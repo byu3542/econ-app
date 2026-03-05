@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingHorizontal="16dp"
+    android:paddingVertical="12dp">
+
+    <!-- Sender Label (YOU / ANALYST) -->
+    <TextView
+        android:id="@+id/tvSenderLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="YOU"
+        android:textColor="@color/text_muted"
+        android:textSize="9sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.1"
+        android:layout_marginBottom="4dp" />
+
+    <!-- Message Bubble -->
+    <LinearLayout
+        android:id="@+id/llBubbleContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="12dp"
+        android:minWidth="60dp">
+
+        <TextView
+            android:id="@+id/tvMessage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/text_navy"
+            android:textSize="14sp"
+            android:lineSpacingExtra="4dp" />
+
+    </LinearLayout>
+
+    <!-- Timestamp -->
+    <TextView
+        android:id="@+id/tvTimestamp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="9:38 AM"
+        android:textColor="@color/text_muted"
+        android:textSize="9sp"
+        android:layout_marginTop="4dp" />
+
+</LinearLayout>

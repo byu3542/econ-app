@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="6dp"
+    app:cardBackgroundColor="@color/card_white">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <!-- 4dp Left Navy Border -->
+        <View
+            android:layout_width="4dp"
+            android:layout_height="match_parent"
+            android:background="@color/header_navy" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="18dp">
+
+            <TextView
+                android:id="@+id/tvMetricLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="METRIC"
+                android:textColor="@color/text_muted"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.2"
+                android:textAllCaps="true" />
+
+            <TextView
+                android:id="@+id/tvMetricValue"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="0.0%"
+                android:textColor="@color/text_navy"
+                android:textSize="34sp"
+                android:fontFamily="serif"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvMetricDate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="0dp"
+                android:text="Jan 2026"
+                android:textColor="@color/text_muted"
+                android:textSize="9sp"
+                android:letterSpacing="0.05" />
+
+        </LinearLayout>
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

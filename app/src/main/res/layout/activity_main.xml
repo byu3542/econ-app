@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_warm_off_white">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <!-- 1. NAVY HEADER BLOCK -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/header_navy"
+            android:orientation="vertical"
+            android:paddingHorizontal="24dp"
+            android:paddingTop="48dp"
+            android:paddingBottom="32dp">
+
+            <TextView
+                android:id="@+id/tvEyebrow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="U.S. ECONOMIC MONITOR"
+                android:textColor="@color/accent_gold"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.2"
+                android:textAllCaps="true" />
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp">
+
+                <TextView
+                    android:id="@+id/tvDashboardTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentStart="true"
+                    android:layout_toStartOf="@id/header_badge_container"
+                    android:text="Economic\nIndicators"
+                    android:textColor="@color/card_white"
+                    android:textSize="42sp"
+                    android:fontFamily="serif"
+                    android:textStyle="bold"
+                    android:lineSpacingExtra="-6dp" />
+
+                <LinearLayout
+                    android:id="@+id/header_badge_container"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:orientation="vertical"
+                    android:gravity="center">
+
+                    <LinearLayout
+                        android:id="@+id/header_badge"
+                        android:layout_width="80dp"
+                        android:layout_height="80dp"
+                        android:background="@drawable/badge_gold_outline"
+                        android:gravity="center"
+                        android:orientation="vertical">
+                        <TextView
+                            android:id="@+id/tvHeaderBadgeValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0.00%"
+                            android:textColor="@color/accent_gold"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="FED FUNDS"
+                            android:textColor="@color/text_muted"
+                            android:textSize="8sp"
+                            android:letterSpacing="0.1"
+                            android:textAllCaps="true" />
+                    </LinearLayout>
+
+                    <!-- AI Analysis Button -->
+                    <LinearLayout
+                        android:id="@+id/btnAiAnalysis"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center_vertical"
+                        android:paddingHorizontal="8dp"
+                        android:paddingVertical="4dp"
+                        android:background="@drawable/badge_neutral_filled"
+                        android:clickable="true"
+                        android:focusable="true">
+                        <ImageView
+                            android:layout_width="14dp"
+                            android:layout_height="14dp"
+                            android:src="@drawable/ic_ai_analysis"
+                            android:layout_marginEnd="4dp" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="AI ANALYSIS"
+                            android:textColor="@color/text_navy"
+                            android:textSize="8sp"
+                            android:textStyle="bold"
+                            android:letterSpacing="0.05" />
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </RelativeLayout>
+
+            <TextView
+                android:id="@+id/tvHeaderDate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="Updated: --"
+                android:textColor="@color/text_muted"
+                android:textSize="11sp"
+                android:textAllCaps="true"
+                android:letterSpacing="0.05" />
+
+        </LinearLayout>
+
+        <!-- Gold Gradient Line below header -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="4dp"
+            android:background="@drawable/gradient_gold" />
+
+        <!-- SCROLLABLE TAB NAVIGATION -->
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/tabLayout"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:background="@color/bg_warm_off_white"
+            app:tabIndicatorColor="@color/accent_gold"
+            app:tabIndicatorHeight="3dp"
+            app:tabMode="scrollable"
+            app:tabSelectedTextColor="@color/text_navy"
+            app:tabTextColor="@color/text_muted"
+            app:tabTextAppearance="@style/TabLabelStyle"
+            app:tabRippleColor="@color/divider_sand"
+            android:elevation="0dp" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/divider_sand" />
+
+        <!-- PROGRESS BAR -->
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="match_parent"
+            android:layout_height="4dp"
+            style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+            android:indeterminate="true"
+            android:visibility="gone"
+            android:progressTint="@color/accent_gold" />
+
+        <androidx.viewpager2.widget.ViewPager2
+            android:id="@+id/viewPager"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+    </LinearLayout>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

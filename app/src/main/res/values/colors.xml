@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Alabaster Report Design System -->
+    <color name="bg_warm_off_white">#f5f3ef</color>
+    <color name="header_navy">#1a1a2e</color>
+    <color name="card_white">#ffffff</color>
+    <color name="row_alt_bg">#faf9f7</color>
+    <color name="divider_sand">#f0ede8</color>
+    <color name="accent_gold">#c9a84c</color>
+    <color name="tab_bg_warm_gray">#ede9e3</color>
+
+    <color name="text_navy">#1a1a2e</color>
+    <color name="text_secondary">#666666</color>
+    <color name="text_muted">#bbbbbb</color>
+
+    <!-- Map missing names used in themes.xml -->
+    <color name="cardBackground">@color/card_white</color>
+    <color name="alabaster_dark_gray">#333333</color>
+    <color name="textPrimary">@color/text_navy</color>
+    <color name="textSecondary">@color/text_secondary</color>
+
+    <!-- Legacy / Theme Compatibility -->
+    <color name="colorPrimary">#1a1a2e</color>
+    <color name="colorPrimaryDark">#1a1a2e</color>
+    <color name="colorAccent">#c9a84c</color>
+    <color name="background">#f5f3ef</color>
+</resources>

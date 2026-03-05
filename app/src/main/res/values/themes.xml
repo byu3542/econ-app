@@ -1,0 +1,61 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Theme.EconomicDashboard" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <!-- Primary brand color. -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+
+        <!-- Customize your theme here. -->
+        <item name="android:windowBackground">@color/background</item>
+
+        <!-- Alabaster specific styling -->
+        <item name="toolbarStyle">@style/AlabasterToolbar</item>
+        <item name="tabStyle">@style/AlabasterTabLayout</item>
+    </style>
+
+    <!-- Full screen dialog theme for AI Chat -->
+    <style name="Theme.EconomicDashboard.FullScreenDialog" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowFullscreen">false</item>
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:windowBackground">@color/bg_warm_off_white</item>
+        <item name="android:windowAnimationStyle">@style/DialogAnimation</item>
+    </style>
+
+    <style name="DialogAnimation">
+        <item name="android:windowEnterAnimation">@anim/slide_in_up</item>
+        <item name="android:windowExitAnimation">@anim/slide_out_down</item>
+    </style>
+
+    <style name="AlabasterToolbar" parent="Widget.MaterialComponents.Toolbar">
+        <item name="android:background">@color/cardBackground</item>
+        <item name="titleTextColor">@color/textPrimary</item>
+        <item name="subtitleTextColor">@color/textSecondary</item>
+        <item name="elevation">0dp</item>
+    </style>
+
+    <style name="AlabasterTabLayout" parent="Widget.MaterialComponents.TabLayout">
+        <item name="android:background">@color/cardBackground</item>
+        <item name="tabIndicatorColor">@color/alabaster_dark_gray</item>
+        <item name="tabSelectedTextColor">@color/textPrimary</item>
+        <item name="tabTextColor">@color/textSecondary</item>
+        <item name="tabIndicatorHeight">2dp</item>
+        <item name="tabTextAppearance">@style/AlabasterTabTextAppearance</item>
+    </style>
+
+    <style name="AlabasterTabTextAppearance" parent="TextAppearance.Design.Tab">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <!-- Style referenced in fragment_dashboard.xml -->
+    <style name="TabLabelStyle" parent="TextAppearance.Design.Tab">
+        <item name="android:textSize">11sp</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.05</item>
+    </style>
+
+</resources>

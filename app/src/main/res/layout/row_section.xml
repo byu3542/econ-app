@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingHorizontal="20dp"
+        android:paddingVertical="18dp"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/tvMaturity"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Label"
+            android:textColor="@color/text_navy"
+            android:fontFamily="sans-serif"
+            android:textSize="16sp" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="end">
+
+            <TextView
+                android:id="@+id/tvYield"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0.00%"
+                android:textColor="@color/text_navy"
+                android:textSize="18sp"
+                android:fontFamily="sans-serif"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvDate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="2026-02-24"
+                android:textColor="@color/text_muted"
+                android:textSize="10sp"
+                android:fontFamily="sans-serif"
+                android:letterSpacing="0.05" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginHorizontal="20dp"
+        android:background="@color/divider_sand" />
+</LinearLayout>
