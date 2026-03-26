@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
     android:paddingHorizontal="16dp"
-    android:paddingVertical="12dp">
+    android:paddingVertical="12dp"
+    android:clipChildren="false"
+    android:clipToPadding="false">
 
     <!-- Sender Label (YOU / ANALYST) -->
     <TextView
@@ -16,16 +18,29 @@
         android:textSize="9sp"
         android:textStyle="bold"
         android:letterSpacing="0.1"
-        android:layout_marginBottom="4dp" />
+        android:layout_marginBottom="4dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0" />
 
     <!-- Message Bubble -->
     <LinearLayout
         android:id="@+id/llBubbleContainer"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:paddingHorizontal="16dp"
         android:paddingVertical="12dp"
-        android:minWidth="60dp">
+        android:minWidth="60dp"
+        android:orientation="vertical"
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        android:layout_marginTop="2dp"
+        app:layout_constraintTop_toBottomOf="@id/tvSenderLabel"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0"
+        app:layout_constraintWidth_default="wrap">
 
         <TextView
             android:id="@+id/tvMessage"
@@ -34,6 +49,44 @@
             android:textColor="@color/text_navy"
             android:textSize="14sp"
             android:lineSpacingExtra="4dp" />
+
+        <!-- Typing Indicator Container -->
+        <LinearLayout
+            android:id="@+id/llTypingIndicator"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingTop="12dp"
+            android:paddingBottom="4dp"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:visibility="gone">
+
+            <View
+                android:id="@+id/dot1"
+                android:layout_width="6dp"
+                android:layout_height="6dp"
+                android:background="@drawable/dot_neutral"
+                android:backgroundTint="@color/text_navy"
+                android:layout_marginEnd="4dp" />
+
+            <View
+                android:id="@+id/dot2"
+                android:layout_width="6dp"
+                android:layout_height="6dp"
+                android:background="@drawable/dot_neutral"
+                android:backgroundTint="@color/text_navy"
+                android:layout_marginEnd="4dp" />
+
+            <View
+                android:id="@+id/dot3"
+                android:layout_width="6dp"
+                android:layout_height="6dp"
+                android:background="@drawable/dot_neutral"
+                android:backgroundTint="@color/text_navy" />
+
+        </LinearLayout>
 
     </LinearLayout>
 
@@ -45,6 +98,10 @@
         android:text="9:38 AM"
         android:textColor="@color/text_muted"
         android:textSize="9sp"
-        android:layout_marginTop="4dp" />
+        android:layout_marginTop="4dp"
+        app:layout_constraintTop_toBottomOf="@id/llBubbleContainer"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0" />
 
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

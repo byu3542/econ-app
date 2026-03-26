@@ -10,7 +10,7 @@ public class ApiConfig {
     public static final String BEA_API_KEY = "13425E5B-2ECF-4378-9786-E48A81B1AEAE";
     public static final String BLS_API_KEY = "5198938c150e4e93a417f3769a5cc077";
     public static final String FRED_API_KEY = "02e1293e2b997b87df09df66c0e8fb86";
-    
+
     // Read from BuildConfig (populated from local.properties)
     public static final String ANTHROPIC_API_KEY = BuildConfig.ANTHROPIC_API_KEY;
 
@@ -51,8 +51,28 @@ public class ApiConfig {
         "BC_2YEAR", "BC_5YEAR", "BC_10YEAR", "BC_30YEAR"
     };
 
-    public static final String FRED_FED_FUNDS = "DFF";
-    public static final String FRED_ISM_PMI   = "NAPM";
+    public static final String FRED_FED_FUNDS    = "DFF";
+    public static final String FRED_ISM_PMI      = "NAPM";
     public static final String FRED_10Y_MATURITY = "DGS10";
     public static final String FRED_2Y_MATURITY  = "DGS2";
+    public static final String FRED_3M_MATURITY  = "DGS3MO";
+
+    // PCE Inflation (Fed’s preferred measure) — FRED
+    public static final String FRED_PCE      = "PCEPI";        // PCE Price Index (all items)
+    public static final String FRED_CORE_PCE = "PCEPILFE";     // Core PCE (ex food & energy)
+
+    // Housing indicators — FRED
+    public static final String FRED_HOUSING_STARTS       = "HOUST";          // Housing Starts (thousands)
+    public static final String FRED_EXISTING_HOME_SALES  = "EXHOSLUSM495S";  // Existing Home Sales (thousands)
+
+    // MBS & Mortgage indicators — FRED
+    public static final String FRED_BANK_MBS   = "TMBACBW027SBOG"; // Commercial Bank MBS Holdings (billions)
+    public static final String FRED_FED_MBS    = "WSHOMCB";        // Fed MBS Holdings (billions)
+    public static final String FRED_MORTGAGE30 = "MORTGAGE30US";   // 30-Year Fixed Mortgage Rate (%)
+    public static final String FRED_MBS_LIMIT  = "260";            // ~5 years weekly data
+
+    // History limits
+    public static final String BLS_HISTORY_MONTHS = "10"; // years back for BLS percentile history
+    public static final String FRED_PCE_LIMIT     = "120"; // 10 years monthly
+    public static final String FRED_HOUSING_LIMIT = "36";  // 3 years monthly
 }

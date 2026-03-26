@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Overview — OUTLINE / INACTIVE state
+  Same 2×2 grid geometry as the filled version, drawn as hollow
+  stroke-only rectangles.  strokeColor="#FFFFFF" so itemIconTint
+  can recolor it correctly via the SRC_IN color filter.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Top-left large rectangle -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.5"
+        android:pathData="M3,3H11V13H3V3z" />
+    <!-- Top-right short rectangle -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.5"
+        android:pathData="M13,3H21V9H13V3z" />
+    <!-- Bottom-right tall rectangle -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.5"
+        android:pathData="M13,11H21V21H13V11z" />
+    <!-- Bottom-left short rectangle -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.5"
+        android:pathData="M3,15H11V21H3V15z" />
+</vector>

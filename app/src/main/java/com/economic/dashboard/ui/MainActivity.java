@@ -1,100 +1,196 @@
 package com.economic.dashboard.ui;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.EditText;
-import android.widget.ImageButton;
+import android.view.ViewGroup;
 import android.widget.TextView;
+
+import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.viewpager2.widget.ViewPager2;
 
 import com.economic.dashboard.R;
-import com.economic.dashboard.api.ApiConfig;
 import com.economic.dashboard.models.ChatMessage;
-import com.economic.dashboard.models.EconomicDataPoint;
+import com.economic.dashboard.news.NewsFragment;
+import com.economic.dashboard.news.NewsRepository;
+import com.economic.dashboard.ui.fragments.DashboardFragment;
+import com.economic.dashboard.ui.fragments.EconomyFragment;
+import com.economic.dashboard.ui.fragments.TreasuryFragment;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import android.widget.ProgressBar;
-import com.google.android.material.tabs.TabLayout;
-import com.google.android.material.tabs.TabLayoutMediator;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
-import java.io.IOException;
+import org.json.JSONArray;
+
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
 
 public class MainActivity extends AppCompatActivity {
 
+    // ─── ViewModel ─────────────────────────────────────────────────────────────
     private EconomicViewModel viewModel;
-    private EconomicPagerAdapter pagerAdapter;
+
+    // ─── Header views ───────────────────────────────────────────────────────────
     private ProgressBar progressBar;
-    private ViewPager2 viewPager;
-    private TabLayout tabLayout;
+    private TextView tvHeaderSub;
 
-    private TextView tvEyebrow, tvHeaderBadgeValue, tvHeaderDate;
-    private View headerBadge, btnAiAnalysis;
+    // ─── Bottom navigation ──────────────────────────────────────────────────────
+    private BottomNavigationView bottomNav;
+    private View navActiveIndicator;
 
-    // Claude AI - Increased timeouts to prevent "Error: timeout"
-    private final OkHttpClient httpClient = new OkHttpClient.Builder()
+    // ─── AI chat state — lives here so it persists across bottom sheet open/close
+    // Package-private so AiAnalystBottomSheet can access them directly.
+    ChatAdapter   chatAdapter;
+    final JSONArray conversationHistory = new JSONArray();
+    String lastUserQuery = "";
+    final OkHttpClient httpClient = new OkHttpClient.Builder()
             .connectTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
             .readTimeout(60, TimeUnit.SECONDS)
             .build();
+
+    // ─── Public accessors used by AiAnalystBottomSheet ──────────────────────────
+    public ChatAdapter      getChatAdapter()          { return chatAdapter; }
+    public JSONArray        getConversationHistory()  { return conversationHistory; }
+    public OkHttpClient     getHttpClient()           { return httpClient; }
+    public String           getLastUserQuery()        { return lastUserQuery; }
+    public void             setLastUserQuery(String q){ lastUserQuery = q; }
+    public EconomicViewModel getViewModel()           { return viewModel; }
+
+    // ─── Lifecycle ──────────────────────────────────────────────────────────────
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        progressBar = findViewById(R.id.progressBar);
-        viewPager   = findViewById(R.id.viewPager);
-        tabLayout   = findViewById(R.id.tabLayout);
+        // Hide the default ActionBar — we use a custom header
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().hide();
+        }
 
-        tvEyebrow          = findViewById(R.id.tvEyebrow);
-        tvHeaderBadgeValue = findViewById(R.id.tvHeaderBadgeValue);
-        tvHeaderDate       = findViewById(R.id.tvHeaderDate);
-        headerBadge        = findViewById(R.id.header_badge);
-        btnAiAnalysis      = findViewById(R.id.btnAiAnalysis);
+        // Header views
+        progressBar  = findViewById(R.id.progressBar);
+        tvHeaderSub = findViewById(R.id.tvHeaderSub);
+
+        // Bottom nav views
+        bottomNav          = findViewById(R.id.bottomNav);
+        navActiveIndicator = findViewById(R.id.navActiveIndicator);
 
         viewModel = new ViewModelProvider(this).get(EconomicViewModel.class);
 
-        setupViewPager();
-        updateEyebrow();
+        // Initialise chat adapter once — persists across bottom sheet open/close
+        chatAdapter = new ChatAdapter(this::retryLastQuery);
+        chatAdapter.addMessage(new ChatMessage(
+                "Hello! I am your AI Economic Analyst, powered by Claude. "
+                + "Ask me anything about the US economic data.", false));
+
+        setupBottomNav();
+        updateHeader();
         observeViewModel();
 
-        if (headerBadge != null) {
-            headerBadge.setOnClickListener(v -> showFedFundsHistory());
-        }
-
-        if (btnAiAnalysis != null) {
-            btnAiAnalysis.setOnClickListener(v -> showAiChat());
-        }
-
         viewModel.fetchAllData();
+
+        // Warm the news cache in the background so AI Analyst has context immediately
+        NewsRepository.getInstance().fetchAllFeedsIfStale();
     }
 
-    private void showFedFundsHistory() {
+    // ─── Bottom navigation setup ────────────────────────────────────────────────
+
+    private void setupBottomNav() {
+        // Load the default destination immediately (before post fires)
+        loadFragment(new DashboardFragment(), "overview");
+
+        // Everything else runs after the nav bar is fully measured so that
+        // getWidth() returns the real pixel value, requestLayout() sticks,
+        // and the listener captures the correct itemWidth in its closure.
+        bottomNav.post(() -> {
+            final int itemWidth  = bottomNav.getWidth() / 5;
+            // Indicator is 60% of item width, inset 20% from each side (matches mockup)
+            final int indWidth   = (int) (itemWidth * 0.6f);
+            final int indOffset  = (int) (itemWidth * 0.2f);   // 20% left inset
+
+            // Snap indicator to Overview (index 0) on first load
+            navActiveIndicator.getLayoutParams().width = indWidth;
+            navActiveIndicator.requestLayout();
+            navActiveIndicator.setTranslationX(indOffset);
+
+            bottomNav.setOnItemSelectedListener(item -> {
+                int id = item.getItemId();
+
+                // AI Analyst — show bottom sheet, keep previous item selected
+                if (id == R.id.nav_ai_analyst) {
+                    if (getSupportFragmentManager()
+                            .findFragmentByTag(AiAnalystBottomSheet.TAG) == null) {
+                        new AiAnalystBottomSheet().show(
+                                getSupportFragmentManager(), AiAnalystBottomSheet.TAG);
+                    }
+                    return false;
+                }
+
+                // Determine indicator index and load the correct fragment
+                int index = 0;
+                if (id == R.id.nav_markets) {
+                    index = 1;
+                    loadFragment(new TreasuryFragment(), "markets");
+                } else if (id == R.id.nav_economy) {
+                    index = 2;
+                    loadFragment(new EconomyFragment(), "economy");
+                } else if (id == R.id.navigation_news) {
+                    index = 3;
+                    loadFragment(new NewsFragment(), "news");
+                } else {
+                    // nav_overview (default)
+                    loadFragment(new DashboardFragment(), "overview");
+                }
+
+                // Animate the gold line to the active item, preserving the 20% inset
+                navActiveIndicator.animate()
+                        .translationX(index * itemWidth + indOffset)
+                        .setDuration(200)
+                        .setInterpolator(new FastOutSlowInInterpolator())
+                        .start();
+
+                return true;
+            });
+        });
+    }
+
+    /** Replace the fragment container, skipping re-add if same tag is already showing. */
+    private void loadFragment(Fragment fragment, String tag) {
+        Fragment existing = getSupportFragmentManager().findFragmentByTag(tag);
+        if (existing != null && existing.isAdded()) return; // already showing
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.fragmentContainer, fragment, tag)
+                .commit();
+    }
+
+/** Called by ChatAdapter retry button — delegates to the open bottom sheet. */
+    private void retryLastQuery() {
+        AiAnalystBottomSheet sheet = (AiAnalystBottomSheet)
+                getSupportFragmentManager().findFragmentByTag(AiAnalystBottomSheet.TAG);
+        // Sheet handles its own retry via lastUserQuery stored in MainActivity
+        // If sheet is not open, nothing to retry
+    }
+
+    // ─── Fed Funds history dialog — unchanged ───────────────────────────────────
+
+    public void showFedFundsHistory() {
         View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_fed_funds_history, null);
         AlertDialog dialog = new AlertDialog.Builder(this)
                 .setView(dialogView)
@@ -107,242 +203,57 @@ public class MainActivity extends AppCompatActivity {
             rv.setAdapter(adapter);
 
             viewModel.getFedFundsHistory().observe(this, data -> {
-                if (data != null) {
-                    adapter.setData(data);
-                }
+                if (data != null) adapter.setData(data);
             });
         }
 
         View btnClose = dialogView.findViewById(R.id.btnClose);
-        if (btnClose != null) {
-            btnClose.setOnClickListener(v -> dialog.dismiss());
-        }
+        if (btnClose != null) btnClose.setOnClickListener(v -> dialog.dismiss());
 
         dialog.show();
     }
 
-    private void showAiChat() {
-        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_ai_chat, null);
-        
-        // Use full screen dialog theme
-        AlertDialog dialog = new AlertDialog.Builder(this, R.style.Theme_EconomicDashboard_FullScreenDialog)
-                .setView(dialogView)
-                .create();
-
-        // Ensure the dialog's window covers the full screen
-        if (dialog.getWindow() != null) {
-            dialog.getWindow().setLayout(
-                android.view.ViewGroup.LayoutParams.MATCH_PARENT,
-                android.view.ViewGroup.LayoutParams.MATCH_PARENT
-            );
-        }
-
-        RecyclerView rvChat = dialogView.findViewById(R.id.rvChat);
-        EditText etMessage = dialogView.findViewById(R.id.etMessage);
-        ImageButton btnSend = dialogView.findViewById(R.id.btnSend);
-        View btnClose = dialogView.findViewById(R.id.btnClose);
-
-        // Chip references
-        View chipYieldCurve = dialogView.findViewById(R.id.chipYieldCurve);
-        View chipRecession = dialogView.findViewById(R.id.chipRecession);
-        View chipWages = dialogView.findViewById(R.id.chipWages);
-
-        ChatAdapter adapter = new ChatAdapter();
-        rvChat.setLayoutManager(new LinearLayoutManager(this));
-        rvChat.setAdapter(adapter);
-
-        adapter.addMessage(new ChatMessage("Hello! I am your Claude-powered Economic Analyst. Ask me anything about the data.", false));
-
-        // Click listeners for chips
-        if (chipYieldCurve != null) {
-            chipYieldCurve.setOnClickListener(v -> etMessage.setText("Analyze the current yield curve health."));
-        }
-        if (chipRecession != null) {
-            chipRecession.setOnClickListener(v -> etMessage.setText("What is the current recession risk based on this data?"));
-        }
-        if (chipWages != null) {
-            chipWages.setOnClickListener(v -> etMessage.setText("What are the latest real wage trends?"));
-        }
-
-        btnSend.setOnClickListener(v -> {
-            String userQuery = etMessage.getText().toString().trim();
-            if (!userQuery.isEmpty()) {
-                adapter.addMessage(new ChatMessage(userQuery, true));
-                etMessage.setText("");
-                rvChat.scrollToPosition(adapter.getItemCount() - 1);
-                
-                queryClaude(userQuery, adapter, rvChat);
-            }
-        });
-
-        if (btnClose != null) {
-            btnClose.setOnClickListener(v -> dialog.dismiss());
-        }
-
-        dialog.show();
-    }
-
-    private void queryClaude(String userQuery, ChatAdapter adapter, RecyclerView rv) {
-        if (ApiConfig.ANTHROPIC_API_KEY.equals("YOUR_ANTHROPIC_API_KEY") || ApiConfig.ANTHROPIC_API_KEY.isEmpty()) {
-            adapter.addMessage(new ChatMessage("Please provide a valid Anthropic API Key in your local.properties file (ANTHROPIC_API_KEY=your_key).", false));
-            return;
-        }
-
-        String context = constructEconomicContext();
-        String fullPrompt = "You are an expert economic analyst. Here is the current US economic data from the dashboard:\n" +
-                context + "\n\nUser Question: " + userQuery + "\n\nPlease provide a concise analysis based on this data.";
-
-        try {
-            JSONObject message = new JSONObject();
-            message.put("role", "user");
-            message.put("content", fullPrompt);
-
-            JSONArray messages = new JSONArray();
-            messages.put(message);
-
-            JSONObject body = new JSONObject();
-            body.put("model", "claude-haiku-4-5-20251001");
-            body.put("max_tokens", 1024);
-            body.put("messages", messages);
-
-            Request request = new Request.Builder()
-                    .url("https://api.anthropic.com/v1/messages")
-                    .addHeader("x-api-key", ApiConfig.ANTHROPIC_API_KEY)
-                    .addHeader("anthropic-version", "2023-06-01")
-                    .post(RequestBody.create(MediaType.parse("application/json"), body.toString()))
-                    .build();
-
-            httpClient.newCall(request).enqueue(new Callback() {
-                @Override
-                public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                    Log.e("Claude", "Query failed", e);
-                    String errorDetails = e.getMessage() != null ? e.getMessage() : "Unknown connection error";
-                    runOnUiThread(() -> {
-                        adapter.addMessage(new ChatMessage("Error: " + errorDetails, false));
-                        rv.smoothScrollToPosition(adapter.getItemCount() - 1);
-                    });
-                }
-
-                @Override
-                public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                    try (Response r = response) {
-                        String responseBody = r.body() != null ? r.body().string() : "";
-                        if (r.isSuccessful()) {
-                            JSONObject json = new JSONObject(responseBody);
-                            String text = json.getJSONArray("content").getJSONObject(0).getString("text");
-                            runOnUiThread(() -> {
-                                adapter.addMessage(new ChatMessage(text, false));
-                                rv.smoothScrollToPosition(adapter.getItemCount() - 1);
-                            });
-                        } else {
-                            Log.e("Claude", "API error " + r.code() + ": " + responseBody);
-                            String apiError = extractApiError(responseBody, r.code());
-                            runOnUiThread(() -> {
-                                adapter.addMessage(new ChatMessage(apiError, false));
-                                rv.smoothScrollToPosition(adapter.getItemCount() - 1);
-                            });
-                        }
-                    } catch (Exception e) {
-                        Log.e("Claude", "Response parse failed", e);
-                        runOnUiThread(() -> {
-                            adapter.addMessage(new ChatMessage("Error parsing response.", false));
-                            rv.smoothScrollToPosition(adapter.getItemCount() - 1);
-                        });
-                    }
-                }
-            });
-        } catch (Exception e) {
-            Log.e("Claude", "Request build failed", e);
-            adapter.addMessage(new ChatMessage("Error building request: " + e.getMessage(), false));
-        }
-    }
-
-    private String extractApiError(String responseBody, int code) {
-        try {
-            JSONObject json = new JSONObject(responseBody);
-            if (json.has("error")) {
-                JSONObject error = json.getJSONObject("error");
-                String message = error.optString("message", "Unknown error");
-                return "Claude API error (" + code + "): " + message;
-            }
-        } catch (Exception ignored) {}
-        return "Claude API error (" + code + "). See Logcat for details.";
-    }
-
-    private String constructEconomicContext() {
-        StringBuilder sb = new StringBuilder();
-        
-        EconomicDataPoint fedFunds = EconomicViewModel.getLatest(viewModel.getFedFundsData().getValue(), "Federal Funds Effective Rate");
-        if (fedFunds != null) sb.append("- Fed Funds Rate: ").append(fedFunds.getValue()).append("%\n");
-        
-        EconomicDataPoint gdp = EconomicViewModel.getLatest(viewModel.getGdpData().getValue(), "Gross domestic product");
-        if (gdp != null) sb.append("- GDP Growth: ").append(gdp.getValue()).append("% (").append(gdp.getDate()).append(")\n");
-        
-        EconomicDataPoint unemp = EconomicViewModel.getLatest(viewModel.getEmploymentData().getValue(), "Unemployment Rate");
-        if (unemp != null) sb.append("- Unemployment Rate: ").append(unemp.getValue()).append("%\n");
-        
-        EconomicDataPoint cpi = EconomicViewModel.getLatest(viewModel.getCpiData().getValue(), "CPI-U All Items");
-        if (cpi != null) sb.append("- CPI Index: ").append(cpi.getValue()).append("\n");
-
-        List<EconomicDataPoint> spreadData = viewModel.getCalculatedSpreadData().getValue();
-        if (spreadData != null && !spreadData.isEmpty()) {
-            EconomicDataPoint latestSpread = spreadData.get(spreadData.size() - 1);
-            sb.append("- 10Y-2Y Yield Spread: ").append(String.format(Locale.US, "%.2f%%", latestSpread.getValue())).append("\n");
-        }
-
-        return sb.toString();
-    }
-
-    private void setupViewPager() {
-        pagerAdapter = new EconomicPagerAdapter(this);
-        viewPager.setAdapter(pagerAdapter);
-        viewPager.setOffscreenPageLimit(5);
-
-        new TabLayoutMediator(tabLayout, viewPager, (tab, position) -> {
-            switch (position) {
-                case 0: tab.setText("Overview");   break;
-                case 1: tab.setText("Treasury");   break;
-                case 2: tab.setText("GDP");        break;
-                case 3: tab.setText("Employment"); break;
-                case 4: tab.setText("CPI");        break;
-                case 5: tab.setText("Wages");      break;
-            }
-        }).attach();
-    }
-
-    private void updateEyebrow() {
-        Calendar cal = Calendar.getInstance();
-        int month = cal.get(Calendar.MONTH);
-        int quarter = (month / 3) + 1;
-        int year = cal.get(Calendar.YEAR);
-        String text = String.format(Locale.US, "U.S. ECONOMIC MONITOR  ·  Q%d %d", quarter, year);
-        if (tvEyebrow != null) tvEyebrow.setText(text);
-    }
+    // ─── ViewModel observation — unchanged ──────────────────────────────────────
 
     private void observeViewModel() {
-        viewModel.getIsLoading().observe(this, loading -> {
-            progressBar.setVisibility(loading ? View.VISIBLE : View.GONE);
-        });
+        viewModel.getIsLoading().observe(this, loading ->
+                progressBar.setVisibility(loading ? View.VISIBLE : View.GONE));
 
         viewModel.getFedFundsData().observe(this, data -> {
-            if (data != null) {
-                EconomicDataPoint p = EconomicViewModel.getLatest(data, "Federal Funds Effective Rate");
-                if (p != null && tvHeaderBadgeValue != null) {
-                    tvHeaderBadgeValue.setText(String.format(Locale.US, "%.2f%%", p.getValue()));
-                    updateTimestamp();
-                }
-            }
+            if (data != null) updateHeader();
         });
 
         viewModel.getErrorMsg().observe(this, error -> {});
     }
 
-    private void updateTimestamp() {
-        if (tvHeaderDate != null) {
-            String now = new SimpleDateFormat("MMM dd, yyyy  ·  hh:mm a z", Locale.US).format(new Date());
-            tvHeaderDate.setText("Updated: " + now);
+    private void updateHeader() {
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        int month = cal.get(java.util.Calendar.MONTH);
+        int year = cal.get(java.util.Calendar.YEAR);
+        int quarter;
+        if (month <= 2) quarter = 1;
+        else if (month <= 5) quarter = 2;
+        else if (month <= 8) quarter = 3;
+        else quarter = 4;
+        String quarterLabel = "Q" + quarter + " " + year;
+        SimpleDateFormat fmt = new SimpleDateFormat("MMM d, hh:mm a", Locale.US);
+        String dateStr = fmt.format(new Date());
+        TextView tvQuarter = findViewById(R.id.tvHeaderQuarter);
+        if (tvQuarter != null) {
+            tvQuarter.setText(quarterLabel);
+        }
+        if (tvHeaderSub != null) {
+            tvHeaderSub.setText("Updated " + dateStr);
         }
     }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        updateHeader();
+    }
+
+    // ─── Options menu (refresh) — unchanged ─────────────────────────────────────
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -351,11 +262,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == R.id.action_refresh) {
             viewModel.fetchAllData();
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private int dpToPx(int dp) {
+        return Math.round(dp * getResources().getDisplayMetrics().density);
     }
 }

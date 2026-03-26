@@ -12,18 +12,23 @@
     <!-- Economic Growth Bars - Maximized content -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M15,78 L32,78 L32,58 L15,55 Z" /> <!-- Bar 1: Employment -->
+        android:pathData="M15,82 L32,82 L32,58 L15,55 Z" /> <!-- Bar 1 -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M41.5,78 L58.5,78 L58.5,38 L41.5,38 Z" /> <!-- Bar 2: CPI -->
+        android:pathData="M41.5,82 L58.5,82 L58.5,38 L41.5,38 Z" /> <!-- Bar 2 -->
     <path
         android:fillColor="#4CAF50"
-        android:pathData="M68,78 L85,78 L85,18 L68,18 Z" /> <!-- Bar 3: Yield Curve (Growth) -->
+        android:pathData="M68,82 L85,82 L85,18 L68,18 Z" /> <!-- Bar 3 -->
 
     <!-- Connecting Trend Line - Thicker and wider -->
     <path
         android:strokeColor="#FFFFFF"
-        android:strokeWidth="4"
+        android:strokeWidth="6"
         android:strokeLineCap="round"
         android:pathData="M23.5,58 L50,38 L76.5,18" />
+
+    <!-- Arrow head on the line going up - Larger and bolder -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M76.5,18 L68,18 L76.5,9.5 L85,18 Z" />
 </vector>

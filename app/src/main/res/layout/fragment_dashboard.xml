@@ -18,135 +18,42 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- KPI GRID (2 Columns) -->
-            <GridLayout
+            <!-- FED FUNDS HERO CARD -->
+            <include layout="@layout/card_fed_funds_hero" />
+
+            <!-- KPI BADGE ROW 1: GDP Growth | CPI-U YOY -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:columnCount="2"
-                android:rowCount="2"
-                android:alignmentMode="alignMargins"
-                android:columnOrderPreserved="false"
-                android:layout_marginBottom="16dp">
+                android:orientation="horizontal"
+                android:layout_marginBottom="8dp"
+                android:baselineAligned="false">
 
-                <include layout="@layout/card_kpi_gold" android:id="@+id/cardUnemployment"
+                <include layout="@layout/card_kpi_badge" android:id="@+id/cardHourlyWage"
                     android:layout_width="0dp" android:layout_height="wrap_content"
-                    android:layout_columnWeight="1" android:layout_marginEnd="8dp" android:layout_marginBottom="16dp"/>
+                    android:layout_weight="1" android:layout_marginEnd="4dp" />
 
-                <include layout="@layout/card_kpi_navy" android:id="@+id/cardLabor"
+                <include layout="@layout/card_kpi_badge" android:id="@+id/cardLabor"
                     android:layout_width="0dp" android:layout_height="wrap_content"
-                    android:layout_columnWeight="1" android:layout_marginStart="8dp" android:layout_marginBottom="16dp"/>
+                    android:layout_weight="1" android:layout_marginStart="4dp" />
+            </LinearLayout>
 
-                <include layout="@layout/card_kpi_navy" android:id="@+id/cardCPI"
-                    android:layout_width="0dp" android:layout_height="wrap_content"
-                    android:layout_columnWeight="1" android:layout_marginEnd="8dp" />
-
-                <include layout="@layout/card_kpi_gold" android:id="@+id/cardHourlyWage"
-                    android:layout_width="0dp" android:layout_height="wrap_content"
-                    android:layout_columnWeight="1" android:layout_marginStart="8dp" />
-            </GridLayout>
-
-            <!-- TREASURY YIELDS SECTION -->
-            <androidx.cardview.widget.CardView
+            <!-- KPI BADGE ROW 2: 10Y-3M Spread | Unemployment -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="6dp"
-                app:cardBackgroundColor="@color/card_white">
+                android:orientation="horizontal"
+                android:layout_marginBottom="16dp"
+                android:baselineAligned="false">
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
+                <include layout="@layout/card_kpi_badge" android:id="@+id/cardCPI"
+                    android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:layout_marginEnd="4dp" />
 
-                    <RelativeLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:background="@color/header_navy"
-                        android:paddingHorizontal="20dp"
-                        android:paddingVertical="16dp">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Treasury Yields"
-                            android:textColor="@color/card_white"
-                            android:textSize="22sp"
-                            android:fontFamily="serif"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_alignParentEnd="true"
-                            android:layout_centerVertical="true"
-                            android:background="@drawable/badge_gold_filled"
-                            android:paddingHorizontal="10dp"
-                            android:paddingVertical="4dp"
-                            android:text="LIVE"
-                            android:textColor="@color/header_navy"
-                            android:textSize="10sp"
-                            android:textStyle="bold" />
-
-                        <View
-                            android:layout_width="match_parent"
-                            android:layout_height="2dp"
-                            android:layout_alignParentBottom="true"
-                            android:background="@color/accent_gold" />
-                    </RelativeLayout>
-
-                    <include layout="@layout/row_section_alt" android:id="@+id/row1M" />
-                    <include layout="@layout/row_section" android:id="@+id/row3M" />
-                    <include layout="@layout/row_section_alt" android:id="@+id/row2Y" />
-                    <include layout="@layout/row_section" android:id="@+id/row10Y" />
-                    <include layout="@layout/row_section_alt" android:id="@+id/row30Y" />
-
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
-
-            <!-- INFLATION & WAGES SECTION -->
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="6dp"
-                app:cardBackgroundColor="@color/card_white">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
-
-                    <RelativeLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:background="@color/header_navy"
-                        android:paddingHorizontal="20dp"
-                        android:paddingVertical="16dp">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Inflation &amp; Earnings"
-                            android:textColor="@color/card_white"
-                            android:textSize="22sp"
-                            android:fontFamily="serif"
-                            android:textStyle="bold" />
-
-                        <View
-                            android:layout_width="match_parent"
-                            android:layout_height="2dp"
-                            android:layout_alignParentBottom="true"
-                            android:background="@color/accent_gold" />
-                    </RelativeLayout>
-
-                    <include layout="@layout/row_section" android:id="@+id/rowCPI" />
-                    <include layout="@layout/row_section_alt" android:id="@+id/rowHourlyWageRow" />
-                    <include layout="@layout/row_section" android:id="@+id/rowWages" />
-
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
+                <include layout="@layout/card_kpi_badge" android:id="@+id/cardUnemployment"
+                    android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:layout_marginStart="4dp" />
+            </LinearLayout>
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>

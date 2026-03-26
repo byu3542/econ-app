@@ -12,46 +12,43 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- UNEMPLOYMENT STATUS CARD (GDP Style) -->
+        <!-- UNEMPLOYMENT RATE Badge (full-width, Markets style) -->
         <androidx.cardview.widget.CardView
             android:id="@+id/cardUnemploymentStatus"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="6dp"
-            app:cardBackgroundColor="@color/header_navy">
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="4dp"
+            app:cardBackgroundColor="#1C2236">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="24dp"
+                android:padding="14dp"
                 android:gravity="center">
 
                 <TextView
                     android:id="@+id/tvUnempLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Unemployment Rate Indicator"
-                    android:textColor="@color/accent_gold"
-                    android:textSize="14sp"
+                    android:text="UNEMPLOYMENT RATE"
+                    android:textColor="#C8A84B"
+                    android:textSize="10sp"
                     android:textStyle="bold"
                     android:textAllCaps="true"
-                    android:letterSpacing="0.1"
-                    android:textAlignment="center"/>
+                    android:letterSpacing="0.08" />
 
                 <TextView
                     android:id="@+id/tvUnempValue"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="—"
-                    android:textColor="@color/card_white"
-                    android:textSize="48sp"
-                    android:fontFamily="serif"
+                    android:text="\u2014"
+                    android:textColor="#FFFFFF"
+                    android:textSize="28sp"
                     android:textStyle="bold"
-                    android:layout_marginTop="8dp"
-                    android:textAlignment="center"/>
+                    android:layout_marginTop="4dp" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -65,16 +62,15 @@
                         android:layout_width="8dp"
                         android:layout_height="8dp"
                         android:background="@drawable/dot_neutral"
-                        android:layout_marginEnd="8dp" />
+                        android:layout_marginEnd="4dp" />
 
                     <TextView
                         android:id="@+id/tvUnempStatus"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Loading reading..."
+                        android:text="\u2014"
                         android:textColor="@color/text_muted"
-                        android:textSize="12sp"
-                        android:textAlignment="center"/>
+                        android:textSize="10sp" />
                 </LinearLayout>
 
                 <TextView
@@ -82,10 +78,9 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Vs 12-month low"
-                    android:textColor="@color/text_muted"
-                    android:textSize="10sp"
-                    android:layout_marginTop="2dp"
-                    android:textAlignment="center"/>
+                    android:textColor="#5A6A8A"
+                    android:textSize="9sp"
+                    android:layout_marginTop="2dp" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
@@ -103,28 +98,28 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
-                <RelativeLayout
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="@color/header_navy"
+                    android:orientation="vertical"
                     android:paddingHorizontal="20dp"
-                    android:paddingVertical="16dp">
+                    android:paddingTop="16dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Unemployment Rate Trend"
-                        android:textColor="@color/card_white"
-                        android:textSize="22sp"
+                        android:textColor="#1C2236"
+                        android:textSize="15sp"
                         android:fontFamily="serif"
                         android:textStyle="bold" />
 
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="2dp"
-                        android:layout_alignParentBottom="true"
+                        android:layout_marginTop="8dp"
                         android:background="@color/accent_gold" />
-                </RelativeLayout>
+                </LinearLayout>
 
                 <com.github.mikephil.charting.charts.LineChart
                     android:id="@+id/unemploymentChart"
@@ -149,28 +144,28 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
-                <RelativeLayout
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="@color/header_navy"
+                    android:orientation="vertical"
                     android:paddingHorizontal="20dp"
-                    android:paddingVertical="16dp">
+                    android:paddingTop="16dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Labor Participation Rate"
-                        android:textColor="@color/card_white"
-                        android:textSize="22sp"
+                        android:textColor="#1C2236"
+                        android:textSize="15sp"
                         android:fontFamily="serif"
                         android:textStyle="bold" />
 
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="2dp"
-                        android:layout_alignParentBottom="true"
+                        android:layout_marginTop="8dp"
                         android:background="@color/accent_gold" />
-                </RelativeLayout>
+                </LinearLayout>
 
                 <com.github.mikephil.charting.charts.LineChart
                     android:id="@+id/laborParticipationChart"

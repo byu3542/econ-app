@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Right-edge fade overlay that hints at horizontally scrollable tab content. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <gradient
+        android:type="linear"
+        android:angle="0"
+        android:startColor="@android:color/transparent"
+        android:endColor="#f5f3ef" />
+</shape>

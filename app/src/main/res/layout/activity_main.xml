@@ -1,4 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Refactored layout:
+    • Header block (navy) — unchanged
+    • FrameLayout (fragmentContainer) — hosts Overview / Markets / Economy fragments
+    • FrameLayout wrapper at the bottom:
+        – navActiveIndicator View (2dp gold line that slides to active item)
+        – BottomNavigationView (4 destinations)
+
+  The FAB and old TabLayout+ViewPager2 have been removed.
+-->
 <androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -11,150 +21,113 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <!-- 1. NAVY HEADER BLOCK -->
+        <!-- ══ 1. SLIM HEADER — single row ════════════════════════════════ -->
         <LinearLayout
+            android:id="@+id/header_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@color/header_navy"
-            android:orientation="vertical"
-            android:paddingHorizontal="24dp"
-            android:paddingTop="48dp"
-            android:paddingBottom="32dp">
+            android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/tvEyebrow"
+            <LinearLayout
+                android:id="@+id/header_inner_layout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="U.S. ECONOMIC MONITOR"
-                android:textColor="@color/accent_gold"
-                android:textSize="10sp"
-                android:textStyle="bold"
-                android:letterSpacing="0.2"
-                android:textAllCaps="true" />
+                android:orientation="vertical"
+                android:layout_marginTop="0dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="9dp"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp">
 
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp">
+                <!-- Gold accent bar -->
+                <View
+                    android:layout_width="40dp"
+                    android:layout_height="2dp"
+                    android:background="#c9a84c"
+                    android:layout_marginBottom="8dp"/>
 
+                <!-- Line 1: "U.S. ECONOMIC" -->
                 <TextView
-                    android:id="@+id/tvDashboardTitle"
+                    android:id="@+id/tvHeaderLine1"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_alignParentStart="true"
-                    android:layout_toStartOf="@id/header_badge_container"
-                    android:text="Economic\nIndicators"
-                    android:textColor="@color/card_white"
-                    android:textSize="42sp"
+                    android:text="U.S. ECONOMIC"
+                    android:textSize="28sp"
+                    android:textColor="#ffffff"
                     android:fontFamily="serif"
                     android:textStyle="bold"
-                    android:lineSpacingExtra="-6dp" />
+                    android:textAllCaps="true"
+                    android:letterSpacing="0.08"
+                    android:includeFontPadding="false"/>
 
-                <LinearLayout
-                    android:id="@+id/header_badge_container"
+                <!-- Line 2: "MONITOR" -->
+                <TextView
+                    android:id="@+id/tvHeaderLine2"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_alignParentEnd="true"
-                    android:layout_centerVertical="true"
-                    android:orientation="vertical"
-                    android:gravity="center">
+                    android:text="MONITOR"
+                    android:textSize="28sp"
+                    android:textColor="#ffffff"
+                    android:fontFamily="serif"
+                    android:textStyle="bold"
+                    android:textAllCaps="true"
+                    android:letterSpacing="0.08"
+                    android:includeFontPadding="false"
+                    android:layout_marginTop="-4dp"
+                    android:layout_marginBottom="8dp"/>
 
-                    <LinearLayout
-                        android:id="@+id/header_badge"
-                        android:layout_width="80dp"
-                        android:layout_height="80dp"
-                        android:background="@drawable/badge_gold_outline"
-                        android:gravity="center"
-                        android:orientation="vertical">
-                        <TextView
-                            android:id="@+id/tvHeaderBadgeValue"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="0.00%"
-                            android:textColor="@color/accent_gold"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="FED FUNDS"
-                            android:textColor="@color/text_muted"
-                            android:textSize="8sp"
-                            android:letterSpacing="0.1"
-                            android:textAllCaps="true" />
-                    </LinearLayout>
+                <!-- Line 3: Quarter pill + date row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
 
-                    <!-- AI Analysis Button -->
-                    <LinearLayout
-                        android:id="@+id/btnAiAnalysis"
+                    <TextView
+                        android:id="@+id/tvHeaderQuarter"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:gravity="center_vertical"
-                        android:paddingHorizontal="8dp"
-                        android:paddingVertical="4dp"
-                        android:background="@drawable/badge_neutral_filled"
-                        android:clickable="true"
-                        android:focusable="true">
-                        <ImageView
-                            android:layout_width="14dp"
-                            android:layout_height="14dp"
-                            android:src="@drawable/ic_ai_analysis"
-                            android:layout_marginEnd="4dp" />
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="AI ANALYSIS"
-                            android:textColor="@color/text_navy"
-                            android:textSize="8sp"
-                            android:textStyle="bold"
-                            android:letterSpacing="0.05" />
-                    </LinearLayout>
+                        android:textSize="10sp"
+                        android:textColor="#c9a84c"
+                        android:fontFamily="sans-serif-medium"
+                        android:textAllCaps="true"
+                        android:letterSpacing="0.14"
+                        android:background="@drawable/bg_quarter_pill"
+                        android:paddingStart="8dp"
+                        android:paddingEnd="8dp"
+                        android:paddingTop="3dp"
+                        android:paddingBottom="3dp"/>
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="1dp"
+                        android:layout_weight="1"/>
+
+                    <TextView
+                        android:id="@+id/tvHeaderSub"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="9sp"
+                        android:textColor="#47ffffff"
+                        android:fontFamily="sans-serif"
+                        android:textAllCaps="true"
+                        android:letterSpacing="0.05"
+                        android:singleLine="true"/>
 
                 </LinearLayout>
 
-            </RelativeLayout>
+            </LinearLayout>
 
-            <TextView
-                android:id="@+id/tvHeaderDate"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:text="Updated: --"
-                android:textColor="@color/text_muted"
-                android:textSize="11sp"
-                android:textAllCaps="true"
-                android:letterSpacing="0.05" />
+            <!-- 1dp gold border at ~18% alpha -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#2Ec9a84c" />
 
         </LinearLayout>
 
-        <!-- Gold Gradient Line below header -->
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="4dp"
-            android:background="@drawable/gradient_gold" />
-
-        <!-- SCROLLABLE TAB NAVIGATION -->
-        <com.google.android.material.tabs.TabLayout
-            android:id="@+id/tabLayout"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:background="@color/bg_warm_off_white"
-            app:tabIndicatorColor="@color/accent_gold"
-            app:tabIndicatorHeight="3dp"
-            app:tabMode="scrollable"
-            app:tabSelectedTextColor="@color/text_navy"
-            app:tabTextColor="@color/text_muted"
-            app:tabTextAppearance="@style/TabLabelStyle"
-            app:tabRippleColor="@color/divider_sand"
-            android:elevation="0dp" />
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@color/divider_sand" />
-
-        <!-- PROGRESS BAR -->
+        <!-- ══ Progress bar — unchanged ════════════════════════════════════ -->
         <ProgressBar
             android:id="@+id/progressBar"
             android:layout_width="match_parent"
@@ -164,12 +137,60 @@
             android:visibility="gone"
             android:progressTint="@color/accent_gold" />
 
-        <androidx.viewpager2.widget.ViewPager2
-            android:id="@+id/viewPager"
+        <!-- ══ 2. FRAGMENT CONTAINER — hosts Overview / Markets / Economy ══ -->
+        <FrameLayout
+            android:id="@+id/fragmentContainer"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1" />
 
+        <!-- ══ 3. BOTTOM NAV WRAPPER ════════════════════════════════════════
+             The FrameLayout lets the navActiveIndicator View float at the
+             very top edge of the nav bar so it appears as a 2dp top-line
+             indicator above the active destination icon.
+        ═══════════════════════════════════════════════════════════════════ -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <!-- BottomNav declared FIRST so it is drawn beneath the indicator -->
+            <com.google.android.material.bottomnavigation.BottomNavigationView
+                android:id="@+id/bottomNav"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_bottom_nav_border"
+                app:menu="@menu/bottom_nav_menu"
+                app:itemIconTint="@color/bottom_nav_icon_color"
+                app:itemTextColor="@color/bottom_nav_text_color"
+                app:itemTextAppearanceActive="@style/BottomNavLabelStyle"
+                app:itemTextAppearanceInactive="@style/BottomNavLabelStyle"
+                app:labelVisibilityMode="labeled"
+                app:itemActiveIndicatorStyle="@style/BottomNavActiveIndicatorNone"
+                app:elevation="0dp" />
+
+            <!--
+              Gold indicator line declared LAST so it is drawn on top of the
+              BottomNav's solid navy background.  In a FrameLayout the last
+              child wins the z-order — declaring it first (as before) meant
+              the nav background painted over it completely.
+              Width and TranslationX are set in MainActivity inside post().
+            -->
+            <!--
+              Width is set to 60% of itemWidth in code (matching mockup inset of 20% each side).
+              TranslationX accounts for the 20% left inset when centering per item.
+              bg_nav_indicator gives it 2dp bottom-corner rounding (squared top, pill bottom).
+            -->
+            <View
+                android:id="@+id/navActiveIndicator"
+                android:layout_width="0dp"
+                android:layout_height="4dp"
+                android:layout_gravity="top|start"
+                android:background="@drawable/bg_nav_indicator"
+                android:importantForAccessibility="no" />
+
+        </FrameLayout>
+
     </LinearLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
+

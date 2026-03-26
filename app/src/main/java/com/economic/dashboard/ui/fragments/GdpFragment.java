@@ -36,6 +36,9 @@ public class GdpFragment extends Fragment {
     private TextView tvGdpLatest, tvGdpDesc, tvGdpStatusText;
     private View viewGdpIndicatorDot;
     private CardView cardGdpStatus;
+    private TextView tvGdpLatestQuarterValue, tvGdpLatestQuarterLabel, tvGdpLatestQuarterStatus;
+    private View viewGdpLatestQuarterDot;
+    private CardView cardGdpLatestQuarter;
 
     @Nullable @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -54,6 +57,11 @@ public class GdpFragment extends Fragment {
         tvGdpStatusText = view.findViewById(R.id.tvGdpStatusText);
         viewGdpIndicatorDot = view.findViewById(R.id.viewGdpIndicatorDot);
         cardGdpStatus = view.findViewById(R.id.cardGdpStatus);
+        cardGdpLatestQuarter = view.findViewById(R.id.cardGdpLatestQuarter);
+        tvGdpLatestQuarterValue = view.findViewById(R.id.tvGdpLatestQuarterValue);
+        tvGdpLatestQuarterLabel = view.findViewById(R.id.tvGdpLatestQuarterLabel);
+        tvGdpLatestQuarterStatus = view.findViewById(R.id.tvGdpLatestQuarterStatus);
+        viewGdpLatestQuarterDot = view.findViewById(R.id.viewGdpLatestQuarterDot);
 
         ChartHelper.styleLineChart(gdpChart, "GDP Growth Rate", "Quarter", "Growth (%)");
         
@@ -69,6 +77,19 @@ public class GdpFragment extends Fragment {
             if (data != null) {
                 buildGdpChart(data);
                 updateGdpIndicator(data);
+                updateLatestQuarterStatus(data);
+            }
+        });
+
+        viewModel.getLatestQuarterGdp().observe(getViewLifecycleOwner(), value -> {
+            if (value != null && tvGdpLatestQuarterValue != null) {
+                tvGdpLatestQuarterValue.setText(value);
+            }
+        });
+
+        viewModel.getLatestQuarterLabel().observe(getViewLifecycleOwner(), label -> {
+            if (label != null && tvGdpLatestQuarterLabel != null) {
+                tvGdpLatestQuarterLabel.setText(label);
             }
         });
 
@@ -146,6 +167,43 @@ public class GdpFragment extends Fragment {
         cardGdpStatus.setCardBackgroundColor(Color.parseColor("#1A1F2B"));
     }
 
+    private void updateLatestQuarterStatus(List<EconomicDataPoint> data) {
+        final String GDP_SERIES = "Gross domestic product";
+        List<EconomicDataPoint> gdpRows = EconomicViewModel.filterBySeries(data, GDP_SERIES);
+        if (gdpRows.isEmpty()) return;
+        EconomicDataPoint latest = gdpRows.get(gdpRows.size() - 1);
+        double latestValue = latest.getValue();
+
+        String status;
+        int dotColor;
+
+        if (latestValue < 0) {
+            status = "CONTRACTION";
+            dotColor = Color.parseColor("#F44336");
+        } else if (latestValue < 2.0) {
+            status = "SLOWING";
+            dotColor = Color.parseColor("#FFEB3B");
+        } else {
+            status = "EXPANSION";
+            dotColor = Color.parseColor("#4CAF50");
+        }
+
+        if (tvGdpLatestQuarterStatus != null) {
+            tvGdpLatestQuarterStatus.setText(status);
+            tvGdpLatestQuarterStatus.setTextColor(Color.parseColor("#BBBBBB"));
+        }
+
+        if (viewGdpLatestQuarterDot != null) {
+            GradientDrawable dot = new GradientDrawable();
+            dot.setShape(GradientDrawable.OVAL);
+            dot.setColor(dotColor);
+            viewGdpLatestQuarterDot.setBackground(dot);
+        }
+
+        if (cardGdpLatestQuarter != null) {
+            cardGdpLatestQuarter.setCardBackgroundColor(Color.parseColor("#1A1F2B"));
+        }
+    }
     private void buildGdpChart(List<EconomicDataPoint> data) {
         final String GDP_SERIES = "Gross domestic product";
         List<EconomicDataPoint> gdpRows = EconomicViewModel.filterBySeries(data, GDP_SERIES);
@@ -157,11 +215,19 @@ public class GdpFragment extends Fragment {
 
         if (gdpRows.isEmpty()) return;
 
+        // Exclude the COVID outlier period (Q2 2020: -28%, Q3 2020: +35%) which makes
+        // recent data unreadable. Default to post-2021 data; fall back to all data if empty.
+        List<EconomicDataPoint> chartRows = new ArrayList<>();
+        for (EconomicDataPoint dp : gdpRows) {
+            if (dp.getDate().compareTo("2022-01-01") >= 0) chartRows.add(dp);
+        }
+        if (chartRows.isEmpty()) chartRows = gdpRows;
+
         List<Entry> entries = new ArrayList<>();
         final List<String> labels = new ArrayList<>();
-        for (int i = 0; i < gdpRows.size(); i++) {
-            entries.add(new Entry(i, (float) gdpRows.get(i).getValue()));
-            labels.add(gdpRows.get(i).getDate());
+        for (int i = 0; i < chartRows.size(); i++) {
+            entries.add(new Entry(i, (float) chartRows.get(i).getValue()));
+            labels.add(chartRows.get(i).getDate());
         }
 
         gdpChart.getXAxis().setValueFormatter(new ValueFormatter() {
@@ -173,17 +239,9 @@ public class GdpFragment extends Fragment {
 
         LineDataSet dataSet = new LineDataSet(entries, "GDP Growth (%)");
         dataSet.setColor(Color.parseColor("#1a73e8"));
-        dataSet.setCircleColor(Color.parseColor("#1a73e8"));
-        dataSet.setLineWidth(3f);
-        dataSet.setCircleRadius(5f);
-        dataSet.setDrawValues(true);
-        dataSet.setValueTextSize(9f);
-        dataSet.setValueFormatter(new ValueFormatter() {
-            @Override public String getFormattedValue(float value) {
-                return String.format(Locale.US, "%.1f", value);
-            }
-        });
-
+        dataSet.setLineWidth(1.5f);
+        dataSet.setDrawCircles(false);
+        dataSet.setDrawValues(false);
         dataSet.setMode(LineDataSet.Mode.LINEAR);
 
         gdpChart.setData(new LineData(dataSet));

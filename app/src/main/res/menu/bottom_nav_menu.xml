@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Bottom navigation menu — 5 destinations.
+  Each icon references a selector drawable that automatically switches
+  between a filled icon (state_checked=true / active) and an outline
+  icon (inactive), matching Material Design conventions.
+
+  itemIconTint in activity_main.xml handles colour:
+    active   → #c9a84c (gold)
+    inactive → rgba(255,255,255,0.35)
+-->
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/nav_overview"
+        android:icon="@drawable/ic_overview_selector"
+        android:title="Overview" />
+
+    <item
+        android:id="@+id/nav_markets"
+        android:icon="@drawable/ic_markets_selector"
+        android:title="Markets" />
+
+    <item
+        android:id="@+id/nav_economy"
+        android:icon="@drawable/ic_economy_selector"
+        android:title="Economy" />
+
+    <item
+        android:id="@+id/navigation_news"
+        android:icon="@drawable/ic_news"
+        android:title="News" />
+
+    <item
+        android:id="@+id/nav_ai_analyst"
+        android:icon="@drawable/ic_ai_analyst_selector"
+        android:title="AI Analyst" />
+
+</menu>

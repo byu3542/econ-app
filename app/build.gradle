@@ -65,4 +65,10 @@ dependencies {
     implementation 'androidx.navigation:navigation-ui:2.7.6'
 
     // Claude AI (Anthropic REST API via OkHttp — already included above)
+
+    // Markdown rendering for AI Agent responses
+    implementation 'io.noties.markwon:core:4.6.2'
+
+    // Chrome Custom Tabs (News feature)
+    implementation 'androidx.browser:browser:1.8.0'
 }

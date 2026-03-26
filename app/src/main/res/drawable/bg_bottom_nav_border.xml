@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Draws a 1dp gold-tinted border along the top edge of the BottomNavigationView.
+  The bottom/left/right are pushed out so only the top stroke is visible.
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Top border: 1dp solid rgba(201,168,76,0.2) -->
+    <item
+        android:bottom="-2dp"
+        android:left="-2dp"
+        android:right="-2dp">
+        <shape android:shape="rectangle">
+            <stroke
+                android:width="1dp"
+                android:color="#33C9A84C" />
+            <solid android:color="#0f1729" />
+        </shape>
+    </item>
+</layer-list>

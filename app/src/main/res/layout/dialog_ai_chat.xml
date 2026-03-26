@@ -1,67 +1,102 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!--
+  Bottom-sheet layout for the AI Economic Analyst panel.
+  Height is set programmatically to ~62% of screen in MainActivity.
+  Uses a vertical LinearLayout so the RecyclerView can flex with weight=1.
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     android:background="@color/bg_warm_off_white">
 
-    <!-- Header with Close Button -->
-    <RelativeLayout
-        android:id="@+id/rlHeader"
+    <!-- Header area with Navy background -->
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="64dp"
-        android:paddingHorizontal="16dp">
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@color/header_navy">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerVertical="true"
-            android:text="AI ECONOMIC ANALYST"
-            android:textColor="@color/accent_gold"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            android:textAllCaps="true"
-            android:letterSpacing="0.2" />
+        <!-- Drag handle -->
+        <View
+            android:layout_width="32dp"
+            android:layout_height="3dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="4dp"
+            android:background="#26000000"
+            android:importantForAccessibility="no" />
 
-        <ImageButton
-            android:id="@+id/btnClose"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_close"
-            app:tint="@color/text_secondary" />
+        <!-- Header row -->
+        <RelativeLayout
+            android:id="@+id/rlHeader"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:paddingHorizontal="16dp">
 
-    </RelativeLayout>
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_ai_agent"
+                    android:layout_marginEnd="8dp"
+                    app:tint="@color/accent_gold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="AI ECONOMIC ANALYST"
+                    android:textColor="@color/accent_gold"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textAllCaps="true"
+                    android:letterSpacing="0.2" />
+
+            </LinearLayout>
+
+            <ImageButton
+                android:id="@+id/btnClose"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_close"
+                app:tint="@color/card_white" />
+
+        </RelativeLayout>
+
+    </LinearLayout>
+
+    <!-- Header divider -->
     <View
-        android:id="@+id/headerDivider"
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:layout_below="@id/rlHeader"
-        android:background="@color/divider_sand" />
+        android:background="@color/accent_gold" />
 
-    <!-- Top Label -->
+    <!-- Quick-ask chip row -->
     <TextView
-        android:id="@+id/tvAskAboutLabel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/headerDivider"
         android:text="ASK ABOUT"
         android:textColor="@color/text_muted"
         android:textSize="10sp"
         android:textStyle="bold"
         android:letterSpacing="0.2"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="12dp"
         android:layout_marginStart="16dp" />
 
-    <!-- Chips Horizontal Scroll -->
     <HorizontalScrollView
-        android:id="@+id/svChips"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/tvAskAboutLabel"
         android:scrollbars="none"
         android:paddingTop="8dp"
         android:paddingBottom="8dp"
@@ -73,6 +108,34 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/chipRecentNews"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Recent News"
+                android:background="@drawable/bg_chip_outline"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="8dp"
+                android:textSize="12sp"
+                android:textColor="@color/text_secondary"
+                android:layout_marginEnd="8dp"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <TextView
+                android:id="@+id/chipRecentUpdates"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Recent Economic Updates"
+                android:background="@drawable/bg_chip_outline"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="8dp"
+                android:textSize="12sp"
+                android:textColor="@color/text_secondary"
+                android:layout_marginEnd="8dp"
+                android:clickable="true"
+                android:focusable="true" />
 
             <TextView
                 android:id="@+id/chipYieldCurve"
@@ -114,25 +177,25 @@
                 android:textColor="@color/text_secondary"
                 android:clickable="true"
                 android:focusable="true" />
+
         </LinearLayout>
     </HorizontalScrollView>
 
-    <!-- Chat Messages -->
+    <!-- Chat messages — flex-fills remaining space -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvChat"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@id/svChips"
-        android:layout_above="@id/llInputArea"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:padding="16dp"
-        android:clipToPadding="false" />
+        android:clipToPadding="false"
+        android:clipChildren="false" />
 
-    <!-- Input Area Footer -->
+    <!-- Input area -->
     <LinearLayout
         android:id="@+id/llInputArea"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_above="@id/tvDisclaimer"
         android:orientation="horizontal"
         android:padding="16dp"
         android:gravity="center_vertical">
@@ -160,14 +223,6 @@
                 android:inputType="textCapSentences" />
 
             <ImageButton
-                android:id="@+id/btnOptions"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:src="@drawable/ic_unfold_more"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                app:tint="@color/text_secondary" />
-
-            <ImageButton
                 android:id="@+id/btnSend"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
@@ -175,20 +230,19 @@
                 android:background="@drawable/bg_send_button_circle"
                 app:tint="@color/accent_gold"
                 android:layout_marginStart="8dp" />
+
         </LinearLayout>
 
     </LinearLayout>
 
-    <!-- Disclaimer Text -->
+    <!-- Disclaimer -->
     <TextView
-        android:id="@+id/tvDisclaimer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
         android:text="Responses use live Treasury · BEA · BLS data"
         android:textColor="@color/text_muted"
         android:textSize="10sp"
         android:gravity="center"
         android:paddingBottom="16dp" />
 
-</RelativeLayout>
+</LinearLayout>

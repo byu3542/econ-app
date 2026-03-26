@@ -20,6 +20,7 @@ import com.economic.dashboard.models.EconomicDataPoint;
 import com.economic.dashboard.ui.EconomicViewModel;
 import com.economic.dashboard.utils.ChartHelper;
 import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.LimitLine;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
@@ -61,6 +62,36 @@ public class EmploymentFragment extends Fragment {
 
         ChartHelper.styleLineChart(unemploymentChart,       "Unemployment Rate Trend",           "Month", "Rate (%)");
         ChartHelper.styleLineChart(laborParticipationChart, "Labor Force Participation Rate",     "Month", "Rate (%)");
+
+        // ── Persistent benchmark LimitLines for unemployment chart ──────────
+        // Healthy ceiling (top of healthy range)
+        LimitLine healthy = new LimitLine(4.5f, "Healthy ≤4.5%");
+        healthy.setLineColor(Color.parseColor("#4CAF50"));
+        healthy.setLineWidth(1f);
+        healthy.setTextColor(Color.parseColor("#4CAF50"));
+        healthy.setTextSize(9f);
+        healthy.enableDashedLine(8f, 4f, 0f);
+
+        // Elevated threshold
+        LimitLine elevated = new LimitLine(5.5f, "Elevated 5.5%");
+        elevated.setLineColor(Color.parseColor("#FF9800"));
+        elevated.setLineWidth(1f);
+        elevated.setTextColor(Color.parseColor("#FF9800"));
+        elevated.setTextSize(9f);
+        elevated.enableDashedLine(8f, 4f, 0f);
+
+        // Recession territory threshold
+        LimitLine recession = new LimitLine(7.0f, "Recession 7.0%");
+        recession.setLineColor(Color.parseColor("#F44336"));
+        recession.setLineWidth(1.2f);
+        recession.setTextColor(Color.parseColor("#F44336"));
+        recession.setTextSize(9f);
+        recession.enableDashedLine(8f, 4f, 0f);
+
+        unemploymentChart.getAxisLeft().addLimitLine(healthy);
+        unemploymentChart.getAxisLeft().addLimitLine(elevated);
+        unemploymentChart.getAxisLeft().addLimitLine(recession);
+        unemploymentChart.getAxisLeft().setDrawLimitLinesBehindData(true);
 
         // Add Y-Axis unit labeling
         ValueFormatter percentFormatter = new ValueFormatter() {
@@ -188,9 +219,8 @@ public class EmploymentFragment extends Fragment {
         LineDataSet dataSet = new LineDataSet(entries, series);
         int color = Color.parseColor(hexColor);
         dataSet.setColor(color);
-        dataSet.setCircleColor(color);
-        dataSet.setLineWidth(3f);
-        dataSet.setCircleRadius(4f);
+        dataSet.setLineWidth(1.5f);
+        dataSet.setDrawCircles(false);
         dataSet.setDrawValues(false);
         dataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
 

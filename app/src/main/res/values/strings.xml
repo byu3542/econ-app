@@ -1,11 +1,13 @@
 <resources>
-    <string name="app_name">Economic Dashboard</string>
+    <string name="app_name">Econ Monitor</string>
     <string name="tab_dashboard">Dashboard</string>
     <string name="tab_treasury">Treasury</string>
     <string name="tab_gdp">GDP</string>
     <string name="tab_employment">Employment</string>
     <string name="tab_cpi">CPI</string>
     <string name="tab_wages">Wages</string>
+
+    <string name="middle_dot">&#183;</string>
     <string name="refresh">Refresh</string>
     <string name="loading">Loading data…</string>
     <string name="no_data">No data yet. Pull to refresh.</string>

@@ -12,84 +12,141 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- 10Y-2Y SPREAD CARD (GDP Style) -->
-        <androidx.cardview.widget.CardView
-            android:id="@+id/cardSpreadYoY"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="6dp"
-            app:cardBackgroundColor="@color/header_navy">
+            android:orientation="horizontal"
+            android:baselineAligned="false"
+            android:layout_marginBottom="16dp">
 
-            <LinearLayout
-                android:layout_width="match_parent"
+            <!-- 10Y-2Y SPREAD CARD -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardSpreadYoY"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="24dp"
-                android:gravity="center">
-
-                <TextView
-                    android:id="@+id/tvSpreadLabel"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="10Y - 2Y SPREAD"
-                    android:textColor="@color/accent_gold"
-                    android:textSize="14sp"
-                    android:textStyle="bold"
-                    android:textAllCaps="true"
-                    android:letterSpacing="0.1"
-                    android:textAlignment="center"
-                    android:gravity="center"/>
-
-                <TextView
-                    android:id="@+id/tvSpreadValue"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="—"
-                    android:textColor="@color/card_white"
-                    android:textSize="48sp"
-                    android:fontFamily="serif"
-                    android:textStyle="bold"
-                    android:layout_marginTop="8dp"
-                    android:textAlignment="center"/>
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="6dp"
+                app:cardBackgroundColor="@color/header_navy">
 
                 <LinearLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginTop="4dp">
-
-                    <View
-                        android:id="@+id/viewSpreadIndicatorDot"
-                        android:layout_width="8dp"
-                        android:layout_height="8dp"
-                        android:background="@drawable/dot_neutral"
-                        android:layout_marginEnd="8dp" />
+                    android:orientation="vertical"
+                    android:padding="16dp"
+                    android:gravity="center">
 
                     <TextView
-                        android:id="@+id/tvIndicatorText"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="LOADING DATA"
-                        android:textColor="@color/text_muted"
+                        android:text="10Y - 2Y"
+                        android:textColor="@color/accent_gold"
                         android:textSize="12sp"
-                        android:textAlignment="center"/>
-                </LinearLayout>
+                        android:textStyle="bold"
+                        android:textAllCaps="true"
+                        android:letterSpacing="0.1"/>
 
-                <TextView
-                    android:id="@+id/tvSpreadDate"
-                    android:layout_width="wrap_content"
+                    <TextView
+                        android:id="@+id/tvSpreadValue"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="—"
+                        android:textColor="@color/card_white"
+                        android:textSize="28sp"
+                        android:fontFamily="serif"
+                        android:textStyle="bold"
+                        android:layout_marginTop="4dp"/>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginTop="4dp">
+
+                        <View
+                            android:id="@+id/viewSpreadIndicatorDot"
+                            android:layout_width="8dp"
+                            android:layout_height="8dp"
+                            android:background="@drawable/dot_neutral"
+                            android:layout_marginEnd="6dp" />
+
+                        <TextView
+                            android:id="@+id/tvIndicatorText"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="LOADING"
+                            android:textColor="@color/text_muted"
+                            android:textSize="10sp"/>
+                    </LinearLayout>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- 10Y-3M SPREAD CARD -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardSpread3M"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="6dp"
+                app:cardBackgroundColor="@color/header_navy">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Current Treasury Yield Difference"
-                    android:textColor="@color/text_muted"
-                    android:textSize="10sp"
-                    android:layout_marginTop="2dp"
-                    android:visibility="gone"
-                    android:textAlignment="center"/>
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
+                    android:orientation="vertical"
+                    android:padding="16dp"
+                    android:gravity="center">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="10Y - 3M"
+                        android:textColor="@color/accent_gold"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:textAllCaps="true"
+                        android:letterSpacing="0.1"/>
+
+                    <TextView
+                        android:id="@+id/tvSpread3MValue"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="—"
+                        android:textColor="@color/card_white"
+                        android:textSize="28sp"
+                        android:fontFamily="serif"
+                        android:textStyle="bold"
+                        android:layout_marginTop="4dp"/>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginTop="4dp">
+
+                        <View
+                            android:id="@+id/viewSpread3MIndicatorDot"
+                            android:layout_width="8dp"
+                            android:layout_height="8dp"
+                            android:background="@drawable/dot_neutral"
+                            android:layout_marginEnd="6dp" />
+
+                        <TextView
+                            android:id="@+id/tvIndicator3MText"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="LOADING"
+                            android:textColor="@color/text_muted"
+                            android:textSize="10sp"/>
+                    </LinearLayout>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+        </LinearLayout>
 
         <!-- 10Y-2Y SPREAD TREND SECTION -->
         <androidx.cardview.widget.CardView
@@ -115,9 +172,9 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="10Y-2Y Spread"
+                        android:text="10Y-2Y Spread Trend"
                         android:textColor="@color/card_white"
-                        android:textSize="22sp"
+                        android:textSize="18sp"
                         android:fontFamily="serif"
                         android:textStyle="bold" />
 
@@ -131,9 +188,53 @@
                 <com.github.mikephil.charting.charts.LineChart
                     android:id="@+id/spreadChart"
                     android:layout_width="match_parent"
-                    android:layout_height="300dp"
-                    android:padding="16dp"/>
+                    android:layout_height="220dp"
+                    android:padding="12dp"/>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
 
+        <!-- 10Y-3M SPREAD TREND SECTION -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="6dp"
+            app:cardBackgroundColor="@color/card_white">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" >
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@color/header_navy"
+                    android:paddingHorizontal="20dp"
+                    android:paddingVertical="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="10Y-3M Spread Trend"
+                        android:textColor="@color/card_white"
+                        android:textSize="18sp"
+                        android:fontFamily="serif"
+                        android:textStyle="bold" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="2dp"
+                        android:layout_alignParentBottom="true"
+                        android:background="@color/accent_gold" />
+                </RelativeLayout>
+
+                <com.github.mikephil.charting.charts.LineChart
+                    android:id="@+id/spread3MChart"
+                    android:layout_width="match_parent"
+                    android:layout_height="220dp"
+                    android:padding="12dp"/>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
@@ -161,9 +262,9 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Treasury Yield Curve"
+                        android:text="Current Yield Curve"
                         android:textColor="@color/card_white"
-                        android:textSize="22sp"
+                        android:textSize="18sp"
                         android:fontFamily="serif"
                         android:textStyle="bold" />
 
@@ -177,9 +278,8 @@
                 <com.github.mikephil.charting.charts.LineChart
                     android:id="@+id/yieldCurveChart"
                     android:layout_width="match_parent"
-                    android:layout_height="300dp"
-                    android:padding="16dp"/>
-
+                    android:layout_height="250dp"
+                    android:padding="12dp"/>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
@@ -207,9 +307,9 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="10-Year Treasury"
+                        android:text="10-Year Trend"
                         android:textColor="@color/card_white"
-                        android:textSize="22sp"
+                        android:textSize="18sp"
                         android:fontFamily="serif"
                         android:textStyle="bold" />
 
@@ -223,9 +323,8 @@
                 <com.github.mikephil.charting.charts.LineChart
                     android:id="@+id/tenYearTrendChart"
                     android:layout_width="match_parent"
-                    android:layout_height="300dp"
-                    android:padding="16dp"/>
-
+                    android:layout_height="220dp"
+                    android:padding="12dp"/>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!--
+        4-pointed star polygon. Tips reach 2dp from each edge (full 24dp canvas).
+        Inner corners sit at (9.5,9.5)/(14.5,9.5) etc — 5dp arm width at the base,
+        matching the visual mass of the Markets bar-chart and Economy building icons.
+    -->
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M12,2 L13.8,10.2 L22,12 L13.8,13.8 L12,22 L10.2,13.8 L2,12 L10.2,10.2 Z"/>
+</vector>

@@ -11,23 +11,18 @@ import com.github.mikephil.charting.components.Description;
 public class ChartHelper {
 
     /**
-     * Styles a LineChart with standard themes and adds axis labels.
-     * Note: MPAndroidChart does not have a native "Axis Title" property.
-     * We simulate the Y-axis title using the Chart Description and the X-axis 
-     * title is usually implied by the context or legend.
+     * Styles a LineChart with the app's light theme:
+     * transparent background, subtle #EEEEEE grid lines, #888888 axis text,
+     * #555555 legend with LINE form, and disabled description overlay.
      */
     public static void styleLineChart(LineChart chart, String description, String xTitle, String yTitle) {
-        // Use Description as a Y-axis label/Header
+        // Disable description label (title is in the card header)
         Description desc = new Description();
-        desc.setText(yTitle);
-        desc.setTextColor(Color.parseColor("#888888"));
-        desc.setTextSize(10f);
-        // Position description at the top left
-        desc.setPosition(120f, 40f); 
+        desc.setEnabled(false);
         chart.setDescription(desc);
 
-        // Background & Borders
-        chart.setBackgroundColor(Color.WHITE);
+        // Background & Borders — transparent so card background shows through
+        chart.setBackgroundColor(Color.TRANSPARENT);
         chart.setDrawGridBackground(false);
         chart.setDrawBorders(false);
 
@@ -42,23 +37,24 @@ public class ChartHelper {
         XAxis xAxis = chart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setDrawGridLines(true);
-        xAxis.setGridColor(Color.parseColor("#F0F0F0"));
-        xAxis.setTextColor(Color.parseColor("#666666"));
-        xAxis.setTextSize(9f);
+        xAxis.setGridColor(Color.parseColor("#EEEEEE"));
+        xAxis.setTextColor(Color.parseColor("#888888"));
+        xAxis.setTextSize(10f);
         xAxis.setGranularity(1f);
         xAxis.setLabelRotationAngle(-45f);
         xAxis.setAvoidFirstLastClipping(true);
         xAxis.setLabelCount(6, false);
-        // We don't have a native xTitle property, but it's often dates.
+        xAxis.setAxisLineColor(Color.parseColor("#CCCCCC"));
 
         // Y Axis (Left)
         YAxis leftAxis = chart.getAxisLeft();
         leftAxis.setDrawGridLines(true);
-        leftAxis.setGridColor(Color.parseColor("#F0F0F0"));
-        leftAxis.setTextColor(Color.parseColor("#666666"));
+        leftAxis.setGridColor(Color.parseColor("#EEEEEE"));
+        leftAxis.setTextColor(Color.parseColor("#888888"));
         leftAxis.setTextSize(10f);
         leftAxis.setDrawZeroLine(true);
         leftAxis.setZeroLineColor(Color.parseColor("#CCCCCC"));
+        leftAxis.setAxisLineColor(Color.parseColor("#CCCCCC"));
         leftAxis.setXOffset(10f); // Space for labels
 
         // Disable Right Axis
@@ -70,8 +66,9 @@ public class ChartHelper {
         legend.setHorizontalAlignment(Legend.LegendHorizontalAlignment.CENTER);
         legend.setOrientation(Legend.LegendOrientation.HORIZONTAL);
         legend.setDrawInside(false);
-        legend.setTextSize(10f);
-        legend.setTextColor(Color.parseColor("#444444"));
+        legend.setTextSize(11f);
+        legend.setTextColor(Color.parseColor("#555555"));
+        legend.setForm(Legend.LegendForm.LINE);
         legend.setYOffset(5f);
 
         // Loading state

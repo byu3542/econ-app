@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Foreground layer for the U.S. Economic Monitor adaptive icon.
+    Viewport: 108×108dp  — NO background, NO text, NO padding inset.
+    Curve path uses full diagonal (10,62)→(96,14).
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!--
+        AREA FILL — under the yield curve, vertical gradient
+        Top:    rgba(201,168,76,0.25)  →  #40C9A84C
+        Bottom: rgba(201,168,76,0)     →  #00C9A84C
+    -->
+    <path
+        android:pathData="M10,62 C16,62 20,64 26,66
+                          C32,68 34,70 38,68
+                          C44,64 46,55 52,46
+                          C58,37 66,26 80,18
+                          C86,14 92,14 96,14
+                          L96,108 L10,108 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="0"
+                android:startY="14"
+                android:endX="0"
+                android:endY="108">
+                <item android:offset="0" android:color="#40C9A84C"/>
+                <item android:offset="1" android:color="#00C9A84C"/>
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!--
+        CURVE STROKE — yield curve line
+        Gold #C9A84C, stroke 4dp, round caps & joins
+    -->
+    <path
+        android:pathData="M10,62 C16,62 20,64 26,66
+                          C32,68 34,70 38,68
+                          C44,64 46,55 52,46
+                          C58,37 66,26 80,18
+                          C86,14 92,14 96,14"
+        android:fillColor="#00000000"
+        android:strokeColor="#C9A84C"
+        android:strokeWidth="4"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"/>
+
+    <!--
+        TERMINUS GLOW RING — at (96,14), radius 11dp
+        rgba(224,192,112,0.15)  →  #26E0C070
+    -->
+    <path
+        android:pathData="M96,3 A11,11,0,1,0,96,25 A11,11,0,1,0,96,3 Z"
+        android:fillColor="#26E0C070"/>
+
+    <!--
+        TERMINUS DOT — solid circle at (96,14), radius 6dp
+        Color: #E0C070
+    -->
+    <path
+        android:pathData="M96,8 A6,6,0,1,0,96,20 A6,6,0,1,0,96,8 Z"
+        android:fillColor="#FFE0C070"/>
+
+    <!--
+        BASELINE — horizontal at y=96
+        rgba(201,168,76,0.2)  →  #33C9A84C
+    -->
+    <path
+        android:pathData="M10,96 L96,96"
+        android:fillColor="#00000000"
+        android:strokeColor="#33C9A84C"
+        android:strokeWidth="1"/>
+
+    <!--
+        TICK MARKS — x=10, 35, 60, 96 dropping from y=96 to y=100
+        rgba(201,168,76,0.3)  →  #4DC9A84C
+    -->
+    <path
+        android:pathData="M10,96 L10,100 M35,96 L35,100 M60,96 L60,100 M96,96 L96,100"
+        android:fillColor="#00000000"
+        android:strokeColor="#4DC9A84C"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"/>
+
+</vector>

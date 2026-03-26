@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MBS & Mortgage Rates — Chart Mockup</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #f5f3ef;
+    font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+    display: flex;
+    justify-content: center;
+    padding: 32px 16px;
+  }
+  .card {
+    width: 100%;
+    max-width: 520px;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.18);
+    background: #ffffff;
+  }
+  .card-header {
+    background: #1a1a2e;
+    padding: 16px 20px;
+    position: relative;
+  }
+  .card-header h2 {
+    color: #ffffff;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 22px;
+    font-weight: bold;
+    margin: 0;
+  }
+  .card-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #c9a84c;
+  }
+  .chart-container {
+    padding: 16px;
+    background: #ffffff;
+    height: 320px;
+  }
+  .app-label {
+    text-align: center;
+    color: #999;
+    font-size: 11px;
+    margin-top: 12px;
+    font-style: italic;
+  }
+</style>
+</head>
+<body>
+<div>
+  <div class="card">
+    <div class="card-header">
+      <h2>MBS &amp; Mortgage Rates</h2>
+    </div>
+    <div class="chart-container">
+      <canvas id="mbsChart"></canvas>
+    </div>
+  </div>
+  <p class="app-label">U.S. Economic Monitor — Housing Tab Mockup</p>
+</div>
+
+<script>
+// Generate realistic mock data for the past 5 years (weekly, sampled monthly for readability)
+const labels = [];
+const bankMbs = [];
+const fedMbs = [];
+const mortgageRate = [];
+
+const startDate = new Date(2021, 2, 1);  // Mar 2021
+const endDate   = new Date(2026, 2, 1);  // Mar 2026
+
+// Realistic trajectories:
+// Bank MBS: ~2,700B in 2021, rising to ~2,900B by 2026
+// Fed MBS:  ~2,300B in 2021, peaked ~2,700B mid-2022, tapering to ~2,200B by 2026
+// 30-Yr Mortgage: ~3.0% in 2021, spiked to ~7.2% in late 2023, easing to ~6.5% by 2026
+
+let bankBase = 2680;
+let fedBase  = 2290;
+let mortBase = 3.05;
+
+let monthCount = 0;
+const d = new Date(startDate);
+while (d <= endDate) {
+  const month = d.toLocaleString('en-US', { month: 'short', year: '2-digit' });
+  labels.push(month);
+
+  const t = monthCount / 60; // normalized 0..1 over 5 years
+
+  // Bank MBS: gentle upward drift with slight noise
+  bankBase = 2680 + t * 220 + Math.sin(t * 12) * 30 + (Math.random() - 0.5) * 15;
+  bankMbs.push(Math.round(bankBase));
+
+  // Fed MBS: rose sharply 2021-2022, then QT drawdown
+  if (t < 0.25) {
+    fedBase = 2290 + t * 4 * 410; // ramp up to ~2700
+  } else if (t < 0.35) {
+    fedBase = 2700 - (t - 0.25) * 10 * 20; // brief plateau/slight dip
+  } else {
+    fedBase = 2680 - (t - 0.35) * 1.54 * 500; // QT drawdown
+  }
+  fedBase += (Math.random() - 0.5) * 10;
+  fedMbs.push(Math.round(Math.max(fedBase, 2100)));
+
+  // 30-Yr Mortgage: ~3% early 2021 -> rapid rise mid-2022 -> peak ~7.2% late 2023 -> ease to ~6.5%
+  if (t < 0.15) {
+    mortBase = 3.0 + t * 6 * 0.5;
+  } else if (t < 0.45) {
+    mortBase = 3.45 + (t - 0.15) * 3.33 * 3.8;
+  } else if (t < 0.55) {
+    mortBase = 7.25 - (t - 0.45) * 10 * 0.25;
+  } else if (t < 0.7) {
+    mortBase = 7.0 + Math.sin((t - 0.55) * 20) * 0.35;
+  } else {
+    mortBase = 6.8 - (t - 0.7) * 1.0;
+  }
+  mortBase += (Math.random() - 0.5) * 0.08;
+  mortgageRate.push(parseFloat(mortBase.toFixed(2)));
+
+  d.setMonth(d.getMonth() + 1);
+  monthCount++;
+}
+
+const ctx = document.getElementById('mbsChart').getContext('2d');
+new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: labels,
+    datasets: [
+      {
+        label: 'Bank MBS Holdings',
+        data: bankMbs,
+        borderColor: '#C8A84B',
+        backgroundColor: 'rgba(200, 168, 75, 0.08)',
+        borderWidth: 2.5,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+        tension: 0.3,
+        yAxisID: 'y',
+        order: 2
+      },
+      {
+        label: 'Fed MBS Holdings',
+        data: fedMbs,
+        borderColor: '#BBBBBB',
+        backgroundColor: 'rgba(187, 187, 187, 0.08)',
+        borderWidth: 2.5,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+        tension: 0.3,
+        yAxisID: 'y',
+        order: 3
+      },
+      {
+        label: '30-Yr Mortgage Rate',
+        data: mortgageRate,
+        borderColor: '#F44336',
+        backgroundColor: 'rgba(244, 67, 54, 0.08)',
+        borderWidth: 2.5,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+        tension: 0.3,
+        yAxisID: 'y1',
+        order: 1
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: {
+      mode: 'index',
+      intersect: false
+    },
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: {
+          color: '#444444',
+          font: { size: 11 },
+          padding: 16,
+          usePointStyle: true,
+          pointStyleWidth: 20
+        }
+      },
+      tooltip: {
+        backgroundColor: '#1a1a2e',
+        titleColor: '#c9a84c',
+        bodyColor: '#ffffff',
+        borderColor: '#c9a84c',
+        borderWidth: 1,
+        padding: 12,
+        callbacks: {
+          label: function(ctx) {
+            if (ctx.dataset.yAxisID === 'y1') {
+              return ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(2) + '%';
+            }
+            return ctx.dataset.label + ': $' + ctx.parsed.y.toLocaleString() + 'B';
+          }
+        }
+      }
+    },
+    scales: {
+      x: {
+        ticks: {
+          color: '#666666',
+          font: { size: 9 },
+          maxRotation: 45,
+          minRotation: 45,
+          maxTicksLimit: 10
+        },
+        grid: {
+          color: '#F0F0F0'
+        }
+      },
+      y: {
+        type: 'linear',
+        position: 'left',
+        title: {
+          display: true,
+          text: 'Billions USD',
+          color: '#888888',
+          font: { size: 10 }
+        },
+        ticks: {
+          color: '#666666',
+          font: { size: 10 },
+          callback: function(val) {
+            return (val / 1000).toFixed(1) + 'T';
+          }
+        },
+        grid: {
+          color: '#F0F0F0'
+        },
+        min: 2000,
+        max: 3000
+      },
+      y1: {
+        type: 'linear',
+        position: 'right',
+        title: {
+          display: true,
+          text: '%',
+          color: '#888888',
+          font: { size: 10 }
+        },
+        ticks: {
+          color: '#666666',
+          font: { size: 10 },
+          callback: function(val) {
+            return val.toFixed(1) + '%';
+          }
+        },
+        grid: {
+          drawOnChartArea: false
+        },
+        min: 2,
+        max: 8
+      }
+    }
+  }
+});
+</script>
+</body>
+</html>

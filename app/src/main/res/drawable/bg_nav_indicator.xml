@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Gold top-line indicator for the active BottomNavigationView item.
+  Matches the mockup: squared top edge (flush with nav bar top),
+  2dp rounded bottom corners — same subtle pill detail as the HTML reference.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/accent_gold" />
+    <corners
+        android:topLeftRadius="0dp"
+        android:topRightRadius="0dp"
+        android:bottomLeftRadius="2dp"
+        android:bottomRightRadius="2dp" />
+</shape>

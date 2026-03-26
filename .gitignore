@@ -1,0 +1,17 @@
+# Local configuration — contains API keys, never commit
+local.properties
+
+# Built outputs
+build/
+.gradle/
+*.apk
+*.aab
+
+# Android Studio
+.idea/
+*.iml
+.DS_Store
+
+# Keystore files
+*.jks
+*.keystore

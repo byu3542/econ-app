@@ -24,4 +24,11 @@
     <color name="colorPrimaryDark">#1a1a2e</color>
     <color name="colorAccent">#c9a84c</color>
     <color name="background">#f5f3ef</color>
+
+    <!-- Bottom Navigation -->
+    <color name="nav_bg">#0f1729</color>
+
+    <!-- Economy secondary tab row -->
+    <color name="economy_tab_bg">#ede8df</color>
+    <color name="economy_tab_text_unselected">#8a9ab5</color>
 </resources>

@@ -11,6 +11,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:minHeight="112dp"
         android:orientation="horizontal">
 
         <!-- 4dp Left Gold Border -->
@@ -23,8 +24,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingHorizontal="16dp"
-            android:paddingVertical="18dp">
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="14dp"
+            android:paddingBottom="12dp">
 
             <TextView
                 android:id="@+id/tvMetricLabel"
@@ -52,11 +55,47 @@
                 android:id="@+id/tvMetricDate"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="0dp"
                 android:text="Jan 2026"
                 android:textColor="@color/text_muted"
                 android:textSize="9sp"
                 android:letterSpacing="0.05" />
+
+            <!-- Inline tier badge: dot + status + historical percentile -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="7dp">
+
+                <View
+                    android:id="@+id/viewTierDot"
+                    android:layout_width="7dp"
+                    android:layout_height="7dp"
+                    android:background="@drawable/dot_neutral"
+                    android:layout_marginEnd="5dp" />
+
+                <TextView
+                    android:id="@+id/tvTierStatus"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text=""
+                    android:textColor="@color/text_muted"
+                    android:textSize="9sp"
+                    android:textStyle="bold"
+                    android:textAllCaps="true"
+                    android:letterSpacing="0.08" />
+
+                <TextView
+                    android:id="@+id/tvPercentile"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=""
+                    android:textColor="@color/text_muted"
+                    android:textSize="8sp" />
+
+            </LinearLayout>
 
         </LinearLayout>
     </LinearLayout>

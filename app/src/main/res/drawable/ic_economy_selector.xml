@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Switches between filled (active) and outline (inactive) Economy icon. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_checked="true"  android:drawable="@drawable/ic_economy_filled" />
+    <item                               android:drawable="@drawable/ic_economy_outline" />
+</selector>
