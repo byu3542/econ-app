@@ -1,8 +1,9 @@
 # Local configuration — contains API keys, never commit
 local.properties
 
-# Built outputs
+# Built outputs — contain secrets baked in via BuildConfig
 build/
+app/build/
 .gradle/
 *.apk
 *.aab
