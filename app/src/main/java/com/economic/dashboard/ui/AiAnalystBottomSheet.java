@@ -17,8 +17,15 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.economic.dashboard.R;
+import com.economic.dashboard.analyst.HistoricalContextBuilder;
 import com.economic.dashboard.analyst.NewsContextBuilder;
 import com.economic.dashboard.api.ApiConfig;
+<<<<<<< Updated upstream
+=======
+import com.economic.dashboard.api.HistoricalDataRepository;
+import com.economic.dashboard.api.NewsArticleRepository;
+import com.economic.dashboard.models.NewsArticle;
+>>>>>>> Stashed changes
 import com.economic.dashboard.models.ChatMessage;
 import com.economic.dashboard.models.EconomicDataPoint;
 import com.economic.dashboard.news.NewsItem;
@@ -54,6 +61,25 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
 
     public static final String TAG = "AiAnalystBottomSheet";
 
+<<<<<<< Updated upstream
+=======
+    // ─── Historical data context (loaded async from Room on panel open) ────────
+    /**
+     * 2-year trend summary built by HistoricalContextBuilder.
+     * Pre-loaded in onViewCreated so it's ready before the user's first query.
+     * Starts empty; the field is populated on a background thread and remains
+     * stable for the lifetime of the panel.
+     */
+    private volatile String historicalContext = "";
+
+    // ─── News & Prompts Integration ───────────────────────────────────────────
+    private NewsArticleRepository articleRepository;
+    private NewsArticle selectedArticle;
+    private RecyclerView rvPrompts;
+    private PromptAdapter promptAdapter;
+    private SmartPromptGenerator promptGenerator;
+
+>>>>>>> Stashed changes
     // ─── Convenience access to shared state in MainActivity ────────────────────
 
     private MainActivity host() {
@@ -198,6 +224,43 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
             btnClose.setOnClickListener(v -> dismiss());
         }
 
+        // ── Historical data cache ─────────────────────────────────────────────
+        // 1. Load whatever is already in Room so the first query has trend context.
+        // 2. Trigger a background stale-check that fetches from FRED/BLS/BEA if
+        //    the cache is empty or more than 7 days old.
+        loadHistoricalContextAsync();
+        // Capture context before the lambda — refreshIfStale callback runs on a background thread.
+        final android.content.Context appCtx = requireContext().getApplicationContext();
+        HistoricalDataRepository.refreshIfStale(appCtx, anySucceeded -> {
+            if (anySucceeded) {
+                // Fresh data was written to Room — rebuild the context string.
+                historicalContext = HistoricalContextBuilder.build(appCtx);
+                Log.d(TAG, "Historical context refreshed after API fetch.");
+            }
+        });
+    }
+
+    /**
+     * Queries Room on a background thread and stores the result in
+     * {@link #historicalContext}.  Safe to call multiple times.
+     *
+     * Context is captured on the calling (main) thread before spawning the
+     * background thread, so requireContext() is never called off the main thread.
+     */
+    private void loadHistoricalContextAsync() {
+        // Capture context on main thread — never call requireContext() inside a Thread lambda.
+        final android.content.Context appCtx = requireContext().getApplicationContext();
+        new Thread(() -> {
+            try {
+                String ctx = HistoricalContextBuilder.build(appCtx);
+                historicalContext = ctx;
+                Log.d(TAG, "Historical context loaded ("
+                        + ctx.length() + " chars, "
+                        + (ctx.isEmpty() ? "empty — cache not ready yet" : "ready") + ")");
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to load historical context", e);
+            }
+        }).start();
     }
 
     // ─── Claude query ───────────────────────────────────────────────────────────
@@ -547,6 +610,54 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
                 ? String.format(Locale.US, "$%.1f M (%s)", fedMbs.getValue(), fedMbs.getDate())
                 : "Unavailable").append("\n");
 
+<<<<<<< Updated upstream
+=======
+        // ── STOCK MARKET INDICES ─────────────────────────────────────────
+        sb.append("\nSTOCK MARKET INDICES\n");
+        List<EconomicDataPoint> sp500List = vm.getSp500Data().getValue();
+        EconomicDataPoint sp500 = sp500List != null
+                ? sp500List.get(sp500List.size() - 1) : null;
+        sb.append("S&P 500: ").append(sp500 != null
+                ? String.format(Locale.US, "%.0f points (%s)", sp500.getValue(), sp500.getDate())
+                : "Unavailable").append("\n");
+
+        List<EconomicDataPoint> nasdaqList = vm.getNasdaqData().getValue();
+        EconomicDataPoint nasdaq = nasdaqList != null
+                ? nasdaqList.get(nasdaqList.size() - 1) : null;
+        sb.append("Nasdaq Composite: ").append(nasdaq != null
+                ? String.format(Locale.US, "%.0f points (%s)", nasdaq.getValue(), nasdaq.getDate())
+                : "Unavailable").append("\n");
+
+        List<EconomicDataPoint> vixList = vm.getVixData().getValue();
+        EconomicDataPoint vix = vixList != null
+                ? vixList.get(vixList.size() - 1) : null;
+        sb.append("VIX Volatility Index: ").append(vix != null
+                ? String.format(Locale.US, "%.2f (%s)", vix.getValue(), vix.getDate())
+                : "Unavailable").append("\n");
+
+        // ── BOND MARKET SPREADS ──────────────────────────────────────────
+        sb.append("\nBOND MARKET SPREADS\n");
+        List<EconomicDataPoint> baaList = vm.getBaaSpreadData().getValue();
+        EconomicDataPoint baaSp = baaList != null
+                ? baaList.get(baaList.size() - 1) : null;
+        sb.append("BAA Corporate Spread: ").append(baaSp != null
+                ? String.format(Locale.US, "%.2f%% (%s)", baaSp.getValue(), baaSp.getDate())
+                : "Unavailable").append("\n");
+
+        List<EconomicDataPoint> hyList = vm.getHySpreadData().getValue();
+        EconomicDataPoint hySpread = hyList != null
+                ? hyList.get(hyList.size() - 1) : null;
+        sb.append("High Yield Spread: ").append(hySpread != null
+                ? String.format(Locale.US, "%.2f%% (%s)", hySpread.getValue(), hySpread.getDate())
+                : "Unavailable").append("\n");
+
+        // ── HISTORICAL TRENDS (2-year cache from Room) ───────────────────────
+        // Appended last so it doesn't crowd the live-data section.
+        if (historicalContext != null && !historicalContext.isEmpty()) {
+            sb.append(historicalContext);
+        }
+
+>>>>>>> Stashed changes
         sb.append("\n");
         return sb.toString();
     }
