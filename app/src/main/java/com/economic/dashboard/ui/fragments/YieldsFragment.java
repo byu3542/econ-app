@@ -15,8 +15,9 @@ import androidx.lifecycle.ViewModelProvider;
 import com.economic.dashboard.R;
 import com.economic.dashboard.models.EconomicDataPoint;
 import com.economic.dashboard.ui.EconomicViewModel;
-import com.economic.dashboard.utils.ChartHelper;
 import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
@@ -26,23 +27,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * Yields sub-tab inside Markets.
- * Displays the Current Yield Curve chart and the Treasury Yields table.
- */
 public class YieldsFragment extends Fragment {
 
     private EconomicViewModel viewModel;
     private LineChart yieldCurveChart;
-
-    // Treasury table rows
     private View row1M, row3M, row2Y, row10Y, row30Y;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
+                             @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_yields, container, false);
     }
 
@@ -51,18 +45,14 @@ public class YieldsFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         viewModel = new ViewModelProvider(requireActivity()).get(EconomicViewModel.class);
 
-        // ── Yield curve chart ────────────────────────────────────────────────
         yieldCurveChart = view.findViewById(R.id.yieldCurveChart);
-        ChartHelper.styleLineChart(yieldCurveChart, "Current Yield Curve", "Maturity", "Yield (%)");
-
-        ValueFormatter yieldFormatter = new ValueFormatter() {
+        styleChart(yieldCurveChart);
+        yieldCurveChart.getAxisLeft().setValueFormatter(new ValueFormatter() {
             @Override public String getFormattedValue(float value) {
                 return String.format(Locale.US, "%.1f%%", value);
             }
-        };
-        yieldCurveChart.getAxisLeft().setValueFormatter(yieldFormatter);
+        });
 
-        // ── Treasury table rows ──────────────────────────────────────────────
         row1M  = view.findViewById(R.id.row1M);
         row3M  = view.findViewById(R.id.row3M);
         row2Y  = view.findViewById(R.id.row2Y);
@@ -74,59 +64,46 @@ public class YieldsFragment extends Fragment {
         setupTreasuryRow(row10Y, "10 Year");
         setupTreasuryRow(row30Y, "30 Year");
 
-        // ── Observe treasury data ────────────────────────────────────────────
         viewModel.getTreasuryData().observe(getViewLifecycleOwner(), data -> {
-            if (data != null) {
-                buildYieldCurveChart(data);
-                updateTreasury(data);
-            }
+            if (data != null) { buildYieldCurveChart(data); updateTreasury(data); }
         });
     }
 
-    // ── Yield Curve chart ────────────────────────────────────────────────────
-
     private void buildYieldCurveChart(List<EconomicDataPoint> data) {
         String latestDate = null;
-        for (EconomicDataPoint p : data) {
+        for (EconomicDataPoint p : data)
             if (latestDate == null || p.getDate().compareTo(latestDate) > 0) latestDate = p.getDate();
-        }
         if (latestDate == null) return;
 
         final double[] maturityYears = {0.083, 0.25, 0.5, 1.0, 2.0, 5.0, 10.0, 30.0};
         final String[] maturityNames = {"1M","3M","6M","1Y","2Y","5Y","10Y","30Y"};
         final String[] seriesNames   = {"1 Month","3 Month","6 Month","1 Year","2 Year","5 Year","10 Year","30 Year"};
+        final String finalLatestDate = latestDate;
 
         List<Entry> entries = new ArrayList<>();
         for (int i = 0; i < seriesNames.length; i++) {
             for (EconomicDataPoint p : data) {
-                if (p.getSeries().equals(seriesNames[i]) && p.getDate().equals(latestDate)) {
+                if (p.getSeries().equals(seriesNames[i]) && p.getDate().equals(finalLatestDate)) {
                     entries.add(new Entry((float) maturityYears[i], (float) p.getValue()));
                     break;
                 }
             }
         }
 
-        LineDataSet dataSet = new LineDataSet(entries, "Yield (%) \u2014 " + latestDate);
-        dataSet.setColor(Color.parseColor("#1a73e8"));
-        dataSet.setLineWidth(1.5f);
-        dataSet.setDrawCircles(false);
-        dataSet.setDrawValues(false);
-        dataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
+        LineDataSet ds = new LineDataSet(entries, "Yield (%) — " + latestDate);
+        ds.setColor(Color.parseColor("#1a73e8")); ds.setLineWidth(1.5f);
+        ds.setDrawCircles(false); ds.setDrawValues(false); ds.setMode(LineDataSet.Mode.CUBIC_BEZIER);
 
         yieldCurveChart.getXAxis().setValueFormatter(new ValueFormatter() {
             @Override public String getFormattedValue(float value) {
-                for (int i = 0; i < maturityYears.length; i++) {
+                for (int i = 0; i < maturityYears.length; i++)
                     if (Math.abs(maturityYears[i] - value) < 0.05) return maturityNames[i];
-                }
                 return "";
             }
         });
 
-        yieldCurveChart.setData(new LineData(dataSet));
-        yieldCurveChart.invalidate();
+        yieldCurveChart.setData(new LineData(ds)); yieldCurveChart.invalidate();
     }
-
-    // ── Treasury table helpers (moved from DashboardFragment) ────────────────
 
     private void setupTreasuryRow(View row, String label) {
         if (row == null) return;
@@ -135,11 +112,11 @@ public class YieldsFragment extends Fragment {
     }
 
     private void updateTreasury(List<EconomicDataPoint> data) {
-        setTreasuryRate(data, "1 Month",  row1M);
-        setTreasuryRate(data, "3 Month",  row3M);
-        setTreasuryRate(data, "2 Year",   row2Y);
-        setTreasuryRate(data, "10 Year",  row10Y);
-        setTreasuryRate(data, "30 Year",  row30Y);
+        setTreasuryRate(data, "1 Month", row1M);
+        setTreasuryRate(data, "3 Month", row3M);
+        setTreasuryRate(data, "2 Year",  row2Y);
+        setTreasuryRate(data, "10 Year", row10Y);
+        setTreasuryRate(data, "30 Year", row30Y);
     }
 
     private void setTreasuryRate(List<EconomicDataPoint> data, String series, View row) {
@@ -148,11 +125,26 @@ public class YieldsFragment extends Fragment {
         TextView valView  = row.findViewById(R.id.tvYield);
         TextView dateView = row.findViewById(R.id.tvDate);
         if (p != null) {
-            valView.setText(String.format(Locale.US, "%.2f%%", p.getValue()));
-            dateView.setText(p.getDate());
+            if (valView  != null) valView.setText(String.format(Locale.US, "%.2f%%", p.getValue()));
+            if (dateView != null) dateView.setText(p.getDate());
         } else {
-            valView.setText("\u2014");
-            dateView.setText("");
+            if (valView  != null) valView.setText("—");
+            if (dateView != null) dateView.setText("");
         }
+    }
+
+    private void styleChart(LineChart chart) {
+        int grid = Color.argb(0x14, 0xFF, 0xFF, 0xFF);
+        chart.setBackgroundColor(Color.parseColor("#1C2236")); chart.setDrawGridBackground(false);
+        chart.setDrawBorders(false); chart.setTouchEnabled(true); chart.setDragEnabled(true);
+        chart.setScaleEnabled(true); chart.setPinchZoom(true); chart.getDescription().setEnabled(false);
+        chart.setNoDataText("Loading data..."); chart.setExtraBottomOffset(8f);
+        XAxis x = chart.getXAxis();
+        x.setPosition(XAxis.XAxisPosition.BOTTOM); x.setTextColor(Color.parseColor("#5A6A8A")); x.setTextSize(9f);
+        x.setDrawGridLines(true); x.setGridColor(grid); x.setLabelRotationAngle(-45f);
+        x.setGranularity(1f); x.setLabelCount(6, false); x.setAvoidFirstLastClipping(true);
+        YAxis y = chart.getAxisLeft();
+        y.setTextColor(Color.parseColor("#8899BB")); y.setTextSize(10f); y.setDrawGridLines(true); y.setGridColor(grid);
+        chart.getAxisRight().setEnabled(false);
     }
 }

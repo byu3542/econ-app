@@ -20,7 +20,7 @@
             android:layout_marginBottom="16dp">
 
             <androidx.cardview.widget.CardView
-                android:id="@+id/cardSpreadYoY"
+                android:id="@+id/cardBaa"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -31,23 +31,22 @@
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:orientation="vertical" android:padding="16dp" android:gravity="center">
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="10Y - 2Y" android:textColor="@color/accent_gold"
+                        android:text="BAA SPREAD" android:textColor="@color/accent_gold"
                         android:textSize="12sp" android:textStyle="bold" android:textAllCaps="true" />
-                    <TextView android:id="@+id/tvSpreadValue" android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" android:text="&#8212;" android:textSize="28sp"
+                    <TextView android:id="@+id/tvBaaValue" android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" android:text="—" android:textSize="28sp"
                         android:textColor="@color/card_white" android:textStyle="bold" android:layout_marginTop="4dp" />
                     <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
                         android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="4dp">
-                        <View android:id="@+id/viewSpreadIndicatorDot" android:layout_width="8dp" android:layout_height="8dp"
-                            android:background="@drawable/dot_neutral" android:layout_marginEnd="6dp" />
-                        <TextView android:id="@+id/tvIndicatorText" android:layout_width="wrap_content"
+                        <View android:id="@+id/viewBaaDot" android:layout_width="8dp" android:layout_height="8dp" android:layout_marginEnd="6dp" />
+                        <TextView android:id="@+id/tvBaaStatus" android:layout_width="wrap_content"
                             android:layout_height="wrap_content" android:text="LOADING" android:textColor="@color/text_muted" android:textSize="10sp" />
                     </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
             <androidx.cardview.widget.CardView
-                android:id="@+id/cardSpread3M"
+                android:id="@+id/cardHy"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -58,20 +57,20 @@
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:orientation="vertical" android:padding="16dp" android:gravity="center">
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="10Y - 3M" android:textColor="@color/accent_gold"
+                        android:text="HIGH YIELD" android:textColor="@color/accent_gold"
                         android:textSize="12sp" android:textStyle="bold" android:textAllCaps="true" />
-                    <TextView android:id="@+id/tvSpread3MValue" android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" android:text="&#8212;" android:textSize="28sp"
+                    <TextView android:id="@+id/tvHyValue" android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" android:text="—" android:textSize="28sp"
                         android:textColor="@color/card_white" android:textStyle="bold" android:layout_marginTop="4dp" />
                     <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
                         android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="4dp">
-                        <View android:id="@+id/viewSpread3MIndicatorDot" android:layout_width="8dp" android:layout_height="8dp"
-                            android:background="@drawable/dot_neutral" android:layout_marginEnd="6dp" />
-                        <TextView android:id="@+id/tvIndicator3MText" android:layout_width="wrap_content"
+                        <View android:id="@+id/viewHyDot" android:layout_width="8dp" android:layout_height="8dp" android:layout_marginEnd="6dp" />
+                        <TextView android:id="@+id/tvHyStatus" android:layout_width="wrap_content"
                             android:layout_height="wrap_content" android:text="LOADING" android:textColor="@color/text_muted" android:textSize="10sp" />
                     </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
+
         </LinearLayout>
 
         <androidx.cardview.widget.CardView
@@ -85,7 +84,7 @@
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:orientation="vertical" android:paddingHorizontal="20dp" android:paddingTop="16dp">
                     <TextView android:id="@+id/tvChartTitle" android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" android:text="10Y-2Y Spread"
+                        android:layout_height="wrap_content" android:text="BAA Corporate Spread"
                         android:textColor="#ffffff" android:textSize="15sp" android:textStyle="bold" />
                     <View android:layout_width="match_parent" android:layout_height="2dp"
                         android:layout_marginTop="8dp" android:background="@color/accent_gold" />

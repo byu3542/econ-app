@@ -18,9 +18,10 @@ import androidx.lifecycle.ViewModelProvider;
 import com.economic.dashboard.R;
 import com.economic.dashboard.models.EconomicDataPoint;
 import com.economic.dashboard.ui.EconomicViewModel;
-import com.economic.dashboard.utils.ChartHelper;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.LimitLine;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
@@ -30,32 +31,24 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * Combined Inflation tab — merges CPI, PCE (new), and Wages data into one scrollable screen.
- * Replaces the previous separate CPI and Wages tabs.
- */
 public class InflationFragment extends Fragment {
 
     private EconomicViewModel viewModel;
 
-    // PCE hero card (Fed's preferred measure)
     private CardView cardPceStatus;
     private TextView tvPceValue, tvPceStatus, tvPcePercentile;
     private View viewPceDot;
 
-    // CPI status card
     private CardView cardCpiYoY;
     private TextView tvCpiYoYValue, tvCpiYoYStatus, tvCpiPercentile;
     private View viewCpiDot;
 
-    // Wage status card
     private CardView cardWageYoY;
     private TextView tvWageYoYValue, tvWageYoYStatus;
     private View viewWageDot;
 
-    // Charts
-    private LineChart chartPceCpi;     // PCE vs CPI comparison
-    private LineChart chartComparison; // Inflation vs wage indexed
+    private LineChart chartPceCpi;
+    private LineChart chartComparison;
 
     @Nullable
     @Override
@@ -70,53 +63,43 @@ public class InflationFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         viewModel = new ViewModelProvider(requireActivity()).get(EconomicViewModel.class);
 
-        // PCE card
-        cardPceStatus  = view.findViewById(R.id.cardPceStatus);
-        tvPceValue     = view.findViewById(R.id.tvPceValue);
-        tvPceStatus    = view.findViewById(R.id.tvPceStatus);
+        cardPceStatus   = view.findViewById(R.id.cardPceStatus);
+        tvPceValue      = view.findViewById(R.id.tvPceValue);
+        tvPceStatus     = view.findViewById(R.id.tvPceStatus);
         tvPcePercentile = view.findViewById(R.id.tvPcePercentile);
-        viewPceDot     = view.findViewById(R.id.viewPceDot);
+        viewPceDot      = view.findViewById(R.id.viewPceDot);
 
-        // CPI card
-        cardCpiYoY     = view.findViewById(R.id.cardCpiYoY);
-        tvCpiYoYValue  = view.findViewById(R.id.tvCpiYoYValue);
-        tvCpiYoYStatus = view.findViewById(R.id.tvCpiYoYStatus);
+        cardCpiYoY      = view.findViewById(R.id.cardCpiYoY);
+        tvCpiYoYValue   = view.findViewById(R.id.tvCpiYoYValue);
+        tvCpiYoYStatus  = view.findViewById(R.id.tvCpiYoYStatus);
         tvCpiPercentile = view.findViewById(R.id.tvCpiPercentile);
-        viewCpiDot     = view.findViewById(R.id.viewCpiIndicatorDot);
+        viewCpiDot      = view.findViewById(R.id.viewCpiIndicatorDot);
 
-        // Wage card
-        cardWageYoY    = view.findViewById(R.id.cardWageYoY);
-        tvWageYoYValue = view.findViewById(R.id.tvWageYoYValue);
+        cardWageYoY     = view.findViewById(R.id.cardWageYoY);
+        tvWageYoYValue  = view.findViewById(R.id.tvWageYoYValue);
         tvWageYoYStatus = view.findViewById(R.id.tvWageYoYStatus);
-        viewWageDot    = view.findViewById(R.id.viewWageIndicatorDot);
+        viewWageDot     = view.findViewById(R.id.viewWageIndicatorDot);
 
-        // Charts
         chartPceCpi     = view.findViewById(R.id.chartPceCpi);
         chartComparison = view.findViewById(R.id.comparisonChart);
 
-        // Style charts
-        ChartHelper.styleLineChart(chartPceCpi,     "PCE vs CPI-U (Year-over-Year %)",    "Month", "YoY %");
-        ChartHelper.styleLineChart(chartComparison,  "Inflation vs Wage Growth (Base=100)", "Month", "Index");
+        styleChart(chartPceCpi);
+        styleChart(chartComparison);
 
-        ValueFormatter pctFmt = new ValueFormatter() {
+        chartPceCpi.getAxisLeft().setValueFormatter(new ValueFormatter() {
             @Override public String getFormattedValue(float v) { return String.format(Locale.US, "%.1f%%", v); }
-        };
-        ValueFormatter idxFmt = new ValueFormatter() {
+        });
+        chartComparison.getAxisLeft().setValueFormatter(new ValueFormatter() {
             @Override public String getFormattedValue(float v) { return String.format(Locale.US, "%.0f", v); }
-        };
-        chartPceCpi.getAxisLeft().setValueFormatter(pctFmt);
-        chartComparison.getAxisLeft().setValueFormatter(idxFmt);
+        });
 
-        // Add benchmark limit lines to YoY chart
         addYoYLimitLines(chartPceCpi);
 
-        // Click listeners for benchmark modals
         if (cardCpiYoY != null)
             cardCpiYoY.setOnClickListener(v2 -> showBenchmarkDialog(R.layout.dialog_cpi_status));
         if (cardWageYoY != null)
             cardWageYoY.setOnClickListener(v2 -> showBenchmarkDialog(R.layout.dialog_wages_status));
 
-        // Observe data
         viewModel.getPceData().observe(getViewLifecycleOwner(), pce -> {
             if (pce != null) {
                 updatePceCard(pce);
@@ -128,30 +111,22 @@ public class InflationFragment extends Fragment {
                 updateCpiCard(cpi);
                 buildPceCpiChart(viewModel.getPceData().getValue(), cpi);
                 tryBuildComparisonChart();
-                tryUpdateWageCard(); // CPI may arrive after wages; resolve wage spread card here too
+                tryUpdateWageCard();
             }
         });
         viewModel.getWageData().observe(getViewLifecycleOwner(), wages -> {
-            if (wages != null) {
-                tryUpdateWageCard();
-                tryBuildComparisonChart();
-            }
+            if (wages != null) { tryUpdateWageCard(); tryBuildComparisonChart(); }
         });
     }
-
-    // ── PCE Card ─────────────────────────────────────────────────────────────
 
     private void updatePceCard(List<EconomicDataPoint> pceData) {
         List<EconomicDataPoint> rows = EconomicViewModel.filterBySeries(pceData, "PCE Price Index");
         if (rows.size() < 13) return;
-
-        double latest  = rows.get(rows.size() - 1).getValue();
-        double yearAgo = rows.get(rows.size() - 13).getValue();
-        double yoy     = ((latest - yearAgo) / yearAgo) * 100.0;
-
+        double latest  = rows.get(rows.size()-1).getValue();
+        double yearAgo = rows.get(rows.size()-13).getValue();
+        double yoy = ((latest - yearAgo) / yearAgo) * 100.0;
         if (tvPceValue != null) tvPceValue.setText(String.format(Locale.US, "%.2f%%", yoy));
 
-        // Core PCE YoY
         List<EconomicDataPoint> coreRows = EconomicViewModel.filterBySeries(pceData, "Core PCE Price Index");
         String coreLabel = "";
         if (coreRows.size() >= 13) {
@@ -172,16 +147,12 @@ public class InflationFragment extends Fragment {
         setDot(viewPceDot, color);
     }
 
-    // ── CPI Card ──────────────────────────────────────────────────────────────
-
     private void updateCpiCard(List<EconomicDataPoint> cpiData) {
         List<EconomicDataPoint> rows = EconomicViewModel.filterBySeries(cpiData, "CPI-U All Items");
         if (rows.size() < 13) return;
-
-        double latest  = rows.get(rows.size() - 1).getValue();
-        double yearAgo = rows.get(rows.size() - 13).getValue();
-        double yoy     = ((latest - yearAgo) / yearAgo) * 100.0;
-
+        double latest  = rows.get(rows.size()-1).getValue();
+        double yearAgo = rows.get(rows.size()-13).getValue();
+        double yoy = ((latest - yearAgo) / yearAgo) * 100.0;
         if (tvCpiYoYValue != null) tvCpiYoYValue.setText(String.format(Locale.US, "%.2f%%", yoy));
 
         String status; int color;
@@ -197,12 +168,9 @@ public class InflationFragment extends Fragment {
         }
         setDot(viewCpiDot, color);
 
-        // Historical percentile
         int pct = EconomicViewModel.calculatePercentile(cpiData, "CPI-U All Items", latest);
         if (tvCpiPercentile != null) tvCpiPercentile.setText(EconomicViewModel.formatPercentile(pct));
     }
-
-    // ── Wage Card ─────────────────────────────────────────────────────────────
 
     private void tryUpdateWageCard() {
         List<EconomicDataPoint> wageData = viewModel.getWageData().getValue();
@@ -235,12 +203,8 @@ public class InflationFragment extends Fragment {
         setDot(viewWageDot, color);
     }
 
-    // ── Charts ────────────────────────────────────────────────────────────────
-
-    /** PCE YoY vs CPI YoY rolling line chart */
     private void buildPceCpiChart(List<EconomicDataPoint> pceData, List<EconomicDataPoint> cpiData) {
         if (pceData == null || cpiData == null || chartPceCpi == null) return;
-
         List<EconomicDataPoint> pceRows = EconomicViewModel.filterBySeries(pceData, "PCE Price Index");
         List<EconomicDataPoint> cpiRows = EconomicViewModel.filterBySeries(cpiData, "CPI-U All Items");
         if (pceRows.size() < 13 || cpiRows.size() < 13) return;
@@ -249,28 +213,21 @@ public class InflationFragment extends Fragment {
         List<Entry> cpiEntries = new ArrayList<>();
         final List<String> dates = new ArrayList<>();
 
-        // Compute rolling YoY for last 24 months of PCE
-        int pcStart = Math.max(12, pceRows.size() - 24);
+        int pcStart = Math.max(12, pceRows.size()-24);
         for (int i = pcStart; i < pceRows.size(); i++) {
-            double yoy = ((pceRows.get(i).getValue() - pceRows.get(i - 12).getValue())
-                    / pceRows.get(i - 12).getValue()) * 100.0;
+            double yoy = ((pceRows.get(i).getValue() - pceRows.get(i-12).getValue()) / pceRows.get(i-12).getValue()) * 100.0;
             pceEntries.add(new Entry(pceEntries.size(), (float) yoy));
             String d = pceRows.get(i).getDate();
-            dates.add(d.length() >= 7 ? d.substring(5, 7) + "/" + d.substring(2, 4) : d);
+            dates.add(d.length() >= 7 ? d.substring(5,7)+"/"+d.substring(2,4) : d);
         }
 
-        // Match CPI YoY to same date range.
-        // Use original cpiRows indices (not a subList) so lookback is always valid.
-        // ciStart >= 12 guarantees cpiRows.get(i - 12) never goes out of bounds.
-        int ciStart = Math.max(12, cpiRows.size() - 24);
+        int ciStart = Math.max(12, cpiRows.size()-24);
         for (int i = ciStart; i < cpiRows.size() && cpiEntries.size() < pceEntries.size(); i++) {
-            double cYoy = ((cpiRows.get(i).getValue() - cpiRows.get(i - 12).getValue())
-                    / cpiRows.get(i - 12).getValue()) * 100.0;
+            double cYoy = ((cpiRows.get(i).getValue() - cpiRows.get(i-12).getValue()) / cpiRows.get(i-12).getValue()) * 100.0;
             cpiEntries.add(new Entry(cpiEntries.size(), (float) cYoy));
         }
-        // Trim PCE and dates to match CPI length (never pad CPI with zeros)
-        while (pceEntries.size() > cpiEntries.size()) pceEntries.remove(pceEntries.size() - 1);
-        while (dates.size() > pceEntries.size()) dates.remove(dates.size() - 1);
+        while (pceEntries.size() > cpiEntries.size()) pceEntries.remove(pceEntries.size()-1);
+        while (dates.size() > pceEntries.size()) dates.remove(dates.size()-1);
 
         chartPceCpi.getXAxis().setValueFormatter(new ValueFormatter() {
             @Override public String getFormattedValue(float v) {
@@ -279,10 +236,7 @@ public class InflationFragment extends Fragment {
             }
         });
 
-        LineDataSet pceSet = makeLineDataSet(pceEntries, "PCE", "#4285F4", true);
-        LineDataSet cpiSet = makeLineDataSet(cpiEntries, "CPI-U", "#fbbc04", false);
-
-        chartPceCpi.setData(new LineData(pceSet, cpiSet));
+        chartPceCpi.setData(new LineData(makeLineDataSet(pceEntries, "PCE", "#4285F4"), makeLineDataSet(cpiEntries, "CPI-U", "#fbbc04")));
         chartPceCpi.invalidate();
     }
 
@@ -303,12 +257,11 @@ public class InflationFragment extends Fragment {
 
         for (int i = 0; i < cpiRows.size(); i++) {
             String date = cpiRows.get(i).getDate();
-            cpiEntries.add(new Entry(i, (float) ((cpiRows.get(i).getValue() / cpiBase) * 100.0)));
-            dates.add(date.length() >= 7 ? date.substring(5, 7) + "-" + date.substring(0, 4) : date);
+            cpiEntries.add(new Entry(i, (float)((cpiRows.get(i).getValue()/cpiBase)*100.0)));
+            dates.add(date.length() >= 7 ? date.substring(5,7)+"-"+date.substring(0,4) : date);
             for (EconomicDataPoint w : wageRows) {
                 if (w.getDate().equals(date)) {
-                    wageEntries.add(new Entry(i, (float) ((w.getValue() / wageBase) * 100.0)));
-                    break;
+                    wageEntries.add(new Entry(i, (float)((w.getValue()/wageBase)*100.0))); break;
                 }
             }
         }
@@ -319,51 +272,31 @@ public class InflationFragment extends Fragment {
             }
         });
 
-        LineDataSet cpiSet  = makeLineDataSet(cpiEntries,  "Consumer Prices (CPI)", "#fbbc04", false);
-        LineDataSet wageSet = makeLineDataSet(wageEntries, "Average Wages",          "#9c27b0", false);
-        chartComparison.setData(new LineData(cpiSet, wageSet));
+        chartComparison.setData(new LineData(makeLineDataSet(cpiEntries, "Consumer Prices (CPI)", "#fbbc04"), makeLineDataSet(wageEntries, "Average Wages", "#9c27b0")));
         chartComparison.invalidate();
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
-
-    private LineDataSet makeLineDataSet(List<Entry> entries, String label, String hexColor, boolean filled) {
+    private LineDataSet makeLineDataSet(List<Entry> entries, String label, String hexColor) {
         LineDataSet ds = new LineDataSet(entries, label);
-        int c = Color.parseColor(hexColor);
-        ds.setColor(c);
-        ds.setLineWidth(1.5f);
-        ds.setDrawCircles(false);
-        ds.setDrawValues(false);
-        ds.setMode(LineDataSet.Mode.CUBIC_BEZIER);
+        ds.setColor(Color.parseColor(hexColor)); ds.setLineWidth(1.5f);
+        ds.setDrawCircles(false); ds.setDrawValues(false); ds.setMode(LineDataSet.Mode.CUBIC_BEZIER);
         return ds;
     }
 
     private void addYoYLimitLines(LineChart chart) {
-        // Fed target (2%), elevated (3.5%) reference lines
         LimitLine target = new LimitLine(2.0f, "Fed Target 2%");
-        target.setLineColor(Color.parseColor("#4CAF50"));
-        target.setLineWidth(1f);
-        target.setTextColor(Color.parseColor("#4CAF50"));
-        target.setTextSize(9f);
-        target.enableDashedLine(8f, 4f, 0f);
-
+        target.setLineColor(Color.parseColor("#4CAF50")); target.setLineWidth(1f);
+        target.setTextColor(Color.parseColor("#4CAF50")); target.setTextSize(9f); target.enableDashedLine(8f, 4f, 0f);
         LimitLine elevated = new LimitLine(3.5f, "Elevated 3.5%");
-        elevated.setLineColor(Color.parseColor("#FF9800"));
-        elevated.setLineWidth(1f);
-        elevated.setTextColor(Color.parseColor("#FF9800"));
-        elevated.setTextSize(9f);
-        elevated.enableDashedLine(8f, 4f, 0f);
-
-        chart.getAxisLeft().addLimitLine(target);
-        chart.getAxisLeft().addLimitLine(elevated);
+        elevated.setLineColor(Color.parseColor("#FF9800")); elevated.setLineWidth(1f);
+        elevated.setTextColor(Color.parseColor("#FF9800")); elevated.setTextSize(9f); elevated.enableDashedLine(8f, 4f, 0f);
+        chart.getAxisLeft().addLimitLine(target); chart.getAxisLeft().addLimitLine(elevated);
         chart.getAxisLeft().setDrawLimitLinesBehindData(true);
     }
 
     private void setDot(View dot, int color) {
         if (dot == null) return;
-        GradientDrawable gd = new GradientDrawable();
-        gd.setShape(GradientDrawable.OVAL);
-        gd.setColor(color);
+        GradientDrawable gd = new GradientDrawable(); gd.setShape(GradientDrawable.OVAL); gd.setColor(color);
         dot.setBackground(gd);
     }
 
@@ -374,5 +307,20 @@ public class InflationFragment extends Fragment {
         View btn = dialogView.findViewById(R.id.btnClose);
         if (btn != null) btn.setOnClickListener(v -> dialog.dismiss());
         dialog.show();
+    }
+
+    private void styleChart(LineChart chart) {
+        int grid = Color.argb(0x14, 0xFF, 0xFF, 0xFF);
+        chart.setBackgroundColor(Color.parseColor("#1C2236")); chart.setDrawGridBackground(false);
+        chart.setDrawBorders(false); chart.setTouchEnabled(true); chart.setDragEnabled(true);
+        chart.setScaleEnabled(true); chart.setPinchZoom(true); chart.getDescription().setEnabled(false);
+        chart.setNoDataText("Loading data..."); chart.setExtraBottomOffset(8f);
+        XAxis x = chart.getXAxis();
+        x.setPosition(XAxis.XAxisPosition.BOTTOM); x.setTextColor(Color.parseColor("#5A6A8A")); x.setTextSize(9f);
+        x.setDrawGridLines(true); x.setGridColor(grid); x.setLabelRotationAngle(-45f);
+        x.setGranularity(1f); x.setLabelCount(6, false); x.setAvoidFirstLastClipping(true);
+        YAxis y = chart.getAxisLeft();
+        y.setTextColor(Color.parseColor("#8899BB")); y.setTextSize(10f); y.setDrawGridLines(true); y.setGridColor(grid);
+        chart.getAxisRight().setEnabled(false);
     }
 }

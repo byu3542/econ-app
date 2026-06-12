@@ -39,14 +39,20 @@ public class EconomicRepository {
     // FRED - Generic Fetcher
     // ============================================================
     public void fetchFredData(String seriesId, String seriesName, DataCallback<List<EconomicDataPoint>> callback) {
-        fetchFredData(seriesId, seriesName, "5", callback);
+        fetchFredData(seriesId, seriesName, "5", null, "FRED", callback);
     }
 
     public void fetchFredData(String seriesId, String seriesName, String limit, DataCallback<List<EconomicDataPoint>> callback) {
-        fetchFredData(seriesId, seriesName, limit, null, callback);
+        fetchFredData(seriesId, seriesName, limit, null, "FRED", callback);
     }
 
     public void fetchFredData(String seriesId, String seriesName, String limit, String frequency, DataCallback<List<EconomicDataPoint>> callback) {
+        fetchFredData(seriesId, seriesName, limit, frequency, "FRED", callback);
+    }
+
+    /** Full-control overload — callers should pass the correct category for display and filtering. */
+    public void fetchFredData(String seriesId, String seriesName, String limit, String frequency,
+                              String category, DataCallback<List<EconomicDataPoint>> callback) {
         new Thread(() -> {
             try {
                 Map<String, String> params = new HashMap<>();
@@ -78,7 +84,7 @@ public class EconomicRepository {
                         try {
                             if (isValidValue(obs.value)) {
                                 results.add(new EconomicDataPoint(
-                                        "FRED", "Interest Rates", seriesName,
+                                        "FRED", category, seriesName,
                                         obs.date, Double.parseDouble(obs.value), "%"
                                 ));
                             }
@@ -105,8 +111,8 @@ public class EconomicRepository {
         new Thread(() -> {
             try {
                 // Fetch PCE (all items) — 120 months for percentile context
-                List<EconomicDataPoint> pceAll   = fetchFredSync(ApiConfig.FRED_PCE,      "PCE Price Index",       ApiConfig.FRED_PCE_LIMIT, "m");
-                List<EconomicDataPoint> pceCore  = fetchFredSync(ApiConfig.FRED_CORE_PCE, "Core PCE Price Index",  ApiConfig.FRED_PCE_LIMIT, "m");
+                List<EconomicDataPoint> pceAll   = fetchFredSync(ApiConfig.FRED_PCE,      "PCE Price Index",       ApiConfig.FRED_PCE_LIMIT, "m", "Inflation");
+                List<EconomicDataPoint> pceCore  = fetchFredSync(ApiConfig.FRED_CORE_PCE, "Core PCE Price Index",  ApiConfig.FRED_PCE_LIMIT, "m", "Inflation");
 
                 List<EconomicDataPoint> combined = new ArrayList<>();
                 combined.addAll(pceAll);
@@ -133,10 +139,10 @@ public class EconomicRepository {
             try {
                 List<EconomicDataPoint> starts = fetchFredSync(
                         ApiConfig.FRED_HOUSING_STARTS, "Housing Starts",
-                        ApiConfig.FRED_HOUSING_LIMIT, "m");
+                        ApiConfig.FRED_HOUSING_LIMIT, "m", "Housing");
                 List<EconomicDataPoint> sales = fetchFredSync(
                         ApiConfig.FRED_EXISTING_HOME_SALES, "Existing Home Sales",
-                        ApiConfig.FRED_HOUSING_LIMIT, "m");
+                        ApiConfig.FRED_HOUSING_LIMIT, "m", "Housing");
 
                 List<EconomicDataPoint> combined = new ArrayList<>();
                 combined.addAll(starts);
@@ -155,9 +161,10 @@ public class EconomicRepository {
         }).start();
     }
 
-    /** Synchronous FRED helper for use inside compound fetch methods */
+    /** Synchronous FRED helper for use inside compound fetch methods. Caller must supply the correct category. */
     private List<EconomicDataPoint> fetchFredSync(String seriesId, String seriesName,
-                                                   String limit, String frequency) throws Exception {
+                                                   String limit, String frequency,
+                                                   String category) throws Exception {
         Map<String, String> params = new HashMap<>();
         params.put("series_id", seriesId);
         params.put("api_key", ApiConfig.FRED_API_KEY);
@@ -175,7 +182,7 @@ public class EconomicRepository {
                 try {
                     if (isValidValue(obs.value)) {
                         results.add(new EconomicDataPoint(
-                                "FRED", "Inflation", seriesName,
+                                "FRED", category, seriesName,
                                 obs.date, Double.parseDouble(obs.value), "Index"
                         ));
                     }
@@ -193,13 +200,13 @@ public class EconomicRepository {
             try {
                 List<EconomicDataPoint> bankMbs = fetchFredSync(
                         ApiConfig.FRED_BANK_MBS, "Bank MBS Holdings",
-                        ApiConfig.FRED_MBS_LIMIT, "w");
+                        ApiConfig.FRED_MBS_LIMIT, "w", "Bonds");
                 List<EconomicDataPoint> fedMbs = fetchFredSync(
                         ApiConfig.FRED_FED_MBS, "Fed MBS Holdings",
-                        ApiConfig.FRED_MBS_LIMIT, "w");
+                        ApiConfig.FRED_MBS_LIMIT, "w", "Bonds");
                 List<EconomicDataPoint> mortgage = fetchFredSync(
                         ApiConfig.FRED_MORTGAGE30, "30-Yr Mortgage Rate",
-                        ApiConfig.FRED_MBS_LIMIT, "w");
+                        ApiConfig.FRED_MBS_LIMIT, "w", "Housing");
 
                 List<EconomicDataPoint> combined = new ArrayList<>();
                 combined.addAll(bankMbs);
@@ -349,7 +356,7 @@ public class EconomicRepository {
         new Thread(() -> {
             try {
                 int currentYear = Calendar.getInstance().get(Calendar.YEAR);
-                int startYear   = currentYear - Integer.parseInt(ApiConfig.BLS_HISTORY_MONTHS);
+                int startYear   = currentYear - Integer.parseInt(ApiConfig.BLS_HISTORY_YEARS);
 
                 Map<String, Object> body = new HashMap<>();
                 body.put("seriesid",       seriesIds);

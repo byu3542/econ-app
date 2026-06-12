@@ -20,6 +20,7 @@ android {
             properties.load(propertiesFile.newDataInputStream())
         }
         buildConfigField "String", "ANTHROPIC_API_KEY", "\"${properties.getProperty('ANTHROPIC_API_KEY', 'YOUR_ANTHROPIC_API_KEY')}\""
+        buildConfigField "String", "FRED_API_KEY", "\"${properties.getProperty('FRED_API_KEY', '02e1293e2b997b87df09df66c0e8fb86')}\""
     }
 
     buildTypes {
@@ -71,4 +72,11 @@ dependencies {
 
     // Chrome Custom Tabs (News feature)
     implementation 'androidx.browser:browser:1.8.0'
+
+    // Room (local database for caching economic data)
+    implementation 'androidx.room:room-runtime:2.6.1'
+    annotationProcessor 'androidx.room:room-compiler:2.6.1'
+
+    // WorkManager (background refresh scheduling)
+    implementation 'androidx.work:work-runtime:2.9.0'
 }

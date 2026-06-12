@@ -8,22 +8,28 @@ import java.util.concurrent.TimeUnit;
 
 public class RetrofitClient {
 
-    private static Retrofit blsRetrofit;
-    private static Retrofit beaRetrofit;
-    private static Retrofit fredRetrofit;
+    private static volatile Retrofit blsRetrofit;
+    private static volatile Retrofit beaRetrofit;
+    private static volatile Retrofit fredRetrofit;
 
-    public static OkHttpClient buildClient() {
-        HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
-        logging.setLevel(HttpLoggingInterceptor.Level.BODY);
-        return new OkHttpClient.Builder()
-                .addInterceptor(logging)
-                .connectTimeout(60, TimeUnit.SECONDS)
-                .readTimeout(60, TimeUnit.SECONDS)
-                .writeTimeout(60, TimeUnit.SECONDS)
-                .build();
+    /** Shared client — reuses the connection pool across all Retrofit instances and direct OkHttp calls. */
+    private static volatile OkHttpClient sharedClient;
+
+    public static synchronized OkHttpClient buildClient() {
+        if (sharedClient == null) {
+            HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
+            logging.setLevel(HttpLoggingInterceptor.Level.BASIC);
+            sharedClient = new OkHttpClient.Builder()
+                    .addInterceptor(logging)
+                    .connectTimeout(60, TimeUnit.SECONDS)
+                    .readTimeout(60, TimeUnit.SECONDS)
+                    .writeTimeout(60, TimeUnit.SECONDS)
+                    .build();
+        }
+        return sharedClient;
     }
 
-    public static EconomicApiService getBlsService() {
+    public static synchronized EconomicApiService getBlsService() {
         if (blsRetrofit == null) {
             blsRetrofit = new Retrofit.Builder()
                     .baseUrl(ApiConfig.BLS_BASE_URL_V2)
@@ -34,7 +40,7 @@ public class RetrofitClient {
         return blsRetrofit.create(EconomicApiService.class);
     }
 
-    public static EconomicApiService getBeaService() {
+    public static synchronized EconomicApiService getBeaService() {
         if (beaRetrofit == null) {
             beaRetrofit = new Retrofit.Builder()
                     .baseUrl(ApiConfig.BEA_BASE_URL)
@@ -45,7 +51,7 @@ public class RetrofitClient {
         return beaRetrofit.create(EconomicApiService.class);
     }
 
-    public static EconomicApiService getFredService() {
+    public static synchronized EconomicApiService getFredService() {
         if (fredRetrofit == null) {
             fredRetrofit = new Retrofit.Builder()
                     .baseUrl(ApiConfig.FRED_BASE_URL)

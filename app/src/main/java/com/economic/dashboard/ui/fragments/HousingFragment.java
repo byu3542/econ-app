@@ -255,17 +255,17 @@ public class HousingFragment extends Fragment {
         if (rows.isEmpty()) return;
 
         double latest = rows.get(rows.size() - 1).getValue();
-        // EXHOSLUSM495S returns raw unit counts (e.g. 3,910,000); display in millions
+        // EXHOSLUSM495S returns values in THOUSANDS of units (SAAR), e.g. 3900 = 3.9M
         if (tvSalesValue != null)
-            tvSalesValue.setText(String.format(Locale.US, "%.2fM", latest / 1_000_000.0));
+            tvSalesValue.setText(String.format(Locale.US, "%.2fM", latest / 1_000.0));
 
-        // Thresholds in actual units (SAAR)
+        // Thresholds in thousands of units (matching FRED units)
         String status; int color;
-        if (latest < 3_000_000)  { status = "VERY WEAK";      color = Color.parseColor("#F44336"); }
-        else if (latest < 4_000_000) { status = "WEAK";        color = Color.parseColor("#FF9800"); }
-        else if (latest < 5_000_000) { status = "NORMAL";      color = Color.parseColor("#4CAF50"); }
-        else if (latest < 6_000_000) { status = "STRONG";      color = Color.parseColor("#2196F3"); }
-        else                     { status = "VERY STRONG";    color = Color.parseColor("#9C27B0"); }
+        if (latest < 3_000)  { status = "VERY WEAK";   color = Color.parseColor("#F44336"); }
+        else if (latest < 4_000) { status = "WEAK";    color = Color.parseColor("#FF9800"); }
+        else if (latest < 5_000) { status = "NORMAL";  color = Color.parseColor("#4CAF50"); }
+        else if (latest < 6_000) { status = "STRONG";  color = Color.parseColor("#2196F3"); }
+        else                 { status = "VERY STRONG"; color = Color.parseColor("#9C27B0"); }
 
         if (tvSalesStatus != null) tvSalesStatus.setText(status);
         setDot(viewSalesDot, color);

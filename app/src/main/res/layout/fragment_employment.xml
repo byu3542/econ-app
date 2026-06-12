@@ -12,167 +12,87 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- UNEMPLOYMENT RATE Badge (full-width, Markets style) -->
-        <androidx.cardview.widget.CardView
-            android:id="@+id/cardUnemploymentStatus"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="4dp"
-            app:cardBackgroundColor="#1C2236">
+            android:orientation="horizontal"
+            android:baselineAligned="false"
+            android:layout_marginBottom="16dp">
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="14dp"
-                android:gravity="center">
-
-                <TextView
-                    android:id="@+id/tvUnempLabel"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="UNEMPLOYMENT RATE"
-                    android:textColor="#C8A84B"
-                    android:textSize="10sp"
-                    android:textStyle="bold"
-                    android:textAllCaps="true"
-                    android:letterSpacing="0.08" />
-
-                <TextView
-                    android:id="@+id/tvUnempValue"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="\u2014"
-                    android:textColor="#FFFFFF"
-                    android:textSize="28sp"
-                    android:textStyle="bold"
-                    android:layout_marginTop="4dp" />
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginTop="4dp">
-
-                    <View
-                        android:id="@+id/viewUnempIndicatorDot"
-                        android:layout_width="8dp"
-                        android:layout_height="8dp"
-                        android:background="@drawable/dot_neutral"
-                        android:layout_marginEnd="4dp" />
-
-                    <TextView
-                        android:id="@+id/tvUnempStatus"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="\u2014"
-                        android:textColor="@color/text_muted"
-                        android:textSize="10sp" />
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardUnemploymentStatus"
+                android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:layout_marginEnd="8dp"
+                app:cardCornerRadius="16dp" app:cardElevation="6dp"
+                app:cardBackgroundColor="@color/header_navy">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="vertical" android:padding="16dp" android:gravity="center">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="UNEMPLOYMENT RATE" android:textColor="@color/accent_gold"
+                        android:textSize="12sp" android:textStyle="bold" android:textAllCaps="true" android:letterSpacing="0.1" />
+                    <TextView android:id="@+id/tvUnempValue" android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" android:text="&#8212;"
+                        android:textColor="@color/card_white" android:textSize="28sp"
+                        android:fontFamily="serif" android:textStyle="bold" android:layout_marginTop="4dp" />
+                    <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="4dp">
+                        <View android:id="@+id/viewUnempIndicatorDot" android:layout_width="8dp"
+                            android:layout_height="8dp" android:layout_marginEnd="6dp" />
+                        <TextView android:id="@+id/tvUnempStatus" android:layout_width="wrap_content"
+                            android:layout_height="wrap_content" android:text="&#8212;"
+                            android:textColor="@color/text_muted" android:textSize="10sp" />
+                    </LinearLayout>
+                    <TextView android:id="@+id/tvUnempLowInfo" android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" android:text="Vs 12-month low"
+                        android:textColor="#5A6A8A" android:textSize="9sp" android:layout_marginTop="2dp" />
                 </LinearLayout>
+            </androidx.cardview.widget.CardView>
 
-                <TextView
-                    android:id="@+id/tvUnempLowInfo"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Vs 12-month low"
-                    android:textColor="#5A6A8A"
-                    android:textSize="9sp"
-                    android:layout_marginTop="2dp" />
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardLaborParticipation"
+                android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:layout_marginStart="8dp"
+                app:cardCornerRadius="16dp" app:cardElevation="6dp"
+                app:cardBackgroundColor="@color/header_navy">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="vertical" android:padding="16dp" android:gravity="center">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="LABOR PARTICIPATION" android:textColor="@color/accent_gold"
+                        android:textSize="12sp" android:textStyle="bold" android:textAllCaps="true" android:letterSpacing="0.1" />
+                    <TextView android:id="@+id/tvLaborValue" android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" android:text="&#8212;"
+                        android:textColor="@color/card_white" android:textSize="28sp"
+                        android:fontFamily="serif" android:textStyle="bold" android:layout_marginTop="4dp" />
+                    <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="4dp">
+                        <View android:id="@+id/viewLaborIndicatorDot" android:layout_width="8dp"
+                            android:layout_height="8dp" android:layout_marginEnd="6dp" />
+                        <TextView android:id="@+id/tvLaborStatus" android:layout_width="wrap_content"
+                            android:layout_height="wrap_content" android:text="&#8212;"
+                            android:textColor="@color/text_muted" android:textSize="10sp" />
+                    </LinearLayout>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="% of population" android:textColor="#5A6A8A" android:textSize="9sp" android:layout_marginTop="2dp" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+        </LinearLayout>
 
-        <!-- UNEMPLOYMENT RATE TREND SECTION -->
         <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="6dp"
-            app:cardBackgroundColor="@color/card_white">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:paddingHorizontal="20dp"
-                    android:paddingTop="16dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Unemployment Rate Trend"
-                        android:textColor="#1C2236"
-                        android:textSize="15sp"
-                        android:fontFamily="serif"
-                        android:textStyle="bold" />
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="2dp"
-                        android:layout_marginTop="8dp"
-                        android:background="@color/accent_gold" />
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp" app:cardCornerRadius="16dp"
+            app:cardElevation="6dp" app:cardBackgroundColor="@color/header_navy">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="vertical" android:paddingHorizontal="20dp" android:paddingTop="16dp">
+                    <TextView android:id="@+id/tvChartTitle" android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" android:text="Unemployment Rate Trend"
+                        android:textColor="#ffffff" android:textSize="15sp" android:fontFamily="serif" android:textStyle="bold" />
+                    <View android:layout_width="match_parent" android:layout_height="2dp"
+                        android:layout_marginTop="8dp" android:background="@color/accent_gold" />
                 </LinearLayout>
-
                 <com.github.mikephil.charting.charts.LineChart
-                    android:id="@+id/unemploymentChart"
-                    android:layout_width="match_parent"
-                    android:layout_height="300dp"
-                    android:padding="16dp"/>
-
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-
-        <!-- LABOR FORCE PARTICIPATION TREND SECTION -->
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="6dp"
-            app:cardBackgroundColor="@color/card_white">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:paddingHorizontal="20dp"
-                    android:paddingTop="16dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Labor Participation Rate"
-                        android:textColor="#1C2236"
-                        android:textSize="15sp"
-                        android:fontFamily="serif"
-                        android:textStyle="bold" />
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="2dp"
-                        android:layout_marginTop="8dp"
-                        android:background="@color/accent_gold" />
-                </LinearLayout>
-
-                <com.github.mikephil.charting.charts.LineChart
-                    android:id="@+id/laborParticipationChart"
-                    android:layout_width="match_parent"
-                    android:layout_height="300dp"
-                    android:padding="16dp"/>
-
+                    android:id="@+id/swappableChart"
+                    android:layout_width="match_parent" android:layout_height="300dp" android:padding="12dp" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 

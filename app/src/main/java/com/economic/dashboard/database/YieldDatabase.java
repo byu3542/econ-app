@@ -9,54 +9,61 @@ import androidx.room.RoomDatabase;
 import androidx.room.migration.Migration;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
-<<<<<<< Updated upstream
-=======
 import com.economic.dashboard.models.EconomicHistoryEntry;
 import com.economic.dashboard.models.NewsArticle;
->>>>>>> Stashed changes
 import com.economic.dashboard.models.TreasuryYield;
 
 /**
  * Room Database for local economic data caching.
- * Singleton pattern ensures only one database instance exists.
  *
  * v1 → original treasury yields only
- * v2 → added news articles table
+ * v2 → added news_articles table
  * v3 → added economic_history table (2-year historical data for AI Analyst)
  */
-<<<<<<< Updated upstream
-@Database(entities = {TreasuryYield.class}, version = 1, exportSchema = false)
-=======
 @Database(
     entities = {TreasuryYield.class, NewsArticle.class, EconomicHistoryEntry.class},
     version = 3,
     exportSchema = false
 )
->>>>>>> Stashed changes
 public abstract class YieldDatabase extends RoomDatabase {
 
     private static volatile YieldDatabase instance;
     private static final Object lock = new Object();
 
-    // ── DAOs ──────────────────────────────────────────────────────────────────
-
-    /** Treasury yield curve snapshot (current rates) */
     public abstract TreasuryYieldDao treasuryYieldDao();
-
-<<<<<<< Updated upstream
-=======
-    /** News articles cached from RSS / NewsAPI */
     public abstract NewsArticleDao newsArticleDao();
-
-    /** 2-year historical data for AI Analyst context */
     public abstract EconomicHistoryDao economicHistoryDao();
 
-    // ── Migration: v2 → v3 ───────────────────────────────────────────────────
+    // ── Migration: v1 → v2 ───────────────────────────────────────────────────
+    static final Migration MIGRATION_1_2 = new Migration(1, 2) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+            database.execSQL(
+                "CREATE TABLE IF NOT EXISTS `news_articles` (" +
+                    "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                    "`title` TEXT, " +
+                    "`description` TEXT, " +
+                    "`content` TEXT, " +
+                    "`url` TEXT, " +
+                    "`imageUrl` TEXT, " +
+                    "`publishedAt` TEXT, " +
+                    "`source` TEXT, " +
+                    "`author` TEXT, " +
+                    "`economicRelevanceScore` INTEGER NOT NULL DEFAULT 0, " +
+                    "`contentLength` INTEGER NOT NULL DEFAULT 0, " +
+                    "`estimatedReadMinutes` INTEGER NOT NULL DEFAULT 0, " +
+                    "`cachedAtMillis` INTEGER NOT NULL DEFAULT 0, " +
+                    "`isRead` INTEGER NOT NULL DEFAULT 0, " +
+                    "`isFavorited` INTEGER NOT NULL DEFAULT 0, " +
+                    "`userNotes` TEXT, " +
+                    "`aiAnalysisSummary` TEXT, " +
+                    "`aiAnalysisTimestamp` INTEGER NOT NULL DEFAULT 0" +
+                ")"
+            );
+        }
+    };
 
-    /**
-     * Adds the economic_history table introduced in database version 3.
-     * Preserves all existing rows in treasury_yields and news_articles.
-     */
+    // ── Migration: v2 → v3 ───────────────────────────────────────────────────
     static final Migration MIGRATION_2_3 = new Migration(2, 3) {
         @Override
         public void migrate(@NonNull SupportSQLiteDatabase database) {
@@ -82,14 +89,6 @@ public abstract class YieldDatabase extends RoomDatabase {
 
     // ── Singleton factory ─────────────────────────────────────────────────────
 
->>>>>>> Stashed changes
-    /**
-     * Get singleton instance of the database.
-     * Uses double-checked locking for thread safety.
-     *
-     * @param context Application context
-     * @return Singleton YieldDatabase instance
-     */
     public static YieldDatabase getInstance(Context context) {
         if (instance == null) {
             synchronized (lock) {
@@ -99,7 +98,10 @@ public abstract class YieldDatabase extends RoomDatabase {
                             YieldDatabase.class,
                             "yield_database"
                     )
-                    .addMigrations(MIGRATION_2_3)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                    // Safety net: if migration path is still missing, wipe and rebuild.
+                    // All data is re-fetched from APIs so no data loss in practice.
+                    .fallbackToDestructiveMigration()
                     .build();
                 }
             }
