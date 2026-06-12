@@ -11,4 +11,8 @@
     <string name="refresh">Refresh</string>
     <string name="loading">Loading data…</string>
     <string name="no_data">No data yet. Pull to refresh.</string>
-    <string n
+    <string name="clear_cache">Clear Cache</string>
+    <string name="clear_cache_confirm">Delete all locally cached economic data? It will be re-downloaded on the next refresh.</string>
+    <string name="cache_cleared">Cache cleared</string>
+    <string name="refreshing_data">Refreshing data…</string>
+</resources>

@@ -179,4 +179,32 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) { getMenuInflater().inflate(R.menu.main_menu, menu); return true; }
 
     @Override
-    public boolean onOptionsItemSelected(@NonNul
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if (item.getItemId() == R.id.action_refresh) {
+            // Refresh live dashboard data AND force-refresh the local cache
+            android.widget.Toast.makeText(this, R.string.refreshing_data,
+                    android.widget.Toast.LENGTH_SHORT).show();
+            viewModel.fetchAllData();
+            CacheManager.forceRefreshAll(this, success ->
+                    runOnUiThread(this::updateHeader));
+            return true;
+        }
+        if (item.getItemId() == R.id.action_clear_cache) {
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.clear_cache)
+                    .setMessage(R.string.clear_cache_confirm)
+                    .setPositiveButton(android.R.string.ok, (d, w) ->
+                            CacheManager.clearAllCaches(this, success ->
+                                    runOnUiThread(() -> {
+                                        android.widget.Toast.makeText(this,
+                                                R.string.cache_cleared,
+                                                android.widget.Toast.LENGTH_SHORT).show();
+                                        updateHeader();
+                                    })))
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+}

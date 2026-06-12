@@ -19,10 +19,15 @@ import com.economic.dashboard.models.TreasuryYield;
  * v1 → original treasury yields only
  * v2 → added news_articles table
  * v3 → added economic_history table (2-year historical data for AI Analyst)
+ * v4 → rebuild economic_history so its schema matches the entity exactly.
+ *      (The v2→v3 migration created the columns with DEFAULT clauses the entity
+ *       doesn't declare, which tripped Room's identity-hash check. Bumping the
+ *       version lets destructive fallback recreate the table cleanly. All tables
+ *       are re-fetchable API caches, so no real data is lost.)
  */
 @Database(
     entities = {TreasuryYield.class, NewsArticle.class, EconomicHistoryEntry.class},
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 public abstract class YieldDatabase extends RoomDatabase {

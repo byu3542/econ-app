@@ -8,4 +8,9 @@
         android:icon="@drawable/ic_refresh"
         app:showAsAction="always" />
 
-    <ite
+    <item
+        android:id="@+id/action_clear_cache"
+        android:title="@string/clear_cache"
+        app:showAsAction="never" />
+
+</menu>

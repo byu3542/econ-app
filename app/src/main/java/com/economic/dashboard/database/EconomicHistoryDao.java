@@ -71,4 +71,28 @@ public interface EconomicHistoryDao {
     @Query("DELETE FROM economic_history WHERE seriesId = :seriesId")
     void deleteSeries(String seriesId);
 
- 
+    // ── Cleanup & cache statistics (used by CacheManager / CacheCleanupWorker) ──
+
+    /**
+     * Delete rows whose observation date is older than the cutoff.
+     * Dates are stored as "YYYY-MM-DD" strings, so lexicographic comparison
+     * is equivalent to chronological comparison.
+     *
+     * @param cutoffDate e.g. "2024-04-12" (26 months before today)
+     * @return number of rows deleted
+     */
+    @Query("DELETE FROM economic_history WHERE date < :cutoffDate")
+    int deleteOlderThan(String cutoffDate);
+
+    /** Oldest observation date in the cache, or null if empty. */
+    @Query("SELECT MIN(date) FROM economic_history")
+    String getOldestDate();
+
+    /** Newest observation date in the cache, or null if empty. */
+    @Query("SELECT MAX(date) FROM economic_history")
+    String getNewestDate();
+
+    /** Number of distinct series currently cached. */
+    @Query("SELECT COUNT(DISTINCT seriesId) FROM economic_history")
+    int getSeriesCount();
+}

@@ -205,4 +205,57 @@ public class HistoricalContextBuilder {
         boolean first = true;
         for (Map.Entry<String, Double> m : byMonth.entrySet()) {
             if (!first) sb.append(" | ");
-       
+            sb.append(m.getKey()).append(' ')
+              .append(String.format(Locale.US, "%.2f", m.getValue()));
+            first = false;
+        }
+        sb.append('\n');
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // Helpers
+    // ──────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Compares the last 4 data points to the 4 before them and returns a
+     * directional label.  Falls back to "→ stable" for very small moves.
+     */
+    private static String trendArrow(List<EconomicHistoryEntry> rows) {
+        if (rows.size() < 8) {
+            // Not enough history — compare first vs last
+            double first = rows.get(0).value;
+            double last  = rows.get(rows.size() - 1).value;
+            double diff  = last - first;
+            if (Math.abs(diff) < 0.10) return "→ stable";
+            return diff > 0 ? "↑ rising" : "▼ declining";
+        }
+
+        // Compare avg of last 4 vs avg of preceding 4
+        double recentSum = 0, priorSum = 0;
+        int n = rows.size();
+        for (int i = n - 4; i < n;       i++) recentSum += rows.get(i).value;
+        for (int i = n - 8; i < n - 4;   i++) priorSum  += rows.get(i).value;
+        double diff = (recentSum - priorSum) / 4.0;
+
+        if (Math.abs(diff) < 0.10) return "→ stable";
+        return diff > 0 ? "↑ rising" : "▼ declining";
+    }
+
+    /**
+     * Convert "YYYY-MM-01" → "Q#'YY" label, e.g. "2024-07-01" → "Q3'24".
+     * Falls back to the raw date on parse error.
+     */
+    private static String dateToQuarterLabel(String date) {
+        if (date == null || date.length() < 7) return date;
+        try {
+            String yearStr  = date.substring(0, 4);
+            String monthStr = date.substring(5, 7);
+            int month  = Integer.parseInt(monthStr);
+            int quarter = (month - 1) / 3 + 1;
+            String yy  = yearStr.substring(2);
+            return "Q" + quarter + "'" + yy;
+        } catch (Exception e) {
+            return date;
+        }
+    }
+}

@@ -15,4 +15,20 @@ import com.economic.dashboard.workers.YieldRefreshScheduler;
  *   3. Background population/refresh of the 24-month history cache
  *      (no-op if cache is fresh — see CacheManager.STALE_AFTER_DAYS)
  */
-public clas
+public class EconomicDashboardApplication extends Application {
+    @Override
+    public void onCreate() {
+        super.onCreate();
+
+        // Schedule daily Treasury Yield refresh at 2:30 PM MST
+        // Safe to call multiple times (uses KEEP policy to prevent duplicates)
+        YieldRefreshScheduler.scheduleDailyYieldRefresh(this);
+
+        // Schedule weekly cache cleanup (KEEP policy — idempotent)
+        CacheCleanupWorker.scheduleWeekly(this);
+
+        // Populate/refresh the 24-month history cache in the background.
+        // Skips the network entirely if the cache is < 7 days old.
+        CacheManager.refreshIfStale(this, null);
+    }
+}

@@ -80,4 +80,6 @@ dependencies {
     // WorkManager (background refresh scheduling)
     implementation 'androidx.work:work-runtime:2.9.0'
 
- 
+    // Unit testing (JVM tests in app/src/test)
+    testImplementation 'junit:junit:4.13.2'
+}

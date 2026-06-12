@@ -432,4 +432,25 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
             double sv = spread.get(spread.size()-1).getValue();
             sb.append(String.format(Locale.US, " 10Y-2Y spread %.2f%%%s.", sv, sv < 0 ? " (inverted)" : ""));
         }
-   
+        sb.append(" Which of these readings stand out most, and what do they collectively signal about the near-term economic outlook?");
+        return sb.toString();
+    }
+
+    private String buildRecentNewsQuery() {
+        List<NewsItem> cached = NewsRepository.getInstance().getCachedItems();
+        if (cached.isEmpty()) return "What are the most important recent developments in the US economy that I should be aware of right now?";
+        StringBuilder sb = new StringBuilder("Based on the latest economic news headlines, what are the most significant stories right now and what do they signal for the economic outlook? Focus on the highest-impact items.");
+        int count = 0;
+        for (int tier = 2; tier >= 1 && count < 3; tier--) {
+            for (NewsItem item : cached) {
+                if (count >= 3) break;
+                if (item.impactLevel == tier && item.title != null) {
+                    sb.append(count == 0 ? " Recent headlines include: \"" : ", \"").append(item.title).append("\"");
+                    count++;
+                }
+            }
+        }
+        if (count > 0) sb.append(".");
+        return sb.toString();
+    }
+}
