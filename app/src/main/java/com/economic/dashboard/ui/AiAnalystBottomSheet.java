@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.economic.dashboard.R;
+import com.economic.dashboard.analyst.HistoricalContextBuilder;
 import com.economic.dashboard.analyst.NewsContextBuilder;
 import com.economic.dashboard.analyst.SmartPromptGenerator;
 import com.economic.dashboard.api.ApiConfig;
@@ -57,6 +58,14 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
     private PromptAdapter promptAdapter;
     private SmartPromptGenerator promptGenerator;
 
+    /**
+     * 24-month historical trend block built from the Room cache.
+     * Preloaded on a background thread in onViewCreated (Room queries are
+     * synchronous and must not run on the main thread), then injected into
+     * the system prompt by queryClaude(). Empty string if cache is empty.
+     */
+    private volatile String historicalContext = "";
+
     // ─── Convenience access to shared state in MainActivity ────────────────────
 
     private MainActivity host() { return (MainActivity) requireActivity(); }
@@ -96,6 +105,12 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
 
         rvChat.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvChat.setAdapter(chatAdapter());
+
+        // Preload the 24-month historical context from the Room cache so it's
+        // ready before the first question is sent (Room must stay off the
+        // main thread). Uses application context — safe if the sheet closes.
+        final android.content.Context appCtx = requireContext().getApplicationContext();
+        new Thread(() -> historicalContext = HistoricalContextBuilder.build(appCtx)).start();
 
         if (chatAdapter().getItemCount() > 0)
             rvChat.scrollToPosition(chatAdapter().getItemCount() - 1);
@@ -192,16 +207,19 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
             String newsContext = NewsContextBuilder.build(cachedNews);
 
             String systemPrompt = "You are an AI Economic Analyst embedded in the U.S. Economic Monitor app. "
-                    + "You have access to the following live data pulled directly from the app. "
-                    + "Always use these exact figures when answering questions — never substitute "
-                    + "general knowledge for values that appear in the data snapshot below. "
+                    + "You have access to the following live data pulled directly from the app, "
+                    + "plus 24 months of locally cached historical data (treasury yields, mortgage "
+                    + "rates, unemployment, GDP). Always use these exact figures when answering "
+                    + "questions — never substitute general knowledge for values that appear in "
+                    + "the data below. Use the historical series to discuss trends, compare current "
+                    + "values to past readings, and answer questions about specific past months. "
                     + "If a value is listed as 'Unavailable' it has not yet been fetched.\n\n"
                     + "FORMATTING RULES: Do NOT use markdown headers (##, ###, or # prefix). "
                     + "Do NOT use bullet lists with dashes or asterisks. "
                     + "Use short paragraphs and bold text (**word**) only for key figures or labels. "
                     + "Keep responses under 200 words unless the user explicitly asks for detail. "
                     + "When news headlines are provided, weave relevant recent developments into your analysis where appropriate.\n\n"
-                    + dataSnapshot + newsContext;
+                    + dataSnapshot + historicalContext + newsContext;
 
             JSONObject body = new JSONObject();
             body.put("model", "claude-haiku-4-5-20251001");
@@ -414,25 +432,4 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
             double sv = spread.get(spread.size()-1).getValue();
             sb.append(String.format(Locale.US, " 10Y-2Y spread %.2f%%%s.", sv, sv < 0 ? " (inverted)" : ""));
         }
-        sb.append(" Which of these readings stand out most, and what do they collectively signal about the near-term economic outlook?");
-        return sb.toString();
-    }
-
-    private String buildRecentNewsQuery() {
-        List<NewsItem> cached = NewsRepository.getInstance().getCachedItems();
-        if (cached.isEmpty()) return "What are the most important recent developments in the US economy that I should be aware of right now?";
-        StringBuilder sb = new StringBuilder("Based on the latest economic news headlines, what are the most significant stories right now and what do they signal for the economic outlook? Focus on the highest-impact items.");
-        int count = 0;
-        for (int tier = 2; tier >= 1 && count < 3; tier--) {
-            for (NewsItem item : cached) {
-                if (count >= 3) break;
-                if (item.impactLevel == tier && item.title != null) {
-                    sb.append(count == 0 ? " Recent headlines include: \"" : ", \"").append(item.title).append("\"");
-                    count++;
-                }
-            }
-        }
-        if (count > 0) sb.append(".");
-        return sb.toString();
-    }
-}
+   

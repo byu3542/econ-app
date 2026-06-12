@@ -8,8 +8,10 @@ import com.economic.dashboard.database.EconomicHistoryDao;
 import com.economic.dashboard.database.YieldDatabase;
 import com.economic.dashboard.models.EconomicHistoryEntry;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * Reads cached economic_history rows from Room and formats a compact
@@ -72,6 +74,17 @@ public class HistoricalContextBuilder {
             // ── GDP growth ────────────────────────────────────────────────────
             sb.append("\nGDP GROWTH — QoQ Annualized % (BEA quarterly)\n");
             appendGdpBlock(sb, dao);
+
+            // ── Full series detail (monthly resolution) ──────────────────────
+            // Gives the AI the actual time series, not just summary stats, so it
+            // can answer questions like "what was the 10Y yield last September?"
+            sb.append("\nFULL SERIES DETAIL — month-by-month, 24-month window");
+            sb.append(" (weekly series show the last reading of each month)\n");
+            appendMonthlySeries(sb, dao, HistoricalDataRepository.SERIES_10Y_TREASURY, "10Y Treasury %");
+            appendMonthlySeries(sb, dao, HistoricalDataRepository.SERIES_2Y_TREASURY,  "2Y Treasury %");
+            appendMonthlySeries(sb, dao, HistoricalDataRepository.SERIES_3M_TREASURY,  "3M T-Bill %");
+            appendMonthlySeries(sb, dao, HistoricalDataRepository.SERIES_MORTGAGE30,   "30-Yr Mortgage %");
+            appendMonthlySeries(sb, dao, HistoricalDataRepository.SERIES_UNEMPLOYMENT, "Unemployment %");
 
             return sb.toString();
 
@@ -168,50 +181,28 @@ public class HistoricalContextBuilder {
         }
     }
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // Helpers
-    // ──────────────────────────────────────────────────────────────────────────
-
     /**
-     * Compares the last 4 data points to the 4 before them and returns a
-     * directional label.  Falls back to "→ stable" for very small moves.
+     * Emits one line per series with the last cached value of each month:
+     *   "10Y Treasury %: 2024-07 4.25 | 2024-08 3.92 | ... | 2026-06 4.41"
+     * Rows arrive sorted ASC by date, so the last value seen for a month wins.
      */
-    private static String trendArrow(List<EconomicHistoryEntry> rows) {
-        if (rows.size() < 8) {
-            // Not enough history — compare first vs last
-            double first = rows.get(0).value;
-            double last  = rows.get(rows.size() - 1).value;
-            double diff  = last - first;
-            if (Math.abs(diff) < 0.10) return "→ stable";
-            return diff > 0 ? "↑ rising" : "▼ declining";
+    private static void appendMonthlySeries(StringBuilder sb, EconomicHistoryDao dao,
+                                            String seriesId, String label) {
+        List<EconomicHistoryEntry> rows = dao.getSeriesSync(seriesId);
+        if (rows == null || rows.isEmpty()) return;
+
+        // LinkedHashMap preserves chronological order; later rows overwrite
+        // earlier ones within the same month (= last reading of the month).
+        Map<String, Double> byMonth = new LinkedHashMap<>();
+        for (EconomicHistoryEntry e : rows) {
+            if (e.date != null && e.date.length() >= 7) {
+                byMonth.put(e.date.substring(0, 7), e.value);
+            }
         }
+        if (byMonth.isEmpty()) return;
 
-        // Compare avg of last 4 vs avg of preceding 4
-        double recentSum = 0, priorSum = 0;
-        int n = rows.size();
-        for (int i = n - 4; i < n;       i++) recentSum += rows.get(i).value;
-        for (int i = n - 8; i < n - 4;   i++) priorSum  += rows.get(i).value;
-        double diff = (recentSum - priorSum) / 4.0;
-
-        if (Math.abs(diff) < 0.10) return "→ stable";
-        return diff > 0 ? "↑ rising" : "▼ declining";
-    }
-
-    /**
-     * Convert "YYYY-MM-01" → "Q#'YY" label, e.g. "2024-07-01" → "Q3'24".
-     * Falls back to the raw date on parse error.
-     */
-    private static String dateToQuarterLabel(String date) {
-        if (date == null || date.length() < 7) return date;
-        try {
-            String yearStr  = date.substring(0, 4);
-            String monthStr = date.substring(5, 7);
-            int month  = Integer.parseInt(monthStr);
-            int quarter = (month - 1) / 3 + 1;
-            String yy  = yearStr.substring(2);
-            return "Q" + quarter + "'" + yy;
-        } catch (Exception e) {
-            return date;
-        }
-    }
-}
+        sb.append(label).append(": ");
+        boolean first = true;
+        for (Map.Entry<String, Double> m : byMonth.entrySet()) {
+            if (!first) sb.append(" | ");
+       

@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.economic.dashboard.R;
+import com.economic.dashboard.cache.CacheManager;
 import com.economic.dashboard.models.ChatMessage;
 import com.economic.dashboard.news.NewsFragment;
 import com.economic.dashboard.news.NewsRepository;
@@ -164,7 +165,11 @@ public class MainActivity extends AppCompatActivity {
         int quarter = month <= 2 ? 1 : month <= 5 ? 2 : month <= 8 ? 3 : 4;
         TextView tvQuarter = findViewById(R.id.tvHeaderQuarter);
         if (tvQuarter != null) tvQuarter.setText("Q" + quarter + " " + year);
-        if (tvHeaderSub != null) tvHeaderSub.setText("Updated " + new SimpleDateFormat("MMM d, hh:mm a", Locale.US).format(new Date()));
+        // Cache status indicator: show real cache age, not the wall clock
+        if (tvHeaderSub != null) {
+            CacheManager.getStatus(this, status ->
+                    runOnUiThread(() -> tvHeaderSub.setText(status.toDisplayString())));
+        }
     }
 
     @Override
@@ -174,8 +179,4 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) { getMenuInflater().inflate(R.menu.main_menu, menu); return true; }
 
     @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if (item.getItemId() == R.id.action_refresh) { viewModel.fetchAllData(); return true; }
-        return super.onOptionsItemSelected(item);
-    }
-}
+    public boolean onOptionsItemSelected(@NonNul

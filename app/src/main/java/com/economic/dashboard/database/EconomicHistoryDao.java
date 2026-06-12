@@ -70,4 +70,5 @@ public interface EconomicHistoryDao {
      */
     @Query("DELETE FROM economic_history WHERE seriesId = :seriesId")
     void deleteSeries(String seriesId);
-}
+
+ 
