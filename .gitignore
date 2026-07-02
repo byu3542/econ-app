@@ -16,3 +16,7 @@ app/build/
 # Keystore files
 *.jks
 *.keystore
+
+# Local shortcuts / tool caches
+*.lnk
+proxy/.wrangler/
