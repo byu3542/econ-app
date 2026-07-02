@@ -15,11 +15,14 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import com.economic.dashboard.databinding.FragmentNewsBinding;
 import com.economic.dashboard.R;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 
 public class NewsFragment extends Fragment {
+
+    private FragmentNewsBinding binding;
 
     private NewsViewModel        viewModel;
     private NewsAdapter          adapter;
@@ -32,7 +35,8 @@ public class NewsFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_news, container, false);
+        binding = FragmentNewsBinding.inflate(inflater, container, false);
+        return binding.getRoot();
     }
 
     @Override
@@ -42,22 +46,22 @@ public class NewsFragment extends Fragment {
         viewModel = new ViewModelProvider(requireActivity()).get(NewsViewModel.class);
 
         // ─── RecyclerView ────────────────────────────────────────────────────────
-        RecyclerView recycler = view.findViewById(R.id.recycler_news);
+        RecyclerView recycler = binding.recyclerNews;
         adapter = new NewsAdapter();
         recycler.setLayoutManager(new LinearLayoutManager(requireContext()));
         recycler.setAdapter(adapter);
 
         // ─── Progress / Error views ──────────────────────────────────────────────
-        progressBar = view.findViewById(R.id.progress_news);
-        tvError     = view.findViewById(R.id.text_news_error);
+        progressBar = binding.progressNews;
+        tvError     = binding.textNewsError;
 
         // ─── Swipe-to-refresh ────────────────────────────────────────────────────
-        swipeRefresh = view.findViewById(R.id.swipe_refresh_news);
+        swipeRefresh = binding.swipeRefreshNews;
         swipeRefresh.setColorSchemeColors(0xFFc9a84c);
         swipeRefresh.setOnRefreshListener(() -> viewModel.loadNews(true));
 
         // ─── Filter chips ────────────────────────────────────────────────────────
-        ChipGroup chipGroup = view.findViewById(R.id.chip_group_filter);
+        ChipGroup chipGroup = binding.chipGroupFilter;
         chipGroup.setOnCheckedStateChangeListener((group, checkedIds) -> {
             if (checkedIds.isEmpty()) {
                 viewModel.setFilter(null);
@@ -97,5 +101,11 @@ public class NewsFragment extends Fragment {
 
         // ─── Initial load ────────────────────────────────────────────────────────
         viewModel.loadNews(false);
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
     }
 }

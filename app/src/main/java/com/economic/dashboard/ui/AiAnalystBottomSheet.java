@@ -21,6 +21,7 @@ import com.economic.dashboard.analyst.HistoricalContextBuilder;
 import com.economic.dashboard.analyst.NewsContextBuilder;
 import com.economic.dashboard.analyst.SmartPromptGenerator;
 import com.economic.dashboard.api.ApiConfig;
+import com.economic.dashboard.databinding.DialogAiChatBinding;
 import com.economic.dashboard.api.NewsArticleRepository;
 import com.economic.dashboard.models.NewsArticle;
 import com.economic.dashboard.models.ChatMessage;
@@ -50,6 +51,8 @@ import okhttp3.Response;
 public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
 
     public static final String TAG = "AiAnalystBottomSheet";
+
+    private DialogAiChatBinding binding;
 
     // ─── News & Prompts Integration ───────────────────────────────────────────
     private NewsArticleRepository articleRepository;
@@ -85,23 +88,24 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.dialog_ai_chat, container, false);
+        binding = DialogAiChatBinding.inflate(inflater, container, false);
+        return binding.getRoot();
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        RecyclerView rvChat = view.findViewById(R.id.rvChat);
-        EditText     etMsg  = view.findViewById(R.id.etMessage);
-        ImageButton  btnSend = view.findViewById(R.id.btnSend);
-        View         btnClose = view.findViewById(R.id.btnClose);
+        RecyclerView rvChat = binding.rvChat;
+        EditText     etMsg  = binding.etMessage;
+        ImageButton  btnSend = binding.btnSend;
+        View         btnClose = binding.btnClose;
 
-        View chipYieldCurve    = view.findViewById(R.id.chipYieldCurve);
-        View chipRecession     = view.findViewById(R.id.chipRecession);
-        View chipWages         = view.findViewById(R.id.chipWages);
-        View chipRecentUpdates = view.findViewById(R.id.chipRecentUpdates);
-        View chipRecentNews    = view.findViewById(R.id.chipRecentNews);
+        View chipYieldCurve    = binding.chipYieldCurve;
+        View chipRecession     = binding.chipRecession;
+        View chipWages         = binding.chipWages;
+        View chipRecentUpdates = binding.chipRecentUpdates;
+        View chipRecentNews    = binding.chipRecentNews;
 
         rvChat.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvChat.setAdapter(chatAdapter());
@@ -452,5 +456,11 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
         }
         if (count > 0) sb.append(".");
         return sb.toString();
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
     }
 }

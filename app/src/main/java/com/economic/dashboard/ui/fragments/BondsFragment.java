@@ -14,7 +14,7 @@ import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.economic.dashboard.R;
+import com.economic.dashboard.databinding.FragmentBondsBinding;
 import com.economic.dashboard.models.EconomicDataPoint;
 import com.economic.dashboard.ui.EconomicViewModel;
 import com.github.mikephil.charting.charts.LineChart;
@@ -33,6 +33,7 @@ import java.util.Locale;
 public class BondsFragment extends Fragment {
 
     private EconomicViewModel viewModel;
+    private FragmentBondsBinding binding;
     private CardView cardBaa, cardHy;
     private TextView tvBaaValue, tvBaaStatus, tvHyValue, tvHyStatus;
     private View viewBaaDot, viewHyDot;
@@ -45,7 +46,8 @@ public class BondsFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_bonds, container, false);
+        binding = FragmentBondsBinding.inflate(inflater, container, false);
+        return binding.getRoot();
     }
 
     @Override
@@ -53,11 +55,11 @@ public class BondsFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         viewModel = new ViewModelProvider(requireActivity()).get(EconomicViewModel.class);
 
-        cardBaa = view.findViewById(R.id.cardBaa); cardHy = view.findViewById(R.id.cardHy);
-        tvBaaValue = view.findViewById(R.id.tvBaaValue); tvBaaStatus = view.findViewById(R.id.tvBaaStatus);
-        tvHyValue = view.findViewById(R.id.tvHyValue); tvHyStatus = view.findViewById(R.id.tvHyStatus);
-        viewBaaDot = view.findViewById(R.id.viewBaaDot); viewHyDot = view.findViewById(R.id.viewHyDot);
-        swappableChart = view.findViewById(R.id.swappableChart); tvChartTitle = view.findViewById(R.id.tvChartTitle);
+        cardBaa = binding.cardBaa; cardHy = binding.cardHy;
+        tvBaaValue = binding.tvBaaValue; tvBaaStatus = binding.tvBaaStatus;
+        tvHyValue = binding.tvHyValue; tvHyStatus = binding.tvHyStatus;
+        viewBaaDot = binding.viewBaaDot; viewHyDot = binding.viewHyDot;
+        swappableChart = binding.swappableChart; tvChartTitle = binding.tvChartTitle;
 
         styleChart(swappableChart); addAllBenchmarks(swappableChart);
 
@@ -175,5 +177,11 @@ public class BondsFragment extends Fragment {
         if (dot == null) return;
         GradientDrawable gd = new GradientDrawable(); gd.setShape(GradientDrawable.OVAL); gd.setColor(color);
         dot.setBackground(gd);
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
     }
 }

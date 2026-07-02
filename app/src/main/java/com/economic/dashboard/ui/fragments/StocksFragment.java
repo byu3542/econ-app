@@ -14,7 +14,7 @@ import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.economic.dashboard.R;
+import com.economic.dashboard.databinding.FragmentStocksBinding;
 import com.economic.dashboard.models.EconomicDataPoint;
 import com.economic.dashboard.ui.EconomicViewModel;
 import com.github.mikephil.charting.charts.LineChart;
@@ -33,6 +33,7 @@ import java.util.Locale;
 public class StocksFragment extends Fragment {
 
     private EconomicViewModel viewModel;
+    private FragmentStocksBinding binding;
     private CardView cardSp500, cardNasdaq, cardVix;
     private TextView tvSp500Value, tvSp500Status, tvNasdaqValue, tvNasdaqStatus, tvVixValue, tvVixStatus;
     private View viewSp500Dot, viewNasdaqDot, viewVixDot;
@@ -46,7 +47,8 @@ public class StocksFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_stocks, container, false);
+        binding = FragmentStocksBinding.inflate(inflater, container, false);
+        return binding.getRoot();
     }
 
     @Override
@@ -54,20 +56,20 @@ public class StocksFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         viewModel = new ViewModelProvider(requireActivity()).get(EconomicViewModel.class);
 
-        cardSp500 = view.findViewById(R.id.cardSp500);
-        cardNasdaq = view.findViewById(R.id.cardNasdaq);
-        cardVix = view.findViewById(R.id.cardVix);
-        tvSp500Value = view.findViewById(R.id.tvSp500Value);
-        tvSp500Status = view.findViewById(R.id.tvSp500Status);
-        tvNasdaqValue = view.findViewById(R.id.tvNasdaqValue);
-        tvNasdaqStatus = view.findViewById(R.id.tvNasdaqStatus);
-        tvVixValue = view.findViewById(R.id.tvVixValue);
-        tvVixStatus = view.findViewById(R.id.tvVixStatus);
-        viewSp500Dot = view.findViewById(R.id.viewSp500Dot);
-        viewNasdaqDot = view.findViewById(R.id.viewNasdaqDot);
-        viewVixDot = view.findViewById(R.id.viewVixDot);
-        swappableChart = view.findViewById(R.id.swappableChart);
-        tvChartTitle = view.findViewById(R.id.tvChartTitle);
+        cardSp500 = binding.cardSp500;
+        cardNasdaq = binding.cardNasdaq;
+        cardVix = binding.cardVix;
+        tvSp500Value = binding.tvSp500Value;
+        tvSp500Status = binding.tvSp500Status;
+        tvNasdaqValue = binding.tvNasdaqValue;
+        tvNasdaqStatus = binding.tvNasdaqStatus;
+        tvVixValue = binding.tvVixValue;
+        tvVixStatus = binding.tvVixStatus;
+        viewSp500Dot = binding.viewSp500Dot;
+        viewNasdaqDot = binding.viewNasdaqDot;
+        viewVixDot = binding.viewVixDot;
+        swappableChart = binding.swappableChart;
+        tvChartTitle = binding.tvChartTitle;
 
         styleChart(swappableChart);
         addVixBenchmarks(swappableChart);
@@ -219,5 +221,11 @@ public class StocksFragment extends Fragment {
 
     private String formatValueWithK(double value) {
         return value >= 10000 ? String.format(Locale.US, "%.0fK", value/1000) : String.format(Locale.US, "%.0f", value);
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
     }
 }

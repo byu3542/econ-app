@@ -14,7 +14,7 @@ import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.economic.dashboard.R;
+import com.economic.dashboard.databinding.FragmentHousingBinding;
 import com.economic.dashboard.models.EconomicDataPoint;
 import com.economic.dashboard.ui.EconomicViewModel;
 import com.github.mikephil.charting.charts.LineChart;
@@ -39,6 +39,8 @@ import java.util.Locale;
  * MBS holdings, and 30-Year Mortgage Rate.
  */
 public class HousingFragment extends Fragment {
+
+    private FragmentHousingBinding binding;
 
     private EconomicViewModel viewModel;
 
@@ -72,7 +74,8 @@ public class HousingFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_housing, container, false);
+        binding = FragmentHousingBinding.inflate(inflater, container, false);
+        return binding.getRoot();
     }
 
     @Override
@@ -81,35 +84,35 @@ public class HousingFragment extends Fragment {
         viewModel = new ViewModelProvider(requireActivity()).get(EconomicViewModel.class);
 
         // Housing Starts badge
-        tvStartsValue       = view.findViewById(R.id.tvStartsValue);
-        tvStartsStatus      = view.findViewById(R.id.tvStartsStatus);
-        viewStartsDot       = view.findViewById(R.id.viewStartsDot);
+        tvStartsValue       = binding.tvStartsValue;
+        tvStartsStatus      = binding.tvStartsStatus;
+        viewStartsDot       = binding.viewStartsDot;
 
         // Existing Home Sales badge
-        tvSalesValue        = view.findViewById(R.id.tvSalesValue);
-        tvSalesStatus       = view.findViewById(R.id.tvSalesStatus);
-        viewSalesDot        = view.findViewById(R.id.viewSalesDot);
+        tvSalesValue        = binding.tvSalesValue;
+        tvSalesStatus       = binding.tvSalesStatus;
+        viewSalesDot        = binding.viewSalesDot;
 
         // MBS Badge cards
-        badgeMortgage         = view.findViewById(R.id.badgeMortgage);
-        badgeBankMbs          = view.findViewById(R.id.badgeBankMbs);
-        badgeFedMbs           = view.findViewById(R.id.badgeFedMbs);
-        tvBadgeMortgageValue  = view.findViewById(R.id.tvBadgeMortgageValue);
-        tvBadgeBankMbsValue   = view.findViewById(R.id.tvBadgeBankMbsValue);
-        tvBadgeFedMbsValue    = view.findViewById(R.id.tvBadgeFedMbsValue);
-        tvBadgeMortgageStatus = view.findViewById(R.id.tvBadgeMortgageStatus);
-        tvBadgeBankMbsStatus  = view.findViewById(R.id.tvBadgeBankMbsStatus);
-        tvBadgeFedMbsStatus   = view.findViewById(R.id.tvBadgeFedMbsStatus);
-        viewBadgeMortgageDot  = view.findViewById(R.id.viewBadgeMortgageDot);
-        viewBadgeBankMbsDot   = view.findViewById(R.id.viewBadgeBankMbsDot);
-        viewBadgeFedMbsDot    = view.findViewById(R.id.viewBadgeFedMbsDot);
+        badgeMortgage         = binding.badgeMortgage;
+        badgeBankMbs          = binding.badgeBankMbs;
+        badgeFedMbs           = binding.badgeFedMbs;
+        tvBadgeMortgageValue  = binding.tvBadgeMortgageValue;
+        tvBadgeBankMbsValue   = binding.tvBadgeBankMbsValue;
+        tvBadgeFedMbsValue    = binding.tvBadgeFedMbsValue;
+        tvBadgeMortgageStatus = binding.tvBadgeMortgageStatus;
+        tvBadgeBankMbsStatus  = binding.tvBadgeBankMbsStatus;
+        tvBadgeFedMbsStatus   = binding.tvBadgeFedMbsStatus;
+        viewBadgeMortgageDot  = binding.viewBadgeMortgageDot;
+        viewBadgeBankMbsDot   = binding.viewBadgeBankMbsDot;
+        viewBadgeFedMbsDot    = binding.viewBadgeFedMbsDot;
 
         // Swappable chart + title
-        chartSwappable   = view.findViewById(R.id.chartSwappable);
-        tvSwappableTitle = view.findViewById(R.id.tvSwappableTitle);
+        chartSwappable   = binding.chartSwappable;
+        tvSwappableTitle = binding.tvSwappableTitle;
 
         // MBS dual-axis chart
-        chartMbsMortgage = view.findViewById(R.id.chartMbsMortgage);
+        chartMbsMortgage = binding.chartMbsMortgage;
 
         // Style swappable chart (dark theme)
         styleSwappableChart();
@@ -608,5 +611,11 @@ public class HousingFragment extends Fragment {
         gd.setShape(GradientDrawable.OVAL);
         gd.setColor(color);
         dot.setBackground(gd);
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
     }
 }

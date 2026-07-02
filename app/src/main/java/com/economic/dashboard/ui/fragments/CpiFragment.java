@@ -15,6 +15,7 @@ import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.economic.dashboard.databinding.FragmentCpiBinding;
 import com.economic.dashboard.R;
 import com.economic.dashboard.models.EconomicDataPoint;
 import com.economic.dashboard.ui.EconomicViewModel;
@@ -31,6 +32,8 @@ import java.util.Locale;
 
 public class CpiFragment extends Fragment {
 
+    private FragmentCpiBinding binding;
+
     private EconomicViewModel viewModel;
     private LineChart cpiChart;
     private LineChart cpiWChart;
@@ -42,7 +45,8 @@ public class CpiFragment extends Fragment {
     @Nullable @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_cpi, container, false);
+        binding = FragmentCpiBinding.inflate(inflater, container, false);
+        return binding.getRoot();
     }
 
     @Override
@@ -50,14 +54,14 @@ public class CpiFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         viewModel = new ViewModelProvider(requireActivity()).get(EconomicViewModel.class);
 
-        cpiChart  = view.findViewById(R.id.cpiUChart);
-        cpiWChart = view.findViewById(R.id.cpiWChart);
+        cpiChart  = binding.cpiUChart;
+        cpiWChart = binding.cpiWChart;
         
-        cardCpiYoY     = view.findViewById(R.id.cardCpiYoY);
-        tvCpiYoYValue  = view.findViewById(R.id.tvCpiYoYValue);
-        tvCpiYoYDate   = view.findViewById(R.id.tvCpiYoYDate);
-        tvCpiYoYStatus = view.findViewById(R.id.tvCpiYoYStatus);
-        viewCpiIndicatorDot = view.findViewById(R.id.viewCpiIndicatorDot);
+        cardCpiYoY     = binding.cardCpiYoY;
+        tvCpiYoYValue  = binding.tvCpiYoYValue;
+        tvCpiYoYDate   = binding.tvCpiYoYDate;
+        tvCpiYoYStatus = binding.tvCpiYoYStatus;
+        viewCpiIndicatorDot = binding.viewCpiIndicatorDot;
 
         ChartHelper.styleLineChart(cpiChart,  "Consumer Price Index (CPI-U All Items)", "Month", "Index Value");
         ChartHelper.styleLineChart(cpiWChart, "CPI-W All Items",                         "Month", "Index Value");
@@ -184,5 +188,11 @@ public class CpiFragment extends Fragment {
 
         chart.setData(new LineData(dataSet));
         chart.invalidate();
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
     }
 }

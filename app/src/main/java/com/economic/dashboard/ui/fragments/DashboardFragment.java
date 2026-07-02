@@ -15,6 +15,7 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.economic.dashboard.R;
+import com.economic.dashboard.databinding.FragmentDashboardBinding;
 import com.economic.dashboard.models.EconomicDataPoint;
 import com.economic.dashboard.ui.EconomicViewModel;
 import com.economic.dashboard.ui.MainActivity;
@@ -25,6 +26,7 @@ import java.util.Locale;
 public class DashboardFragment extends Fragment {
 
     private EconomicViewModel viewModel;
+    private FragmentDashboardBinding binding;
 
     private View cardUnemployment, cardLabor, cardCPI, cardHourlyWage, cardMortgage, cardVix;
     // Fed funds hero views — bound directly so they never fail silently
@@ -36,7 +38,8 @@ public class DashboardFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_dashboard, container, false);
+        binding = FragmentDashboardBinding.inflate(inflater, container, false);
+        return binding.getRoot();
     }
 
     @Override
@@ -51,15 +54,15 @@ public class DashboardFragment extends Fragment {
     }
 
     private void bindViews(View v) {
-        swipeRefresh = v.findViewById(R.id.swipeRefresh);
+        swipeRefresh = binding.swipeRefresh;
 
         // KPI badges
-        cardHourlyWage   = v.findViewById(R.id.cardHourlyWage);
-        cardLabor        = v.findViewById(R.id.cardLabor);
-        cardCPI          = v.findViewById(R.id.cardCPI);
-        cardUnemployment = v.findViewById(R.id.cardUnemployment);
-        cardMortgage     = v.findViewById(R.id.cardMortgage);
-        cardVix          = v.findViewById(R.id.cardVix);
+        cardHourlyWage   = binding.cardHourlyWage;
+        cardLabor        = binding.cardLabor;
+        cardCPI          = binding.cardCPI;
+        cardUnemployment = binding.cardUnemployment;
+        cardMortgage     = binding.cardMortgage;
+        cardVix          = binding.cardVix;
 
         setupCardLabel(cardHourlyWage,   "GDP GROWTH");
         setupCardLabel(cardLabor,        "CPI-U YOY");
@@ -329,4 +332,10 @@ public class DashboardFragment extends Fragment {
 
     @Override
     public void onResume() { super.onResume(); }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
+    }
 }

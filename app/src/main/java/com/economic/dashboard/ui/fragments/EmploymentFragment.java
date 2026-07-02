@@ -14,7 +14,7 @@ import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.economic.dashboard.R;
+import com.economic.dashboard.databinding.FragmentEmploymentBinding;
 import com.economic.dashboard.models.EconomicDataPoint;
 import com.economic.dashboard.ui.EconomicViewModel;
 import com.github.mikephil.charting.charts.LineChart;
@@ -31,6 +31,8 @@ import java.util.List;
 import java.util.Locale;
 
 public class EmploymentFragment extends Fragment {
+
+    private FragmentEmploymentBinding binding;
 
     private EconomicViewModel viewModel;
     private LineChart swappableChart;
@@ -49,7 +51,8 @@ public class EmploymentFragment extends Fragment {
     @Nullable @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_employment, container, false);
+        binding = FragmentEmploymentBinding.inflate(inflater, container, false);
+        return binding.getRoot();
     }
 
     @Override
@@ -57,8 +60,8 @@ public class EmploymentFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         viewModel = new ViewModelProvider(requireActivity()).get(EconomicViewModel.class);
 
-        swappableChart = view.findViewById(R.id.swappableChart);
-        tvChartTitle = view.findViewById(R.id.tvChartTitle);
+        swappableChart = binding.swappableChart;
+        tvChartTitle = binding.tvChartTitle;
 
         styleChart(swappableChart);
         addEmploymentLimitLines(swappableChart);
@@ -69,16 +72,16 @@ public class EmploymentFragment extends Fragment {
             }
         });
 
-        cardUnemploymentStatus = view.findViewById(R.id.cardUnemploymentStatus);
-        tvUnempValue = view.findViewById(R.id.tvUnempValue);
-        tvUnempStatus = view.findViewById(R.id.tvUnempStatus);
-        tvUnempLowInfo = view.findViewById(R.id.tvUnempLowInfo);
-        viewUnempIndicatorDot = view.findViewById(R.id.viewUnempIndicatorDot);
+        cardUnemploymentStatus = binding.cardUnemploymentStatus;
+        tvUnempValue = binding.tvUnempValue;
+        tvUnempStatus = binding.tvUnempStatus;
+        tvUnempLowInfo = binding.tvUnempLowInfo;
+        viewUnempIndicatorDot = binding.viewUnempIndicatorDot;
 
-        cardLaborParticipation = view.findViewById(R.id.cardLaborParticipation);
-        tvLaborValue = view.findViewById(R.id.tvLaborValue);
-        tvLaborStatus = view.findViewById(R.id.tvLaborStatus);
-        viewLaborIndicatorDot = view.findViewById(R.id.viewLaborIndicatorDot);
+        cardLaborParticipation = binding.cardLaborParticipation;
+        tvLaborValue = binding.tvLaborValue;
+        tvLaborStatus = binding.tvLaborStatus;
+        viewLaborIndicatorDot = binding.viewLaborIndicatorDot;
 
         cardUnemploymentStatus.setOnClickListener(v -> {
             activeCard = "unemployment"; setActiveCard("unemployment"); buildSwappableChart();
@@ -219,5 +222,11 @@ public class EmploymentFragment extends Fragment {
         YAxis y = chart.getAxisLeft();
         y.setTextColor(Color.parseColor("#8899BB")); y.setTextSize(10f); y.setDrawGridLines(true); y.setGridColor(grid);
         chart.getAxisRight().setEnabled(false);
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
     }
 }

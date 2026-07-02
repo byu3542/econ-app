@@ -15,6 +15,7 @@ import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.economic.dashboard.databinding.FragmentInflationBinding;
 import com.economic.dashboard.R;
 import com.economic.dashboard.models.EconomicDataPoint;
 import com.economic.dashboard.ui.EconomicViewModel;
@@ -32,6 +33,8 @@ import java.util.List;
 import java.util.Locale;
 
 public class InflationFragment extends Fragment {
+
+    private FragmentInflationBinding binding;
 
     private EconomicViewModel viewModel;
 
@@ -55,7 +58,8 @@ public class InflationFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_inflation, container, false);
+        binding = FragmentInflationBinding.inflate(inflater, container, false);
+        return binding.getRoot();
     }
 
     @Override
@@ -63,25 +67,25 @@ public class InflationFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         viewModel = new ViewModelProvider(requireActivity()).get(EconomicViewModel.class);
 
-        cardPceStatus   = view.findViewById(R.id.cardPceStatus);
-        tvPceValue      = view.findViewById(R.id.tvPceValue);
-        tvPceStatus     = view.findViewById(R.id.tvPceStatus);
-        tvPcePercentile = view.findViewById(R.id.tvPcePercentile);
-        viewPceDot      = view.findViewById(R.id.viewPceDot);
+        cardPceStatus   = binding.cardPceStatus;
+        tvPceValue      = binding.tvPceValue;
+        tvPceStatus     = binding.tvPceStatus;
+        tvPcePercentile = binding.tvPcePercentile;
+        viewPceDot      = binding.viewPceDot;
 
-        cardCpiYoY      = view.findViewById(R.id.cardCpiYoY);
-        tvCpiYoYValue   = view.findViewById(R.id.tvCpiYoYValue);
-        tvCpiYoYStatus  = view.findViewById(R.id.tvCpiYoYStatus);
-        tvCpiPercentile = view.findViewById(R.id.tvCpiPercentile);
-        viewCpiDot      = view.findViewById(R.id.viewCpiIndicatorDot);
+        cardCpiYoY      = binding.cardCpiYoY;
+        tvCpiYoYValue   = binding.tvCpiYoYValue;
+        tvCpiYoYStatus  = binding.tvCpiYoYStatus;
+        tvCpiPercentile = binding.tvCpiPercentile;
+        viewCpiDot      = binding.viewCpiIndicatorDot;
 
-        cardWageYoY     = view.findViewById(R.id.cardWageYoY);
-        tvWageYoYValue  = view.findViewById(R.id.tvWageYoYValue);
-        tvWageYoYStatus = view.findViewById(R.id.tvWageYoYStatus);
-        viewWageDot     = view.findViewById(R.id.viewWageIndicatorDot);
+        cardWageYoY     = binding.cardWageYoY;
+        tvWageYoYValue  = binding.tvWageYoYValue;
+        tvWageYoYStatus = binding.tvWageYoYStatus;
+        viewWageDot     = binding.viewWageIndicatorDot;
 
-        chartPceCpi     = view.findViewById(R.id.chartPceCpi);
-        chartComparison = view.findViewById(R.id.comparisonChart);
+        chartPceCpi     = binding.chartPceCpi;
+        chartComparison = binding.comparisonChart;
 
         styleChart(chartPceCpi);
         styleChart(chartComparison);
@@ -322,5 +326,11 @@ public class InflationFragment extends Fragment {
         YAxis y = chart.getAxisLeft();
         y.setTextColor(Color.parseColor("#8899BB")); y.setTextSize(10f); y.setDrawGridLines(true); y.setGridColor(grid);
         chart.getAxisRight().setEnabled(false);
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
     }
 }

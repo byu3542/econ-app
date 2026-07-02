@@ -11,7 +11,7 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.viewpager2.widget.ViewPager2;
 
-import com.economic.dashboard.R;
+import com.economic.dashboard.databinding.FragmentMarketsBinding;
 import com.economic.dashboard.ui.EconomicViewModel;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
@@ -19,8 +19,7 @@ import com.google.android.material.tabs.TabLayoutMediator;
 public class MarketsFragment extends Fragment {
 
     private EconomicViewModel viewModel;
-    private TabLayout tabLayout;
-    private ViewPager2 viewPager;
+    private FragmentMarketsBinding binding;
     private MarketsPagerAdapter pagerAdapter;
 
     @Nullable
@@ -28,7 +27,8 @@ public class MarketsFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_markets, container, false);
+        binding = FragmentMarketsBinding.inflate(inflater, container, false);
+        return binding.getRoot();
     }
 
     @Override
@@ -37,8 +37,8 @@ public class MarketsFragment extends Fragment {
 
         viewModel = new ViewModelProvider(requireActivity()).get(EconomicViewModel.class);
 
-        tabLayout = view.findViewById(R.id.tabLayout);
-        viewPager = view.findViewById(R.id.viewPager);
+        TabLayout tabLayout = binding.tabLayout;
+        ViewPager2 viewPager = binding.viewPager;
 
         pagerAdapter = new MarketsPagerAdapter(this);
         viewPager.setAdapter(pagerAdapter);
@@ -52,5 +52,11 @@ public class MarketsFragment extends Fragment {
                 default: tab.setText(""); break;
             }
         }).attach();
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
     }
 }

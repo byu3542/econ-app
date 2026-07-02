@@ -12,6 +12,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.economic.dashboard.databinding.FragmentYieldsBinding;
 import com.economic.dashboard.R;
 import com.economic.dashboard.models.EconomicDataPoint;
 import com.economic.dashboard.ui.EconomicViewModel;
@@ -29,6 +30,8 @@ import java.util.Locale;
 
 public class YieldsFragment extends Fragment {
 
+    private FragmentYieldsBinding binding;
+
     private EconomicViewModel viewModel;
     private LineChart yieldCurveChart;
     private View row1M, row3M, row2Y, row10Y, row30Y;
@@ -37,7 +40,8 @@ public class YieldsFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_yields, container, false);
+        binding = FragmentYieldsBinding.inflate(inflater, container, false);
+        return binding.getRoot();
     }
 
     @Override
@@ -45,7 +49,7 @@ public class YieldsFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         viewModel = new ViewModelProvider(requireActivity()).get(EconomicViewModel.class);
 
-        yieldCurveChart = view.findViewById(R.id.yieldCurveChart);
+        yieldCurveChart = binding.yieldCurveChart;
         styleChart(yieldCurveChart);
         yieldCurveChart.getAxisLeft().setValueFormatter(new ValueFormatter() {
             @Override public String getFormattedValue(float value) {
@@ -53,11 +57,11 @@ public class YieldsFragment extends Fragment {
             }
         });
 
-        row1M  = view.findViewById(R.id.row1M);
-        row3M  = view.findViewById(R.id.row3M);
-        row2Y  = view.findViewById(R.id.row2Y);
-        row10Y = view.findViewById(R.id.row10Y);
-        row30Y = view.findViewById(R.id.row30Y);
+        row1M  = binding.row1M;
+        row3M  = binding.row3M;
+        row2Y  = binding.row2Y;
+        row10Y = binding.row10Y;
+        row30Y = binding.row30Y;
         setupTreasuryRow(row1M,  "1 Month");
         setupTreasuryRow(row3M,  "3 Month");
         setupTreasuryRow(row2Y,  "2 Year");
@@ -146,5 +150,11 @@ public class YieldsFragment extends Fragment {
         YAxis y = chart.getAxisLeft();
         y.setTextColor(Color.parseColor("#8899BB")); y.setTextSize(10f); y.setDrawGridLines(true); y.setGridColor(grid);
         chart.getAxisRight().setEnabled(false);
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
     }
 }

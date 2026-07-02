@@ -15,6 +15,7 @@ import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.economic.dashboard.databinding.FragmentWagesBinding;
 import com.economic.dashboard.R;
 import com.economic.dashboard.models.EconomicDataPoint;
 import com.economic.dashboard.ui.EconomicViewModel;
@@ -31,6 +32,8 @@ import java.util.Locale;
 
 public class WagesFragment extends Fragment {
 
+    private FragmentWagesBinding binding;
+
     private EconomicViewModel viewModel;
     private LineChart hourlyWageChart;
     private LineChart comparisonChart;
@@ -42,7 +45,8 @@ public class WagesFragment extends Fragment {
     @Nullable @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_wages, container, false);
+        binding = FragmentWagesBinding.inflate(inflater, container, false);
+        return binding.getRoot();
     }
 
     @Override
@@ -50,13 +54,13 @@ public class WagesFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         viewModel = new ViewModelProvider(requireActivity()).get(EconomicViewModel.class);
 
-        hourlyWageChart = view.findViewById(R.id.hourlyWageChart);
-        comparisonChart = view.findViewById(R.id.comparisonChart);
+        hourlyWageChart = binding.hourlyWageChart;
+        comparisonChart = binding.comparisonChart;
         
-        cardWageYoY     = view.findViewById(R.id.cardWageYoY);
-        tvWageYoYValue  = view.findViewById(R.id.tvWageYoYValue);
-        tvWageYoYStatus = view.findViewById(R.id.tvWageYoYStatus);
-        viewWageIndicatorDot = view.findViewById(R.id.viewWageIndicatorDot);
+        cardWageYoY     = binding.cardWageYoY;
+        tvWageYoYValue  = binding.tvWageYoYValue;
+        tvWageYoYStatus = binding.tvWageYoYStatus;
+        viewWageIndicatorDot = binding.viewWageIndicatorDot;
 
         ChartHelper.styleLineChart(hourlyWageChart, "Average Hourly Earnings (Private Sector)", "Month", "Wage ($)");
         ChartHelper.styleLineChart(comparisonChart,  "Inflation vs Wage Growth (Indexed to 100)", "Month", "Index");
@@ -272,5 +276,11 @@ public class WagesFragment extends Fragment {
         LineData lineData = new LineData(cpiSet, wageSet);
         comparisonChart.setData(lineData);
         comparisonChart.invalidate();
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
     }
 }

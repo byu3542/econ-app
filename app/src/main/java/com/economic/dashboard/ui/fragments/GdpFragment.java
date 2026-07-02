@@ -15,6 +15,7 @@ import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.economic.dashboard.databinding.FragmentGdpBinding;
 import com.economic.dashboard.R;
 import com.economic.dashboard.models.EconomicDataPoint;
 import com.economic.dashboard.ui.EconomicViewModel;
@@ -32,6 +33,8 @@ import java.util.Locale;
 
 public class GdpFragment extends Fragment {
 
+    private FragmentGdpBinding binding;
+
     private EconomicViewModel viewModel;
     private LineChart gdpChart;
     private TextView tvGdpLatest, tvGdpDesc, tvGdpStatusText;
@@ -44,7 +47,8 @@ public class GdpFragment extends Fragment {
     @Nullable @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_gdp, container, false);
+        binding = FragmentGdpBinding.inflate(inflater, container, false);
+        return binding.getRoot();
     }
 
     @Override
@@ -52,17 +56,17 @@ public class GdpFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         viewModel = new ViewModelProvider(requireActivity()).get(EconomicViewModel.class);
 
-        gdpChart = view.findViewById(R.id.gdpChart);
-        tvGdpLatest = view.findViewById(R.id.tvGdpLatest);
-        tvGdpDesc = view.findViewById(R.id.tvGdpDesc);
-        tvGdpStatusText = view.findViewById(R.id.tvGdpStatusText);
-        viewGdpIndicatorDot = view.findViewById(R.id.viewGdpIndicatorDot);
-        cardGdpStatus = view.findViewById(R.id.cardGdpStatus);
-        cardGdpLatestQuarter = view.findViewById(R.id.cardGdpLatestQuarter);
-        tvGdpLatestQuarterValue = view.findViewById(R.id.tvGdpLatestQuarterValue);
-        tvGdpLatestQuarterLabel = view.findViewById(R.id.tvGdpLatestQuarterLabel);
-        tvGdpLatestQuarterStatus = view.findViewById(R.id.tvGdpLatestQuarterStatus);
-        viewGdpLatestQuarterDot = view.findViewById(R.id.viewGdpLatestQuarterDot);
+        gdpChart = binding.gdpChart;
+        tvGdpLatest = binding.tvGdpLatest;
+        tvGdpDesc = binding.tvGdpDesc;
+        tvGdpStatusText = binding.tvGdpStatusText;
+        viewGdpIndicatorDot = binding.viewGdpIndicatorDot;
+        cardGdpStatus = binding.cardGdpStatus;
+        cardGdpLatestQuarter = binding.cardGdpLatestQuarter;
+        tvGdpLatestQuarterValue = binding.tvGdpLatestQuarterValue;
+        tvGdpLatestQuarterLabel = binding.tvGdpLatestQuarterLabel;
+        tvGdpLatestQuarterStatus = binding.tvGdpLatestQuarterStatus;
+        viewGdpLatestQuarterDot = binding.viewGdpLatestQuarterDot;
 
         styleChart(gdpChart);
         gdpChart.getAxisLeft().setValueFormatter(new ValueFormatter() {
@@ -185,5 +189,11 @@ public class GdpFragment extends Fragment {
         YAxis y = chart.getAxisLeft();
         y.setTextColor(Color.parseColor("#8899BB")); y.setTextSize(10f); y.setDrawGridLines(true); y.setGridColor(grid);
         chart.getAxisRight().setEnabled(false);
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
     }
 }

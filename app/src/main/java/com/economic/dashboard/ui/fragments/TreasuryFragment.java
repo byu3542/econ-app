@@ -11,7 +11,7 @@ import androidx.fragment.app.Fragment;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
-import com.economic.dashboard.R;
+import com.economic.dashboard.databinding.FragmentMarketsHostBinding;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
@@ -25,20 +25,23 @@ public class TreasuryFragment extends Fragment {
 
     private static final String[] TAB_TITLES = {"Yields", "Spreads"};
 
+    private FragmentMarketsHostBinding binding;
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_markets_host, container, false);
+        binding = FragmentMarketsHostBinding.inflate(inflater, container, false);
+        return binding.getRoot();
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        TabLayout tabLayout  = view.findViewById(R.id.marketsTabLayout);
-        ViewPager2 viewPager = view.findViewById(R.id.marketsViewPager);
+        TabLayout tabLayout  = binding.marketsTabLayout;
+        ViewPager2 viewPager = binding.marketsViewPager;
 
         // Child fragment adapter — use getChildFragmentManager() for nested fragments
         viewPager.setAdapter(new MarketsTabAdapter(this));
@@ -47,6 +50,12 @@ public class TreasuryFragment extends Fragment {
         new TabLayoutMediator(tabLayout, viewPager, (tab, position) ->
                 tab.setText(TAB_TITLES[position])
         ).attach();
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
     }
 
     // ── Inner adapter ──────────────────────────────────────────────────────────

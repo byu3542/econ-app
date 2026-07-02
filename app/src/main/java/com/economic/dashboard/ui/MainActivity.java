@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.economic.dashboard.R;
 import com.economic.dashboard.cache.CacheManager;
+import com.economic.dashboard.databinding.ActivityMainBinding;
 import com.economic.dashboard.models.ChatMessage;
 import com.economic.dashboard.news.NewsFragment;
 import com.economic.dashboard.news.NewsRepository;
@@ -40,10 +41,7 @@ import okhttp3.OkHttpClient;
 public class MainActivity extends AppCompatActivity {
 
     private EconomicViewModel viewModel;
-    private ProgressBar progressBar;
-    private TextView tvHeaderSub;
-    private BottomNavigationView bottomNav;
-    private View navActiveIndicator;
+    private ActivityMainBinding binding;
 
     ChatAdapter chatAdapter;
     final JSONArray conversationHistory = new JSONArray();
@@ -64,14 +62,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        binding = ActivityMainBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
         if (getSupportActionBar() != null) getSupportActionBar().hide();
-
-        progressBar = findViewById(R.id.progressBar);
-        tvHeaderSub = findViewById(R.id.tvHeaderSub);
-        bottomNav = findViewById(R.id.bottomNav);
-        navActiveIndicator = findViewById(R.id.navActiveIndicator);
 
         viewModel = new ViewModelProvider(this).get(EconomicViewModel.class);
 
@@ -90,16 +84,16 @@ public class MainActivity extends AppCompatActivity {
     private void setupBottomNav() {
         loadFragment(new DashboardFragment(), "overview");
 
-        bottomNav.post(() -> {
-            final int itemWidth = bottomNav.getWidth() / 5;
+        binding.bottomNav.post(() -> {
+            final int itemWidth = binding.bottomNav.getWidth() / 5;
             final int indWidth  = (int)(itemWidth * 0.6f);
             final int indOffset = (int)(itemWidth * 0.2f);
 
-            navActiveIndicator.getLayoutParams().width = indWidth;
-            navActiveIndicator.requestLayout();
-            navActiveIndicator.setTranslationX(indOffset);
+            binding.navActiveIndicator.getLayoutParams().width = indWidth;
+            binding.navActiveIndicator.requestLayout();
+            binding.navActiveIndicator.setTranslationX(indOffset);
 
-            bottomNav.setOnItemSelectedListener(item -> {
+            binding.bottomNav.setOnItemSelectedListener(item -> {
                 int id = item.getItemId();
 
                 if (id == R.id.nav_ai_analyst) {
@@ -114,7 +108,7 @@ public class MainActivity extends AppCompatActivity {
                 else if (id == R.id.navigation_news) { index = 3; loadFragment(new NewsFragment(), "news"); }
                 else { loadFragment(new DashboardFragment(), "overview"); }
 
-                navActiveIndicator.animate()
+                binding.navActiveIndicator.animate()
                         .translationX(index * itemWidth + indOffset)
                         .setDuration(200)
                         .setInterpolator(new FastOutSlowInInterpolator())
@@ -150,7 +144,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void observeViewModel() {
         viewModel.getIsLoading().observe(this, loading ->
-                progressBar.setVisibility(loading ? View.VISIBLE : View.GONE));
+                binding.progressBar.setVisibility(loading ? View.VISIBLE : View.GONE));
         viewModel.getFedFundsData().observe(this, data -> { if (data != null) updateHeader(); });
         viewModel.getErrorMsg().observe(this, error -> {
             if (error != null && !error.isEmpty()) {
@@ -163,13 +157,11 @@ public class MainActivity extends AppCompatActivity {
         java.util.Calendar cal = java.util.Calendar.getInstance();
         int month = cal.get(java.util.Calendar.MONTH), year = cal.get(java.util.Calendar.YEAR);
         int quarter = month <= 2 ? 1 : month <= 5 ? 2 : month <= 8 ? 3 : 4;
-        TextView tvQuarter = findViewById(R.id.tvHeaderQuarter);
+        TextView tvQuarter = binding.tvHeaderQuarter;
         if (tvQuarter != null) tvQuarter.setText("Q" + quarter + " " + year);
         // Cache status indicator: show real cache age, not the wall clock
-        if (tvHeaderSub != null) {
-            CacheManager.getStatus(this, status ->
-                    runOnUiThread(() -> tvHeaderSub.setText(status.toDisplayString())));
-        }
+        CacheManager.getStatus(this, status ->
+                runOnUiThread(() -> binding.tvHeaderSub.setText(status.toDisplayString())));
     }
 
     @Override

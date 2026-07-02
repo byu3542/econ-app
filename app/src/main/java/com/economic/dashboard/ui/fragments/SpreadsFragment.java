@@ -14,7 +14,7 @@ import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.economic.dashboard.R;
+import com.economic.dashboard.databinding.FragmentSpreadsBinding;
 import com.economic.dashboard.models.EconomicDataPoint;
 import com.economic.dashboard.ui.EconomicViewModel;
 import com.github.mikephil.charting.charts.LineChart;
@@ -32,6 +32,8 @@ import java.util.Locale;
 
 public class SpreadsFragment extends Fragment {
 
+    private FragmentSpreadsBinding binding;
+
     private EconomicViewModel viewModel;
     private LineChart swappableChart;
     private TextView tvChartTitle;
@@ -45,7 +47,8 @@ public class SpreadsFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_spreads, container, false);
+        binding = FragmentSpreadsBinding.inflate(inflater, container, false);
+        return binding.getRoot();
     }
 
     @Override
@@ -53,22 +56,22 @@ public class SpreadsFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         viewModel = new ViewModelProvider(requireActivity()).get(EconomicViewModel.class);
 
-        swappableChart = view.findViewById(R.id.swappableChart);
-        tvChartTitle = view.findViewById(R.id.tvChartTitle);
+        swappableChart = binding.swappableChart;
+        tvChartTitle = binding.tvChartTitle;
         styleChart(swappableChart);
         addSpreadLimitLines(swappableChart);
         swappableChart.getAxisLeft().setValueFormatter(new ValueFormatter() {
             @Override public String getFormattedValue(float value) { return String.format(Locale.US, "%.1f%%", value); }
         });
 
-        cardSpreadYoY = view.findViewById(R.id.cardSpreadYoY);
-        tvSpreadValue = view.findViewById(R.id.tvSpreadValue);
-        tvIndicatorText = view.findViewById(R.id.tvIndicatorText);
-        viewSpreadIndicatorDot = view.findViewById(R.id.viewSpreadIndicatorDot);
-        cardSpread3M = view.findViewById(R.id.cardSpread3M);
-        tvSpread3MValue = view.findViewById(R.id.tvSpread3MValue);
-        tvIndicator3MText = view.findViewById(R.id.tvIndicator3MText);
-        viewSpread3MIndicatorDot = view.findViewById(R.id.viewSpread3MIndicatorDot);
+        cardSpreadYoY = binding.cardSpreadYoY;
+        tvSpreadValue = binding.tvSpreadValue;
+        tvIndicatorText = binding.tvIndicatorText;
+        viewSpreadIndicatorDot = binding.viewSpreadIndicatorDot;
+        cardSpread3M = binding.cardSpread3M;
+        tvSpread3MValue = binding.tvSpread3MValue;
+        tvIndicator3MText = binding.tvIndicator3MText;
+        viewSpread3MIndicatorDot = binding.viewSpread3MIndicatorDot;
 
         cardSpreadYoY.setOnClickListener(v -> { activeCard = "yoy"; setActiveCard("yoy"); buildSwappableChart(); });
         cardSpread3M.setOnClickListener(v -> { activeCard = "3m"; setActiveCard("3m"); buildSwappableChart(); });
@@ -176,5 +179,11 @@ public class SpreadsFragment extends Fragment {
         deep.setTextColor(Color.parseColor("#9C27B0")); deep.setTextSize(9f); deep.enableDashedLine(8f, 4f, 0f);
         chart.getAxisLeft().addLimitLine(zero); chart.getAxisLeft().addLimitLine(warn); chart.getAxisLeft().addLimitLine(deep);
         chart.getAxisLeft().setDrawLimitLinesBehindData(true);
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
     }
 }
