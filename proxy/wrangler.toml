@@ -1,0 +1,7 @@
+name = "econ-dashboard-anthropic-proxy"
+main = "worker.js"
+compatibility_date = "2026-07-01"
+
+# Secrets are NOT set here. After deploying, run:
+#   wrangler secret put ANTHROPIC_API_KEY
+#   wrangler secret put APP_TOKEN        # optional but recommended

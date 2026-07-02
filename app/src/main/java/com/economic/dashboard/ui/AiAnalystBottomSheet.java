@@ -188,8 +188,10 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
     }
 
     private void queryClaude(String userQuery, RecyclerView rv) {
-        if (ApiConfig.ANTHROPIC_API_KEY.equals("YOUR_ANTHROPIC_API_KEY") || ApiConfig.ANTHROPIC_API_KEY.isEmpty()) {
-            chatAdapter().addMessage(new ChatMessage("Please provide a valid Anthropic API Key in local.properties.", false));
+        if (ApiConfig.PROXY_BASE_URL.isEmpty()) {
+            chatAdapter().addMessage(new ChatMessage(
+                    "AI Analyst is not configured. Deploy the proxy in the proxy/ folder, "
+                    + "then set PROXY_BASE_URL in local.properties (see proxy/README.md).", false));
             return;
         }
 
@@ -232,10 +234,11 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
             body.put("system", systemPrompt);
             body.put("messages", messages);
 
+            // Calls the proxy (see proxy/README.md) — the Anthropic key stays
+            // server-side and is never shipped inside the APK.
             Request request = new Request.Builder()
-                    .url("https://api.anthropic.com/v1/messages")
-                    .addHeader("x-api-key", ApiConfig.ANTHROPIC_API_KEY)
-                    .addHeader("anthropic-version", "2023-06-01")
+                    .url(ApiConfig.PROXY_BASE_URL + "/v1/messages")
+                    .addHeader("x-app-token", ApiConfig.PROXY_APP_TOKEN)
                     .post(RequestBody.create(MediaType.parse("application/json"), body.toString()))
                     .build();
 

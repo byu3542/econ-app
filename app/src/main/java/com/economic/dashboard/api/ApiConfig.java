@@ -11,8 +11,10 @@ public class ApiConfig {
     // Read from local.properties via BuildConfig (set FRED_API_KEY= in local.properties)
     public static final String FRED_API_KEY = BuildConfig.FRED_API_KEY;
 
-    // Read from local.properties via BuildConfig (set ANTHROPIC_API_KEY= in local.properties)
-    public static final String ANTHROPIC_API_KEY = BuildConfig.ANTHROPIC_API_KEY;
+    // AI Analyst proxy (see proxy/README.md). The Anthropic key is held by the
+    // proxy server and is no longer compiled into the app.
+    public static final String PROXY_BASE_URL = BuildConfig.PROXY_BASE_URL;
+    public static final String PROXY_APP_TOKEN = BuildConfig.PROXY_APP_TOKEN;
 
     // Read from local.properties via BuildConfig (set NEWS_API_KEY= in local.properties)
     public static final String NEWS_API_KEY = BuildConfig.NEWS_API_KEY;
