@@ -75,6 +75,11 @@ public class MainActivity extends AppCompatActivity {
                 + "Ask me anything about the US economic data.", false));
 
         setupBottomNav();
+
+        binding.fabAiAnalyst.setOnClickListener(v -> {
+            if (getSupportFragmentManager().findFragmentByTag(AiAnalystBottomSheet.TAG) == null)
+                new AiAnalystBottomSheet().show(getSupportFragmentManager(), AiAnalystBottomSheet.TAG);
+        });
         updateHeader();
         observeViewModel();
         viewModel.fetchAllData();
@@ -96,17 +101,15 @@ public class MainActivity extends AppCompatActivity {
             binding.bottomNav.setOnItemSelectedListener(item -> {
                 int id = item.getItemId();
 
-                if (id == R.id.nav_ai_analyst) {
-                    if (getSupportFragmentManager().findFragmentByTag(AiAnalystBottomSheet.TAG) == null)
-                        new AiAnalystBottomSheet().show(getSupportFragmentManager(), AiAnalystBottomSheet.TAG);
-                    return false;
-                }
-
+                // Center slot (nav_ai_placeholder) is disabled — the floating
+                // fabAiAnalyst button handles the AI Analyst instead.
                 int index = 0;
-                if (id == R.id.nav_markets) { index = 1; loadFragment(new MarketsFragment(), "markets"); }
-                else if (id == R.id.nav_economy) { index = 2; loadFragment(new EconomyFragment(), "economy"); }
-                else if (id == R.id.navigation_news) { index = 3; loadFragment(new NewsFragment(), "news"); }
+                String title = "Overview";
+                if (id == R.id.nav_markets) { index = 1; title = "Markets"; loadFragment(new MarketsFragment(), "markets"); }
+                else if (id == R.id.nav_economy) { index = 3; title = "Economy"; loadFragment(new EconomyFragment(), "economy"); }
+                else if (id == R.id.navigation_news) { index = 4; title = "News"; loadFragment(new NewsFragment(), "news"); }
                 else { loadFragment(new DashboardFragment(), "overview"); }
+                binding.tvHeaderLine1.setText(title);
 
                 binding.navActiveIndicator.animate()
                         .translationX(index * itemWidth + indOffset)

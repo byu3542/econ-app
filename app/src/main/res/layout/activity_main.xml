@@ -47,34 +47,20 @@
                     android:background="#c9a84c"
                     android:layout_marginBottom="8dp"/>
 
-                <!-- Line 1: "U.S. ECONOMIC" -->
+                <!-- Title: "ECON MONITOR" — single line -->
                 <TextView
                     android:id="@+id/tvHeaderLine1"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="U.S. ECONOMIC"
-                    android:textSize="28sp"
+                    android:text="Overview"
+                    android:textSize="26sp"
                     android:textColor="#ffffff"
                     android:fontFamily="serif"
                     android:textStyle="bold"
                     android:textAllCaps="true"
                     android:letterSpacing="0.08"
-                    android:includeFontPadding="false"/>
-
-                <!-- Line 2: "MONITOR" -->
-                <TextView
-                    android:id="@+id/tvHeaderLine2"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="MONITOR"
-                    android:textSize="28sp"
-                    android:textColor="#ffffff"
-                    android:fontFamily="serif"
-                    android:textStyle="bold"
-                    android:textAllCaps="true"
-                    android:letterSpacing="0.08"
+                    android:singleLine="true"
                     android:includeFontPadding="false"
-                    android:layout_marginTop="-4dp"
                     android:layout_marginBottom="8dp"/>
 
                 <!-- Line 3: Quarter pill + date row -->
@@ -142,7 +128,8 @@
             android:id="@+id/fragmentContainer"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1" />
+            android:layout_weight="1"
+            android:paddingBottom="30dp" />
 
         <!-- ══ 3. BOTTOM NAV WRAPPER ════════════════════════════════════════
              The FrameLayout lets the navActiveIndicator View float at the
@@ -150,6 +137,7 @@
              indicator above the active destination icon.
         ═══════════════════════════════════════════════════════════════════ -->
         <FrameLayout
+            android:id="@+id/bottomNavWrapper"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
@@ -157,8 +145,11 @@
             <com.google.android.material.bottomnavigation.BottomNavigationView
                 android:id="@+id/bottomNav"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="76dp"
                 android:background="@drawable/bg_bottom_nav_border"
+                app:itemIconSize="28dp"
+                app:itemPaddingTop="12dp"
+                app:itemPaddingBottom="16dp"
                 app:menu="@menu/bottom_nav_menu"
                 app:itemIconTint="@color/bottom_nav_icon_color"
                 app:itemTextColor="@color/bottom_nav_text_color"
@@ -191,6 +182,38 @@
         </FrameLayout>
 
     </LinearLayout>
+
+    <!-- ══ 4. CENTER AI ANALYST BUTTON ═══════════════════════════════════
+         Circular launcher-icon artwork with a gold ring, anchored so it
+         straddles the top edge of the bottom nav (pantrii-style FAB).
+         Opens AiAnalystBottomSheet — wired in MainActivity.
+    ═══════════════════════════════════════════════════════════════════ -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/fabAiAnalyst"
+        android:layout_width="62dp"
+        android:layout_height="62dp"
+        android:layout_gravity="center"
+        android:translationY="10dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:contentDescription="AI Analyst"
+        app:cardCornerRadius="31dp"
+        app:cardElevation="8dp"
+        app:cardBackgroundColor="@color/accent_gold"
+        app:rippleColor="#331A1A2E"
+        app:strokeColor="@color/bg_warm_off_white"
+        app:strokeWidth="3dp"
+        app:layout_anchor="@id/bottomNavWrapper"
+        app:layout_anchorGravity="top|center_horizontal">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:src="@drawable/ic_fab_gold_ai"
+            android:scaleType="fitXY"
+            android:importantForAccessibility="no" />
+
+    </com.google.android.material.card.MaterialCardView>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
 

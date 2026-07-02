@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Center-nav FAB artwork, Option A (rebalanced): brighter gold disc,
+    navy sparkle centered with the small companion star given more air.
+    Clipped to a circle by the MaterialCardView in activity_main.xml.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Gold background (circle crop applied by the view) -->
+    <path
+        android:pathData="M0,0h108v108H0z"
+        android:fillColor="#D2B156"/>
+
+    <!-- Main 4-point sparkle, navy, centered -->
+    <path
+        android:fillColor="#1A1A2E"
+        android:pathData="M52,35 L57.75,52.25 L75,58 L57.75,63.75 L52,81 L46.25,63.75 L29,58 L46.25,52.25 Z"/>
+
+    <!-- Small companion sparkle, top-right, pulled in from the ring edge -->
+    <path
+        android:fillColor="#1A1A2E"
+        android:pathData="M76,20 L78.5,27.5 L86,30 L78.5,32.5 L76,40 L73.5,32.5 L66,30 L73.5,27.5 Z"/>
+
+</vector>
