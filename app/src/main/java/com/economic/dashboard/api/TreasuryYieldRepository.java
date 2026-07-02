@@ -10,6 +10,7 @@ import com.economic.dashboard.database.TreasuryYieldDao;
 import com.economic.dashboard.database.YieldDatabase;
 import com.economic.dashboard.models.EconomicDataPoint;
 import com.economic.dashboard.models.TreasuryYield;
+import com.economic.dashboard.utils.AppExecutors;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,7 +55,7 @@ public class TreasuryYieldRepository {
     }
 
     private void checkCacheAndRefreshIfNeeded() {
-        new Thread(() -> {
+        AppExecutors.getInstance().diskIO().execute(() -> {
             try {
                 long lastCacheTime = dao.getLastCacheTimeSync();
                 long currentTime = System.currentTimeMillis();
@@ -71,7 +72,7 @@ public class TreasuryYieldRepository {
             } catch (Exception e) {
                 Log.e(TAG, "Error checking cache freshness", e);
             }
-        }).start();
+        });
     }
 
     public void fetchFromAPI() {
@@ -91,7 +92,7 @@ public class TreasuryYieldRepository {
     }
 
     private void updateCache(List<EconomicDataPoint> economicDataPoints) {
-        new Thread(() -> {
+        AppExecutors.getInstance().diskIO().execute(() -> {
             try {
                 long currentTime = System.currentTimeMillis();
                 List<TreasuryYield> yieldEntities = new ArrayList<>();
@@ -104,7 +105,7 @@ public class TreasuryYieldRepository {
             } catch (Exception e) {
                 Log.e(TAG, "Error updating cache", e);
             }
-        }).start();
+        });
     }
 
     public void forceRefresh() {
@@ -113,10 +114,10 @@ public class TreasuryYieldRepository {
     }
 
     public void clearCache() {
-        new Thread(() -> {
+        AppExecutors.getInstance().diskIO().execute(() -> {
             try { dao.clear(); Log.d(TAG, "Cache cleared"); }
             catch (Exception e) { Log.e(TAG, "Error clearing cache", e); }
-        }).start();
+        });
     }
 
     public long getCacheAgeMinutes() {

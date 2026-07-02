@@ -7,6 +7,7 @@ import com.economic.dashboard.models.BeaResponse;
 import com.economic.dashboard.models.BlsResponse;
 import com.economic.dashboard.models.EconomicDataPoint;
 import com.economic.dashboard.models.FredResponse;
+import com.economic.dashboard.utils.AppExecutors;
 
 import org.xmlpull.v1.XmlPullParser;
 
@@ -53,7 +54,7 @@ public class EconomicRepository {
     /** Full-control overload — callers should pass the correct category for display and filtering. */
     public void fetchFredData(String seriesId, String seriesName, String limit, String frequency,
                               String category, DataCallback<List<EconomicDataPoint>> callback) {
-        new Thread(() -> {
+        AppExecutors.getInstance().networkIO().execute(() -> {
             try {
                 Map<String, String> params = new HashMap<>();
                 params.put("series_id", seriesId);
@@ -101,14 +102,14 @@ public class EconomicRepository {
                 Log.e(TAG, "FRED fetch error", e);
                 callback.onError("FRED fetch failed: " + e.getMessage());
             }
-        }).start();
+        });
     }
 
     // ============================================================
     // PCE INFLATION — FRED
     // ============================================================
     public void fetchPCEData(DataCallback<List<EconomicDataPoint>> callback) {
-        new Thread(() -> {
+        AppExecutors.getInstance().networkIO().execute(() -> {
             try {
                 // Fetch PCE (all items) — 120 months for percentile context
                 List<EconomicDataPoint> pceAll   = fetchFredSync(ApiConfig.FRED_PCE,      "PCE Price Index",       ApiConfig.FRED_PCE_LIMIT, "m", "Inflation");
@@ -128,14 +129,14 @@ public class EconomicRepository {
                 Log.e(TAG, "PCE fetch error", e);
                 callback.onError("PCE fetch failed: " + e.getMessage());
             }
-        }).start();
+        });
     }
 
     // ============================================================
     // HOUSING DATA — FRED
     // ============================================================
     public void fetchHousingData(DataCallback<List<EconomicDataPoint>> callback) {
-        new Thread(() -> {
+        AppExecutors.getInstance().networkIO().execute(() -> {
             try {
                 List<EconomicDataPoint> starts = fetchFredSync(
                         ApiConfig.FRED_HOUSING_STARTS, "Housing Starts",
@@ -158,7 +159,7 @@ public class EconomicRepository {
                 Log.e(TAG, "Housing fetch error", e);
                 callback.onError("Housing fetch failed: " + e.getMessage());
             }
-        }).start();
+        });
     }
 
     /** Synchronous FRED helper for use inside compound fetch methods. Caller must supply the correct category. */
@@ -196,7 +197,7 @@ public class EconomicRepository {
     // MBS & MORTGAGE RATES — FRED
     // ============================================================
     public void fetchMbsMortgageData(DataCallback<List<EconomicDataPoint>> callback) {
-        new Thread(() -> {
+        AppExecutors.getInstance().networkIO().execute(() -> {
             try {
                 List<EconomicDataPoint> bankMbs = fetchFredSync(
                         ApiConfig.FRED_BANK_MBS, "Bank MBS Holdings",
@@ -223,14 +224,14 @@ public class EconomicRepository {
                 Log.e(TAG, "MBS/mortgage fetch error", e);
                 callback.onError("MBS/mortgage fetch failed: " + e.getMessage());
             }
-        }).start();
+        });
     }
 
     // ============================================================
     // GDP — BEA NIPA TABLE T10101
     // ============================================================
     public void fetchGDPData(DataCallback<List<EconomicDataPoint>> callback) {
-        new Thread(() -> {
+        AppExecutors.getInstance().networkIO().execute(() -> {
             try {
                 int currentYear = Calendar.getInstance().get(Calendar.YEAR);
                 StringBuilder yearsBuilder = new StringBuilder();
@@ -285,7 +286,7 @@ public class EconomicRepository {
                 Log.e(TAG, "BEA fetch error", e);
                 callback.onError("GDP fetch failed: " + e.getMessage());
             }
-        }).start();
+        });
     }
 
     /** Converts BEA period strings like "2023Q1" → "2023-01-01". */
@@ -353,7 +354,7 @@ public class EconomicRepository {
     private void fetchBlsData(List<String> seriesIds, String category,
                                String[] seriesNames, String[] units,
                                DataCallback<List<EconomicDataPoint>> callback) {
-        new Thread(() -> {
+        AppExecutors.getInstance().networkIO().execute(() -> {
             try {
                 int currentYear = Calendar.getInstance().get(Calendar.YEAR);
                 int startYear   = currentYear - Integer.parseInt(ApiConfig.BLS_HISTORY_YEARS);
@@ -421,14 +422,14 @@ public class EconomicRepository {
                 Log.e(TAG, "BLS fetch error", e);
                 callback.onError("BLS fetch failed: " + e.getMessage());
             }
-        }).start();
+        });
     }
 
     // ============================================================
     // TREASURY YIELD CURVE
     // ============================================================
     public void fetchTreasuryRates(DataCallback<List<EconomicDataPoint>> callback) {
-        new Thread(() -> {
+        AppExecutors.getInstance().networkIO().execute(() -> {
             try {
                 int currentYear = Calendar.getInstance().get(Calendar.YEAR);
                 String url = ApiConfig.TREASURY_BASE_URL +
@@ -451,7 +452,7 @@ public class EconomicRepository {
                 Log.e(TAG, "Treasury fetch error", e);
                 callback.onError("Treasury fetch failed: " + e.getMessage());
             }
-        }).start();
+        });
     }
 
     private List<EconomicDataPoint> parseTreasuryXml(String xmlContent) throws Exception {

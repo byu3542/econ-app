@@ -3,6 +3,7 @@ package com.economic.dashboard.api;
 import android.util.Log;
 
 import com.economic.dashboard.models.NewsArticle;
+import com.economic.dashboard.utils.AppExecutors;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +32,7 @@ public class NewsApiClient {
     }
 
     public void searchNews(String query, String sortBy, NewsCallback callback) {
-        new Thread(() -> {
+        AppExecutors.getInstance().networkIO().execute(() -> {
             try {
                 String url = BASE_URL + ENDPOINT_EVERYTHING +
                         "?q=" + urlEncode(query) +
@@ -61,7 +62,7 @@ public class NewsApiClient {
                 Log.e(TAG, "NewsAPI fetch error", e);
                 callback.onError("NewsAPI fetch failed: " + e.getMessage());
             }
-        }).start();
+        });
     }
 
     public void searchRecentEconomicNews(String query, NewsCallback callback) {

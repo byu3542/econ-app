@@ -8,6 +8,7 @@ import androidx.lifecycle.LiveData;
 import com.economic.dashboard.database.NewsArticleDao;
 import com.economic.dashboard.database.YieldDatabase;
 import com.economic.dashboard.models.NewsArticle;
+import com.economic.dashboard.utils.AppExecutors;
 
 import java.util.List;
 
@@ -41,10 +42,10 @@ public class NewsArticleRepository {
                     article.cachedAtMillis = now;
                 }
 
-                new Thread(() -> {
+                AppExecutors.getInstance().diskIO().execute(() -> {
                     dao.insertAll(articles);
                     Log.d(TAG, "Articles cached to database");
-                }).start();
+                });
             }
 
             @Override
@@ -67,6 +68,6 @@ public class NewsArticleRepository {
     }
 
     public void markAsRead(int articleId) {
-        new Thread(() -> dao.markAsRead(articleId)).start();
+        AppExecutors.getInstance().diskIO().execute(() -> dao.markAsRead(articleId));
     }
 }

@@ -7,6 +7,7 @@ import com.economic.dashboard.api.HistoricalDataRepository;
 import com.economic.dashboard.api.TreasuryYieldRepository;
 import com.economic.dashboard.database.EconomicHistoryDao;
 import com.economic.dashboard.database.YieldDatabase;
+import com.economic.dashboard.utils.AppExecutors;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -130,7 +131,7 @@ public final class CacheManager {
      * Read cache statistics off the main thread and deliver them via callback.
      */
     public static void getStatus(Context context, StatusCallback callback) {
-        new Thread(() -> {
+        AppExecutors.getInstance().diskIO().execute(() -> {
             try {
                 EconomicHistoryDao dao =
                         YieldDatabase.getInstance(context).economicHistoryDao();
@@ -145,7 +146,7 @@ public final class CacheManager {
                 Log.e(TAG, "getStatus failed", e);
                 callback.onStatus(new CacheStatus(0, 0, 0, null, null));
             }
-        }).start();
+        });
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -188,7 +189,7 @@ public final class CacheManager {
      * APIs on next refresh, so this is always safe.
      */
     public static void clearAllCaches(Context context, OperationCallback callback) {
-        new Thread(() -> {
+        AppExecutors.getInstance().diskIO().execute(() -> {
             boolean ok = true;
             try {
                 YieldDatabase db = YieldDatabase.getInstance(context);
@@ -200,7 +201,7 @@ public final class CacheManager {
                 ok = false;
             }
             if (callback != null) callback.onComplete(ok);
-        }).start();
+        });
     }
 
     // ─────────────────────────────────────────────────────────────────────────

@@ -28,6 +28,7 @@ import com.economic.dashboard.models.ChatMessage;
 import com.economic.dashboard.models.EconomicDataPoint;
 import com.economic.dashboard.news.NewsItem;
 import com.economic.dashboard.news.NewsRepository;
+import com.economic.dashboard.utils.AppExecutors;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
@@ -114,7 +115,7 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
         // ready before the first question is sent (Room must stay off the
         // main thread). Uses application context — safe if the sheet closes.
         final android.content.Context appCtx = requireContext().getApplicationContext();
-        new Thread(() -> historicalContext = HistoricalContextBuilder.build(appCtx)).start();
+        AppExecutors.getInstance().diskIO().execute(() -> historicalContext = HistoricalContextBuilder.build(appCtx));
 
         if (chatAdapter().getItemCount() > 0)
             rvChat.scrollToPosition(chatAdapter().getItemCount() - 1);

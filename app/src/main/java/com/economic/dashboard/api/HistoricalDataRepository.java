@@ -9,6 +9,7 @@ import com.economic.dashboard.models.BeaResponse;
 import com.economic.dashboard.models.BlsResponse;
 import com.economic.dashboard.models.EconomicHistoryEntry;
 import com.economic.dashboard.models.FredResponse;
+import com.economic.dashboard.utils.AppExecutors;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -74,7 +75,7 @@ public class HistoricalDataRepository {
      *                 Pass null if you don't need a completion signal.
      */
     public static void refreshIfStale(Context context, RefreshCallback callback) {
-        new Thread(() -> {
+        AppExecutors.getInstance().networkIO().execute(() -> {
             try {
                 EconomicHistoryDao dao = YieldDatabase.getInstance(context).economicHistoryDao();
                 long lastCache = dao.getLastCacheTimeSync();
@@ -96,7 +97,7 @@ public class HistoricalDataRepository {
                 Log.e(TAG, "refreshIfStale error", e);
                 if (callback != null) callback.onComplete(false);
             }
-        }).start();
+        });
     }
 
     /**
@@ -104,7 +105,7 @@ public class HistoricalDataRepository {
      * Clears existing data before fetching.
      */
     public static void forceRefresh(Context context, RefreshCallback callback) {
-        new Thread(() -> {
+        AppExecutors.getInstance().networkIO().execute(() -> {
             try {
                 EconomicHistoryDao dao = YieldDatabase.getInstance(context).economicHistoryDao();
                 dao.clearAll();
@@ -113,7 +114,7 @@ public class HistoricalDataRepository {
                 Log.e(TAG, "forceRefresh error", e);
                 if (callback != null) callback.onComplete(false);
             }
-        }).start();
+        });
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -165,7 +166,7 @@ public class HistoricalDataRepository {
             AtomicInteger successCount,
             Runnable onDone) {
 
-        new Thread(() -> {
+        AppExecutors.getInstance().networkIO().execute(() -> {
             try {
                 Map<String, String> params = new HashMap<>();
                 params.put("series_id",  seriesId);
@@ -212,7 +213,7 @@ public class HistoricalDataRepository {
             } finally {
                 onDone.run();
             }
-        }).start();
+        });
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -225,7 +226,7 @@ public class HistoricalDataRepository {
             AtomicInteger successCount,
             Runnable onDone) {
 
-        new Thread(() -> {
+        AppExecutors.getInstance().networkIO().execute(() -> {
             try {
                 int currentYear = Calendar.getInstance().get(Calendar.YEAR);
                 int startYear   = currentYear - 2;  // 2 years back
@@ -289,7 +290,7 @@ public class HistoricalDataRepository {
             } finally {
                 onDone.run();
             }
-        }).start();
+        });
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -302,7 +303,7 @@ public class HistoricalDataRepository {
             AtomicInteger successCount,
             Runnable onDone) {
 
-        new Thread(() -> {
+        AppExecutors.getInstance().networkIO().execute(() -> {
             try {
                 int currentYear = Calendar.getInstance().get(Calendar.YEAR);
                 // Build comma-separated year list for the past 3 years
@@ -374,7 +375,7 @@ public class HistoricalDataRepository {
             } finally {
                 onDone.run();
             }
-        }).start();
+        });
     }
 
     // ──────────────────────────────────────────────────────────────────────────
