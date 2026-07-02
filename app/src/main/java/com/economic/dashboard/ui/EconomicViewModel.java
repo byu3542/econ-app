@@ -9,8 +9,10 @@ import com.economic.dashboard.api.EconomicRepository;
 import com.economic.dashboard.models.EconomicDataPoint;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class EconomicViewModel extends ViewModel {
 
@@ -52,7 +54,7 @@ public class EconomicViewModel extends ViewModel {
     private final MutableLiveData<String>  errorMsg  = new MutableLiveData<>();
     private final MutableLiveData<String>  statusMsg = new MutableLiveData<>();
 
-    private int pendingFetches = 0;
+    private final AtomicInteger pendingFetches = new AtomicInteger(0);
     private final Object lock = new Object();
 
     public LiveData<List<EconomicDataPoint>> getTreasuryData()           { return treasuryData; }
@@ -83,21 +85,23 @@ public class EconomicViewModel extends ViewModel {
     public void fetchAllData() {
         isLoading.postValue(true);
         synchronized (lock) {
-            pendingFetches = 18; // MOVE Index removed (not available via FRED)
             currentTenYearList = null; currentTwoYearList = null; currentThreeMonthList = null;
         }
-        fetchTreasury(); fetchGDP(); fetchEmployment(); fetchCPI(); fetchWages();
-        fetchFedFunds(); fetchFedFundsHistory(); fetchTenYearHistory(); fetchTwoYearHistory(); fetchThreeMonthHistory();
-        fetchPCE(); fetchHousing(); fetchMbsMortgage();
-        fetchSp500(); fetchNasdaq(); fetchVix();
-        fetchBaaSpread(); fetchHySpread();
+        // Build the task list first so the pending count is always derived from
+        // the actual number of fetches — no hardcoded magic number to maintain.
+        List<Runnable> fetchTasks = Arrays.asList(
+                this::fetchTreasury, this::fetchGDP, this::fetchEmployment, this::fetchCPI, this::fetchWages,
+                this::fetchFedFunds, this::fetchFedFundsHistory, this::fetchTenYearHistory,
+                this::fetchTwoYearHistory, this::fetchThreeMonthHistory,
+                this::fetchPCE, this::fetchHousing, this::fetchMbsMortgage,
+                this::fetchSp500, this::fetchNasdaq, this::fetchVix,
+                this::fetchBaaSpread, this::fetchHySpread);
+        pendingFetches.set(fetchTasks.size());
+        for (Runnable task : fetchTasks) task.run();
     }
 
     private void checkAllDone() {
-        synchronized (lock) {
-            pendingFetches--;
-            if (pendingFetches <= 0) isLoading.postValue(false);
-        }
+        if (pendingFetches.decrementAndGet() <= 0) isLoading.postValue(false);
     }
 
     public void fetchFedFunds() {
