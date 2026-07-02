@@ -4,15 +4,18 @@ import com.economic.dashboard.BuildConfig;
 
 public class ApiConfig {
 
-    public static final String BEA_API_KEY = "13425E5B-2ECF-4378-9786-E48A81B1AEAE";
-    public static final String BLS_API_KEY = "5198938c150e4e93a417f3769a5cc077";
+    // Read from local.properties via BuildConfig (set BEA_API_KEY= in local.properties)
+    public static final String BEA_API_KEY = BuildConfig.BEA_API_KEY;
+    // Read from local.properties via BuildConfig (set BLS_API_KEY= in local.properties)
+    public static final String BLS_API_KEY = BuildConfig.BLS_API_KEY;
     // Read from local.properties via BuildConfig (set FRED_API_KEY= in local.properties)
     public static final String FRED_API_KEY = BuildConfig.FRED_API_KEY;
 
     // Read from local.properties via BuildConfig (set ANTHROPIC_API_KEY= in local.properties)
     public static final String ANTHROPIC_API_KEY = BuildConfig.ANTHROPIC_API_KEY;
 
-    public static final String NEWS_API_KEY = "c0d06ae231f14276ab056967aeb7ac0e";
+    // Read from local.properties via BuildConfig (set NEWS_API_KEY= in local.properties)
+    public static final String NEWS_API_KEY = BuildConfig.NEWS_API_KEY;
 
     public static final String TREASURY_BASE_URL =
             "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/pages/";

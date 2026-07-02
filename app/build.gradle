@@ -20,7 +20,10 @@ android {
             properties.load(propertiesFile.newDataInputStream())
         }
         buildConfigField "String", "ANTHROPIC_API_KEY", "\"${properties.getProperty('ANTHROPIC_API_KEY', 'YOUR_ANTHROPIC_API_KEY')}\""
-        buildConfigField "String", "FRED_API_KEY", "\"${properties.getProperty('FRED_API_KEY', '02e1293e2b997b87df09df66c0e8fb86')}\""
+        buildConfigField "String", "FRED_API_KEY", "\"${properties.getProperty('FRED_API_KEY', 'YOUR_FRED_API_KEY')}\""
+        buildConfigField "String", "BEA_API_KEY", "\"${properties.getProperty('BEA_API_KEY', 'YOUR_BEA_API_KEY')}\""
+        buildConfigField "String", "BLS_API_KEY", "\"${properties.getProperty('BLS_API_KEY', 'YOUR_BLS_API_KEY')}\""
+        buildConfigField "String", "NEWS_API_KEY", "\"${properties.getProperty('NEWS_API_KEY', 'YOUR_NEWS_API_KEY')}\""
     }
 
     buildTypes {

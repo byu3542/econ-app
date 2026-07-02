@@ -1,0 +1,20 @@
+# Copy this file's key entries into local.properties (which is git-ignored)
+# and fill in your real values. The app reads these via BuildConfig at build time.
+#
+# sdk.dir is normally written automatically by Android Studio.
+#sdk.dir=C\:\\Users\\YOU\\AppData\\Local\\Android\\Sdk
+
+# Anthropic (AI Analyst) — https://console.anthropic.com/
+ANTHROPIC_API_KEY=
+
+# FRED — https://research.stlouisfed.org/useraccount/apikeys
+FRED_API_KEY=
+
+# BEA — https://apps.bea.gov/API/signup/
+BEA_API_KEY=
+
+# BLS — https://data.bls.gov/registrationEngine/
+BLS_API_KEY=
+
+# NewsAPI — https://newsapi.org/
+NEWS_API_KEY=
