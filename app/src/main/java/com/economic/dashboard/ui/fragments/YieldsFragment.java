@@ -57,11 +57,13 @@ public class YieldsFragment extends Fragment {
             }
         });
 
-        row1M  = binding.row1M;
-        row3M  = binding.row3M;
-        row2Y  = binding.row2Y;
-        row10Y = binding.row10Y;
-        row30Y = binding.row30Y;
+        // <include> entries — binding exposes the included layout's binding,
+        // so getRoot() gives the View the rest of this class expects.
+        row1M  = binding.row1M.getRoot();
+        row3M  = binding.row3M.getRoot();
+        row2Y  = binding.row2Y.getRoot();
+        row10Y = binding.row10Y.getRoot();
+        row30Y = binding.row30Y.getRoot();
         setupTreasuryRow(row1M,  "1 Month");
         setupTreasuryRow(row3M,  "3 Month");
         setupTreasuryRow(row2Y,  "2 Year");

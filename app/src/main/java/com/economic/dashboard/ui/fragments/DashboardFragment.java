@@ -57,12 +57,14 @@ public class DashboardFragment extends Fragment {
         swipeRefresh = binding.swipeRefresh;
 
         // KPI badges
-        cardHourlyWage   = binding.cardHourlyWage;
-        cardLabor        = binding.cardLabor;
-        cardCPI          = binding.cardCPI;
-        cardUnemployment = binding.cardUnemployment;
-        cardMortgage     = binding.cardMortgage;
-        cardVix          = binding.cardVix;
+        // These are <include layout="@layout/card_kpi_badge"> entries, so view
+        // binding exposes them as CardKpiBadgeBinding — getRoot() gives the View.
+        cardHourlyWage   = binding.cardHourlyWage.getRoot();
+        cardLabor        = binding.cardLabor.getRoot();
+        cardCPI          = binding.cardCPI.getRoot();
+        cardUnemployment = binding.cardUnemployment.getRoot();
+        cardMortgage     = binding.cardMortgage.getRoot();
+        cardVix          = binding.cardVix.getRoot();
 
         setupCardLabel(cardHourlyWage,   "GDP GROWTH");
         setupCardLabel(cardLabor,        "CPI-U YOY");
