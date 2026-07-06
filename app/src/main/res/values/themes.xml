@@ -1,6 +1,6 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Theme.EconomicDashboard" parent="Theme.MaterialComponents.Light.NoActionBar">
+    <!-- Base application theme. DayNight — dark palette lives in values-night/colors.xml. -->
+    <style name="Theme.EconomicDashboard" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <!-- Primary brand color. -->
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
@@ -20,7 +20,7 @@
     </style>
 
     <!-- Full screen dialog theme for AI Chat (kept for reference) -->
-    <style name="Theme.EconomicDashboard.FullScreenDialog" parent="Theme.MaterialComponents.Light.NoActionBar">
+    <style name="Theme.EconomicDashboard.FullScreenDialog" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowFullscreen">false</item>
         <item name="android:windowIsFloating">false</item>
@@ -34,7 +34,7 @@
     </style>
 
     <!-- Half-sheet bottom sheet theme for AI Chat (v2) -->
-    <style name="Theme.EconomicDashboard.BottomSheet" parent="Theme.MaterialComponents.Light.BottomSheetDialog">
+    <style name="Theme.EconomicDashboard.BottomSheet" parent="Theme.MaterialComponents.DayNight.BottomSheetDialog">
         <item name="bottomSheetStyle">@style/EconomicBottomSheetStyle</item>
     </style>
 
@@ -87,7 +87,7 @@
         <item name="android:background">@color/economy_tab_bg</item>
         <item name="tabIndicatorColor">@color/accent_gold</item>
         <item name="tabIndicatorHeight">2dp</item>
-        <item name="tabSelectedTextColor">#1a1a2e</item>
+        <item name="tabSelectedTextColor">@color/text_navy</item>
         <item name="tabTextColor">@color/economy_tab_text_unselected</item>
         <item name="tabTextAppearance">@style/EconomyTabTextAppearance</item>
         <item name="tabRippleColor">@color/divider_sand</item>
@@ -132,7 +132,7 @@
         <item name="android:elevation">16dp</item>
     </style>
 
-    <style name="Theme.EconomicDashboard.BottomSheet24" parent="Theme.MaterialComponents.Light.BottomSheetDialog">
+    <style name="Theme.EconomicDashboard.BottomSheet24" parent="Theme.MaterialComponents.DayNight.BottomSheetDialog">
         <item name="bottomSheetStyle">@style/EconomicBottomSheetStyle24</item>
     </style>
 
@@ -147,6 +147,48 @@
     <style name="CircleFabOverlay">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">50%</item>
+    </style>
+
+    <!-- ── Settings sheet ─────────────────────────────────────────────────── -->
+    <style name="SettingsSectionHeader">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textSize">10sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.2</item>
+        <item name="android:textColor">@color/text_muted</item>
+        <item name="android:layout_marginTop">18dp</item>
+        <item name="android:layout_marginBottom">4dp</item>
+    </style>
+
+    <style name="SettingsRow">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:paddingTop">6dp</item>
+        <item name="android:paddingBottom">6dp</item>
+    </style>
+
+    <style name="SettingsRowText">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:orientation">vertical</item>
+    </style>
+
+    <style name="SettingsRowTitle">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:textColor">@color/text_navy</item>
+    </style>
+
+    <style name="SettingsRowSub">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/text_secondary</item>
     </style>
 
 </resources>

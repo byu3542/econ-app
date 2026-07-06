@@ -54,6 +54,10 @@ public class NewsFragment extends Fragment {
         // ─── Progress / Error views ──────────────────────────────────────────────
         progressBar = binding.progressNews;
         tvError     = binding.textNewsError;
+        binding.btnNewsRetry.setOnClickListener(v -> {
+            binding.errorContainer.setVisibility(View.GONE);
+            viewModel.loadNews(true);
+        });
 
         // ─── Swipe-to-refresh ────────────────────────────────────────────────────
         swipeRefresh = binding.swipeRefreshNews;
@@ -95,7 +99,10 @@ public class NewsFragment extends Fragment {
 
         viewModel.getErrorMessage().observe(getViewLifecycleOwner(), error -> {
             boolean hasError = error != null && !error.isEmpty();
-            tvError.setVisibility(hasError ? View.VISIBLE : View.GONE);
+            // Only surface the error card when there's nothing to read —
+            // stale-but-present content beats an error banner.
+            binding.errorContainer.setVisibility(
+                    hasError && adapter.getItemCount() == 0 ? View.VISIBLE : View.GONE);
             if (hasError) tvError.setText(error);
         });
 

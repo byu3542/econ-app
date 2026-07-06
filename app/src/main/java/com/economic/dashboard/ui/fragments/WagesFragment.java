@@ -1,6 +1,7 @@
 package com.economic.dashboard.ui.fragments;
 
 import android.graphics.Color;
+import androidx.core.content.ContextCompat;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -163,7 +164,7 @@ public class WagesFragment extends Fragment {
         }
 
         tvWageYoYStatus.setText(reading);
-        tvWageYoYStatus.setTextColor(Color.parseColor("#BBBBBB"));
+        tvWageYoYStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_on_navy_secondary));
         
         GradientDrawable dot = new GradientDrawable();
         dot.setShape(GradientDrawable.OVAL);

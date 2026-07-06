@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   Refactored layout:
-    • Header block (navy) — unchanged
+    • Header block (navy) — now includes settings gear top-right
     • FrameLayout (fragmentContainer) — hosts Overview / Markets / Economy fragments
     • FrameLayout wrapper at the bottom:
         – navActiveIndicator View (2dp gold line that slides to active item)
@@ -21,7 +21,7 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <!-- ══ 1. SLIM HEADER — single row ════════════════════════════════ -->
+        <!-- ══ 1. SLIM HEADER — single row ════════════════ -->
         <LinearLayout
             android:id="@+id/header_container"
             android:layout_width="match_parent"
@@ -47,21 +47,40 @@
                     android:background="#c9a84c"
                     android:layout_marginBottom="8dp"/>
 
-                <!-- Title: "ECON MONITOR" — single line -->
-                <TextView
-                    android:id="@+id/tvHeaderLine1"
-                    android:layout_width="wrap_content"
+                <!-- Title row: page title + settings gear -->
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Overview"
-                    android:textSize="26sp"
-                    android:textColor="#ffffff"
-                    android:fontFamily="serif"
-                    android:textStyle="bold"
-                    android:textAllCaps="true"
-                    android:letterSpacing="0.08"
-                    android:singleLine="true"
-                    android:includeFontPadding="false"
-                    android:layout_marginBottom="8dp"/>
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="8dp">
+
+                    <TextView
+                        android:id="@+id/tvHeaderLine1"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Overview"
+                        android:textSize="26sp"
+                        android:textColor="#ffffff"
+                        android:fontFamily="serif"
+                        android:textStyle="bold"
+                        android:textAllCaps="true"
+                        android:letterSpacing="0.08"
+                        android:singleLine="true"
+                        android:includeFontPadding="false"/>
+
+                    <ImageView
+                        android:id="@+id/btnSettings"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:padding="9dp"
+                        android:src="@drawable/ic_settings"
+                        android:contentDescription="Settings"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        app:tint="#B3FFFFFF"/>
+
+                </LinearLayout>
 
                 <!-- Line 3: Quarter pill + date row -->
                 <LinearLayout
@@ -113,7 +132,7 @@
 
         </LinearLayout>
 
-        <!-- ══ Progress bar — unchanged ════════════════════════════════════ -->
+        <!-- ══ Progress bar — unchanged ════════════════ -->
         <ProgressBar
             android:id="@+id/progressBar"
             android:layout_width="match_parent"
@@ -131,11 +150,11 @@
             android:layout_weight="1"
             android:paddingBottom="30dp" />
 
-        <!-- ══ 3. BOTTOM NAV WRAPPER ════════════════════════════════════════
+        <!-- ══ 3. BOTTOM NAV WRAPPER ════════════════
              The FrameLayout lets the navActiveIndicator View float at the
              very top edge of the nav bar so it appears as a 2dp top-line
              indicator above the active destination icon.
-        ═══════════════════════════════════════════════════════════════════ -->
+        ═════════════════════════ -->
         <FrameLayout
             android:id="@+id/bottomNavWrapper"
             android:layout_width="match_parent"
@@ -183,11 +202,11 @@
 
     </LinearLayout>
 
-    <!-- ══ 4. CENTER AI ANALYST BUTTON ═══════════════════════════════════
+    <!-- ══ 4. CENTER AI ANALYST BUTTON ═════════════
          Circular launcher-icon artwork with a gold ring, anchored so it
          straddles the top edge of the bottom nav (pantrii-style FAB).
          Opens AiAnalystBottomSheet — wired in MainActivity.
-    ═══════════════════════════════════════════════════════════════════ -->
+    ═════════════════════════ -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/fabAiAnalyst"
         android:layout_width="62dp"
@@ -199,10 +218,9 @@
         android:contentDescription="AI Analyst"
         app:cardCornerRadius="31dp"
         app:cardElevation="8dp"
-        app:cardBackgroundColor="@color/accent_gold"
+        app:cardBackgroundColor="@color/fab_ring"
         app:rippleColor="#331A1A2E"
-        app:strokeColor="@color/bg_warm_off_white"
-        app:strokeWidth="3dp"
+        app:strokeWidth="0dp"
         app:layout_anchor="@id/bottomNavWrapper"
         app:layout_anchorGravity="top|center_horizontal">
 
@@ -216,4 +234,3 @@
     </com.google.android.material.card.MaterialCardView>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
-

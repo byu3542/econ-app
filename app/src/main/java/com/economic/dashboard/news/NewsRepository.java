@@ -1,6 +1,9 @@
 package com.economic.dashboard.news;
 
+import android.content.Context;
 import android.util.Log;
+
+import com.economic.dashboard.utils.SettingsManager;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -24,8 +27,16 @@ public class NewsRepository {
 
     private static NewsRepository instance;
 
+    /** Application context for reading the news-category settings.
+        Set once in EconomicDashboardApplication.onCreate(). */
+    private static Context appContext;
+
     private List<NewsItem> cachedItems    = null;
     private long           cacheTimestamp = 0;
+
+    public static void init(Context context) {
+        appContext = context.getApplicationContext();
+    }
 
     public static synchronized NewsRepository getInstance() {
         if (instance == null) instance = new NewsRepository();
@@ -34,8 +45,31 @@ public class NewsRepository {
 
     private NewsRepository() {}
 
+    /** True if the user has this feed category enabled (default: all on). */
+    private static boolean categoryEnabled(String categoryKey) {
+        if (appContext == null) return true; // init not called — fail open
+        switch (categoryKey) {
+            case NewsConstants.CAT_GOV:
+                return SettingsManager.getBool(appContext, SettingsManager.KEY_NEWS_GOV, true);
+            case NewsConstants.CAT_MEDIA:
+                return SettingsManager.getBool(appContext, SettingsManager.KEY_NEWS_MEDIA, true);
+            case NewsConstants.CAT_INTL:
+                return SettingsManager.getBool(appContext, SettingsManager.KEY_NEWS_INTL, true);
+            case NewsConstants.CAT_RESEARCH:
+                return SettingsManager.getBool(appContext, SettingsManager.KEY_NEWS_RESEARCH, true);
+            default:
+                return true;
+        }
+    }
+
+    /** Drops the in-memory cache so the next fetch re-reads the feed settings. */
+    public synchronized void invalidateCache() {
+        cachedItems = null;
+        cacheTimestamp = 0;
+    }
+
     /**
-     * Fetches all RSS feeds in parallel, deduplicates, sorts, and caps the list.
+     * Fetches enabled RSS feeds in parallel, deduplicates, sorts, and caps the list.
      * Must be called from a background thread.
      *
      * @param forceRefresh ignore cache even if still fresh
@@ -53,6 +87,7 @@ public class NewsRepository {
 
         List<Future<List<NewsItem>>> futures = new ArrayList<>();
         for (String[] feed : NewsConstants.RSS_FEEDS) {
+            if (!categoryEnabled(feed[2])) continue; // user disabled this category
             final String url  = feed[0];
             final String name = feed[1];
             futures.add(executor.submit(() -> new RssParser().parse(url, name)));

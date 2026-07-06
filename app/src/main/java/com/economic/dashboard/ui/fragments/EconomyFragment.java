@@ -79,9 +79,4 @@ public class EconomyFragment extends Fragment {
                 case 3:  return new HousingFragment();
                 default: return new GdpFragment();
             }
-        }
-
-        @Override
-        public int getItemCount() { return 4; }
-    }
-}
+    

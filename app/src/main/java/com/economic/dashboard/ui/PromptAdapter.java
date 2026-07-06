@@ -81,8 +81,4 @@ public class PromptAdapter extends RecyclerView.Adapter<PromptAdapter.ViewHolder
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             tvEmoji = itemView.findViewById(R.id.tvPromptEmoji);
-            tvText = itemView.findViewById(R.id.tvPromptText);
-            btnUse = itemView.findViewById(R.id.btnUsePrompt);
-        }
-    }
-}
+            tvText = itemView.findViewById(R.id.tvPromptText)

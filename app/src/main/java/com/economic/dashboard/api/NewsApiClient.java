@@ -162,12 +162,4 @@ public class NewsApiClient {
 
         private final String searchQuery;
 
-        EconomicTopic(String searchQuery) {
-            this.searchQuery = searchQuery;
-        }
-
-        public String getSearchQuery() {
-            return searchQuery;
-        }
-    }
-}
+        EconomicTopic(Stri

@@ -39,7 +39,7 @@
                             android:background="@drawable/dot_neutral" android:layout_marginEnd="4dp" />
                         <TextView android:id="@+id/tvGdpStatusText" android:layout_width="wrap_content"
                             android:layout_height="wrap_content" android:text="&#8212;"
-                            android:textColor="@color/text_muted" android:textSize="10sp" />
+                            android:textColor="@color/text_on_navy_muted" android:textSize="10sp" />
                     </LinearLayout>
                     <TextView android:id="@+id/tvGdpDesc" android:layout_width="wrap_content"
                         android:layout_height="wrap_content" android:text="Annualized % change"
@@ -67,7 +67,7 @@
                             android:background="@drawable/dot_neutral" android:layout_marginEnd="4dp" />
                         <TextView android:id="@+id/tvGdpLatestQuarterStatus" android:layout_width="wrap_content"
                             android:layout_height="wrap_content" android:text="&#8212;"
-                            android:textColor="@color/text_muted" android:textSize="10sp" />
+                            android:textColor="@color/text_on_navy_muted" android:textSize="10sp" />
                     </LinearLayout>
                     <TextView android:id="@+id/tvGdpLatestQuarterLabel" android:layout_width="wrap_content"
                         android:layout_height="wrap_content" android:text=""

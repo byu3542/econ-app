@@ -29,6 +29,7 @@
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chip_all"
                     style="@style/Widget.MaterialComponents.Chip.Filter"
+                    app:ensureMinTouchTargetSize="true"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="All"
@@ -44,6 +45,7 @@
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chip_fed"
                     style="@style/Widget.MaterialComponents.Chip.Filter"
+                    app:ensureMinTouchTargetSize="true"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Fed"
@@ -58,6 +60,7 @@
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chip_inflation"
                     style="@style/Widget.MaterialComponents.Chip.Filter"
+                    app:ensureMinTouchTargetSize="true"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Inflation"
@@ -72,6 +75,7 @@
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chip_jobs"
                     style="@style/Widget.MaterialComponents.Chip.Filter"
+                    app:ensureMinTouchTargetSize="true"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Jobs"
@@ -86,6 +90,7 @@
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chip_yields"
                     style="@style/Widget.MaterialComponents.Chip.Filter"
+                    app:ensureMinTouchTargetSize="true"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Yields"
@@ -100,6 +105,7 @@
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chip_economy"
                     style="@style/Widget.MaterialComponents.Chip.Filter"
+                    app:ensureMinTouchTargetSize="true"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Economy"
@@ -114,6 +120,7 @@
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chip_research"
                     style="@style/Widget.MaterialComponents.Chip.Filter"
+                    app:ensureMinTouchTargetSize="true"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Research"
@@ -128,6 +135,7 @@
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chip_housing"
                     style="@style/Widget.MaterialComponents.Chip.Filter"
+                    app:ensureMinTouchTargetSize="true"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Housing"
@@ -169,15 +177,55 @@
                 android:layout_gravity="center"
                 android:visibility="gone" />
 
-            <TextView
-                android:id="@+id/text_news_error"
-                android:layout_width="wrap_content"
+            <!-- Error state: icon + message + retry -->
+            <LinearLayout
+                android:id="@+id/error_container"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
+                android:orientation="vertical"
+                android:gravity="center"
                 android:padding="24dp"
-                android:textSize="14sp"
-                android:textAlignment="center"
-                android:visibility="gone" />
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="⚠"
+                    android:textSize="28sp"
+                    android:textColor="@color/accent_gold"
+                    android:importantForAccessibility="no" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Couldn\'t load the news feed"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_navy" />
+
+                <TextView
+                    android:id="@+id/text_news_error"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:textSize="13sp"
+                    android:textColor="@color/text_secondary"
+                    android:textAlignment="center" />
+
+                <Button
+                    android:id="@+id/btn_news_retry"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:minHeight="48dp"
+                    android:text="Retry"
+                    android:textColor="@color/text_navy"
+                    app:strokeColor="@color/accent_gold" />
+
+            </LinearLayout>
 
         </FrameLayout>
 

@@ -10,4 +10,5 @@ public class NewsItem {
     public String tag;           // "FED" | "INFLATION" | "JOBS" | "YIELDS" | "ECONOMY" | "GENERAL"
     public int    impactLevel;   // 2 = high, 1 = medium, 0 = normal
     public String sourceFeedUrl; // URL of the RSS feed that produced this item
+    public String imageUrl;      // from <enclosure>/<media:content>, null if the feed has none
 }

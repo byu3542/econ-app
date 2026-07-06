@@ -77,7 +77,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="\u2014"
-                            android:textColor="@color/text_muted"
+                            android:textColor="@color/text_on_navy_muted"
                             android:textSize="8sp" />
                     </LinearLayout>
                 </LinearLayout>
@@ -138,7 +138,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="\u2014"
-                            android:textColor="@color/text_muted"
+                            android:textColor="@color/text_on_navy_muted"
                             android:textSize="8sp" />
                     </LinearLayout>
                 </LinearLayout>
@@ -211,7 +211,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="\u2014"
-                            android:textColor="@color/text_muted"
+                            android:textColor="@color/text_on_navy_muted"
                             android:textSize="8sp" />
                     </LinearLayout>
                 </LinearLayout>
@@ -273,7 +273,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="\u2014"
-                            android:textColor="@color/text_muted"
+                            android:textColor="@color/text_on_navy_muted"
                             android:textSize="8sp" />
                     </LinearLayout>
                 </LinearLayout>
@@ -335,7 +335,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="\u2014"
-                            android:textColor="@color/text_muted"
+                            android:textColor="@color/text_on_navy_muted"
                             android:textSize="8sp" />
                     </LinearLayout>
                 </LinearLayout>

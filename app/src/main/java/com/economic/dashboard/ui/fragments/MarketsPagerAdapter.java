@@ -22,6 +22,4 @@ public class MarketsPagerAdapter extends FragmentStateAdapter {
 
     @Override
     public int getItemCount() {
-        return 4;
-    }
-}
+  

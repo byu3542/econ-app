@@ -83,6 +83,4 @@ public class ApiConfig {
     // History limits
     public static final String BLS_HISTORY_YEARS = "5"; // years of BLS history to fetch (used as: currentYear - BLS_HISTORY_YEARS)
     public static final String FRED_PCE_LIMIT = "120";
-    public static final String STOCK_INDICES_LIMIT = "120";
-    public static final String BOND_SPREADS_LIMIT = "120";
-}
+    public static final String STOCK

@@ -40,7 +40,7 @@
                         android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="4dp">
                         <View android:id="@+id/viewBaaDot" android:layout_width="8dp" android:layout_height="8dp" android:layout_marginEnd="6dp" />
                         <TextView android:id="@+id/tvBaaStatus" android:layout_width="wrap_content"
-                            android:layout_height="wrap_content" android:text="LOADING" android:textColor="@color/text_muted" android:textSize="10sp" />
+                            android:layout_height="wrap_content" android:text="LOADING" android:textColor="@color/text_on_navy_muted" android:textSize="10sp" />
                     </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
@@ -66,7 +66,7 @@
                         android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="4dp">
                         <View android:id="@+id/viewHyDot" android:layout_width="8dp" android:layout_height="8dp" android:layout_marginEnd="6dp" />
                         <TextView android:id="@+id/tvHyStatus" android:layout_width="wrap_content"
-                            android:layout_height="wrap_content" android:text="LOADING" android:textColor="@color/text_muted" android:textSize="10sp" />
+                            android:layout_height="wrap_content" android:text="LOADING" android:textColor="@color/text_on_navy_muted" android:textSize="10sp" />
                     </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>

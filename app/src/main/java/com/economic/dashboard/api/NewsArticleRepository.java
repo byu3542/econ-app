@@ -68,6 +68,4 @@ public class NewsArticleRepository {
     }
 
     public void markAsRead(int articleId) {
-        AppExecutors.getInstance().diskIO().execute(() -> dao.markAsRead(articleId));
-    }
-}
+        AppExecutors.get

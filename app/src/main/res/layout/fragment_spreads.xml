@@ -41,7 +41,7 @@
                         <View android:id="@+id/viewSpreadIndicatorDot" android:layout_width="8dp" android:layout_height="8dp"
                             android:background="@drawable/dot_neutral" android:layout_marginEnd="6dp" />
                         <TextView android:id="@+id/tvIndicatorText" android:layout_width="wrap_content"
-                            android:layout_height="wrap_content" android:text="LOADING" android:textColor="@color/text_muted" android:textSize="10sp" />
+                            android:layout_height="wrap_content" android:text="LOADING" android:textColor="@color/text_on_navy_muted" android:textSize="10sp" />
                     </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
@@ -68,7 +68,7 @@
                         <View android:id="@+id/viewSpread3MIndicatorDot" android:layout_width="8dp" android:layout_height="8dp"
                             android:background="@drawable/dot_neutral" android:layout_marginEnd="6dp" />
                         <TextView android:id="@+id/tvIndicator3MText" android:layout_width="wrap_content"
-                            android:layout_height="wrap_content" android:text="LOADING" android:textColor="@color/text_muted" android:textSize="10sp" />
+                            android:layout_height="wrap_content" android:text="LOADING" android:textColor="@color/text_on_navy_muted" android:textSize="10sp" />
                     </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>

@@ -187,13 +187,4 @@ public class GdpFragment extends Fragment {
         x.setDrawGridLines(true); x.setGridColor(grid); x.setLabelRotationAngle(-45f);
         x.setGranularity(1f); x.setLabelCount(6, false); x.setAvoidFirstLastClipping(true);
         YAxis y = chart.getAxisLeft();
-        y.setTextColor(Color.parseColor("#8899BB")); y.setTextSize(10f); y.setDrawGridLines(true); y.setGridColor(grid);
-        chart.getAxisRight().setEnabled(false);
-    }
-
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        binding = null;
-    }
-}
+        y.setTextColor(Color.parseColor("#8899BB")); y.setTextSize(10f); y.setDrawGridLines(true);

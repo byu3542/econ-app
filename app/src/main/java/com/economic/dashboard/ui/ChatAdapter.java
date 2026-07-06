@@ -3,13 +3,19 @@ package com.economic.dashboard.ui;
 import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
 import android.animation.ValueAnimator;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.PopupMenu;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -40,11 +46,40 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
     public void addMessage(ChatMessage message) {
         messages.add(message);
         notifyItemInserted(messages.size() - 1);
+        // Rebind the previous row: its run-grouping / timestamp context changed
+        if (messages.size() > 1) notifyItemChanged(messages.size() - 2);
     }
+
+    /** Replaces the whole list — used when restoring a persisted conversation. */
+    public void setMessages(List<ChatMessage> restored) {
+        messages.clear();
+        if (restored != null) messages.addAll(restored);
+        notifyDataSetChanged();
+    }
+
+    /** Streams new text into an existing bubble (SSE partials). */
+    public void updateMessageText(int index, String text) {
+        if (index < 0 || index >= messages.size()) return;
+        messages.get(index).setText(text);
+        notifyItemChanged(index);
+    }
+
+    public int getLastIndex() { return messages.size() - 1; }
 
     public void removeTypingIndicator() {
         for (int i = messages.size() - 1; i >= 0; i--) {
             if (messages.get(i).isTyping()) {
+                messages.remove(i);
+                notifyItemRemoved(i);
+                break;
+            }
+        }
+    }
+
+    /** Removes the most recent error bubble (before a retry). */
+    public void removeLastError() {
+        for (int i = messages.size() - 1; i >= 0; i--) {
+            if (messages.get(i).isError()) {
                 messages.remove(i);
                 notifyItemRemoved(i);
                 break;
@@ -84,6 +119,15 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
             }
         }
 
+        // Run grouping: label only on the first message of a run from the same
+        // sender; timestamp only on the last message of a run.
+        boolean runStart = position == 0
+                || messages.get(position - 1).isUser() != m.isUser()
+                || messages.get(position - 1).isTyping();
+        boolean runEnd = position == messages.size() - 1
+                || messages.get(position + 1).isUser() != m.isUser();
+        holder.tvSenderLabel.setVisibility(runStart ? View.VISIBLE : View.GONE);
+        holder.tvTimestamp.setVisibility(runEnd && !m.isTyping() ? View.VISIBLE : View.GONE);
         holder.tvTimestamp.setText(m.getTimestamp());
 
         DisplayMetrics dm = holder.itemView.getResources().getDisplayMetrics();
@@ -110,17 +154,29 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
             timeParams.horizontalBias   = 0.0f;
             if (m.isError()) {
                 holder.llBubbleContainer.setBackgroundResource(R.drawable.bg_chat_bubble_error);
-                holder.tvMessage.setTextColor(Color.parseColor("#B00020"));
+                holder.tvMessage.setTextColor(androidx.core.content.ContextCompat.getColor(
+                        holder.itemView.getContext(), R.color.error_text));
                 if (retryListener != null) {
                     holder.llBubbleContainer.setClickable(true);
                     holder.llBubbleContainer.setOnClickListener(v -> retryListener.onRetry());
                 }
             } else {
                 holder.llBubbleContainer.setBackgroundResource(R.drawable.bg_chat_bubble_analyst);
-                holder.tvMessage.setTextColor(Color.parseColor("#1a1a2e"));
+                holder.tvMessage.setTextColor(androidx.core.content.ContextCompat.getColor(
+                        holder.itemView.getContext(), R.color.text_navy));
                 holder.llBubbleContainer.setClickable(false);
                 holder.llBubbleContainer.setOnClickListener(null);
             }
+        }
+
+        // Long-press → copy / share (any real message)
+        if (!m.isTyping() && m.getText() != null && !m.getText().isEmpty()) {
+            holder.llBubbleContainer.setOnLongClickListener(v -> {
+                showMessageMenu(v, m.getText());
+                return true;
+            });
+        } else {
+            holder.llBubbleContainer.setOnLongClickListener(null);
         }
 
         holder.llBubbleContainer.setLayoutParams(bubbleParams);
@@ -128,19 +184,51 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
         holder.tvTimestamp.setLayoutParams(timeParams);
     }
 
+    private void showMessageMenu(View anchor, String text) {
+        Context ctx = anchor.getContext();
+        PopupMenu menu = new PopupMenu(ctx, anchor);
+        menu.getMenu().add(0, 1, 0, "Copy");
+        menu.getMenu().add(0, 2, 1, "Share");
+        menu.setOnMenuItemClickListener(item -> {
+            if (item.getItemId() == 1) {
+                ClipboardManager cm = (ClipboardManager) ctx.getSystemService(Context.CLIPBOARD_SERVICE);
+                if (cm != null) {
+                    cm.setPrimaryClip(ClipData.newPlainText("Analyst message", text));
+                    Toast.makeText(ctx, "Copied", Toast.LENGTH_SHORT).show();
+                }
+                return true;
+            } else if (item.getItemId() == 2) {
+                Intent share = new Intent(Intent.ACTION_SEND);
+                share.setType("text/plain");
+                share.putExtra(Intent.EXTRA_TEXT, text);
+                ctx.startActivity(Intent.createChooser(share, "Share message"));
+                return true;
+            }
+            return false;
+        });
+        menu.show();
+    }
+
     private void startDancingDots(ViewHolder holder) {
-        animateDot(holder.dot1, 0);
-        animateDot(holder.dot2, 200);
-        animateDot(holder.dot3, 400);
+        stopDancingDots(holder);
+        holder.dotAnimators.add(animateDot(holder.dot1, 0));
+        holder.dotAnimators.add(animateDot(holder.dot2, 200));
+        holder.dotAnimators.add(animateDot(holder.dot3, 400));
     }
 
+    /**
+     * ObjectAnimators are not stopped by View.clearAnimation() — they must be
+     * cancelled explicitly, otherwise they run forever on recycled views.
+     */
     private void stopDancingDots(ViewHolder holder) {
-        holder.dot1.clearAnimation();
-        holder.dot2.clearAnimation();
-        holder.dot3.clearAnimation();
+        for (ObjectAnimator a : holder.dotAnimators) a.cancel();
+        holder.dotAnimators.clear();
+        holder.dot1.setTranslationY(0f);
+        holder.dot2.setTranslationY(0f);
+        holder.dot3.setTranslationY(0f);
     }
 
-    private void animateDot(View dot, long delay) {
+    private ObjectAnimator animateDot(View dot, long delay) {
         // Use dp-based pixels so bounce scales correctly across all screen densities
         float bouncePx = 8f * dot.getResources().getDisplayMetrics().density;
         ObjectAnimator animator = ObjectAnimator.ofPropertyValuesHolder(dot,
@@ -149,6 +237,13 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
         animator.setStartDelay(delay);
         animator.setRepeatCount(ValueAnimator.INFINITE);
         animator.start();
+        return animator;
+    }
+
+    @Override
+    public void onViewRecycled(@NonNull ViewHolder holder) {
+        super.onViewRecycled(holder);
+        stopDancingDots(holder);
     }
 
     @Override
@@ -158,6 +253,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
         LinearLayout llBubbleContainer, llTypingIndicator;
         TextView tvMessage, tvSenderLabel, tvTimestamp;
         View dot1, dot2, dot3;
+        final List<ObjectAnimator> dotAnimators = new ArrayList<>();
 
         ViewHolder(View v) {
             super(v);

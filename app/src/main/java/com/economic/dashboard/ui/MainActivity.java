@@ -17,22 +17,29 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.economic.dashboard.R;
 import com.economic.dashboard.cache.CacheManager;
+import com.economic.dashboard.database.YieldDatabase;
 import com.economic.dashboard.databinding.ActivityMainBinding;
 import com.economic.dashboard.models.ChatMessage;
+import com.economic.dashboard.models.ChatMessageEntity;
 import com.economic.dashboard.news.NewsFragment;
 import com.economic.dashboard.news.NewsRepository;
 import com.economic.dashboard.ui.fragments.DashboardFragment;
 import com.economic.dashboard.ui.fragments.EconomyFragment;
 import com.economic.dashboard.ui.fragments.MarketsFragment;
+import com.economic.dashboard.utils.AppExecutors;
+import com.economic.dashboard.utils.SettingsManager;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import android.widget.ProgressBar;
 
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 
 import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
@@ -40,8 +47,19 @@ import okhttp3.OkHttpClient;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final String WELCOME_TEXT =
+            "Hello! I am your AI Economic Analyst, powered by Claude. "
+            + "I can see all of the dashboard's live data — ask me anything about it. "
+            + "Tip: long-press any card on the Overview screen to ask about that metric.";
+    /** Newest rows kept in the persisted chat table. */
+    private static final int CHAT_PERSIST_LIMIT = 200;
+
     private EconomicViewModel viewModel;
     private ActivityMainBinding binding;
+
+    /** True only on a fresh launch (not on theme-change/rotation recreates) —
+        gates "open to default tab" and "refresh cache on open". */
+    private boolean freshLaunch = false;
 
     ChatAdapter chatAdapter;
     final JSONArray conversationHistory = new JSONArray();
@@ -62,17 +80,27 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        freshLaunch = (savedInstanceState == null);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
+        // Edge-to-edge: draw behind system bars, then pad the header and
+        // bottom nav so content clears them (required on Android 15+).
+        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), (v, insets) -> {
+            androidx.core.graphics.Insets bars =
+                    insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars());
+            binding.headerContainer.setPadding(0, bars.top, 0, 0);
+            binding.bottomNavWrapper.setPadding(0, 0, 0, bars.bottom);
+            return androidx.core.view.WindowInsetsCompat.CONSUMED;
+        });
 
         if (getSupportActionBar() != null) getSupportActionBar().hide();
 
         viewModel = new ViewModelProvider(this).get(EconomicViewModel.class);
 
         chatAdapter = new ChatAdapter(this::retryLastQuery);
-        chatAdapter.addMessage(new ChatMessage(
-                "Hello! I am your AI Economic Analyst, powered by Claude. "
-                + "Ask me anything about the US economic data.", false));
+        loadPersistedChat();
 
         setupBottomNav();
 
@@ -80,11 +108,100 @@ public class MainActivity extends AppCompatActivity {
             if (getSupportFragmentManager().findFragmentByTag(AiAnalystBottomSheet.TAG) == null)
                 new AiAnalystBottomSheet().show(getSupportFragmentManager(), AiAnalystBottomSheet.TAG);
         });
+        binding.btnSettings.setOnClickListener(v -> showSettingsSheet());
         updateHeader();
         observeViewModel();
         viewModel.fetchAllData();
+        if (freshLaunch && SettingsManager.getBool(this, SettingsManager.KEY_REFRESH_ON_OPEN, false)) {
+            CacheManager.forceRefreshAll(this, success -> runOnUiThread(this::updateHeader));
+        }
         NewsRepository.getInstance().fetchAllFeedsIfStale();
     }
+
+    // ── Settings ─────────────────────────────────────────────────────────────
+
+    /** Gear icon in the header — opens the settings bottom sheet. */
+    private void showSettingsSheet() {
+        if (getSupportFragmentManager().findFragmentByTag(SettingsBottomSheet.TAG) == null)
+            new SettingsBottomSheet().show(getSupportFragmentManager(), SettingsBottomSheet.TAG);
+    }
+
+    /** Asks for the Android 13+ notification permission if not yet granted. */
+    public void ensureNotificationPermission() {
+        if (android.os.Build.VERSION.SDK_INT >= 33
+                && androidx.core.content.ContextCompat.checkSelfPermission(this,
+                        android.Manifest.permission.POST_NOTIFICATIONS)
+                   != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            androidx.core.app.ActivityCompat.requestPermissions(this,
+                    new String[]{ android.Manifest.permission.POST_NOTIFICATIONS }, 1001);
+        }
+    }
+
+    // ── Chat persistence ─────────────────────────────────────────────────────
+
+    /** Restores the saved conversation; falls back to the welcome message. */
+    private void loadPersistedChat() {
+        AppExecutors.getInstance().diskIO().execute(() -> {
+            List<ChatMessageEntity> saved =
+                    YieldDatabase.getInstance(this).chatMessageDao().getAll();
+            List<ChatMessage> restored = new ArrayList<>();
+            for (ChatMessageEntity e : saved) restored.add(e.toChatMessage());
+            runOnUiThread(() -> {
+                if (restored.isEmpty()) {
+                    chatAdapter.addMessage(new ChatMessage(WELCOME_TEXT, false));
+                } else {
+                    chatAdapter.setMessages(restored);
+                    rebuildConversationHistory(restored);
+                }
+            });
+        });
+    }
+
+    /**
+     * Rebuilds the Claude-facing history from restored messages.
+     * Only complete user→assistant pairs are kept — the API requires
+     * strictly alternating roles, and a failed request can leave an
+     * unanswered user message in the persisted log.
+     */
+    private void rebuildConversationHistory(List<ChatMessage> restored) {
+        try {
+            while (conversationHistory.length() > 0) conversationHistory.remove(0);
+            for (int i = 0; i < restored.size() - 1; i++) {
+                ChatMessage q = restored.get(i), a = restored.get(i + 1);
+                if (q.isUser() && !a.isUser()) {
+                    JSONObject user = new JSONObject();
+                    user.put("role", "user"); user.put("content", q.getText());
+                    conversationHistory.put(user);
+                    JSONObject assistant = new JSONObject();
+                    assistant.put("role", "assistant"); assistant.put("content", a.getText());
+                    conversationHistory.put(assistant);
+                    i++;
+                }
+            }
+        } catch (Exception ignored) {}
+    }
+
+    /** Saves a message so the conversation survives app restarts. */
+    public void persistChatMessage(ChatMessage m) {
+        if (m == null || m.isTyping() || m.isError()) return;
+        AppExecutors.getInstance().diskIO().execute(() -> {
+            YieldDatabase db = YieldDatabase.getInstance(this);
+            db.chatMessageDao().insert(ChatMessageEntity.from(m));
+            db.chatMessageDao().trim(CHAT_PERSIST_LIMIT);
+        });
+    }
+
+    /** Wipes the stored conversation and resets the visible chat. */
+    public void clearChatHistory() {
+        AppExecutors.getInstance().diskIO().execute(() ->
+                YieldDatabase.getInstance(this).chatMessageDao().clearAll());
+        while (conversationHistory.length() > 0) conversationHistory.remove(0);
+        lastUserQuery = "";
+        chatAdapter.setMessages(new ArrayList<>());
+        chatAdapter.addMessage(new ChatMessage(WELCOME_TEXT, false));
+    }
+
+    // ── Navigation ───────────────────────────────────────────────────────────
 
     private void setupBottomNav() {
         loadFragment(new DashboardFragment(), "overview");
@@ -119,6 +236,16 @@ public class MainActivity extends AppCompatActivity {
 
                 return true;
             });
+
+            // Open to the user's preferred tab (fresh launches only, so a
+            // theme change or rotation doesn't yank the user off their screen)
+            if (freshLaunch) {
+                freshLaunch = false;
+                int defTab = SettingsManager.getDefaultTab(MainActivity.this);
+                if (defTab == 1)      binding.bottomNav.setSelectedItemId(R.id.nav_markets);
+                else if (defTab == 2) binding.bottomNav.setSelectedItemId(R.id.nav_economy);
+                else if (defTab == 3) binding.bottomNav.setSelectedItemId(R.id.navigation_news);
+            }
         });
     }
 
@@ -128,7 +255,12 @@ public class MainActivity extends AppCompatActivity {
         getSupportFragmentManager().beginTransaction().replace(R.id.fragmentContainer, fragment, tag).commit();
     }
 
-    private void retryLastQuery() {}
+    /** Tap-to-retry on an error bubble — resends via the open analyst sheet. */
+    private void retryLastQuery() {
+        Fragment f = getSupportFragmentManager().findFragmentByTag(AiAnalystBottomSheet.TAG);
+        if (f instanceof AiAnalystBottomSheet && f.isAdded())
+            ((AiAnalystBottomSheet) f).resendLastQuery();
+    }
 
     public void showFedFundsHistory() {
         View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_fed_funds_history, null);

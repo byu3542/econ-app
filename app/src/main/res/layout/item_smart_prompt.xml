@@ -1,12 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Compact suggestion card — used horizontally in the AI chat sheet.
+     Tapping anywhere sends the prompt; the old button is kept for
+     adapter compatibility but hidden. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
+    android:layout_width="250dp"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="12dp"
-    android:layout_marginBottom="8dp"
-    android:background="@android:color/white"
-    android:elevation="2dp">
+    android:padding="10dp"
+    android:layout_marginEnd="8dp"
+    android:background="@drawable/bg_chip_outline"
+    android:clickable="true"
+    android:focusable="true">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -19,7 +23,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="🏦"
-            android:textSize="18sp"
+            android:textSize="16sp"
             android:layout_marginEnd="8dp" />
 
         <TextView
@@ -28,8 +32,10 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="How might this Fed action affect Treasury yields?"
-            android:textSize="13sp"
-            android:textColor="#1a1a1a"
+            android:textSize="12sp"
+            android:textColor="@color/text_navy"
+            android:maxLines="2"
+            android:ellipsize="end"
             android:lineSpacingMultiplier="1.15" />
     </LinearLayout>
 
@@ -39,5 +45,6 @@
         android:layout_height="36dp"
         android:layout_marginTop="8dp"
         android:text="Use This Prompt"
-        android:textSize="12sp" />
+        android:textSize="12sp"
+        android:visibility="gone" />
 </LinearLayout>

@@ -74,8 +74,4 @@ public interface TreasuryYieldDao {
 
     /**
      * Clear all cached Treasury yield data.
-     * Used for cache invalidation or when user requests a fresh fetch.
-     */
-    @Query("DELETE FROM treasury_yields")
-    void clear();
-}
+     * Used for cache invalidation or when user requests a fresh f

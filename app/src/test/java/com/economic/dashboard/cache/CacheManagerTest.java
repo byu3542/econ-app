@@ -95,7 +95,4 @@ public class CacheManagerTest {
     }
 
     @Test
-    public void formatAge_negativeTreatedAsZero() {
-        assertEquals("just now", CacheManager.formatAge(-1000));
-    }
-}
+    public void formatAge_ne

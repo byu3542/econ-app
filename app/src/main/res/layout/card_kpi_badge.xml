@@ -1,14 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Dark navy badge card — matches Housing tab badge style.
-     Used by Overview screen for the 2x2 KPI indicator grid. -->
+     Used by Overview screen for the KPI indicator grid.
+     Tappable (ripple foreground); shows value + delta chip + sparkline. -->
 <androidx.cardview.widget.CardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:foreground="?attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true"
     app:cardCornerRadius="12dp"
     app:cardElevation="4dp"
-    app:cardBackgroundColor="#1C2236">
+    app:cardBackgroundColor="@color/card_navy_badge">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -23,22 +27,47 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="METRIC"
-            android:textColor="#C8A84B"
-            android:textSize="10sp"
+            android:textColor="@color/accent_gold"
+            android:textSize="11sp"
             android:textStyle="bold"
             android:textAllCaps="true"
             android:letterSpacing="0.08" />
 
-        <!-- Value: the percentage / number -->
-        <TextView
-            android:id="@+id/tvMetricValue"
+        <!-- Value + delta vs. previous release -->
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="\u2014"
-            android:textColor="#FFFFFF"
-            android:textSize="28sp"
-            android:textStyle="bold"
-            android:layout_marginTop="4dp" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="4dp">
+
+            <TextView
+                android:id="@+id/tvMetricValue"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="—"
+                android:textColor="#FFFFFF"
+                android:textSize="26sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvMetricDelta"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+        </LinearLayout>
+
+        <!-- Sparkline: recent trend from local history -->
+        <com.economic.dashboard.ui.views.SparklineView
+            android:id="@+id/sparkline"
+            android:layout_width="90dp"
+            android:layout_height="20dp"
+            android:layout_marginTop="6dp"
+            android:visibility="gone"
+            android:importantForAccessibility="no" />
 
         <!-- Status row: colored dot + status word -->
         <LinearLayout
@@ -46,7 +75,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:layout_marginTop="4dp">
+            android:layout_marginTop="6dp">
 
             <View
                 android:id="@+id/viewTierDot"
@@ -59,9 +88,9 @@
                 android:id="@+id/tvTierStatus"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="\u2014"
-                android:textColor="@color/text_muted"
-                android:textSize="10sp"
+                android:text="—"
+                android:textColor="@color/text_slate"
+                android:textSize="11sp"
                 android:textStyle="bold"
                 android:textAllCaps="true" />
         </LinearLayout>
@@ -72,8 +101,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text=""
-            android:textColor="#5A6A8A"
-            android:textSize="9sp"
+            android:textColor="@color/text_slate"
+            android:textSize="10sp"
             android:layout_marginTop="2dp" />
 
         <!-- Sub-label: historical percentile (when available) -->
@@ -82,8 +111,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text=""
-            android:textColor="#5A6A8A"
-            android:textSize="9sp" />
+            android:textColor="@color/text_slate"
+            android:textSize="10sp" />
 
     </LinearLayout>
 </androidx.cardview.widget.CardView>

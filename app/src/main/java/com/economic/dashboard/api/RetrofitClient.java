@@ -59,6 +59,4 @@ public class RetrofitClient {
                     .addConverterFactory(GsonConverterFactory.create())
                     .build();
         }
-        return fredRetrofit.create(EconomicApiService.class);
-    }
-}
+        r

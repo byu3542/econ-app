@@ -104,8 +104,3 @@
             android:pathData="M10,96 L10,100 M35,96 L35,100 M60,96 L60,100 M96,96 L96,100"
             android:fillColor="#00000000"
             android:strokeColor="#4DC9A84C"
-            android:strokeWidth="1.5"
-            android:strokeLineCap="round"/>
-    </group>
-
-</vector>

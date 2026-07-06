@@ -39,7 +39,7 @@
                             android:background="@drawable/dot_neutral" android:layout_marginEnd="4dp" />
                         <TextView android:id="@+id/tvPceStatus" android:layout_width="wrap_content"
                             android:layout_height="wrap_content" android:text="&#8212;"
-                            android:textColor="@color/text_muted" android:textSize="10sp" />
+                            android:textColor="@color/text_on_navy_muted" android:textSize="10sp" />
                     </LinearLayout>
                     <TextView android:id="@+id/tvPcePercentile" android:layout_width="wrap_content"
                         android:layout_height="wrap_content" android:text=""
@@ -66,7 +66,7 @@
                             android:background="@drawable/dot_neutral" android:layout_marginEnd="4dp" />
                         <TextView android:id="@+id/tvCpiYoYStatus" android:layout_width="wrap_content"
                             android:layout_height="wrap_content" android:text="&#8212;"
-                            android:textColor="@color/text_muted" android:textSize="10sp" />
+                            android:textColor="@color/text_on_navy_muted" android:textSize="10sp" />
                     </LinearLayout>
                     <TextView android:id="@+id/tvCpiPercentile" android:layout_width="wrap_content"
                         android:layout_height="wrap_content" android:text=""
@@ -95,7 +95,7 @@
                         android:background="@drawable/dot_neutral" android:layout_marginEnd="4dp" />
                     <TextView android:id="@+id/tvWageYoYStatus" android:layout_width="wrap_content"
                         android:layout_height="wrap_content" android:text="&#8212;"
-                        android:textColor="@color/text_muted" android:textSize="10sp" />
+                        android:textColor="@color/text_on_navy_muted" android:textSize="10sp" />
                 </LinearLayout>
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                     android:text="Wages vs CPI spread" android:textColor="#5A6A8A" android:textSize="9sp" android:layout_marginTop="2dp" />

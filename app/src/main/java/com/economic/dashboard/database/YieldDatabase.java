@@ -9,6 +9,7 @@ import androidx.room.RoomDatabase;
 import androidx.room.migration.Migration;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
+import com.economic.dashboard.models.ChatMessageEntity;
 import com.economic.dashboard.models.EconomicHistoryEntry;
 import com.economic.dashboard.models.NewsArticle;
 import com.economic.dashboard.models.TreasuryYield;
@@ -24,10 +25,11 @@ import com.economic.dashboard.models.TreasuryYield;
  *       doesn't declare, which tripped Room's identity-hash check. Bumping the
  *       version lets destructive fallback recreate the table cleanly. All tables
  *       are re-fetchable API caches, so no real data is lost.)
+ * v5 → added chat_messages table (AI Analyst conversation persistence)
  */
 @Database(
-    entities = {TreasuryYield.class, NewsArticle.class, EconomicHistoryEntry.class},
-    version = 4,
+    entities = {TreasuryYield.class, NewsArticle.class, EconomicHistoryEntry.class, ChatMessageEntity.class},
+    version = 5,
     exportSchema = false
 )
 public abstract class YieldDatabase extends RoomDatabase {
@@ -38,6 +40,7 @@ public abstract class YieldDatabase extends RoomDatabase {
     public abstract TreasuryYieldDao treasuryYieldDao();
     public abstract NewsArticleDao newsArticleDao();
     public abstract EconomicHistoryDao economicHistoryDao();
+    public abstract ChatMessageDao chatMessageDao();
 
     // ── Migration: v1 → v2 ───────────────────────────────────────────────────
     static final Migration MIGRATION_1_2 = new Migration(1, 2) {
@@ -92,6 +95,21 @@ public abstract class YieldDatabase extends RoomDatabase {
         }
     };
 
+    // ── Migration: v4 → v5 ───────────────────────────────────────────────────
+    static final Migration MIGRATION_4_5 = new Migration(4, 5) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+            database.execSQL(
+                "CREATE TABLE IF NOT EXISTS `chat_messages` (" +
+                    "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                    "`text` TEXT, " +
+                    "`isUser` INTEGER NOT NULL, " +
+                    "`timeMillis` INTEGER NOT NULL" +
+                ")"
+            );
+        }
+    };
+
     // ── Singleton factory ─────────────────────────────────────────────────────
 
     public static YieldDatabase getInstance(Context context) {
@@ -103,7 +121,7 @@ public abstract class YieldDatabase extends RoomDatabase {
                             YieldDatabase.class,
                             "yield_database"
                     )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_4_5)
                     // Safety net: if migration path is still missing, wipe and rebuild.
                     // All data is re-fetched from APIs so no data loss in practice.
                     .fallbackToDestructiveMigration()

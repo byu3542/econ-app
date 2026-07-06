@@ -6,6 +6,7 @@
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="12dp"
     android:layout_marginVertical="3dp"
+    app:cardBackgroundColor="@color/surface_card"
     app:cardElevation="1dp"
     app:cardCornerRadius="10dp"
     android:foreground="?attr/selectableItemBackground">
@@ -16,7 +17,7 @@
         android:orientation="horizontal"
         android:padding="12dp">
 
-        <!-- Impact bar on left edge -->
+        <!-- Impact bar on left edge (description set in adapter for TalkBack) -->
         <View
             android:id="@+id/view_impact_bar"
             android:layout_width="3dp"
@@ -44,14 +45,14 @@
                     android:textSize="11sp"
                     android:textStyle="bold"
                     android:textAllCaps="true"
-                    android:textColor="#c9a84c" />
+                    android:textColor="@color/accent_gold" />
 
                 <TextView
                     android:id="@+id/tv_row_time"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textSize="11sp"
-                    android:textColor="#cccccc" />
+                    android:textColor="@color/text_muted" />
 
             </LinearLayout>
 
@@ -63,7 +64,7 @@
                 android:layout_marginTop="3dp"
                 android:textSize="13sp"
                 android:fontFamily="serif"
-                android:textColor="#0f1729"
+                android:textColor="@color/text_navy"
                 android:lineHeight="18sp"
                 android:maxLines="2"
                 android:ellipsize="end" />
@@ -81,6 +82,17 @@
                 android:textAllCaps="true" />
 
         </LinearLayout>
+
+        <!-- Optional thumbnail (only when the feed provides one) -->
+        <ImageView
+            android:id="@+id/iv_row_thumb"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_marginStart="10dp"
+            android:layout_gravity="center_vertical"
+            android:scaleType="centerCrop"
+            android:visibility="gone"
+            android:importantForAccessibility="no" />
 
     </LinearLayout>
 

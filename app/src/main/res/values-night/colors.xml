@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Dark theme palette. Navy data surfaces (header, KPI badges, charts,
+     bottom nav) are already dark and keep their day values — only the
+     light "reading" surfaces and their text flip here. -->
+<resources>
+    <color name="bg_warm_off_white">#12161F</color>
+    <color name="surface_card">#1C222E</color>
+    <color name="row_alt_bg">#171C26</color>
+    <color name="divider_sand">#2A3142</color>
+    <color name="tab_bg_warm_gray">#1C222E</color>
+
+    <color name="text_navy">#E9ECF4</color>
+    <color name="text_secondary">#A9B1C2</color>
+    <color name="text_muted">#707A8C</color>
+    <color name="alabaster_dark_gray">#D8DCE6</color>
+
+    <color name="background">#12161F</color>
+    <color name="economy_tab_bg">#1C222E</color>
+
+    <color name="error_bubble_bg">#2A1E20</color>
+    <color name="error_bubble_stroke">#5C3438</color>
+    <color name="error_text">#FF8A93</color>
+
+    <color name="chart_grid">#2A3142</color>
+    <color name="chart_axis_line">#3A4358</color>
+    <color name="chart_axis_text">#A9B1C2</color>
+    <color name="chart_legend_text">#C5CCDB</color>
+
+    <color name="hairline_on_surface">#1FFFFFFF</color>
+    <color name="handle_on_surface">#33FFFFFF</color>
+
+    <color name="fab_ring">#2A3142</color>
+</resources>

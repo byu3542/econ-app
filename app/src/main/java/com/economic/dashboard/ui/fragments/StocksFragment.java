@@ -1,7 +1,9 @@
 package com.economic.dashboard.ui.fragments;
 
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.InsetDrawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -141,13 +143,18 @@ public class StocksFragment extends Fragment {
         }
     }
 
-    private GradientDrawable makeActiveBorder() {
+    private Drawable makeActiveBorder() {
+        // Stroke is drawn centered on the shape edge; inset it so the full
+        // width renders inside the CardView's rounded clip, and match the
+        // card's 16dp corner radius (minus the inset) so corners align.
         float density = getResources().getDisplayMetrics().density;
+        int strokePx = Math.max(2, Math.round(1.5f * density));
+        int insetPx = (int) Math.ceil(strokePx / 2f);
         GradientDrawable gd = new GradientDrawable();
-        gd.setCornerRadius(12 * density);
-        gd.setStroke((int)(1.5f * density), Color.parseColor("#C8A84B"));
         gd.setColor(Color.TRANSPARENT);
-        return gd;
+        gd.setCornerRadius(16f * density - insetPx);
+        gd.setStroke(strokePx, Color.parseColor("#C8A84B"));
+        return new InsetDrawable(gd, insetPx);
     }
 
     private void buildSwappableChart() {

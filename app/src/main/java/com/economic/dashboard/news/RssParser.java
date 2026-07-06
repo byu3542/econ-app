@@ -122,6 +122,19 @@ public class RssParser {
                         currentField = null;
 
                     } else if (inItem) {
+                        // Thumbnail: <enclosure url= type=image/*> or <media:content|thumbnail url=>
+                        if (current != null && current.imageUrl == null
+                                && ("enclosure".equalsIgnoreCase(tag)
+                                    || "media:content".equalsIgnoreCase(tag)
+                                    || "media:thumbnail".equalsIgnoreCase(tag))) {
+                            String imgUrl = parser.getAttributeValue(null, "url");
+                            String type = parser.getAttributeValue(null, "type");
+                            if (imgUrl != null && !imgUrl.isEmpty()
+                                    && (type == null || type.startsWith("image"))) {
+                                current.imageUrl = imgUrl;
+                            }
+                        }
+
                         // Atom <link href="..."> is a self-closing element with an attribute
                         if ("link".equalsIgnoreCase(tag)) {
                             String href = parser.getAttributeValue(null, "href");

@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/swipeRefresh"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -24,14 +23,14 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_marginBottom="8dp"
+                android:layout_marginBottom="12dp"
                 android:baselineAligned="false">
-                <include layout="@layout/card_kpi_badge" android:id="@+id/cardHourlyWage"
+                <include layout="@layout/card_kpi_badge" android:id="@+id/cardGdp"
                     android:layout_width="0dp" android:layout_height="wrap_content"
-                    android:layout_weight="1" android:layout_marginEnd="4dp" />
-                <include layout="@layout/card_kpi_badge" android:id="@+id/cardLabor"
+                    android:layout_weight="1" android:layout_marginEnd="6dp" />
+                <include layout="@layout/card_kpi_badge" android:id="@+id/cardCpiYoy"
                     android:layout_width="0dp" android:layout_height="wrap_content"
-                    android:layout_weight="1" android:layout_marginStart="4dp" />
+                    android:layout_weight="1" android:layout_marginStart="6dp" />
             </LinearLayout>
 
             <!-- ROW 2: 10Y-3M Spread | Unemployment -->
@@ -39,14 +38,14 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_marginBottom="8dp"
+                android:layout_marginBottom="12dp"
                 android:baselineAligned="false">
-                <include layout="@layout/card_kpi_badge" android:id="@+id/cardCPI"
+                <include layout="@layout/card_kpi_badge" android:id="@+id/cardSpread"
                     android:layout_width="0dp" android:layout_height="wrap_content"
-                    android:layout_weight="1" android:layout_marginEnd="4dp" />
+                    android:layout_weight="1" android:layout_marginEnd="6dp" />
                 <include layout="@layout/card_kpi_badge" android:id="@+id/cardUnemployment"
                     android:layout_width="0dp" android:layout_height="wrap_content"
-                    android:layout_weight="1" android:layout_marginStart="4dp" />
+                    android:layout_weight="1" android:layout_marginStart="6dp" />
             </LinearLayout>
 
             <!-- ROW 3: 30Y Mortgage | VIX -->
@@ -58,10 +57,10 @@
                 android:baselineAligned="false">
                 <include layout="@layout/card_kpi_badge" android:id="@+id/cardMortgage"
                     android:layout_width="0dp" android:layout_height="wrap_content"
-                    android:layout_weight="1" android:layout_marginEnd="4dp" />
+                    android:layout_weight="1" android:layout_marginEnd="6dp" />
                 <include layout="@layout/card_kpi_badge" android:id="@+id/cardVix"
                     android:layout_width="0dp" android:layout_height="wrap_content"
-                    android:layout_weight="1" android:layout_marginStart="4dp" />
+                    android:layout_weight="1" android:layout_marginStart="6dp" />
             </LinearLayout>
 
         </LinearLayout>

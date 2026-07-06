@@ -8,8 +8,13 @@ import java.util.List;
 public class SmartPromptGenerator {
 
     public static List<String> generatePromptsForArticle(NewsArticle article) {
+        return generatePromptsForHeadline(article.title);
+    }
+
+    /** Keyword-matched prompts for any raw headline string (used by the chat sheet). */
+    public static List<String> generatePromptsForHeadline(String headline) {
         List<String> prompts = new ArrayList<>();
-        String title = article.title.toLowerCase();
+        String title = headline == null ? "" : headline.toLowerCase();
 
         if (contains(title, "fed") || contains(title, "federal reserve") || contains(title, "interest rate")) {
             prompts.add("🏦 How might this Fed action affect Treasury yields and bond prices?");

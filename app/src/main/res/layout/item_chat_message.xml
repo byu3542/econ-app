@@ -4,18 +4,18 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:paddingHorizontal="16dp"
-    android:paddingVertical="12dp"
+    android:paddingVertical="6dp"
     android:clipChildren="false"
     android:clipToPadding="false">
 
-    <!-- Sender Label (YOU / ANALYST) -->
+    <!-- Sender Label (YOU / ANALYST) — shown only on the first message of a run -->
     <TextView
         android:id="@+id/tvSenderLabel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="YOU"
         android:textColor="@color/text_muted"
-        android:textSize="9sp"
+        android:textSize="11sp"
         android:textStyle="bold"
         android:letterSpacing="0.1"
         android:layout_marginBottom="4dp"
@@ -48,6 +48,7 @@
             android:layout_height="wrap_content"
             android:textColor="@color/text_navy"
             android:textSize="14sp"
+            android:textIsSelectable="false"
             android:lineSpacingExtra="4dp" />
 
         <!-- Typing Indicator Container -->
@@ -97,7 +98,7 @@
         android:layout_height="wrap_content"
         android:text="9:38 AM"
         android:textColor="@color/text_muted"
-        android:textSize="9sp"
+        android:textSize="11sp"
         android:layout_marginTop="4dp"
         app:layout_constraintTop_toBottomOf="@id/llBubbleContainer"
         app:layout_constraintStart_toStartOf="parent"

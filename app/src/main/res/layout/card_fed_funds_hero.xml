@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.cardview.widget.CardView
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/cardFedFundsHero"
     style="@style/FedFundsHeroCard"
     android:layout_width="match_parent"
@@ -30,7 +29,7 @@
             android:paddingHorizontal="20dp"
             android:paddingVertical="16dp">
 
-            <!-- Left: label · rate · last-updated date -->
+            <!-- Left: label · rate · history hint -->
             <LinearLayout
                 android:id="@+id/llHeroLeft"
                 android:layout_width="wrap_content"
@@ -43,8 +42,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="FED FUNDS RATE"
-                    android:textColor="#80FFFFFF"
-                    android:textSize="8sp"
+                    android:textColor="@color/text_on_navy_secondary"
+                    android:textSize="10sp"
                     android:textStyle="bold"
                     android:textAllCaps="true"
                     android:letterSpacing="0.2" />
@@ -64,13 +63,22 @@
                     android:id="@+id/tvFedFundsHeroLastUpdated"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="#59FFFFFF"
-                    android:textSize="9sp"
+                    android:textColor="@color/text_on_navy_muted"
+                    android:textSize="11sp"
                     android:visibility="gone" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="View history →"
+                    android:textSize="11sp"
+                    android:textColor="@color/gold_muted"
+                    android:fontFamily="sans-serif" />
 
             </LinearLayout>
 
-            <!-- Right: change chip · cut-cycle note · FOMC date · history hint -->
+            <!-- Right: change chip · cycle note · FOMC date (all data-driven) -->
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -83,8 +91,8 @@
                     android:id="@+id/change_fed_funds"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="9sp"
-                    android:textColor="#c9a84c"
+                    android:textSize="11sp"
+                    android:textColor="@color/accent_gold"
                     android:fontFamily="sans-serif-medium"
                     android:background="@drawable/bg_fed_change_chip"
                     android:paddingStart="8dp"
@@ -95,31 +103,22 @@
                     android:visibility="gone"/>
 
                 <TextView
+                    android:id="@+id/tvFedFundsHeroCycle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Cut cycle ongoing"
-                    android:textColor="#80FFFFFF"
+                    android:textColor="@color/text_on_navy_secondary"
                     android:textSize="11sp"
                     android:fontFamily="serif"
-                    android:textStyle="italic" />
+                    android:textStyle="italic"
+                    android:visibility="gone" />
 
                 <TextView
                     android:id="@+id/tvFedFundsHeroDate"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
-                    android:text="Next FOMC: May"
-                    android:textColor="#59FFFFFF"
+                    android:textColor="@color/text_on_navy_muted"
                     android:textSize="11sp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="View history →"
-                    android:textSize="7sp"
-                    android:textColor="#44C9A84C"
-                    android:fontFamily="sans-serif" />
 
             </LinearLayout>
 

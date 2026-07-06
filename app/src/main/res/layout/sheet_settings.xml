@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="28dp">
+
+        <!-- Drag handle -->
+        <View
+            android:layout_width="36dp"
+            android:layout_height="4dp"
+            android:layout_gravity="center_horizontal"
+            android:background="@color/handle_on_surface"
+            android:layout_marginBottom="16dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Settings"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:fontFamily="serif"
+            android:textColor="@color/text_navy"
+            android:layout_marginBottom="4dp"/>
+
+        <!-- ══ APPEARANCE ══ -->
+        <TextView style="@style/SettingsSectionHeader" android:text="APPEARANCE"/>
+
+        <RadioGroup
+            android:id="@+id/rgTheme"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/radioThemeLight"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Light"
+                android:textSize="13sp"
+                android:textColor="@color/text_navy"/>
+
+            <RadioButton
+                android:id="@+id/radioThemeDark"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Dark"
+                android:textSize="13sp"
+                android:textColor="@color/text_navy"/>
+
+            <RadioButton
+                android:id="@+id/radioThemeSystem"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="System"
+                android:textSize="13sp"
+                android:textColor="@color/text_navy"/>
+        </RadioGroup>
+
+        <!-- ══ DATA ══ -->
+        <TextView style="@style/SettingsSectionHeader" android:text="DATA"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnRefreshNow"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp"
+                android:text="Refresh data"
+                android:textSize="12sp"
+                android:textColor="@color/text_navy"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnClearCache"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Clear cache"
+                android:textSize="12sp"
+                android:textColor="@color/text_navy"/>
+        </LinearLayout>
+
+        <LinearLayout style="@style/SettingsRow">
+            <LinearLayout style="@style/SettingsRowText">
+                <TextView style="@style/SettingsRowTitle" android:text="Force-refresh cache on open"/>
+                <TextView style="@style/SettingsRowSub" android:text="Re-downloads all history when the app starts"/>
+            </LinearLayout>
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switchRefreshOnOpen"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+        </LinearLayout>
+
+        <!-- ══ GENERAL ══ -->
+        <TextView style="@style/SettingsSectionHeader" android:text="OPEN APP TO"/>
+
+        <RadioGroup
+            android:id="@+id/rgDefaultTab"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <RadioButton android:id="@+id/radioTabOverview" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Overview" android:textSize="12sp" android:textColor="@color/text_navy"/>
+            <RadioButton android:id="@+id/radioTabMarkets"  android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Markets"  android:textSize="12sp" android:textColor="@color/text_navy"/>
+            <RadioButton android:id="@+id/radioTabEconomy"  android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Economy"  android:textSize="12sp" android:textColor="@color/text_navy"/>
+            <RadioButton android:id="@+id/radioTabNews"     android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="News"     android:textSize="12sp" android:textColor="@color/text_navy"/>
+        </RadioGroup>
+
+        <!-- ══ NEWS SOURCES ══ -->
+        <TextView style="@style/SettingsSectionHeader" android:text="NEWS SOURCES"/>
+
+        <LinearLayout style="@style/SettingsRow">
+            <LinearLayout style="@style/SettingsRowText">
+                <TextView style="@style/SettingsRowTitle" android:text="U.S. government"/>
+                <TextView style="@style/SettingsRowSub" android:text="Fed, BLS, BEA, Treasury, CBO, Census, FDIC"/>
+            </LinearLayout>
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switchNewsGov"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+        </LinearLayout>
+
+        <LinearLayout style="@style/SettingsRow">
+            <LinearLayout style="@style/SettingsRowText">
+                <TextView style="@style/SettingsRowTitle" android:text="Financial media"/>
+                <TextView style="@style/SettingsRowSub" android:text="Reuters, MarketWatch, CNBC, Yahoo, AP"/>
+            </LinearLayout>
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switchNewsMedia"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+        </LinearLayout>
+
+        <LinearLayout style="@style/SettingsRow">
+            <LinearLayout style="@style/SettingsRowText">
+                <TextView style="@style/SettingsRowTitle" android:text="International"/>
+                <TextView style="@style/SettingsRowSub" android:text="IMF, World Bank, BIS, OECD"/>
+            </LinearLayout>
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switchNewsIntl"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+        </LinearLayout>
+
+        <LinearLayout style="@style/SettingsRow">
+            <LinearLayout style="@style/SettingsRowText">
+                <TextView style="@style/SettingsRowTitle" android:text="Research &amp; think tanks"/>
+                <TextView style="@style/SettingsRowSub" android:text="Brookings, PIIE, regional Feds, and more"/>
+            </LinearLayout>
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switchNewsResearch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+        </LinearLayout>
+
+        <!-- ══ AI ANALYST ══ -->
+        <TextView style="@style/SettingsSectionHeader" android:text="AI ANALYST"/>
+
+        <LinearLayout style="@style/SettingsRow">
+            <LinearLayout style="@style/SettingsRowText">
+                <TextView style="@style/SettingsRowTitle" android:text="Quick-ask suggestions"/>
+                <TextView style="@style/SettingsRowSub" android:text="Show the tappable question chips in the chat"/>
+            </LinearLayout>
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switchSmartChips"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+        </LinearLayout>
+
+        <LinearLayout style="@style/SettingsRow">
+            <LinearLayout style="@style/SettingsRowText">
+                <TextView style="@style/SettingsRowTitle" android:text="Detailed responses"/>
+                <TextView style="@style/SettingsRowSub" android:text="Longer, more thorough answers (uses more data)"/>
+            </LinearLayout>
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switchDetailedAi"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+        </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnClearChat"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Clear chat history"
+            android:textSize="12sp"
+            android:textColor="@color/error_text"/>
+
+        <!-- ══ CHARTS ══ -->
+        <TextView style="@style/SettingsSectionHeader" android:text="CHARTS"/>
+
+        <LinearLayout style="@style/SettingsRow">
+            <LinearLayout style="@style/SettingsRowText">
+                <TextView style="@style/SettingsRowTitle" android:text="Gridlines"/>
+                <TextView style="@style/SettingsRowSub" android:text="Show background gridlines on charts"/>
+            </LinearLayout>
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switchGridlines"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+        </LinearLayout>
+
+        <TextView style="@style/SettingsRowTitle" android:text="Axis decimal places" android:layout_marginTop="8dp"/>
+
+        <RadioGroup
+            android:id="@+id/rgDecimals"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <RadioButton android:id="@+id/radioDec1" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="1" android:textSize="13sp" android:textColor="@color/text_navy"/>
+            <RadioButton android:id="@+id/radioDec2" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="2" android:textSize="13sp" android:textColor="@color/text_navy"/>
+            <RadioButton android:id="@+id/radioDec3" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="3" android:textSize="13sp" android:textColor="@color/text_navy"/>
+        </RadioGroup>
+
+        <!-- ══ NOTIFICATIONS ══ -->
+        <TextView style="@style/SettingsSectionHeader" android:text="NOTIFICATIONS"/>
+
+        <LinearLayout style="@style/SettingsRow">
+            <LinearLayout style="@style/SettingsRowText">
+                <TextView style="@style/SettingsRowTitle" android:text="Big rate moves"/>
+                <TextView style="@style/SettingsRowSub" android:text="Alert when the 10Y Treasury moves 10+ bp in a day"/>
+            </LinearLayout>
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switchNotifyMoves"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+        </LinearLayout>
+
+        <LinearLayout style="@style/SettingsRow">
+            <LinearLayout style="@style/SettingsRowText">
+                <TextView style="@style/SettingsRowTitle" android:text="Data release reminders"/>
+                <TextView style="@style/SettingsRowSub" android:text="Morning reminder on jobs-report Fridays"/>
+            </LinearLayout>
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switchNotifyReleases"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+        </LinearLayout>
+
+        <!-- ══ ABOUT ══ -->
+        <TextView style="@style/SettingsSectionHeader" android:text="ABOUT"/>
+
+        <TextView
+            android:id="@+id/tvVersion"
+            style="@style/SettingsRowSub"
+            android:layout_width="wrap_content"
+            android:text="Econ Monitor"/>
+
+        <TextView
+            android:id="@+id/tvCacheStatus"
+            style="@style/SettingsRowSub"
+            android:layout_width="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="Cache status: —"/>
+
+        <TextView
+            style="@style/SettingsRowSub"
+            android:layout_width="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="Data: FRED, BLS, BEA, U.S. Treasury. News via public RSS feeds. AI analysis powered by Claude."/>
+
+    </LinearLayout>
+
+</androidx.core.widget.NestedScrollView>

@@ -5,6 +5,10 @@
  * its chat payload here; this worker attaches the secret key server-side and
  * forwards the request to Anthropic.
  *
+ * Supports both regular JSON responses and streaming (SSE) — when the app
+ * sends "stream": true, Anthropic's text/event-stream body is piped straight
+ * through to the client.
+ *
  * Secrets (set via `wrangler secret put <NAME>` — never commit these):
  *   ANTHROPIC_API_KEY  — required. Your Anthropic key.
  *   APP_TOKEN          — optional. Shared secret; if set, requests must send
@@ -52,10 +56,13 @@ export default {
       body,
     });
 
-    // Pass Anthropic's response straight back to the app.
+    // Pass Anthropic's response straight back to the app, preserving the
+    // upstream content type so SSE streams stay streams.
     return new Response(upstream.body, {
       status: upstream.status,
-      headers: { "content-type": "application/json" },
+      headers: {
+        "content-type": upstream.headers.get("content-type") || "application/json",
+      },
     });
   },
 };

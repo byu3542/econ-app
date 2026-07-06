@@ -9,6 +9,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -69,6 +70,7 @@ public class YieldsFragment extends Fragment {
         setupTreasuryRow(row2Y,  "2 Year");
         setupTreasuryRow(row10Y, "10 Year");
         setupTreasuryRow(row30Y, "30 Year");
+        applyZebra();
 
         viewModel.getTreasuryData().observe(getViewLifecycleOwner(), data -> {
             if (data != null) { buildYieldCurveChart(data); updateTreasury(data); }
@@ -117,6 +119,16 @@ public class YieldsFragment extends Fragment {
         if (tv != null) tv.setText(label);
     }
 
+    /** Zebra striping — alternate rows get the warm alt background. */
+    private void applyZebra() {
+        View[] rowsInOrder = {row1M, row3M, row2Y, row10Y, row30Y};
+        for (int i = 0; i < rowsInOrder.length; i++) {
+            if (rowsInOrder[i] != null && i % 2 == 1)
+                rowsInOrder[i].setBackgroundColor(
+                        ContextCompat.getColor(requireContext(), R.color.row_alt_bg));
+        }
+    }
+
     private void updateTreasury(List<EconomicDataPoint> data) {
         setTreasuryRate(data, "1 Month", row1M);
         setTreasuryRate(data, "3 Month", row3M);
@@ -127,15 +139,31 @@ public class YieldsFragment extends Fragment {
 
     private void setTreasuryRate(List<EconomicDataPoint> data, String series, View row) {
         if (row == null) return;
-        EconomicDataPoint p = EconomicViewModel.getLatest(data, series);
-        TextView valView  = row.findViewById(R.id.tvYield);
-        TextView dateView = row.findViewById(R.id.tvDate);
-        if (p != null) {
+        List<EconomicDataPoint> rows = EconomicViewModel.filterBySeries(data, series);
+        TextView valView    = row.findViewById(R.id.tvYield);
+        TextView dateView   = row.findViewById(R.id.tvDate);
+        TextView changeView = row.findViewById(R.id.tvChange);
+        if (!rows.isEmpty()) {
+            EconomicDataPoint p = rows.get(rows.size() - 1);
             if (valView  != null) valView.setText(String.format(Locale.US, "%.2f%%", p.getValue()));
             if (dateView != null) dateView.setText(p.getDate());
+            if (changeView != null && rows.size() >= 2) {
+                double bps = (p.getValue() - rows.get(rows.size() - 2).getValue()) * 100.0;
+                if (Math.abs(bps) < 0.5) {
+                    changeView.setText("—");
+                    changeView.setTextColor(ContextCompat.getColor(
+                            requireContext(), R.color.text_muted));
+                } else {
+                    changeView.setText(String.format(Locale.US, "%s%.0fbp",
+                            bps > 0 ? "▲" : "▼", Math.abs(bps)));
+                    changeView.setTextColor(ContextCompat.getColor(requireContext(),
+                            bps > 0 ? R.color.delta_bad : R.color.delta_good));
+                }
+            }
         } else {
             if (valView  != null) valView.setText("—");
             if (dateView != null) dateView.setText("");
+            if (changeView != null) changeView.setText("");
         }
     }
 
@@ -144,7 +172,9 @@ public class YieldsFragment extends Fragment {
         chart.setBackgroundColor(Color.parseColor("#1C2236")); chart.setDrawGridBackground(false);
         chart.setDrawBorders(false); chart.setTouchEnabled(true); chart.setDragEnabled(true);
         chart.setScaleEnabled(true); chart.setPinchZoom(true); chart.getDescription().setEnabled(false);
-        chart.setNoDataText("Loading data..."); chart.setExtraBottomOffset(8f);
+        chart.setNoDataText("Loading yield data…");
+        chart.setNoDataTextColor(Color.parseColor("#8899BB"));
+        chart.setExtraBottomOffset(8f);
         XAxis x = chart.getXAxis();
         x.setPosition(XAxis.XAxisPosition.BOTTOM); x.setTextColor(Color.parseColor("#5A6A8A")); x.setTextSize(9f);
         x.setDrawGridLines(true); x.setGridColor(grid); x.setLabelRotationAngle(-45f);

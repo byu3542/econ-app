@@ -4,6 +4,9 @@
     <color name="bg_warm_off_white">#f5f3ef</color>
     <color name="header_navy">#1a1a2e</color>
     <color name="card_white">#ffffff</color>
+    <!-- Light/dark-flipping card surface. card_white stays literal white in both
+         modes because many layouts use it as TEXT color on navy cards. -->
+    <color name="surface_card">#ffffff</color>
     <color name="row_alt_bg">#faf9f7</color>
     <color name="divider_sand">#f0ede8</color>
     <color name="accent_gold">#c9a84c</color>
@@ -12,6 +15,22 @@
     <color name="text_navy">#1a1a2e</color>
     <color name="text_secondary">#666666</color>
     <color name="text_muted">#bbbbbb</color>
+
+    <!-- Dark badge cards (KPI grid, housing badges) -->
+    <color name="card_navy_badge">#1C2236</color>
+    <color name="text_slate">#8A9AB5</color>
+    <color name="text_on_navy_muted">#8CFFFFFF</color>
+    <color name="text_on_navy_secondary">#A6FFFFFF</color>
+    <color name="gold_muted">#99C9A84C</color>
+
+    <!-- Chat error bubble -->
+    <color name="error_bubble_bg">#FFF8F8</color>
+    <color name="error_bubble_stroke">#FFCDD2</color>
+    <color name="error_text">#B00020</color>
+
+    <!-- Delta chips on KPI cards -->
+    <color name="delta_good">#66BB6A</color>
+    <color name="delta_bad">#EF5350</color>
 
     <!-- Map missing names used in themes.xml -->
     <color name="cardBackground">@color/card_white</color>
@@ -31,4 +50,19 @@
     <!-- Economy secondary tab row -->
     <color name="economy_tab_bg">#ede8df</color>
     <color name="economy_tab_text_unselected">#8a9ab5</color>
+
+    <!-- Theme-aware chart styling (light-surface charts via ChartHelper) -->
+    <color name="chart_grid">#EEEEEE</color>
+    <color name="chart_axis_line">#CCCCCC</color>
+    <color name="chart_axis_text">#888888</color>
+    <color name="chart_legend_text">#555555</color>
+
+    <!-- Theme-aware hairlines/handles on flipping surfaces -->
+    <color name="hairline_on_surface">#14000000</color>
+    <color name="handle_on_surface">#26000000</color>
+
+    <!-- Center-nav AI FAB: ring reads against both page bg and nav bar;
+         disc gold matches ic_fab_gold_ai artwork (#D2B156) -->
+    <color name="fab_ring">#f5f3ef</color>
+    <color name="fab_gold">#D2B156</color>
 </resources>

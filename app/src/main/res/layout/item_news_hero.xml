@@ -39,14 +39,14 @@
                 android:textSize="11sp"
                 android:textStyle="bold"
                 android:textAllCaps="true"
-                android:textColor="#c9a84c" />
+                android:textColor="@color/accent_gold" />
 
             <TextView
                 android:id="@+id/tv_hero_time"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="11sp"
-                android:textColor="#aaaaaa" />
+                android:textColor="@color/text_muted" />
 
         </LinearLayout>
 
@@ -59,7 +59,7 @@
             android:layout_marginTop="6dp"
             android:textSize="16sp"
             android:fontFamily="serif"
-            android:textColor="#0f1729"
+            android:textColor="@color/text_navy"
             android:lineHeight="22sp"
             android:maxLines="3"
             android:ellipsize="end" />
@@ -73,7 +73,7 @@
             android:layout_marginTop="4dp"
             android:layout_marginBottom="14dp"
             android:textSize="12sp"
-            android:textColor="#777777"
+            android:textColor="@color/text_secondary"
             android:maxLines="2"
             android:ellipsize="end" />
 

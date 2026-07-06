@@ -41,6 +41,4 @@ public class NewsArticle {
     public String aiAnalysisSummary;
     public long aiAnalysisTimestamp;
 
-    // Required by Room
-    public NewsArticle() {}
-}
+    // Requ

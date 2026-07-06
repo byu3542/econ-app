@@ -1,6 +1,7 @@
 package com.economic.dashboard.ui.fragments;
 
 import android.graphics.Color;
+import androidx.core.content.ContextCompat;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -140,7 +141,7 @@ public class CpiFragment extends Fragment {
         cardCpiYoY.setCardBackgroundColor(Color.parseColor("#1A1F2B")); 
         
         tvCpiYoYStatus.setText(status);
-        tvCpiYoYStatus.setTextColor(Color.parseColor("#BBBBBB"));
+        tvCpiYoYStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_on_navy_secondary));
         
         GradientDrawable dot = new GradientDrawable();
         dot.setShape(GradientDrawable.OVAL);
