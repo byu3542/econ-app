@@ -18,6 +18,8 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import com.facebook.shimmer.ShimmerFrameLayout;
+
 import com.economic.dashboard.R;
 import com.economic.dashboard.databinding.FragmentDashboardBinding;
 import com.economic.dashboard.models.EconomicDataPoint;
@@ -42,6 +44,9 @@ public class DashboardFragment extends Fragment {
     // Fed funds hero views — bound directly so they never fail silently
     private TextView tvFedFundsHeroValue, changeFedFunds, tvFedFundsHeroCycle, tvFedFundsHeroDate;
     private SwipeRefreshLayout swipeRefresh;
+    private ShimmerFrameLayout skeletonShimmer;
+    private View contentContainer;
+    private boolean skeletonHidden = false;
     private boolean wasLoading = false;
 
     /** 2026 FOMC meetings: {month(1-12), startDay, endDay} — federalreserve.gov. */
@@ -72,9 +77,12 @@ public class DashboardFragment extends Fragment {
         swipeRefresh.setOnRefreshListener(() -> viewModel.fetchAllData());
         viewModel.getIsLoading().observe(getViewLifecycleOwner(), loading -> {
             // Haptic tick when a refresh completes
-            if (wasLoading && !loading && swipeRefresh != null)
-                swipeRefresh.performHapticFeedback(
-                        android.view.HapticFeedbackConstants.CONTEXT_CLICK);
+            if (wasLoading && Boolean.FALSE.equals(loading)) {
+                hideSkeleton();
+                if (swipeRefresh != null)
+                    swipeRefresh.performHapticFeedback(
+                            android.view.HapticFeedbackConstants.CONTEXT_CLICK);
+            }
             wasLoading = Boolean.TRUE.equals(loading);
             swipeRefresh.setRefreshing(Boolean.TRUE.equals(loading));
         });
@@ -82,6 +90,8 @@ public class DashboardFragment extends Fragment {
 
     private void bindViews(View v) {
         swipeRefresh = binding.swipeRefresh;
+        skeletonShimmer  = v.findViewById(R.id.skeletonShimmer);
+        contentContainer = v.findViewById(R.id.contentContainer);
 
         // KPI badges
         // These are <include layout="@layout/card_kpi_badge"> entries, so view
@@ -218,6 +228,23 @@ public class DashboardFragment extends Fragment {
         tv.startAnimation(pulse);
     }
 
+    /** Fades out the full-screen shimmer skeleton and reveals real content. */
+    private void hideSkeleton() {
+        if (skeletonHidden) return;
+        skeletonHidden = true;
+        if (contentContainer != null) {
+            contentContainer.setAlpha(0f);
+            contentContainer.setVisibility(View.VISIBLE);
+            contentContainer.animate().alpha(1f).setDuration(300).start();
+        }
+        if (skeletonShimmer != null) {
+            skeletonShimmer.stopShimmer();
+            skeletonShimmer.animate().alpha(0f).setDuration(300)
+                    .withEndAction(() -> skeletonShimmer.setVisibility(View.GONE))
+                    .start();
+        }
+    }
+
     /** Sets the metric value, stops the skeleton pulse, fades in changed values. */
     private void setCardValue(View card, String text) {
         if (card == null) return;
@@ -281,25 +308,25 @@ public class DashboardFragment extends Fragment {
 
     private void observeData() {
         viewModel.getTreasuryData().observe(getViewLifecycleOwner(), data -> {
-            if (data != null) { updateSpread3M(data); applySpread3MTier(data); }
+            if (data != null) { hideSkeleton(); updateSpread3M(data); applySpread3MTier(data); }
         });
         viewModel.getFedFundsData().observe(getViewLifecycleOwner(), data -> {
-            if (data != null) updateFedFundsRate(data);
+            if (data != null) { hideSkeleton(); updateFedFundsRate(data); }
         });
         viewModel.getEmploymentData().observe(getViewLifecycleOwner(), data -> {
-            if (data != null) { updateEmployment(data); applyUnemploymentTier(data); }
+            if (data != null) { hideSkeleton(); updateEmployment(data); applyUnemploymentTier(data); }
         });
         viewModel.getCpiData().observe(getViewLifecycleOwner(), data -> {
-            if (data != null) { updateCpiYoY(data); applyCpiYoYTier(data); }
+            if (data != null) { hideSkeleton(); updateCpiYoY(data); applyCpiYoYTier(data); }
         });
         viewModel.getGdpData().observe(getViewLifecycleOwner(), data -> {
-            if (data != null) { updateGdpGrowth(data); applyGdpTier(data); }
+            if (data != null) { hideSkeleton(); updateGdpGrowth(data); applyGdpTier(data); }
         });
         viewModel.getMbsMortgageData().observe(getViewLifecycleOwner(), data -> {
-            if (data != null) { updateMortgage(data); applyMortgageTier(data); }
+            if (data != null) { hideSkeleton(); updateMortgage(data); applyMortgageTier(data); }
         });
         viewModel.getVixData().observe(getViewLifecycleOwner(), data -> {
-            if (data != null) { updateVix(data); applyVixTier(data); }
+            if (data != null) { hideSkeleton(); updateVix(data); applyVixTier(data); }
         });
     }
 

@@ -54,6 +54,7 @@ dependencies {
     implementation 'androidx.recyclerview:recyclerview:1.3.2'
     implementation 'androidx.cardview:cardview:1.0.0'
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
+    implementation 'com.facebook.shimmer:shimmer:0.5.0'  // skeleton loading
 
     // Networking
     implementation 'com.squareup.retrofit2:retrofit:2.9.0'

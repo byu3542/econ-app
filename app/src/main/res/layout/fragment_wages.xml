@@ -10,14 +10,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:padding="@dimen/space_lg">
 
         <!-- REAL WAGE GROWTH CARD (GDP Style) -->
         <androidx.cardview.widget.CardView
             android:id="@+id/cardWageYoY"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
+            android:layout_marginBottom="@dimen/space_2xl"
             app:cardCornerRadius="16dp"
             app:cardElevation="6dp"
             app:cardBackgroundColor="@color/header_navy">
@@ -26,7 +26,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="24dp"
+                android:padding="@dimen/space_2xl"
                 android:gravity="center">
 
                 <TextView
@@ -35,7 +35,7 @@
                     android:layout_height="wrap_content"
                     android:text="Real Wage Growth v. Inflation (YOY %)"
                     android:textColor="@color/accent_gold"
-                    android:textSize="14sp"
+                    android:textSize="@dimen/text_body"
                     android:textStyle="bold"
                     android:textAllCaps="true"
                     android:letterSpacing="0.1"
@@ -48,10 +48,10 @@
                     android:layout_height="wrap_content"
                     android:text="—"
                     android:textColor="@color/card_white"
-                    android:textSize="48sp"
+                    android:textSize="@dimen/text_display_xl"
                     android:fontFamily="serif"
                     android:textStyle="bold"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="@dimen/space_sm"
                     android:textAlignment="center"/>
 
                 <LinearLayout
@@ -59,14 +59,14 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:layout_marginTop="4dp">
+                    android:layout_marginTop="@dimen/space_xs">
 
                     <View
                         android:id="@+id/viewWageIndicatorDot"
                         android:layout_width="8dp"
                         android:layout_height="8dp"
                         android:background="@drawable/dot_neutral"
-                        android:layout_marginEnd="8dp" />
+                        android:layout_marginEnd="@dimen/space_sm" />
 
                     <TextView
                         android:id="@+id/tvWageYoYStatus"
@@ -74,7 +74,7 @@
                         android:layout_height="wrap_content"
                         android:text="Comparing Wages vs Inflation"
                         android:textColor="@color/text_muted"
-                        android:textSize="12sp"
+                        android:textSize="@dimen/text_secondary"
                         android:textAlignment="center"/>
                 </LinearLayout>
 
@@ -84,8 +84,8 @@
                     android:layout_height="wrap_content"
                     android:text="Annualized % difference"
                     android:textColor="@color/text_muted"
-                    android:textSize="10sp"
-                    android:layout_marginTop="2dp"
+                    android:textSize="@dimen/text_caption"
+                    android:layout_marginTop="@dimen/space_hairline"
                     android:visibility="gone"
                     android:textAlignment="center"/>
             </LinearLayout>
@@ -95,7 +95,7 @@
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
+            android:layout_marginBottom="@dimen/space_2xl"
             app:cardCornerRadius="16dp"
             app:cardElevation="6dp"
             app:cardBackgroundColor="@color/surface_card">
@@ -109,15 +109,15 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:background="@color/header_navy"
-                    android:paddingHorizontal="20dp"
-                    android:paddingVertical="16dp">
+                    android:paddingHorizontal="@dimen/space_xl"
+                    android:paddingVertical="@dimen/space_lg">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Average Hourly Earnings"
                         android:textColor="@color/card_white"
-                        android:textSize="22sp"
+                        android:textSize="@dimen/text_headline"
                         android:fontFamily="serif"
                         android:textStyle="bold" />
 
@@ -132,7 +132,7 @@
                     android:id="@+id/hourlyWageChart"
                     android:layout_width="match_parent"
                     android:layout_height="300dp"
-                    android:padding="16dp"/>
+                    android:padding="@dimen/space_lg"/>
 
             </LinearLayout>
         </androidx.cardview.widget.CardView>
@@ -141,7 +141,7 @@
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
+            android:layout_marginBottom="@dimen/space_2xl"
             app:cardCornerRadius="16dp"
             app:cardElevation="6dp"
             app:cardBackgroundColor="@color/surface_card">
@@ -155,15 +155,15 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:background="@color/header_navy"
-                    android:paddingHorizontal="20dp"
-                    android:paddingVertical="16dp">
+                    android:paddingHorizontal="@dimen/space_xl"
+                    android:paddingVertical="@dimen/space_lg">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Inflation vs Wage Growth"
                         android:textColor="@color/card_white"
-                        android:textSize="22sp"
+                        android:textSize="@dimen/text_headline"
                         android:fontFamily="serif"
                         android:textStyle="bold" />
 
@@ -178,7 +178,7 @@
                     android:id="@+id/comparisonChart"
                     android:layout_width="match_parent"
                     android:layout_height="300dp"
-                    android:padding="16dp"/>
+                    android:padding="@dimen/space_lg"/>
 
             </LinearLayout>
         </androidx.cardview.widget.CardView>

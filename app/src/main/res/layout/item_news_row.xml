@@ -4,8 +4,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="12dp"
-    android:layout_marginVertical="3dp"
+    android:layout_marginHorizontal="@dimen/space_md"
+    android:layout_marginVertical="@dimen/space_xs"
     app:cardBackgroundColor="@color/surface_card"
     app:cardElevation="1dp"
     app:cardCornerRadius="10dp"
@@ -15,14 +15,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="12dp">
+        android:padding="@dimen/space_md">
 
         <!-- Impact bar on left edge (description set in adapter for TalkBack) -->
         <View
             android:id="@+id/view_impact_bar"
             android:layout_width="3dp"
             android:layout_height="match_parent"
-            android:layout_marginEnd="10dp" />
+            android:layout_marginEnd="@dimen/space_md" />
 
         <!-- Content column -->
         <LinearLayout
@@ -42,7 +42,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:textSize="11sp"
+                    android:textSize="@dimen/text_caption"
                     android:textStyle="bold"
                     android:textAllCaps="true"
                     android:textColor="@color/accent_gold" />
@@ -51,7 +51,7 @@
                     android:id="@+id/tv_row_time"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="11sp"
+                    android:textSize="@dimen/text_caption"
                     android:textColor="@color/text_muted" />
 
             </LinearLayout>
@@ -61,8 +61,8 @@
                 android:id="@+id/tv_row_headline"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
-                android:textSize="13sp"
+                android:layout_marginTop="@dimen/space_xs"
+                android:textSize="@dimen/text_secondary"
                 android:fontFamily="serif"
                 android:textColor="@color/text_navy"
                 android:lineHeight="18sp"
@@ -74,10 +74,10 @@
                 android:id="@+id/tv_row_tag"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="5dp"
-                android:paddingHorizontal="8dp"
-                android:paddingVertical="2dp"
-                android:textSize="10sp"
+                android:layout_marginTop="@dimen/space_xs"
+                android:paddingHorizontal="@dimen/space_sm"
+                android:paddingVertical="@dimen/space_hairline"
+                android:textSize="@dimen/text_caption"
                 android:textStyle="bold"
                 android:textAllCaps="true" />
 
@@ -88,7 +88,7 @@
             android:id="@+id/iv_row_thumb"
             android:layout_width="56dp"
             android:layout_height="56dp"
-            android:layout_marginStart="10dp"
+            android:layout_marginStart="@dimen/space_md"
             android:layout_gravity="center_vertical"
             android:scaleType="centerCrop"
             android:visibility="gone"

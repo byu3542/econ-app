@@ -10,14 +10,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:padding="@dimen/space_lg">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:baselineAligned="false"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="@dimen/space_lg">
 
             <!-- 10Y-2Y SPREAD CARD -->
             <androidx.cardview.widget.CardView
@@ -25,7 +25,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginEnd="8dp"
+                android:layout_marginEnd="@dimen/space_sm"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="6dp"
                 app:cardBackgroundColor="@color/header_navy">
@@ -34,7 +34,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp"
+                    android:padding="@dimen/space_lg"
                     android:gravity="center">
 
                     <TextView
@@ -42,7 +42,7 @@
                         android:layout_height="wrap_content"
                         android:text="10Y - 2Y"
                         android:textColor="@color/accent_gold"
-                        android:textSize="12sp"
+                        android:textSize="@dimen/text_secondary"
                         android:textStyle="bold"
                         android:textAllCaps="true"
                         android:letterSpacing="0.1"/>
@@ -53,24 +53,24 @@
                         android:layout_height="wrap_content"
                         android:text="—"
                         android:textColor="@color/card_white"
-                        android:textSize="28sp"
+                        android:textSize="@dimen/text_display"
                         android:fontFamily="serif"
                         android:textStyle="bold"
-                        android:layout_marginTop="4dp"/>
+                        android:layout_marginTop="@dimen/space_xs"/>
 
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:layout_marginTop="4dp">
+                        android:layout_marginTop="@dimen/space_xs">
 
                         <View
                             android:id="@+id/viewSpreadIndicatorDot"
                             android:layout_width="8dp"
                             android:layout_height="8dp"
                             android:background="@drawable/dot_neutral"
-                            android:layout_marginEnd="6dp" />
+                            android:layout_marginEnd="@dimen/space_sm" />
 
                         <TextView
                             android:id="@+id/tvIndicatorText"
@@ -78,7 +78,7 @@
                             android:layout_height="wrap_content"
                             android:text="LOADING"
                             android:textColor="@color/text_muted"
-                            android:textSize="10sp"/>
+                            android:textSize="@dimen/text_caption"/>
                     </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
@@ -89,7 +89,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="8dp"
+                android:layout_marginStart="@dimen/space_sm"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="6dp"
                 app:cardBackgroundColor="@color/header_navy">
@@ -98,7 +98,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp"
+                    android:padding="@dimen/space_lg"
                     android:gravity="center">
 
                     <TextView
@@ -106,7 +106,7 @@
                         android:layout_height="wrap_content"
                         android:text="10Y - 3M"
                         android:textColor="@color/accent_gold"
-                        android:textSize="12sp"
+                        android:textSize="@dimen/text_secondary"
                         android:textStyle="bold"
                         android:textAllCaps="true"
                         android:letterSpacing="0.1"/>
@@ -117,24 +117,24 @@
                         android:layout_height="wrap_content"
                         android:text="—"
                         android:textColor="@color/card_white"
-                        android:textSize="28sp"
+                        android:textSize="@dimen/text_display"
                         android:fontFamily="serif"
                         android:textStyle="bold"
-                        android:layout_marginTop="4dp"/>
+                        android:layout_marginTop="@dimen/space_xs"/>
 
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:layout_marginTop="4dp">
+                        android:layout_marginTop="@dimen/space_xs">
 
                         <View
                             android:id="@+id/viewSpread3MIndicatorDot"
                             android:layout_width="8dp"
                             android:layout_height="8dp"
                             android:background="@drawable/dot_neutral"
-                            android:layout_marginEnd="6dp" />
+                            android:layout_marginEnd="@dimen/space_sm" />
 
                         <TextView
                             android:id="@+id/tvIndicator3MText"
@@ -142,7 +142,7 @@
                             android:layout_height="wrap_content"
                             android:text="LOADING"
                             android:textColor="@color/text_muted"
-                            android:textSize="10sp"/>
+                            android:textSize="@dimen/text_caption"/>
                     </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
@@ -152,7 +152,7 @@
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
+            android:layout_marginBottom="@dimen/space_2xl"
             app:cardCornerRadius="16dp"
             app:cardElevation="6dp"
             app:cardBackgroundColor="@color/surface_card">
@@ -166,15 +166,15 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:background="@color/header_navy"
-                    android:paddingHorizontal="20dp"
-                    android:paddingVertical="16dp">
+                    android:paddingHorizontal="@dimen/space_xl"
+                    android:paddingVertical="@dimen/space_lg">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="10Y-2Y Spread Trend"
                         android:textColor="@color/card_white"
-                        android:textSize="18sp"
+                        android:textSize="@dimen/text_title"
                         android:fontFamily="serif"
                         android:textStyle="bold" />
 
@@ -189,7 +189,7 @@
                     android:id="@+id/spreadChart"
                     android:layout_width="match_parent"
                     android:layout_height="220dp"
-                    android:padding="12dp"/>
+                    android:padding="@dimen/space_md"/>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
@@ -197,7 +197,7 @@
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
+            android:layout_marginBottom="@dimen/space_2xl"
             app:cardCornerRadius="16dp"
             app:cardElevation="6dp"
             app:cardBackgroundColor="@color/surface_card">
@@ -211,15 +211,15 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:background="@color/header_navy"
-                    android:paddingHorizontal="20dp"
-                    android:paddingVertical="16dp">
+                    android:paddingHorizontal="@dimen/space_xl"
+                    android:paddingVertical="@dimen/space_lg">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="10Y-3M Spread Trend"
                         android:textColor="@color/card_white"
-                        android:textSize="18sp"
+                        android:textSize="@dimen/text_title"
                         android:fontFamily="serif"
                         android:textStyle="bold" />
 
@@ -234,7 +234,7 @@
                     android:id="@+id/spread3MChart"
                     android:layout_width="match_parent"
                     android:layout_height="220dp"
-                    android:padding="12dp"/>
+                    android:padding="@dimen/space_md"/>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
@@ -242,7 +242,7 @@
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
+            android:layout_marginBottom="@dimen/space_2xl"
             app:cardCornerRadius="16dp"
             app:cardElevation="6dp"
             app:cardBackgroundColor="@color/surface_card">
@@ -256,15 +256,15 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:background="@color/header_navy"
-                    android:paddingHorizontal="20dp"
-                    android:paddingVertical="16dp">
+                    android:paddingHorizontal="@dimen/space_xl"
+                    android:paddingVertical="@dimen/space_lg">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Current Yield Curve"
                         android:textColor="@color/card_white"
-                        android:textSize="18sp"
+                        android:textSize="@dimen/text_title"
                         android:fontFamily="serif"
                         android:textStyle="bold" />
 
@@ -279,7 +279,7 @@
                     android:id="@+id/yieldCurveChart"
                     android:layout_width="match_parent"
                     android:layout_height="250dp"
-                    android:padding="12dp"/>
+                    android:padding="@dimen/space_md"/>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
@@ -287,7 +287,7 @@
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
+            android:layout_marginBottom="@dimen/space_2xl"
             app:cardCornerRadius="16dp"
             app:cardElevation="6dp"
             app:cardBackgroundColor="@color/surface_card">
@@ -301,15 +301,15 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:background="@color/header_navy"
-                    android:paddingHorizontal="20dp"
-                    android:paddingVertical="16dp">
+                    android:paddingHorizontal="@dimen/space_xl"
+                    android:paddingVertical="@dimen/space_lg">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="10-Year Trend"
                         android:textColor="@color/card_white"
-                        android:textSize="18sp"
+                        android:textSize="@dimen/text_title"
                         android:fontFamily="serif"
                         android:textStyle="bold" />
 
@@ -324,7 +324,7 @@
                     android:id="@+id/tenYearTrendChart"
                     android:layout_width="match_parent"
                     android:layout_height="220dp"
-                    android:padding="12dp"/>
+                    android:padding="@dimen/space_md"/>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 

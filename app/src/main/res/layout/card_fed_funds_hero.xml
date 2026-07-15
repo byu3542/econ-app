@@ -5,7 +5,7 @@
     style="@style/FedFundsHeroCard"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="16dp"
+    android:layout_marginBottom="@dimen/space_lg"
     android:backgroundTint="@null"
     android:foreground="?attr/selectableItemBackground"
     android:clickable="true"
@@ -26,8 +26,8 @@
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingHorizontal="20dp"
-            android:paddingVertical="16dp">
+            android:paddingHorizontal="@dimen/space_xl"
+            android:paddingVertical="@dimen/space_lg">
 
             <!-- Left: label · rate · history hint -->
             <LinearLayout
@@ -43,7 +43,7 @@
                     android:layout_height="wrap_content"
                     android:text="FED FUNDS RATE"
                     android:textColor="@color/text_on_navy_secondary"
-                    android:textSize="10sp"
+                    android:textSize="@dimen/text_caption"
                     android:textStyle="bold"
                     android:textAllCaps="true"
                     android:letterSpacing="0.2" />
@@ -54,7 +54,7 @@
                     android:layout_height="wrap_content"
                     android:text="—"
                     android:textColor="@color/accent_gold"
-                    android:textSize="32sp"
+                    android:textSize="@dimen/text_display_lg"
                     android:fontFamily="serif"
                     android:textStyle="bold"
                     android:includeFontPadding="false" />
@@ -64,15 +64,15 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textColor="@color/text_on_navy_muted"
-                    android:textSize="11sp"
+                    android:textSize="@dimen/text_caption"
                     android:visibility="gone" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
+                    android:layout_marginTop="@dimen/space_sm"
                     android:text="View history →"
-                    android:textSize="11sp"
+                    android:textSize="@dimen/text_caption"
                     android:textColor="@color/gold_muted"
                     android:fontFamily="sans-serif" />
 
@@ -91,15 +91,15 @@
                     android:id="@+id/change_fed_funds"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="11sp"
+                    android:textSize="@dimen/text_caption"
                     android:textColor="@color/accent_gold"
                     android:fontFamily="sans-serif-medium"
                     android:background="@drawable/bg_fed_change_chip"
-                    android:paddingStart="8dp"
-                    android:paddingEnd="8dp"
-                    android:paddingTop="4dp"
-                    android:paddingBottom="4dp"
-                    android:layout_marginBottom="8dp"
+                    android:paddingStart="@dimen/space_sm"
+                    android:paddingEnd="@dimen/space_sm"
+                    android:paddingTop="@dimen/space_xs"
+                    android:paddingBottom="@dimen/space_xs"
+                    android:layout_marginBottom="@dimen/space_sm"
                     android:visibility="gone"/>
 
                 <TextView
@@ -107,7 +107,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textColor="@color/text_on_navy_secondary"
-                    android:textSize="11sp"
+                    android:textSize="@dimen/text_caption"
                     android:fontFamily="serif"
                     android:textStyle="italic"
                     android:visibility="gone" />
@@ -116,9 +116,9 @@
                     android:id="@+id/tvFedFundsHeroDate"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
+                    android:layout_marginTop="@dimen/space_hairline"
                     android:textColor="@color/text_on_navy_muted"
-                    android:textSize="11sp" />
+                    android:textSize="@dimen/text_caption" />
 
             </LinearLayout>
 

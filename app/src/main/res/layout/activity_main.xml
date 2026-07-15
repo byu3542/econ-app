@@ -35,17 +35,17 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:layout_marginTop="0dp"
-                android:paddingTop="4dp"
-                android:paddingBottom="9dp"
-                android:paddingStart="14dp"
-                android:paddingEnd="14dp">
+                android:paddingTop="@dimen/space_xs"
+                android:paddingBottom="@dimen/space_sm"
+                android:paddingStart="@dimen/space_lg"
+                android:paddingEnd="@dimen/space_lg">
 
                 <!-- Gold accent bar -->
                 <View
                     android:layout_width="40dp"
                     android:layout_height="2dp"
-                    android:background="#c9a84c"
-                    android:layout_marginBottom="8dp"/>
+                    android:background="@color/accent_gold"
+                    android:layout_marginBottom="@dimen/space_sm"/>
 
                 <!-- Title row: page title + settings gear -->
                 <LinearLayout
@@ -53,7 +53,7 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:layout_marginBottom="8dp">
+                    android:layout_marginBottom="@dimen/space_sm">
 
                     <TextView
                         android:id="@+id/tvHeaderLine1"
@@ -61,8 +61,8 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="Overview"
-                        android:textSize="26sp"
-                        android:textColor="#ffffff"
+                        android:textSize="@dimen/text_display"
+                        android:textColor="@color/card_white"
                         android:fontFamily="serif"
                         android:textStyle="bold"
                         android:textAllCaps="true"
@@ -74,11 +74,11 @@
                         android:id="@+id/btnSettings"
                         android:layout_width="48dp"
                         android:layout_height="48dp"
-                        android:padding="12dp"
+                        android:padding="@dimen/space_md"
                         android:src="@drawable/ic_settings"
                         android:contentDescription="@string/settings"
                         android:background="?attr/selectableItemBackgroundBorderless"
-                        app:tint="#B3FFFFFF"/>
+                        app:tint="@color/white_70"/>
 
                 </LinearLayout>
 
@@ -93,16 +93,16 @@
                         android:id="@+id/tvHeaderQuarter"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textSize="10sp"
-                        android:textColor="#c9a84c"
+                        android:textSize="@dimen/text_caption"
+                        android:textColor="@color/accent_gold"
                         android:fontFamily="sans-serif-medium"
                         android:textAllCaps="true"
                         android:letterSpacing="0.14"
                         android:background="@drawable/bg_quarter_pill"
-                        android:paddingStart="8dp"
-                        android:paddingEnd="8dp"
-                        android:paddingTop="3dp"
-                        android:paddingBottom="3dp"/>
+                        android:paddingStart="@dimen/space_sm"
+                        android:paddingEnd="@dimen/space_sm"
+                        android:paddingTop="@dimen/space_xs"
+                        android:paddingBottom="@dimen/space_xs"/>
 
                     <View
                         android:layout_width="0dp"
@@ -113,8 +113,8 @@
                         android:id="@+id/tvHeaderSub"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textSize="9sp"
-                        android:textColor="#47ffffff"
+                        android:textSize="@dimen/text_caption"
+                        android:textColor="@color/white_28"
                         android:fontFamily="sans-serif"
                         android:textAllCaps="true"
                         android:letterSpacing="0.05"
@@ -128,7 +128,7 @@
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
-                android:background="#2Ec9a84c" />
+                android:background="@color/gold_hairline" />
 
         </LinearLayout>
 
@@ -148,7 +148,7 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:paddingBottom="30dp" />
+            android:paddingBottom="@dimen/space_4xl" />
 
         <!-- ══ 3. BOTTOM NAV WRAPPER ════════════════
              The FrameLayout lets the navActiveIndicator View float at the
@@ -219,7 +219,7 @@
         app:cardCornerRadius="31dp"
         app:cardElevation="8dp"
         app:cardBackgroundColor="@color/fab_ring"
-        app:rippleColor="#331A1A2E"
+        app:rippleColor="@color/navy_ripple"
         app:strokeWidth="0dp"
         app:layout_anchor="@id/bottomNavWrapper"
         app:layout_anchorGravity="top|center_horizontal">

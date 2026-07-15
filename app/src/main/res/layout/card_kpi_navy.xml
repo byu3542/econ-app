@@ -23,10 +23,10 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:paddingTop="14dp"
-            android:paddingBottom="12dp">
+            android:paddingStart="@dimen/space_lg"
+            android:paddingEnd="@dimen/space_lg"
+            android:paddingTop="@dimen/space_lg"
+            android:paddingBottom="@dimen/space_md">
 
             <TextView
                 android:id="@+id/tvMetricLabel"
@@ -34,7 +34,7 @@
                 android:layout_height="wrap_content"
                 android:text="METRIC"
                 android:textColor="@color/text_muted"
-                android:textSize="10sp"
+                android:textSize="@dimen/text_caption"
                 android:textStyle="bold"
                 android:letterSpacing="0.2"
                 android:textAllCaps="true" />
@@ -43,10 +43,10 @@
                 android:id="@+id/tvMetricValue"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
+                android:layout_marginTop="@dimen/space_hairline"
                 android:text="0.0%"
                 android:textColor="@color/text_navy"
-                android:textSize="34sp"
+                android:textSize="@dimen/text_display_lg"
                 android:fontFamily="serif"
                 android:textStyle="bold" />
 
@@ -56,7 +56,7 @@
                 android:layout_height="wrap_content"
                 android:text="Jan 2026"
                 android:textColor="@color/text_muted"
-                android:textSize="9sp"
+                android:textSize="@dimen/text_caption"
                 android:letterSpacing="0.05" />
 
             <!-- Spacer to push the footer to the bottom -->
@@ -71,14 +71,14 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:layout_marginTop="7dp">
+                android:layout_marginTop="@dimen/space_sm">
 
                 <View
                     android:id="@+id/viewTierDot"
                     android:layout_width="7dp"
                     android:layout_height="7dp"
                     android:background="@drawable/dot_neutral"
-                    android:layout_marginEnd="5dp" />
+                    android:layout_marginEnd="@dimen/space_xs" />
 
                 <TextView
                     android:id="@+id/tvTierStatus"
@@ -87,7 +87,7 @@
                     android:layout_weight="1"
                     android:text=""
                     android:textColor="@color/text_muted"
-                    android:textSize="9sp"
+                    android:textSize="@dimen/text_caption"
                     android:textStyle="bold"
                     android:textAllCaps="true"
                     android:letterSpacing="0.08" />
@@ -98,7 +98,7 @@
                     android:layout_height="wrap_content"
                     android:text=""
                     android:textColor="@color/text_muted"
-                    android:textSize="8sp" />
+                    android:textSize="@dimen/text_caption" />
 
             </LinearLayout>
 

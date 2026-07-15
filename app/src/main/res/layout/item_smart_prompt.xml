@@ -6,8 +6,8 @@
     android:layout_width="250dp"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="10dp"
-    android:layout_marginEnd="8dp"
+    android:padding="@dimen/space_md"
+    android:layout_marginEnd="@dimen/space_sm"
     android:background="@drawable/bg_chip_outline"
     android:clickable="true"
     android:focusable="true">
@@ -23,8 +23,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="🏦"
-            android:textSize="16sp"
-            android:layout_marginEnd="8dp" />
+            android:textSize="@dimen/text_body"
+            android:layout_marginEnd="@dimen/space_sm" />
 
         <TextView
             android:id="@+id/tvPromptText"
@@ -32,7 +32,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="How might this Fed action affect Treasury yields?"
-            android:textSize="12sp"
+            android:textSize="@dimen/text_secondary"
             android:textColor="@color/text_navy"
             android:maxLines="2"
             android:ellipsize="end"
@@ -43,8 +43,8 @@
         android:id="@+id/btnUsePrompt"
         android:layout_width="match_parent"
         android:layout_height="36dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="@dimen/space_sm"
         android:text="Use This Prompt"
-        android:textSize="12sp"
+        android:textSize="@dimen/text_secondary"
         android:visibility="gone" />
 </LinearLayout>

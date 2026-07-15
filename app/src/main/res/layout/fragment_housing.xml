@@ -10,7 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:padding="@dimen/space_lg">
 
         <!-- ═══════════════════════════════════════════════════════════════════
              HOUSING METRIC BADGES — Housing Starts & Existing Home Sales
@@ -19,7 +19,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="@dimen/space_lg"
             android:baselineAligned="false">
 
             <!-- HOUSING STARTS Badge -->
@@ -27,7 +27,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginEnd="6dp"
+                android:layout_marginEnd="@dimen/space_sm"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="4dp"
                 app:cardBackgroundColor="@color/header_navy">
@@ -36,7 +36,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="12dp"
+                    android:padding="@dimen/space_md"
                     android:gravity="center">
 
                     <TextView
@@ -44,7 +44,7 @@
                         android:layout_height="wrap_content"
                         android:text="HOUSING STARTS"
                         android:textColor="@color/accent_gold"
-                        android:textSize="8sp"
+                        android:textSize="@dimen/text_caption"
                         android:textStyle="bold"
                         android:letterSpacing="0.05" />
 
@@ -54,23 +54,23 @@
                         android:layout_height="wrap_content"
                         android:text="\u2014"
                         android:textColor="@color/card_white"
-                        android:textSize="13sp"
+                        android:textSize="@dimen/text_secondary"
                         android:textStyle="bold"
-                        android:layout_marginTop="2dp" />
+                        android:layout_marginTop="@dimen/space_hairline" />
 
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:layout_marginTop="2dp">
+                        android:layout_marginTop="@dimen/space_hairline">
 
                         <View
                             android:id="@+id/viewStartsDot"
                             android:layout_width="6dp"
                             android:layout_height="6dp"
                             android:background="@drawable/dot_neutral"
-                            android:layout_marginEnd="4dp" />
+                            android:layout_marginEnd="@dimen/space_xs" />
 
                         <TextView
                             android:id="@+id/tvStartsStatus"
@@ -78,7 +78,7 @@
                             android:layout_height="wrap_content"
                             android:text="\u2014"
                             android:textColor="@color/text_on_navy_muted"
-                            android:textSize="8sp" />
+                            android:textSize="@dimen/text_caption" />
                     </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
@@ -88,7 +88,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="6dp"
+                android:layout_marginStart="@dimen/space_sm"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="4dp"
                 app:cardBackgroundColor="@color/header_navy">
@@ -97,7 +97,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="12dp"
+                    android:padding="@dimen/space_md"
                     android:gravity="center">
 
                     <TextView
@@ -105,7 +105,7 @@
                         android:layout_height="wrap_content"
                         android:text="HOME SALES"
                         android:textColor="@color/accent_gold"
-                        android:textSize="8sp"
+                        android:textSize="@dimen/text_caption"
                         android:textStyle="bold"
                         android:letterSpacing="0.05" />
 
@@ -115,23 +115,23 @@
                         android:layout_height="wrap_content"
                         android:text="\u2014"
                         android:textColor="@color/card_white"
-                        android:textSize="13sp"
+                        android:textSize="@dimen/text_secondary"
                         android:textStyle="bold"
-                        android:layout_marginTop="2dp" />
+                        android:layout_marginTop="@dimen/space_hairline" />
 
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:layout_marginTop="2dp">
+                        android:layout_marginTop="@dimen/space_hairline">
 
                         <View
                             android:id="@+id/viewSalesDot"
                             android:layout_width="6dp"
                             android:layout_height="6dp"
                             android:background="@drawable/dot_neutral"
-                            android:layout_marginEnd="4dp" />
+                            android:layout_marginEnd="@dimen/space_xs" />
 
                         <TextView
                             android:id="@+id/tvSalesStatus"
@@ -139,7 +139,7 @@
                             android:layout_height="wrap_content"
                             android:text="\u2014"
                             android:textColor="@color/text_on_navy_muted"
-                            android:textSize="8sp" />
+                            android:textSize="@dimen/text_caption" />
                     </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
@@ -152,7 +152,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="@dimen/space_lg"
             android:baselineAligned="false">
 
             <!-- 30-YR RATE Badge -->
@@ -161,7 +161,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginEnd="6dp"
+                android:layout_marginEnd="@dimen/space_sm"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="4dp"
                 app:cardBackgroundColor="@color/header_navy">
@@ -170,7 +170,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="12dp"
+                    android:padding="@dimen/space_md"
                     android:gravity="center">
 
                     <TextView
@@ -178,7 +178,7 @@
                         android:layout_height="wrap_content"
                         android:text="30-YR RATE"
                         android:textColor="@color/accent_gold"
-                        android:textSize="8sp"
+                        android:textSize="@dimen/text_caption"
                         android:textStyle="bold"
                         android:letterSpacing="0.05" />
 
@@ -188,23 +188,23 @@
                         android:layout_height="wrap_content"
                         android:text="\u2014"
                         android:textColor="@color/card_white"
-                        android:textSize="13sp"
+                        android:textSize="@dimen/text_secondary"
                         android:textStyle="bold"
-                        android:layout_marginTop="2dp" />
+                        android:layout_marginTop="@dimen/space_hairline" />
 
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:layout_marginTop="2dp">
+                        android:layout_marginTop="@dimen/space_hairline">
 
                         <View
                             android:id="@+id/viewBadgeMortgageDot"
                             android:layout_width="6dp"
                             android:layout_height="6dp"
                             android:background="@drawable/dot_neutral"
-                            android:layout_marginEnd="4dp" />
+                            android:layout_marginEnd="@dimen/space_xs" />
 
                         <TextView
                             android:id="@+id/tvBadgeMortgageStatus"
@@ -212,7 +212,7 @@
                             android:layout_height="wrap_content"
                             android:text="\u2014"
                             android:textColor="@color/text_on_navy_muted"
-                            android:textSize="8sp" />
+                            android:textSize="@dimen/text_caption" />
                     </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
@@ -223,7 +223,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginHorizontal="3dp"
+                android:layout_marginHorizontal="@dimen/space_xs"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="4dp"
                 app:cardBackgroundColor="@color/header_navy">
@@ -232,7 +232,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="12dp"
+                    android:padding="@dimen/space_md"
                     android:gravity="center">
 
                     <TextView
@@ -240,7 +240,7 @@
                         android:layout_height="wrap_content"
                         android:text="BANK MBS"
                         android:textColor="@color/accent_gold"
-                        android:textSize="8sp"
+                        android:textSize="@dimen/text_caption"
                         android:textStyle="bold"
                         android:letterSpacing="0.05" />
 
@@ -250,23 +250,23 @@
                         android:layout_height="wrap_content"
                         android:text="\u2014"
                         android:textColor="@color/card_white"
-                        android:textSize="13sp"
+                        android:textSize="@dimen/text_secondary"
                         android:textStyle="bold"
-                        android:layout_marginTop="2dp" />
+                        android:layout_marginTop="@dimen/space_hairline" />
 
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:layout_marginTop="2dp">
+                        android:layout_marginTop="@dimen/space_hairline">
 
                         <View
                             android:id="@+id/viewBadgeBankMbsDot"
                             android:layout_width="6dp"
                             android:layout_height="6dp"
                             android:background="@drawable/dot_neutral"
-                            android:layout_marginEnd="4dp" />
+                            android:layout_marginEnd="@dimen/space_xs" />
 
                         <TextView
                             android:id="@+id/tvBadgeBankMbsStatus"
@@ -274,7 +274,7 @@
                             android:layout_height="wrap_content"
                             android:text="\u2014"
                             android:textColor="@color/text_on_navy_muted"
-                            android:textSize="8sp" />
+                            android:textSize="@dimen/text_caption" />
                     </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
@@ -285,7 +285,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="6dp"
+                android:layout_marginStart="@dimen/space_sm"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="4dp"
                 app:cardBackgroundColor="@color/header_navy">
@@ -294,7 +294,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="12dp"
+                    android:padding="@dimen/space_md"
                     android:gravity="center">
 
                     <TextView
@@ -302,7 +302,7 @@
                         android:layout_height="wrap_content"
                         android:text="FED MBS"
                         android:textColor="@color/accent_gold"
-                        android:textSize="8sp"
+                        android:textSize="@dimen/text_caption"
                         android:textStyle="bold"
                         android:letterSpacing="0.05" />
 
@@ -312,23 +312,23 @@
                         android:layout_height="wrap_content"
                         android:text="\u2014"
                         android:textColor="@color/card_white"
-                        android:textSize="13sp"
+                        android:textSize="@dimen/text_secondary"
                         android:textStyle="bold"
-                        android:layout_marginTop="2dp" />
+                        android:layout_marginTop="@dimen/space_hairline" />
 
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:layout_marginTop="2dp">
+                        android:layout_marginTop="@dimen/space_hairline">
 
                         <View
                             android:id="@+id/viewBadgeFedMbsDot"
                             android:layout_width="6dp"
                             android:layout_height="6dp"
                             android:background="@drawable/dot_neutral"
-                            android:layout_marginEnd="4dp" />
+                            android:layout_marginEnd="@dimen/space_xs" />
 
                         <TextView
                             android:id="@+id/tvBadgeFedMbsStatus"
@@ -336,7 +336,7 @@
                             android:layout_height="wrap_content"
                             android:text="\u2014"
                             android:textColor="@color/text_on_navy_muted"
-                            android:textSize="8sp" />
+                            android:textSize="@dimen/text_caption" />
                     </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
@@ -348,10 +348,10 @@
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
+            android:layout_marginBottom="@dimen/space_2xl"
             app:cardCornerRadius="16dp"
             app:cardElevation="6dp"
-            app:cardBackgroundColor="#1C2236">
+            app:cardBackgroundColor="@color/card_navy_badge">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -361,17 +361,17 @@
                 <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="#1C2236"
-                    android:paddingHorizontal="20dp"
-                    android:paddingVertical="14dp">
+                    android:background="@color/card_navy_badge"
+                    android:paddingHorizontal="@dimen/space_xl"
+                    android:paddingVertical="@dimen/space_lg">
 
                     <TextView
                         android:id="@+id/tvSwappableTitle"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="30-Year Mortgage Rate (%)"
-                        android:textColor="#E8F0FF"
-                        android:textSize="14sp"
+                        android:textColor="@color/info_blue_tint"
+                        android:textSize="@dimen/text_body"
                         android:fontFamily="serif"
                         android:textStyle="bold" />
 
@@ -386,7 +386,7 @@
                     android:id="@+id/chartSwappable"
                     android:layout_width="match_parent"
                     android:layout_height="180dp"
-                    android:padding="12dp" />
+                    android:padding="@dimen/space_md" />
 
             </LinearLayout>
         </androidx.cardview.widget.CardView>
@@ -397,10 +397,10 @@
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
+            android:layout_marginBottom="@dimen/space_2xl"
             app:cardCornerRadius="16dp"
             app:cardElevation="6dp"
-            app:cardBackgroundColor="#1C2236">
+            app:cardBackgroundColor="@color/card_navy_badge">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -410,16 +410,16 @@
                 <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="#1C2236"
-                    android:paddingHorizontal="20dp"
-                    android:paddingVertical="16dp">
+                    android:background="@color/card_navy_badge"
+                    android:paddingHorizontal="@dimen/space_xl"
+                    android:paddingVertical="@dimen/space_lg">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="MBS &amp; Mortgage Rates"
-                        android:textColor="#E8F0FF"
-                        android:textSize="15sp"
+                        android:textColor="@color/info_blue_tint"
+                        android:textSize="@dimen/text_body"
                         android:fontFamily="serif"
                         android:textStyle="bold" />
 
@@ -434,7 +434,7 @@
                     android:id="@+id/chartMbsMortgage"
                     android:layout_width="match_parent"
                     android:layout_height="320dp"
-                    android:padding="16dp" />
+                    android:padding="@dimen/space_lg" />
 
             </LinearLayout>
         </androidx.cardview.widget.CardView>

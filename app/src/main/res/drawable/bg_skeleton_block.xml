@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Placeholder block for shimmer skeleton (theme-aware via divider_sand). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/divider_sand" />
+    <corners android:radius="12dp" />
+</shape>

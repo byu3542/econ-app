@@ -65,4 +65,37 @@
          disc gold matches ic_fab_gold_ai artwork (#D2B156) -->
     <color name="fab_ring">#f5f3ef</color>
     <color name="fab_gold">#D2B156</color>
+    <!-- ── Semantic tokens (moved out of layout hex literals) ── -->
+    <!-- Navy-surface structure -->
+    <color name="navy_divider">#2A3342</color>
+    <color name="navy_surface_deep">#1F2633</color>
+    <color name="slate_dim">#5A6A8A</color>
+    <color name="slate_soft">#8899BB</color>
+    <!-- Status signal palette -->
+    <color name="signal_good">#4CAF50</color>
+    <color name="signal_good_soft">#A5D6A7</color>
+    <color name="signal_good_tint">#C8E6C9</color>
+    <color name="signal_watch">#FFEB3B</color>
+    <color name="signal_watch_soft">#FFF59D</color>
+    <color name="signal_watch_tint">#FFF9C4</color>
+    <color name="signal_elevated">#FF9800</color>
+    <color name="signal_elevated_soft">#FFCC80</color>
+    <color name="signal_elevated_tint">#FFE0B2</color>
+    <color name="signal_alert">#F44336</color>
+    <color name="signal_alert_soft">#EF9A9A</color>
+    <color name="signal_alert_tint">#FFCDD2</color>
+    <color name="signal_alert_deep">#B71C1C</color>
+    <!-- Informational accents -->
+    <color name="info_blue">#2196F3</color>
+    <color name="info_blue_soft">#BBDEFB</color>
+    <color name="info_blue_tint">#E8F0FF</color>
+    <color name="accent_purple">#9C27B0</color>
+    <color name="accent_purple_soft">#E1BEE7</color>
+    <color name="google_blue">#4285F4</color>
+    <color name="google_amber">#FBBC04</color>
+    <!-- Alpha overlays -->
+    <color name="white_70">#B3FFFFFF</color>
+    <color name="white_28">#47FFFFFF</color>
+    <color name="navy_ripple">#331A1A2E</color>
+    <color name="gold_hairline">#2EC9A84C</color>
 </resources>

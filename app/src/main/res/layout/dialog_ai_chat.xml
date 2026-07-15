@@ -24,8 +24,8 @@
             android:layout_width="32dp"
             android:layout_height="3dp"
             android:layout_gravity="center_horizontal"
-            android:layout_marginTop="10dp"
-            android:layout_marginBottom="4dp"
+            android:layout_marginTop="@dimen/space_md"
+            android:layout_marginBottom="@dimen/space_xs"
             android:background="@color/handle_on_surface"
             android:importantForAccessibility="no" />
 
@@ -34,7 +34,7 @@
             android:id="@+id/rlHeader"
             android:layout_width="match_parent"
             android:layout_height="52dp"
-            android:paddingHorizontal="16dp">
+            android:paddingHorizontal="@dimen/space_lg">
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -47,7 +47,7 @@
                     android:layout_width="16dp"
                     android:layout_height="16dp"
                     android:src="@drawable/ic_ai_agent"
-                    android:layout_marginEnd="8dp"
+                    android:layout_marginEnd="@dimen/space_sm"
                     app:tint="@color/accent_gold" />
 
                 <TextView
@@ -55,7 +55,7 @@
                     android:layout_height="wrap_content"
                     android:text="AI ECONOMIC ANALYST"
                     android:textColor="@color/accent_gold"
-                    android:textSize="14sp"
+                    android:textSize="@dimen/text_body"
                     android:textStyle="bold"
                     android:textAllCaps="true"
                     android:letterSpacing="0.2" />
@@ -101,21 +101,21 @@
         android:layout_height="wrap_content"
         android:text="ASK ABOUT"
         android:textColor="@color/text_muted"
-        android:textSize="10sp"
+        android:textSize="@dimen/text_caption"
         android:textStyle="bold"
         android:letterSpacing="0.2"
-        android:layout_marginTop="12dp"
-        android:layout_marginStart="16dp" />
+        android:layout_marginTop="@dimen/space_md"
+        android:layout_marginStart="@dimen/space_lg" />
 
     <HorizontalScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:scrollbars="none"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp"
+        android:paddingTop="@dimen/space_sm"
+        android:paddingBottom="@dimen/space_sm"
         android:clipToPadding="false"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp">
+        android:paddingStart="@dimen/space_lg"
+        android:paddingEnd="@dimen/space_lg">
 
         <LinearLayout
             android:layout_width="wrap_content"
@@ -128,11 +128,11 @@
                 android:layout_height="wrap_content"
                 android:text="Recent News"
                 android:background="@drawable/bg_chip_outline"
-                android:paddingHorizontal="16dp"
-                android:paddingVertical="8dp"
-                android:textSize="12sp"
+                android:paddingHorizontal="@dimen/space_lg"
+                android:paddingVertical="@dimen/space_sm"
+                android:textSize="@dimen/text_secondary"
                 android:textColor="@color/text_secondary"
-                android:layout_marginEnd="8dp"
+                android:layout_marginEnd="@dimen/space_sm"
                 android:clickable="true"
                 android:focusable="true" />
 
@@ -142,11 +142,11 @@
                 android:layout_height="wrap_content"
                 android:text="Recent Economic Updates"
                 android:background="@drawable/bg_chip_outline"
-                android:paddingHorizontal="16dp"
-                android:paddingVertical="8dp"
-                android:textSize="12sp"
+                android:paddingHorizontal="@dimen/space_lg"
+                android:paddingVertical="@dimen/space_sm"
+                android:textSize="@dimen/text_secondary"
                 android:textColor="@color/text_secondary"
-                android:layout_marginEnd="8dp"
+                android:layout_marginEnd="@dimen/space_sm"
                 android:clickable="true"
                 android:focusable="true" />
 
@@ -156,11 +156,11 @@
                 android:layout_height="wrap_content"
                 android:text="Yield curve health"
                 android:background="@drawable/bg_chip_outline"
-                android:paddingHorizontal="16dp"
-                android:paddingVertical="8dp"
-                android:textSize="12sp"
+                android:paddingHorizontal="@dimen/space_lg"
+                android:paddingVertical="@dimen/space_sm"
+                android:textSize="@dimen/text_secondary"
                 android:textColor="@color/text_secondary"
-                android:layout_marginEnd="8dp"
+                android:layout_marginEnd="@dimen/space_sm"
                 android:clickable="true"
                 android:focusable="true" />
 
@@ -170,11 +170,11 @@
                 android:layout_height="wrap_content"
                 android:text="Recession risk?"
                 android:background="@drawable/bg_chip_outline"
-                android:paddingHorizontal="16dp"
-                android:paddingVertical="8dp"
-                android:textSize="12sp"
+                android:paddingHorizontal="@dimen/space_lg"
+                android:paddingVertical="@dimen/space_sm"
+                android:textSize="@dimen/text_secondary"
                 android:textColor="@color/text_secondary"
-                android:layout_marginEnd="8dp"
+                android:layout_marginEnd="@dimen/space_sm"
                 android:clickable="true"
                 android:focusable="true" />
 
@@ -184,9 +184,9 @@
                 android:layout_height="wrap_content"
                 android:text="Real wage trend"
                 android:background="@drawable/bg_chip_outline"
-                android:paddingHorizontal="16dp"
-                android:paddingVertical="8dp"
-                android:textSize="12sp"
+                android:paddingHorizontal="@dimen/space_lg"
+                android:paddingVertical="@dimen/space_sm"
+                android:textSize="@dimen/text_secondary"
                 android:textColor="@color/text_secondary"
                 android:clickable="true"
                 android:focusable="true" />
@@ -204,7 +204,7 @@
             android:id="@+id/rvChat"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:padding="16dp"
+            android:padding="@dimen/space_lg"
             android:clipToPadding="false"
             android:clipChildren="false" />
 
@@ -213,13 +213,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|center_horizontal"
-            android:layout_marginBottom="12dp"
+            android:layout_marginBottom="@dimen/space_md"
             android:text="↓ New reply"
-            android:textSize="12sp"
+            android:textSize="@dimen/text_secondary"
             android:textColor="@color/text_navy"
             android:background="@drawable/bg_chip_outline"
-            android:paddingHorizontal="16dp"
-            android:paddingVertical="8dp"
+            android:paddingHorizontal="@dimen/space_lg"
+            android:paddingVertical="@dimen/space_sm"
             android:elevation="4dp"
             android:clickable="true"
             android:focusable="true"
@@ -233,7 +233,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="16dp"
+        android:padding="@dimen/space_lg"
         android:gravity="center_vertical">
 
         <LinearLayout
@@ -243,8 +243,8 @@
             android:background="@drawable/bg_chat_input_capsule"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:paddingStart="16dp"
-            android:paddingEnd="8dp">
+            android:paddingStart="@dimen/space_lg"
+            android:paddingEnd="@dimen/space_sm">
 
             <EditText
                 android:id="@+id/etMessage"
@@ -255,7 +255,7 @@
                 android:background="@null"
                 android:textColor="@color/text_navy"
                 android:textColorHint="@color/text_muted"
-                android:textSize="14sp"
+                android:textSize="@dimen/text_body"
                 android:inputType="textCapSentences"
                 android:imeOptions="actionSend"
                 android:maxLines="1" />
@@ -270,7 +270,7 @@
                 android:contentDescription="Send message"
                 android:enabled="false"
                 android:alpha="0.4"
-                android:layout_marginStart="8dp" />
+                android:layout_marginStart="@dimen/space_sm" />
 
         </LinearLayout>
 
@@ -282,8 +282,8 @@
         android:layout_height="wrap_content"
         android:text="Responses use live Treasury · BEA · BLS data"
         android:textColor="@color/text_muted"
-        android:textSize="10sp"
+        android:textSize="@dimen/text_caption"
         android:gravity="center"
-        android:paddingBottom="16dp" />
+        android:paddingBottom="@dimen/space_lg" />
 
 </LinearLayout>

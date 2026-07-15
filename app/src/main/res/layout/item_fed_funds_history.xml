@@ -8,8 +8,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:paddingVertical="12dp"
-        android:paddingHorizontal="8dp"
+        android:paddingVertical="@dimen/space_md"
+        android:paddingHorizontal="@dimen/space_sm"
         android:gravity="center_vertical">
 
         <TextView
@@ -19,7 +19,7 @@
             android:layout_weight="1"
             android:text="01-2024"
             android:textColor="@color/card_white"
-            android:textSize="13sp"
+            android:textSize="@dimen/text_secondary"
             android:fontFamily="sans-serif-light" />
 
         <TextView
@@ -29,7 +29,7 @@
             android:layout_weight="1"
             android:text="5.33%"
             android:textColor="@color/card_white"
-            android:textSize="13sp"
+            android:textSize="@dimen/text_secondary"
             android:gravity="center"
             android:textStyle="bold" />
 
@@ -39,8 +39,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="+25 bps"
-            android:textColor="#A5D6A7"
-            android:textSize="12sp"
+            android:textColor="@color/signal_good_soft"
+            android:textSize="@dimen/text_secondary"
             android:gravity="end"
             android:textStyle="bold" />
 
@@ -49,6 +49,6 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="#2A3342" />
+        android:background="@color/navy_divider" />
 
 </LinearLayout>

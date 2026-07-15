@@ -3,8 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingHorizontal="16dp"
-    android:paddingVertical="6dp"
+    android:paddingHorizontal="@dimen/space_lg"
+    android:paddingVertical="@dimen/space_sm"
     android:clipChildren="false"
     android:clipToPadding="false">
 
@@ -15,10 +15,10 @@
         android:layout_height="wrap_content"
         android:text="YOU"
         android:textColor="@color/text_muted"
-        android:textSize="11sp"
+        android:textSize="@dimen/text_caption"
         android:textStyle="bold"
         android:letterSpacing="0.1"
-        android:layout_marginBottom="4dp"
+        android:layout_marginBottom="@dimen/space_xs"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -29,13 +29,13 @@
         android:id="@+id/llBubbleContainer"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:paddingHorizontal="16dp"
-        android:paddingVertical="12dp"
+        android:paddingHorizontal="@dimen/space_lg"
+        android:paddingVertical="@dimen/space_md"
         android:minWidth="60dp"
         android:orientation="vertical"
         android:clipChildren="false"
         android:clipToPadding="false"
-        android:layout_marginTop="2dp"
+        android:layout_marginTop="@dimen/space_hairline"
         app:layout_constraintTop_toBottomOf="@id/tvSenderLabel"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -47,7 +47,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="@color/text_navy"
-            android:textSize="14sp"
+            android:textSize="@dimen/text_body"
             android:textIsSelectable="false"
             android:lineSpacingExtra="4dp" />
 
@@ -58,8 +58,8 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:paddingTop="12dp"
-            android:paddingBottom="4dp"
+            android:paddingTop="@dimen/space_md"
+            android:paddingBottom="@dimen/space_xs"
             android:clipChildren="false"
             android:clipToPadding="false"
             android:visibility="gone">
@@ -70,7 +70,7 @@
                 android:layout_height="6dp"
                 android:background="@drawable/dot_neutral"
                 android:backgroundTint="@color/text_navy"
-                android:layout_marginEnd="4dp" />
+                android:layout_marginEnd="@dimen/space_xs" />
 
             <View
                 android:id="@+id/dot2"
@@ -78,7 +78,7 @@
                 android:layout_height="6dp"
                 android:background="@drawable/dot_neutral"
                 android:backgroundTint="@color/text_navy"
-                android:layout_marginEnd="4dp" />
+                android:layout_marginEnd="@dimen/space_xs" />
 
             <View
                 android:id="@+id/dot3"
@@ -98,8 +98,8 @@
         android:layout_height="wrap_content"
         android:text="9:38 AM"
         android:textColor="@color/text_muted"
-        android:textSize="11sp"
-        android:layout_marginTop="4dp"
+        android:textSize="@dimen/text_caption"
+        android:layout_marginTop="@dimen/space_xs"
         app:layout_constraintTop_toBottomOf="@id/llBubbleContainer"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

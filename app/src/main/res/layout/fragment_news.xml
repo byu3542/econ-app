@@ -15,8 +15,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:scrollbars="none"
-            android:paddingVertical="8dp"
-            android:paddingHorizontal="12dp">
+            android:paddingVertical="@dimen/space_sm"
+            android:paddingHorizontal="@dimen/space_md">
 
             <com.google.android.material.chip.ChipGroup
                 android:id="@+id/chip_group_filter"
@@ -166,7 +166,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:clipToPadding="false"
-                    android:paddingBottom="8dp" />
+                    android:paddingBottom="@dimen/space_sm" />
 
             </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
@@ -185,23 +185,23 @@
                 android:layout_gravity="center"
                 android:orientation="vertical"
                 android:gravity="center"
-                android:padding="24dp"
+                android:padding="@dimen/space_2xl"
                 android:visibility="gone">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="⚠"
-                    android:textSize="28sp"
+                    android:textSize="@dimen/text_display"
                     android:textColor="@color/accent_gold"
                     android:importantForAccessibility="no" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="@dimen/space_sm"
                     android:text="Couldn\'t load the news feed"
-                    android:textSize="15sp"
+                    android:textSize="@dimen/text_body"
                     android:textStyle="bold"
                     android:textColor="@color/text_navy" />
 
@@ -209,8 +209,8 @@
                     android:id="@+id/text_news_error"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:textSize="13sp"
+                    android:layout_marginTop="@dimen/space_xs"
+                    android:textSize="@dimen/text_secondary"
                     android:textColor="@color/text_secondary"
                     android:textAlignment="center" />
 
@@ -219,7 +219,7 @@
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
+                    android:layout_marginTop="@dimen/space_md"
                     android:minHeight="48dp"
                     android:text="Retry"
                     android:textColor="@color/text_navy"

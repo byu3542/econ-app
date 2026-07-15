@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/swipeRefresh"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -10,59 +11,104 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <LinearLayout
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
+            android:layout_height="wrap_content">
 
-            <include layout="@layout/card_fed_funds_hero" />
-
-            <!-- ROW 1: GDP Growth | CPI-U YOY -->
+            <!-- Real content — revealed when first data arrives -->
             <LinearLayout
+                android:id="@+id/contentContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="12dp"
-                android:baselineAligned="false">
-                <include layout="@layout/card_kpi_badge" android:id="@+id/cardGdp"
-                    android:layout_width="0dp" android:layout_height="wrap_content"
-                    android:layout_weight="1" android:layout_marginEnd="6dp" />
-                <include layout="@layout/card_kpi_badge" android:id="@+id/cardCpiYoy"
-                    android:layout_width="0dp" android:layout_height="wrap_content"
-                    android:layout_weight="1" android:layout_marginStart="6dp" />
+                android:orientation="vertical"
+                android:padding="@dimen/space_lg"
+                android:visibility="invisible">
+
+                <include layout="@layout/card_fed_funds_hero" />
+
+                <!-- ROW 1: GDP Growth | CPI-U YOY -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="@dimen/space_lg"
+                    android:baselineAligned="false">
+                    <include layout="@layout/card_kpi_badge" android:id="@+id/cardGdp"
+                        android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:layout_marginEnd="@dimen/space_sm" />
+                    <include layout="@layout/card_kpi_badge" android:id="@+id/cardCpiYoy"
+                        android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:layout_marginStart="@dimen/space_sm" />
+                </LinearLayout>
+
+                <!-- ROW 2: 10Y-3M Spread | Unemployment -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="@dimen/space_lg"
+                    android:baselineAligned="false">
+                    <include layout="@layout/card_kpi_badge" android:id="@+id/cardSpread"
+                        android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:layout_marginEnd="@dimen/space_sm" />
+                    <include layout="@layout/card_kpi_badge" android:id="@+id/cardUnemployment"
+                        android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:layout_marginStart="@dimen/space_sm" />
+                </LinearLayout>
+
+                <!-- ROW 3: 30Y Mortgage | VIX -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="@dimen/space_lg"
+                    android:baselineAligned="false">
+                    <include layout="@layout/card_kpi_badge" android:id="@+id/cardMortgage"
+                        android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:layout_marginEnd="@dimen/space_sm" />
+                    <include layout="@layout/card_kpi_badge" android:id="@+id/cardVix"
+                        android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:layout_marginStart="@dimen/space_sm" />
+                </LinearLayout>
+
             </LinearLayout>
 
-            <!-- ROW 2: 10Y-3M Spread | Unemployment -->
-            <LinearLayout
+            <!-- Shimmer skeleton — mirrors hero + 3 KPI rows, hidden on first data -->
+            <com.facebook.shimmer.ShimmerFrameLayout
+                android:id="@+id/skeletonShimmer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="12dp"
-                android:baselineAligned="false">
-                <include layout="@layout/card_kpi_badge" android:id="@+id/cardSpread"
-                    android:layout_width="0dp" android:layout_height="wrap_content"
-                    android:layout_weight="1" android:layout_marginEnd="6dp" />
-                <include layout="@layout/card_kpi_badge" android:id="@+id/cardUnemployment"
-                    android:layout_width="0dp" android:layout_height="wrap_content"
-                    android:layout_weight="1" android:layout_marginStart="6dp" />
-            </LinearLayout>
+                app:shimmer_auto_start="true">
 
-            <!-- ROW 3: 30Y Mortgage | VIX -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="16dp"
-                android:baselineAligned="false">
-                <include layout="@layout/card_kpi_badge" android:id="@+id/cardMortgage"
-                    android:layout_width="0dp" android:layout_height="wrap_content"
-                    android:layout_weight="1" android:layout_marginEnd="6dp" />
-                <include layout="@layout/card_kpi_badge" android:id="@+id/cardVix"
-                    android:layout_width="0dp" android:layout_height="wrap_content"
-                    android:layout_weight="1" android:layout_marginStart="6dp" />
-            </LinearLayout>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/space_lg">
 
-        </LinearLayout>
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="180dp"
+                        android:layout_marginBottom="@dimen/space_lg"
+                        android:background="@drawable/bg_skeleton_block" />
+
+                    <LinearLayout style="@style/SkeletonRow">
+                        <View style="@style/SkeletonCard" android:layout_marginEnd="@dimen/space_sm" />
+                        <View style="@style/SkeletonCard" android:layout_marginStart="@dimen/space_sm" />
+                    </LinearLayout>
+                    <LinearLayout style="@style/SkeletonRow">
+                        <View style="@style/SkeletonCard" android:layout_marginEnd="@dimen/space_sm" />
+                        <View style="@style/SkeletonCard" android:layout_marginStart="@dimen/space_sm" />
+                    </LinearLayout>
+                    <LinearLayout style="@style/SkeletonRow">
+                        <View style="@style/SkeletonCard" android:layout_marginEnd="@dimen/space_sm" />
+                        <View style="@style/SkeletonCard" android:layout_marginStart="@dimen/space_sm" />
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </com.facebook.shimmer.ShimmerFrameLayout>
+
+        </FrameLayout>
     </androidx.core.widget.NestedScrollView>
 </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

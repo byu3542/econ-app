@@ -69,14 +69,14 @@
     </style>
 
     <style name="AlabasterTabTextAppearance" parent="TextAppearance.Design.Tab">
-        <item name="android:textSize">12sp</item>
+        <item name="android:textSize">@dimen/text_secondary</item>
         <item name="android:textAllCaps">true</item>
         <item name="android:textStyle">bold</item>
     </style>
 
     <!-- Style referenced in fragment_dashboard.xml -->
     <style name="TabLabelStyle" parent="TextAppearance.Design.Tab">
-        <item name="android:textSize">11sp</item>
+        <item name="android:textSize">@dimen/text_caption</item>
         <item name="android:textAllCaps">true</item>
         <item name="android:textStyle">bold</item>
         <item name="android:letterSpacing">0.05</item>
@@ -94,14 +94,14 @@
     </style>
 
     <style name="EconomyTabTextAppearance" parent="TextAppearance.Design.Tab">
-        <item name="android:textSize">11.5sp</item>
+        <item name="android:textSize">@dimen/text_caption</item>
         <item name="android:textAllCaps">false</item>
         <item name="android:textStyle">normal</item>
     </style>
 
     <!-- ── Bottom navigation bar ─────────────────────────────────────────── -->
     <style name="BottomNavLabelStyle" parent="TextAppearance.MaterialComponents.Caption">
-        <item name="android:textSize">11sp</item>
+        <item name="android:textSize">@dimen/text_caption</item>
         <item name="android:textAllCaps">false</item>
     </style>
 
@@ -153,7 +153,7 @@
     <style name="SettingsSectionHeader">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
-        <item name="android:textSize">11sp</item>
+        <item name="android:textSize">@dimen/text_caption</item>
         <item name="android:textStyle">bold</item>
         <item name="android:letterSpacing">0.2</item>
         <item name="android:textColor">@color/text_muted</item>
@@ -182,14 +182,14 @@
     <style name="SettingsRowTitle">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
-        <item name="android:textSize">15sp</item>
+        <item name="android:textSize">@dimen/text_body</item>
         <item name="android:textColor">@color/text_navy</item>
     </style>
 
     <style name="SettingsRowSub">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
-        <item name="android:textSize">12sp</item>
+        <item name="android:textSize">@dimen/text_secondary</item>
         <item name="android:textColor">@color/text_secondary</item>
     </style>
 
@@ -199,10 +199,24 @@
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_weight">1</item>
         <item name="android:minWidth">0dp</item>
-        <item name="android:textSize">14sp</item>
+        <item name="android:textSize">@dimen/text_body</item>
         <item name="android:textAllCaps">false</item>
         <item name="android:paddingStart">4dp</item>
         <item name="android:paddingEnd">4dp</item>
     </style>
 
+    <!-- Shimmer skeleton placeholders (Overview) -->
+    <style name="SkeletonRow">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:layout_marginBottom">@dimen/space_lg</item>
+        <item name="android:baselineAligned">false</item>
+    </style>
+    <style name="SkeletonCard">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">130dp</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:background">@drawable/bg_skeleton_block</item>
+    </style>
 </resources>

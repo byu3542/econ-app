@@ -5,18 +5,18 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:background="@color/header_navy"
-    android:padding="24dp">
+    android:padding="@dimen/space_2xl">
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="UNEMPLOYMENT BENCHMARKS"
         android:textColor="@color/accent_gold"
-        android:textSize="12sp"
+        android:textSize="@dimen/text_secondary"
         android:textStyle="bold"
         android:textAllCaps="true"
         android:letterSpacing="0.1"
-        android:layout_marginBottom="20dp"
+        android:layout_marginBottom="@dimen/space_xl"
         android:gravity="center" />
 
     <!-- Benchmark Table Container -->
@@ -24,14 +24,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:cardCornerRadius="12dp"
-        app:cardBackgroundColor="#1F2633"
+        app:cardBackgroundColor="@color/navy_surface_deep"
         app:cardElevation="0dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="12dp">
+            android:padding="@dimen/space_md">
 
             <!-- Healthy Row -->
             <LinearLayout
@@ -39,13 +39,13 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:paddingVertical="12dp">
+                android:paddingVertical="@dimen/space_md">
                 <View
                     android:layout_width="10dp"
                     android:layout_height="10dp"
                     android:background="@drawable/dot_neutral"
-                    android:backgroundTint="#4CAF50"
-                    android:layout_marginEnd="16dp" />
+                    android:backgroundTint="@color/signal_good"
+                    android:layout_marginEnd="@dimen/space_lg" />
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -54,8 +54,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="HEALTHY"
-                        android:textColor="#A5D6A7"
-                        android:textSize="11sp"
+                        android:textColor="@color/signal_good_soft"
+                        android:textSize="@dimen/text_caption"
                         android:textStyle="bold"
                         android:letterSpacing="0.05" />
                     <TextView
@@ -63,12 +63,12 @@
                         android:layout_height="wrap_content"
                         android:text="3.5-4.5% rate AND rising &lt; 0.3% from low"
                         android:textColor="@color/card_white"
-                        android:textSize="13sp"
+                        android:textSize="@dimen/text_secondary"
                         android:fontFamily="sans-serif-light" />
                 </LinearLayout>
             </LinearLayout>
 
-            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#2A3342" />
+            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/navy_divider" />
 
             <!-- Watch Closely Row -->
             <LinearLayout
@@ -76,13 +76,13 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:paddingVertical="12dp">
+                android:paddingVertical="@dimen/space_md">
                 <View
                     android:layout_width="10dp"
                     android:layout_height="10dp"
                     android:background="@drawable/dot_neutral"
-                    android:backgroundTint="#FFEB3B"
-                    android:layout_marginEnd="16dp" />
+                    android:backgroundTint="@color/signal_watch"
+                    android:layout_marginEnd="@dimen/space_lg" />
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -91,8 +91,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="WATCH CLOSELY"
-                        android:textColor="#FFF59D"
-                        android:textSize="11sp"
+                        android:textColor="@color/signal_watch_soft"
+                        android:textSize="@dimen/text_caption"
                         android:textStyle="bold"
                         android:letterSpacing="0.05" />
                     <TextView
@@ -100,12 +100,12 @@
                         android:layout_height="wrap_content"
                         android:text="3.5-4.5% rate AND rising 0.3-0.5% from low"
                         android:textColor="@color/card_white"
-                        android:textSize="13sp"
+                        android:textSize="@dimen/text_secondary"
                         android:fontFamily="sans-serif-light" />
                 </LinearLayout>
             </LinearLayout>
 
-            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#2A3342" />
+            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/navy_divider" />
 
             <!-- Elevated Row -->
             <LinearLayout
@@ -113,13 +113,13 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:paddingVertical="12dp">
+                android:paddingVertical="@dimen/space_md">
                 <View
                     android:layout_width="10dp"
                     android:layout_height="10dp"
                     android:background="@drawable/dot_neutral"
-                    android:backgroundTint="#FF9800"
-                    android:layout_marginEnd="16dp" />
+                    android:backgroundTint="@color/signal_elevated"
+                    android:layout_marginEnd="@dimen/space_lg" />
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -128,8 +128,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="ELEVATED"
-                        android:textColor="#FFCC80"
-                        android:textSize="11sp"
+                        android:textColor="@color/signal_elevated_soft"
+                        android:textSize="@dimen/text_caption"
                         android:textStyle="bold"
                         android:letterSpacing="0.05" />
                     <TextView
@@ -137,12 +137,12 @@
                         android:layout_height="wrap_content"
                         android:text="Level above 5.5% regardless of trend"
                         android:textColor="@color/card_white"
-                        android:textSize="13sp"
+                        android:textSize="@dimen/text_secondary"
                         android:fontFamily="sans-serif-light" />
                 </LinearLayout>
             </LinearLayout>
 
-            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#2A3342" />
+            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/navy_divider" />
 
             <!-- Sahm Rule Row -->
             <LinearLayout
@@ -150,13 +150,13 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:paddingVertical="12dp">
+                android:paddingVertical="@dimen/space_md">
                 <View
                     android:layout_width="10dp"
                     android:layout_height="10dp"
                     android:background="@drawable/dot_neutral"
-                    android:backgroundTint="#F44336"
-                    android:layout_marginEnd="16dp" />
+                    android:backgroundTint="@color/signal_alert"
+                    android:layout_marginEnd="@dimen/space_lg" />
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -165,8 +165,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="RECESSION SIGNAL"
-                        android:textColor="#EF9A9A"
-                        android:textSize="11sp"
+                        android:textColor="@color/signal_alert_soft"
+                        android:textSize="@dimen/text_caption"
                         android:textStyle="bold"
                         android:letterSpacing="0.05" />
                     <TextView
@@ -174,12 +174,12 @@
                         android:layout_height="wrap_content"
                         android:text="Rising 0.5%+ from 12-mo low (Sahm Rule)"
                         android:textColor="@color/card_white"
-                        android:textSize="13sp"
+                        android:textSize="@dimen/text_secondary"
                         android:fontFamily="sans-serif-light" />
                 </LinearLayout>
             </LinearLayout>
 
-            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#2A3342" />
+            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/navy_divider" />
 
             <!-- Territory Row -->
             <LinearLayout
@@ -187,13 +187,13 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:paddingVertical="12dp">
+                android:paddingVertical="@dimen/space_md">
                 <View
                     android:layout_width="10dp"
                     android:layout_height="10dp"
                     android:background="@drawable/dot_neutral"
-                    android:backgroundTint="#B71C1C"
-                    android:layout_marginEnd="16dp" />
+                    android:backgroundTint="@color/signal_alert_deep"
+                    android:layout_marginEnd="@dimen/space_lg" />
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -202,8 +202,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="RECESSION TERRITORY"
-                        android:textColor="#EF9A9A"
-                        android:textSize="11sp"
+                        android:textColor="@color/signal_alert_soft"
+                        android:textSize="@dimen/text_caption"
                         android:textStyle="bold"
                         android:letterSpacing="0.05" />
                     <TextView
@@ -211,7 +211,7 @@
                         android:layout_height="wrap_content"
                         android:text="Level above 7.0% regardless of trend"
                         android:textColor="@color/card_white"
-                        android:textSize="13sp"
+                        android:textSize="@dimen/text_secondary"
                         android:fontFamily="sans-serif-light" />
                 </LinearLayout>
             </LinearLayout>
@@ -225,10 +225,10 @@
         android:layout_height="wrap_content"
         android:text="DISMISS"
         android:textColor="@color/accent_gold"
-        android:textSize="12sp"
+        android:textSize="@dimen/text_secondary"
         android:textStyle="bold"
-        android:padding="16dp"
+        android:padding="@dimen/space_lg"
         android:layout_gravity="end"
-        android:layout_marginTop="8dp" />
+        android:layout_marginTop="@dimen/space_sm" />
 
 </LinearLayout>

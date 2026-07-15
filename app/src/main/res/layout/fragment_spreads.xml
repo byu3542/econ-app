@@ -10,38 +10,38 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:padding="@dimen/space_lg">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:baselineAligned="false"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="@dimen/space_lg">
 
             <androidx.cardview.widget.CardView
                 android:id="@+id/cardSpreadYoY"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginEnd="8dp"
+                android:layout_marginEnd="@dimen/space_sm"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="6dp"
                 app:cardBackgroundColor="@color/header_navy">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:orientation="vertical" android:padding="16dp" android:gravity="center">
+                    android:orientation="vertical" android:padding="@dimen/space_lg" android:gravity="center">
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                         android:text="10Y - 2Y" android:textColor="@color/accent_gold"
-                        android:textSize="12sp" android:textStyle="bold" android:textAllCaps="true" />
+                        android:textSize="@dimen/text_secondary" android:textStyle="bold" android:textAllCaps="true" />
                     <TextView android:id="@+id/tvSpreadValue" android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" android:text="&#8212;" android:textSize="28sp"
-                        android:textColor="@color/card_white" android:textStyle="bold" android:layout_marginTop="4dp" />
+                        android:layout_height="wrap_content" android:text="&#8212;" android:textSize="@dimen/text_display"
+                        android:textColor="@color/card_white" android:textStyle="bold" android:layout_marginTop="@dimen/space_xs" />
                     <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="4dp">
+                        android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="@dimen/space_xs">
                         <View android:id="@+id/viewSpreadIndicatorDot" android:layout_width="8dp" android:layout_height="8dp"
-                            android:background="@drawable/dot_neutral" android:layout_marginEnd="6dp" />
+                            android:background="@drawable/dot_neutral" android:layout_marginEnd="@dimen/space_sm" />
                         <TextView android:id="@+id/tvIndicatorText" android:layout_width="wrap_content"
-                            android:layout_height="wrap_content" android:text="LOADING" android:textColor="@color/text_on_navy_muted" android:textSize="10sp" />
+                            android:layout_height="wrap_content" android:text="LOADING" android:textColor="@color/text_on_navy_muted" android:textSize="@dimen/text_caption" />
                     </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
@@ -51,24 +51,24 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="8dp"
+                android:layout_marginStart="@dimen/space_sm"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="6dp"
                 app:cardBackgroundColor="@color/header_navy">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:orientation="vertical" android:padding="16dp" android:gravity="center">
+                    android:orientation="vertical" android:padding="@dimen/space_lg" android:gravity="center">
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                         android:text="10Y - 3M" android:textColor="@color/accent_gold"
-                        android:textSize="12sp" android:textStyle="bold" android:textAllCaps="true" />
+                        android:textSize="@dimen/text_secondary" android:textStyle="bold" android:textAllCaps="true" />
                     <TextView android:id="@+id/tvSpread3MValue" android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" android:text="&#8212;" android:textSize="28sp"
-                        android:textColor="@color/card_white" android:textStyle="bold" android:layout_marginTop="4dp" />
+                        android:layout_height="wrap_content" android:text="&#8212;" android:textSize="@dimen/text_display"
+                        android:textColor="@color/card_white" android:textStyle="bold" android:layout_marginTop="@dimen/space_xs" />
                     <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="4dp">
+                        android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="@dimen/space_xs">
                         <View android:id="@+id/viewSpread3MIndicatorDot" android:layout_width="8dp" android:layout_height="8dp"
-                            android:background="@drawable/dot_neutral" android:layout_marginEnd="6dp" />
+                            android:background="@drawable/dot_neutral" android:layout_marginEnd="@dimen/space_sm" />
                         <TextView android:id="@+id/tvIndicator3MText" android:layout_width="wrap_content"
-                            android:layout_height="wrap_content" android:text="LOADING" android:textColor="@color/text_on_navy_muted" android:textSize="10sp" />
+                            android:layout_height="wrap_content" android:text="LOADING" android:textColor="@color/text_on_navy_muted" android:textSize="@dimen/text_caption" />
                     </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
@@ -77,24 +77,24 @@
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
+            android:layout_marginBottom="@dimen/space_2xl"
             app:cardCornerRadius="16dp"
             app:cardElevation="6dp"
             app:cardBackgroundColor="@color/header_navy">
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:orientation="vertical" android:paddingHorizontal="20dp" android:paddingTop="16dp">
+                    android:orientation="vertical" android:paddingHorizontal="@dimen/space_xl" android:paddingTop="@dimen/space_lg">
                     <TextView android:id="@+id/tvChartTitle" android:layout_width="wrap_content"
                         android:layout_height="wrap_content" android:text="10Y-2Y Spread"
-                        android:textColor="#ffffff" android:textSize="15sp" android:textStyle="bold" />
+                        android:textColor="@color/card_white" android:textSize="@dimen/text_body" android:textStyle="bold" />
                     <View android:layout_width="match_parent" android:layout_height="2dp"
-                        android:layout_marginTop="8dp" android:background="@color/accent_gold" />
+                        android:layout_marginTop="@dimen/space_sm" android:background="@color/accent_gold" />
                 </LinearLayout>
                 <com.github.mikephil.charting.charts.LineChart
                     android:id="@+id/swappableChart"
                     android:layout_width="match_parent"
                     android:layout_height="300dp"
-                    android:padding="12dp" />
+                    android:padding="@dimen/space_md" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 

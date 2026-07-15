@@ -10,38 +10,38 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:padding="@dimen/space_lg">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:baselineAligned="false"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="@dimen/space_lg">
 
             <androidx.cardview.widget.CardView
                 android:id="@+id/cardSp500"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginEnd="2dp"
+                android:layout_marginEnd="@dimen/space_hairline"
                 android:minHeight="140dp"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="6dp"
                 app:cardBackgroundColor="@color/header_navy">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:orientation="vertical" android:padding="16dp" android:gravity="center">
+                    android:orientation="vertical" android:padding="@dimen/space_lg" android:gravity="center">
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                         android:text="S&amp;P 500" android:textColor="@color/accent_gold"
-                        android:textSize="10sp" android:textStyle="bold" android:textAllCaps="true" />
+                        android:textSize="@dimen/text_caption" android:textStyle="bold" android:textAllCaps="true" />
                     <TextView android:id="@+id/tvSp500Value" android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" android:text="—" android:textSize="18sp"
-                        android:textColor="@color/card_white" android:textStyle="bold" android:layout_marginTop="4dp" />
+                        android:layout_height="wrap_content" android:text="—" android:textSize="@dimen/text_title"
+                        android:textColor="@color/card_white" android:textStyle="bold" android:layout_marginTop="@dimen/space_xs" />
                     <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="4dp">
-                        <View android:id="@+id/viewSp500Dot" android:layout_width="8dp" android:layout_height="8dp" android:layout_marginEnd="6dp" />
+                        android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="@dimen/space_xs">
+                        <View android:id="@+id/viewSp500Dot" android:layout_width="8dp" android:layout_height="8dp" android:layout_marginEnd="@dimen/space_sm" />
                         <TextView android:id="@+id/tvSp500Status" android:layout_width="wrap_content"
-                            android:layout_height="wrap_content" android:text="—" android:textColor="@color/text_on_navy_muted" android:textSize="9sp" />
+                            android:layout_height="wrap_content" android:text="—" android:textColor="@color/text_on_navy_muted" android:textSize="@dimen/text_caption" />
                     </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
@@ -51,25 +51,25 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="2dp"
-                android:layout_marginEnd="2dp"
+                android:layout_marginStart="@dimen/space_hairline"
+                android:layout_marginEnd="@dimen/space_hairline"
                 android:minHeight="140dp"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="6dp"
                 app:cardBackgroundColor="@color/header_navy">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:orientation="vertical" android:padding="16dp" android:gravity="center">
+                    android:orientation="vertical" android:padding="@dimen/space_lg" android:gravity="center">
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                         android:text="Nasdaq" android:textColor="@color/accent_gold"
-                        android:textSize="10sp" android:textStyle="bold" android:textAllCaps="true" />
+                        android:textSize="@dimen/text_caption" android:textStyle="bold" android:textAllCaps="true" />
                     <TextView android:id="@+id/tvNasdaqValue" android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" android:text="—" android:textSize="18sp"
-                        android:textColor="@color/card_white" android:textStyle="bold" android:layout_marginTop="4dp" />
+                        android:layout_height="wrap_content" android:text="—" android:textSize="@dimen/text_title"
+                        android:textColor="@color/card_white" android:textStyle="bold" android:layout_marginTop="@dimen/space_xs" />
                     <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="4dp">
-                        <View android:id="@+id/viewNasdaqDot" android:layout_width="8dp" android:layout_height="8dp" android:layout_marginEnd="6dp" />
+                        android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="@dimen/space_xs">
+                        <View android:id="@+id/viewNasdaqDot" android:layout_width="8dp" android:layout_height="8dp" android:layout_marginEnd="@dimen/space_sm" />
                         <TextView android:id="@+id/tvNasdaqStatus" android:layout_width="wrap_content"
-                            android:layout_height="wrap_content" android:text="—" android:textColor="@color/text_on_navy_muted" android:textSize="9sp" />
+                            android:layout_height="wrap_content" android:text="—" android:textColor="@color/text_on_navy_muted" android:textSize="@dimen/text_caption" />
                     </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
@@ -79,24 +79,24 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="2dp"
+                android:layout_marginStart="@dimen/space_hairline"
                 android:minHeight="140dp"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="6dp"
                 app:cardBackgroundColor="@color/header_navy">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:orientation="vertical" android:padding="16dp" android:gravity="center">
+                    android:orientation="vertical" android:padding="@dimen/space_lg" android:gravity="center">
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                         android:text="VIX" android:textColor="@color/accent_gold"
-                        android:textSize="10sp" android:textStyle="bold" android:textAllCaps="true" />
+                        android:textSize="@dimen/text_caption" android:textStyle="bold" android:textAllCaps="true" />
                     <TextView android:id="@+id/tvVixValue" android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" android:text="—" android:textSize="18sp"
-                        android:textColor="@color/card_white" android:textStyle="bold" android:layout_marginTop="4dp" />
+                        android:layout_height="wrap_content" android:text="—" android:textSize="@dimen/text_title"
+                        android:textColor="@color/card_white" android:textStyle="bold" android:layout_marginTop="@dimen/space_xs" />
                     <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="4dp">
-                        <View android:id="@+id/viewVixDot" android:layout_width="8dp" android:layout_height="8dp" android:layout_marginEnd="6dp" />
+                        android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="@dimen/space_xs">
+                        <View android:id="@+id/viewVixDot" android:layout_width="8dp" android:layout_height="8dp" android:layout_marginEnd="@dimen/space_sm" />
                         <TextView android:id="@+id/tvVixStatus" android:layout_width="wrap_content"
-                            android:layout_height="wrap_content" android:text="—" android:textColor="@color/text_on_navy_muted" android:textSize="9sp" />
+                            android:layout_height="wrap_content" android:text="—" android:textColor="@color/text_on_navy_muted" android:textSize="@dimen/text_caption" />
                     </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
@@ -106,24 +106,24 @@
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
+            android:layout_marginBottom="@dimen/space_2xl"
             app:cardCornerRadius="16dp"
             app:cardElevation="6dp"
             app:cardBackgroundColor="@color/header_navy">
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:orientation="vertical" android:paddingHorizontal="20dp" android:paddingTop="16dp">
+                    android:orientation="vertical" android:paddingHorizontal="@dimen/space_xl" android:paddingTop="@dimen/space_lg">
                     <TextView android:id="@+id/tvChartTitle" android:layout_width="wrap_content"
                         android:layout_height="wrap_content" android:text="S&amp;P 500 Index"
-                        android:textColor="#ffffff" android:textSize="15sp" android:textStyle="bold" />
+                        android:textColor="@color/card_white" android:textSize="@dimen/text_body" android:textStyle="bold" />
                     <View android:layout_width="match_parent" android:layout_height="2dp"
-                        android:layout_marginTop="8dp" android:background="@color/accent_gold" />
+                        android:layout_marginTop="@dimen/space_sm" android:background="@color/accent_gold" />
                 </LinearLayout>
                 <com.github.mikephil.charting.charts.LineChart
                     android:id="@+id/swappableChart"
                     android:layout_width="match_parent"
                     android:layout_height="300dp"
-                    android:padding="12dp" />
+                    android:padding="@dimen/space_md" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
