@@ -35,17 +35,11 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:layout_marginTop="0dp"
-                android:paddingTop="@dimen/space_xs"
+                android:paddingTop="@dimen/space_md"
                 android:paddingBottom="@dimen/space_sm"
                 android:paddingStart="@dimen/space_lg"
                 android:paddingEnd="@dimen/space_lg">
 
-                <!-- Gold accent bar -->
-                <View
-                    android:layout_width="40dp"
-                    android:layout_height="2dp"
-                    android:background="@color/accent_gold"
-                    android:layout_marginBottom="@dimen/space_sm"/>
 
                 <!-- Title row: page title + settings gear -->
                 <LinearLayout
@@ -104,21 +98,6 @@
                         android:paddingTop="@dimen/space_xs"
                         android:paddingBottom="@dimen/space_xs"/>
 
-                    <View
-                        android:layout_width="0dp"
-                        android:layout_height="1dp"
-                        android:layout_weight="1"/>
-
-                    <TextView
-                        android:id="@+id/tvHeaderSub"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textSize="@dimen/text_caption"
-                        android:textColor="@color/white_28"
-                        android:fontFamily="sans-serif"
-                        android:textAllCaps="true"
-                        android:letterSpacing="0.05"
-                        android:singleLine="true"/>
 
                 </LinearLayout>
 

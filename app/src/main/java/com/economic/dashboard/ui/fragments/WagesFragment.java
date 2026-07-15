@@ -18,6 +18,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.economic.dashboard.databinding.FragmentWagesBinding;
 import com.economic.dashboard.R;
+import com.economic.dashboard.ui.MetricBottomSheet;
 import com.economic.dashboard.models.EconomicDataPoint;
 import com.economic.dashboard.ui.EconomicViewModel;
 import com.economic.dashboard.utils.ChartHelper;
@@ -102,18 +103,7 @@ public class WagesFragment extends Fragment {
 
     private void showWagesBenchmarks() {
         if (getContext() == null) return;
-        View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_wages_status, null);
-        
-        AlertDialog dialog = new AlertDialog.Builder(getContext())
-                .setView(dialogView)
-                .create();
-
-        View btnDismiss = dialogView.findViewById(R.id.btnClose);
-        if (btnDismiss != null) {
-            btnDismiss.setOnClickListener(v -> dialog.dismiss());
-        }
-
-        dialog.show();
+        MetricBottomSheet.show(getContext(), R.layout.dialog_wages_status);
     }
 
     private void calculateRealWageGrowth() {
@@ -147,19 +137,19 @@ public class WagesFragment extends Fragment {
         int dotColor;
 
         if (spread < -2.0) {
-            dotColor = Color.parseColor("#F44336"); // Red
+            dotColor = Color.parseColor("#C75B4E"); // Red
             reading = "FALLING BEHIND FAST";
         } else if (spread < 0.0) {
-            dotColor = Color.parseColor("#FF9800"); // Orange
+            dotColor = Color.parseColor("#D98E4F"); // Orange
             reading = "LOSING GROUND";
         } else if (spread <= 1.0) {
-            dotColor = Color.parseColor("#FFEB3B"); // Yellow
+            dotColor = Color.parseColor("#DCC873"); // Yellow
             reading = "BARELY AHEAD";
         } else if (spread <= 2.5) {
-            dotColor = Color.parseColor("#4CAF50"); // Green
+            dotColor = Color.parseColor("#6FA97A"); // Green
             reading = "HEALTHY";
         } else {
-            dotColor = Color.parseColor("#2196F3"); // Blue
+            dotColor = Color.parseColor("#5B8DB8"); // Blue
             reading = "STRONG";
         }
 
@@ -202,8 +192,8 @@ public class WagesFragment extends Fragment {
         });
 
         LineDataSet dataSet = new LineDataSet(entries, "Avg Hourly Wage ($)");
-        dataSet.setColor(Color.parseColor("#9c27b0"));
-        dataSet.setCircleColor(Color.parseColor("#9c27b0"));
+        dataSet.setColor(Color.parseColor("#8A6E9E"));
+        dataSet.setCircleColor(Color.parseColor("#8A6E9E"));
         dataSet.setLineWidth(3f);
         dataSet.setCircleRadius(4f);
         dataSet.setDrawValues(false);
@@ -268,8 +258,8 @@ public class WagesFragment extends Fragment {
         cpiSet.setDrawValues(false);
 
         LineDataSet wageSet = new LineDataSet(wageEntries, "Average Wages");
-        wageSet.setColor(Color.parseColor("#9c27b0"));
-        wageSet.setCircleColor(Color.parseColor("#9c27b0"));
+        wageSet.setColor(Color.parseColor("#8A6E9E"));
+        wageSet.setCircleColor(Color.parseColor("#8A6E9E"));
         wageSet.setLineWidth(3f);
         wageSet.setCircleRadius(3f);
         wageSet.setDrawValues(false);

@@ -174,7 +174,7 @@ public class HousingFragment extends Fragment {
 
         // Left Y-axis (MBS holdings in billions → display as trillions)
         YAxis mbsLeftAxis = chartMbsMortgage.getAxisLeft();
-        mbsLeftAxis.setTextColor(Color.parseColor("#C8A84B"));
+        mbsLeftAxis.setTextColor(Color.parseColor("#C9A84C"));
         mbsLeftAxis.setTextSize(10f);
         mbsLeftAxis.setDrawGridLines(true);
         mbsLeftAxis.setGridColor(mbsSubtleGrid);
@@ -243,11 +243,11 @@ public class HousingFragment extends Fragment {
 
         // Thresholds in thousands of units (annualized monthly rate)
         String status; int color;
-        if (latest < 900)        { status = "DEPRESSED";      color = Color.parseColor("#F44336"); }
-        else if (latest < 1200)  { status = "BELOW AVERAGE";  color = Color.parseColor("#FF9800"); }
-        else if (latest < 1500)  { status = "NORMAL";         color = Color.parseColor("#4CAF50"); }
-        else if (latest < 1800)  { status = "STRONG";         color = Color.parseColor("#2196F3"); }
-        else                     { status = "VERY STRONG";    color = Color.parseColor("#9C27B0"); }
+        if (latest < 900)        { status = "DEPRESSED";      color = Color.parseColor("#C75B4E"); }
+        else if (latest < 1200)  { status = "BELOW AVERAGE";  color = Color.parseColor("#D98E4F"); }
+        else if (latest < 1500)  { status = "NORMAL";         color = Color.parseColor("#6FA97A"); }
+        else if (latest < 1800)  { status = "STRONG";         color = Color.parseColor("#5B8DB8"); }
+        else                     { status = "VERY STRONG";    color = Color.parseColor("#8A6E9E"); }
 
         if (tvStartsStatus != null) tvStartsStatus.setText(status);
         setDot(viewStartsDot, color);
@@ -266,11 +266,11 @@ public class HousingFragment extends Fragment {
 
         // Thresholds in thousands of units (matching FRED units)
         String status; int color;
-        if (latest < 3_000)  { status = "VERY WEAK";   color = Color.parseColor("#F44336"); }
-        else if (latest < 4_000) { status = "WEAK";    color = Color.parseColor("#FF9800"); }
-        else if (latest < 5_000) { status = "NORMAL";  color = Color.parseColor("#4CAF50"); }
-        else if (latest < 6_000) { status = "STRONG";  color = Color.parseColor("#2196F3"); }
-        else                 { status = "VERY STRONG"; color = Color.parseColor("#9C27B0"); }
+        if (latest < 3_000)  { status = "VERY WEAK";   color = Color.parseColor("#C75B4E"); }
+        else if (latest < 4_000) { status = "WEAK";    color = Color.parseColor("#D98E4F"); }
+        else if (latest < 5_000) { status = "NORMAL";  color = Color.parseColor("#6FA97A"); }
+        else if (latest < 6_000) { status = "STRONG";  color = Color.parseColor("#5B8DB8"); }
+        else                 { status = "VERY STRONG"; color = Color.parseColor("#8A6E9E"); }
 
         if (tvSalesStatus != null) tvSalesStatus.setText(status);
         setDot(viewSalesDot, color);
@@ -286,10 +286,10 @@ public class HousingFragment extends Fragment {
             if (tvBadgeMortgageValue != null)
                 tvBadgeMortgageValue.setText(String.format(Locale.US, "%.2f%%", val));
             String status; int color;
-            if (val < 4.0)       { status = "LOW";       color = Color.parseColor("#4CAF50"); }
-            else if (val < 5.5)  { status = "MODERATE";  color = Color.parseColor("#FF9800"); }
-            else if (val < 7.0)  { status = "HIGH";      color = Color.parseColor("#F44336"); }
-            else                 { status = "VERY HIGH"; color = Color.parseColor("#B71C1C"); }
+            if (val < 4.0)       { status = "LOW";       color = Color.parseColor("#6FA97A"); }
+            else if (val < 5.5)  { status = "MODERATE";  color = Color.parseColor("#D98E4F"); }
+            else if (val < 7.0)  { status = "HIGH";      color = Color.parseColor("#C75B4E"); }
+            else                 { status = "VERY HIGH"; color = Color.parseColor("#8E3B32"); }
             if (tvBadgeMortgageStatus != null) tvBadgeMortgageStatus.setText(status);
             setDot(viewBadgeMortgageDot, color);
         }
@@ -301,9 +301,9 @@ public class HousingFragment extends Fragment {
             if (tvBadgeBankMbsValue != null)
                 tvBadgeBankMbsValue.setText(String.format(Locale.US, "$%.0fB", val));
             String status; int color;
-            if (val < 2500)      { status = "DECLINING"; color = Color.parseColor("#FF9800"); }
-            else if (val < 2800) { status = "STABLE";    color = Color.parseColor("#4CAF50"); }
-            else                 { status = "GROWING";   color = Color.parseColor("#2196F3"); }
+            if (val < 2500)      { status = "DECLINING"; color = Color.parseColor("#D98E4F"); }
+            else if (val < 2800) { status = "STABLE";    color = Color.parseColor("#6FA97A"); }
+            else                 { status = "GROWING";   color = Color.parseColor("#5B8DB8"); }
             if (tvBadgeBankMbsStatus != null) tvBadgeBankMbsStatus.setText(status);
             setDot(viewBadgeBankMbsDot, color);
         }
@@ -316,9 +316,9 @@ public class HousingFragment extends Fragment {
             if (tvBadgeFedMbsValue != null)
                 tvBadgeFedMbsValue.setText(String.format(Locale.US, "$%.0fB", valBillions));
             String status; int color;
-            if (valBillions < 2300)      { status = "QT ACTIVE";  color = Color.parseColor("#FF9800"); }
-            else if (valBillions < 2600) { status = "REDUCING";   color = Color.parseColor("#4CAF50"); }
-            else                         { status = "ELEVATED";   color = Color.parseColor("#2196F3"); }
+            if (valBillions < 2300)      { status = "QT ACTIVE";  color = Color.parseColor("#D98E4F"); }
+            else if (valBillions < 2600) { status = "REDUCING";   color = Color.parseColor("#6FA97A"); }
+            else                         { status = "ELEVATED";   color = Color.parseColor("#5B8DB8"); }
             if (tvBadgeFedMbsStatus != null) tvBadgeFedMbsStatus.setText(status);
             setDot(viewBadgeFedMbsDot, color);
         }
@@ -352,7 +352,7 @@ public class HousingFragment extends Fragment {
         GradientDrawable gd = new GradientDrawable();
         gd.setColor(Color.TRANSPARENT);
         gd.setCornerRadius(12f * density - insetPx);
-        gd.setStroke(strokePx, Color.parseColor("#C8A84B"));
+        gd.setStroke(strokePx, Color.parseColor("#C9A84C"));
         return new InsetDrawable(gd, insetPx);
     }
 
@@ -411,7 +411,7 @@ public class HousingFragment extends Fragment {
         switch (activeBadge) {
             case "bankMbs":
                 seriesName = "Bank MBS Holdings";
-                lineColor = "#C8A84B";
+                lineColor = "#C9A84C";
                 break;
             case "fedMbs":
                 seriesName = "Fed MBS Holdings";
@@ -546,7 +546,7 @@ public class HousingFragment extends Fragment {
         });
 
         // Bank MBS — left axis, gold, thin line, no dots
-        LineDataSet bankSet = makeLineDataSet(bankEntries, "Bank MBS Holdings", "#C8A84B", false);
+        LineDataSet bankSet = makeLineDataSet(bankEntries, "Bank MBS Holdings", "#C9A84C", false);
         bankSet.setAxisDependency(YAxis.AxisDependency.LEFT);
         bankSet.setDrawCircles(false);
         bankSet.setDrawCircleHole(false);

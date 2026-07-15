@@ -72,9 +72,9 @@ public class FedFundsHistoryAdapter extends RecyclerView.Adapter<FedFundsHistory
         holder.tvChange.setText(String.format(Locale.US, "%s%.0f bps", sign, item.bpsChange));
 
         if (item.bpsChange > 0) {
-            holder.tvChange.setTextColor(Color.parseColor("#EF9A9A")); // Red-ish for rate hikes (usually bad for markets)
+            holder.tvChange.setTextColor(Color.parseColor("#D9A099")); // Red-ish for rate hikes (usually bad for markets)
         } else if (item.bpsChange < 0) {
-            holder.tvChange.setTextColor(Color.parseColor("#A5D6A7")); // Green-ish for cuts
+            holder.tvChange.setTextColor(Color.parseColor("#A9C4AE")); // Green-ish for cuts
         } else {
             holder.tvChange.setTextColor(Color.parseColor("#BBBBBB"));
             holder.tvChange.setText("0 bps");

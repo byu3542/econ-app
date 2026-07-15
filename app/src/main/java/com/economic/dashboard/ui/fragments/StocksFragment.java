@@ -99,10 +99,10 @@ public class StocksFragment extends Fragment {
         double latest = rows.get(rows.size() - 1).getValue();
         tvSp500Value.setText(formatValueWithK(latest));
         String status; int color;
-        if (latest < 3500) { status = "WEAK"; color = Color.parseColor("#F44336"); }
-        else if (latest < 4000) { status = "FAIR"; color = Color.parseColor("#FF9800"); }
-        else if (latest < 4500) { status = "STRONG"; color = Color.parseColor("#4CAF50"); }
-        else { status = "VERY STRONG"; color = Color.parseColor("#2196F3"); }
+        if (latest < 3500) { status = "WEAK"; color = Color.parseColor("#C75B4E"); }
+        else if (latest < 4000) { status = "FAIR"; color = Color.parseColor("#D98E4F"); }
+        else if (latest < 4500) { status = "STRONG"; color = Color.parseColor("#6FA97A"); }
+        else { status = "VERY STRONG"; color = Color.parseColor("#5B8DB8"); }
         tvSp500Status.setText(status); setDot(viewSp500Dot, color);
     }
 
@@ -112,10 +112,10 @@ public class StocksFragment extends Fragment {
         double latest = rows.get(rows.size() - 1).getValue();
         tvNasdaqValue.setText(formatValueWithK(latest));
         String status; int color;
-        if (latest < 10000) { status = "WEAK"; color = Color.parseColor("#F44336"); }
-        else if (latest < 12000) { status = "FAIR"; color = Color.parseColor("#FF9800"); }
-        else if (latest < 14000) { status = "STRONG"; color = Color.parseColor("#4CAF50"); }
-        else { status = "VERY STRONG"; color = Color.parseColor("#2196F3"); }
+        if (latest < 10000) { status = "WEAK"; color = Color.parseColor("#C75B4E"); }
+        else if (latest < 12000) { status = "FAIR"; color = Color.parseColor("#D98E4F"); }
+        else if (latest < 14000) { status = "STRONG"; color = Color.parseColor("#6FA97A"); }
+        else { status = "VERY STRONG"; color = Color.parseColor("#5B8DB8"); }
         tvNasdaqStatus.setText(status); setDot(viewNasdaqDot, color);
     }
 
@@ -125,10 +125,10 @@ public class StocksFragment extends Fragment {
         double latest = rows.get(rows.size() - 1).getValue();
         tvVixValue.setText(String.format(Locale.US, "%.1f", latest));
         String status; int color;
-        if (latest < 12) { status = "LOW"; color = Color.parseColor("#4CAF50"); }
-        else if (latest < 20) { status = "NORMAL"; color = Color.parseColor("#2196F3"); }
-        else if (latest < 30) { status = "ELEVATED"; color = Color.parseColor("#FF9800"); }
-        else { status = "EXTREME"; color = Color.parseColor("#F44336"); }
+        if (latest < 12) { status = "LOW"; color = Color.parseColor("#6FA97A"); }
+        else if (latest < 20) { status = "NORMAL"; color = Color.parseColor("#5B8DB8"); }
+        else if (latest < 30) { status = "ELEVATED"; color = Color.parseColor("#D98E4F"); }
+        else { status = "EXTREME"; color = Color.parseColor("#C75B4E"); }
         tvVixStatus.setText(status); setDot(viewVixDot, color);
     }
 
@@ -153,7 +153,7 @@ public class StocksFragment extends Fragment {
         GradientDrawable gd = new GradientDrawable();
         gd.setColor(Color.TRANSPARENT);
         gd.setCornerRadius(16f * density - insetPx);
-        gd.setStroke(strokePx, Color.parseColor("#C8A84B"));
+        gd.setStroke(strokePx, Color.parseColor("#C9A84C"));
         return new InsetDrawable(gd, insetPx);
     }
 
@@ -208,8 +208,8 @@ public class StocksFragment extends Fragment {
     }
 
     private void addVixBenchmarks(LineChart chart) {
-        addLine(chart, 12f, "Low Vol", "#4CAF50"); addLine(chart, 20f, "Normal", "#2196F3");
-        addLine(chart, 30f, "Elevated", "#FF9800"); addLine(chart, 50f, "Extreme", "#F44336");
+        addLine(chart, 12f, "Low Vol", "#6FA97A"); addLine(chart, 20f, "Normal", "#5B8DB8");
+        addLine(chart, 30f, "Elevated", "#D98E4F"); addLine(chart, 50f, "Extreme", "#C75B4E");
         chart.getAxisLeft().setDrawLimitLinesBehindData(true);
     }
 

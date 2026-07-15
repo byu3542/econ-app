@@ -25,12 +25,12 @@
 
     <!-- Chat error bubble -->
     <color name="error_bubble_bg">#FFF8F8</color>
-    <color name="error_bubble_stroke">#FFCDD2</color>
+    <color name="error_bubble_stroke">#EFD3D0</color>
     <color name="error_text">#B00020</color>
 
     <!-- Delta chips on KPI cards -->
-    <color name="delta_good">#66BB6A</color>
-    <color name="delta_bad">#EF5350</color>
+    <color name="delta_good">#6FA97A</color>
+    <color name="delta_bad">#C75B4E</color>
 
     <!-- Map missing names used in themes.xml -->
     <color name="cardBackground">@color/card_white</color>
@@ -71,26 +71,26 @@
     <color name="navy_surface_deep">#1F2633</color>
     <color name="slate_dim">#5A6A8A</color>
     <color name="slate_soft">#8899BB</color>
-    <!-- Status signal palette -->
-    <color name="signal_good">#4CAF50</color>
-    <color name="signal_good_soft">#A5D6A7</color>
-    <color name="signal_good_tint">#C8E6C9</color>
-    <color name="signal_watch">#FFEB3B</color>
-    <color name="signal_watch_soft">#FFF59D</color>
-    <color name="signal_watch_tint">#FFF9C4</color>
-    <color name="signal_elevated">#FF9800</color>
-    <color name="signal_elevated_soft">#FFCC80</color>
-    <color name="signal_elevated_tint">#FFE0B2</color>
-    <color name="signal_alert">#F44336</color>
-    <color name="signal_alert_soft">#EF9A9A</color>
-    <color name="signal_alert_tint">#FFCDD2</color>
-    <color name="signal_alert_deep">#B71C1C</color>
+    <!-- Status signal palette (muted to fit the navy/gold scheme) -->
+    <color name="signal_good">#6FA97A</color>
+    <color name="signal_good_soft">#A9C4AE</color>
+    <color name="signal_good_tint">#CBDCCE</color>
+    <color name="signal_watch">#DCC873</color>
+    <color name="signal_watch_soft">#E6DCA8</color>
+    <color name="signal_watch_tint">#F0EAC8</color>
+    <color name="signal_elevated">#D98E4F</color>
+    <color name="signal_elevated_soft">#E5BE93</color>
+    <color name="signal_elevated_tint">#F0DABF</color>
+    <color name="signal_alert">#C75B4E</color>
+    <color name="signal_alert_soft">#D9A099</color>
+    <color name="signal_alert_tint">#EFD3D0</color>
+    <color name="signal_alert_deep">#8E3B32</color>
     <!-- Informational accents -->
-    <color name="info_blue">#2196F3</color>
-    <color name="info_blue_soft">#BBDEFB</color>
-    <color name="info_blue_tint">#E8F0FF</color>
-    <color name="accent_purple">#9C27B0</color>
-    <color name="accent_purple_soft">#E1BEE7</color>
+    <color name="info_blue">#5B8DB8</color>
+    <color name="info_blue_soft">#B3C9DD</color>
+    <color name="info_blue_tint">#E3EAF4</color>
+    <color name="accent_purple">#8A6E9E</color>
+    <color name="accent_purple_soft">#D3C4DC</color>
     <color name="google_blue">#4285F4</color>
     <color name="google_amber">#FBBC04</color>
     <!-- Alpha overlays -->

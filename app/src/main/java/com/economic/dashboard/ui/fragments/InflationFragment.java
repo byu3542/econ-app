@@ -17,6 +17,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.economic.dashboard.databinding.FragmentInflationBinding;
 import com.economic.dashboard.R;
+import com.economic.dashboard.ui.MetricBottomSheet;
 import com.economic.dashboard.models.EconomicDataPoint;
 import com.economic.dashboard.ui.EconomicViewModel;
 import com.github.mikephil.charting.charts.LineChart;
@@ -141,11 +142,11 @@ public class InflationFragment extends Fragment {
         if (tvPcePercentile != null) tvPcePercentile.setText(coreLabel);
 
         String status; int color;
-        if (yoy < 1.5)       { status = "DEFLATION RISK"; color = Color.parseColor("#2196F3"); }
-        else if (yoy <= 2.0) { status = "AT FED TARGET";  color = Color.parseColor("#4CAF50"); }
-        else if (yoy <= 3.0) { status = "ABOVE TARGET";   color = Color.parseColor("#FFEB3B"); }
-        else if (yoy <= 5.0) { status = "ELEVATED";       color = Color.parseColor("#FF9800"); }
-        else                 { status = "CRITICAL";        color = Color.parseColor("#F44336"); }
+        if (yoy < 1.5)       { status = "DEFLATION RISK"; color = Color.parseColor("#5B8DB8"); }
+        else if (yoy <= 2.0) { status = "AT FED TARGET";  color = Color.parseColor("#6FA97A"); }
+        else if (yoy <= 3.0) { status = "ABOVE TARGET";   color = Color.parseColor("#DCC873"); }
+        else if (yoy <= 5.0) { status = "ELEVATED";       color = Color.parseColor("#D98E4F"); }
+        else                 { status = "CRITICAL";        color = Color.parseColor("#C75B4E"); }
 
         if (tvPceStatus != null) tvPceStatus.setText(status);
         setDot(viewPceDot, color);
@@ -160,11 +161,11 @@ public class InflationFragment extends Fragment {
         if (tvCpiYoYValue != null) tvCpiYoYValue.setText(String.format(Locale.US, "%.2f%%", yoy));
 
         String status; int color;
-        if (yoy < 1.5)       { status = "DEFLATION RISK"; color = Color.parseColor("#2196F3"); }
-        else if (yoy <= 2.5) { status = "HEALTHY";        color = Color.parseColor("#4CAF50"); }
-        else if (yoy <= 3.5) { status = "CAUTION";        color = Color.parseColor("#FFEB3B"); }
-        else if (yoy <= 6.0) { status = "ELEVATED";       color = Color.parseColor("#FF9800"); }
-        else                 { status = "CRITICAL";        color = Color.parseColor("#F44336"); }
+        if (yoy < 1.5)       { status = "DEFLATION RISK"; color = Color.parseColor("#5B8DB8"); }
+        else if (yoy <= 2.5) { status = "HEALTHY";        color = Color.parseColor("#6FA97A"); }
+        else if (yoy <= 3.5) { status = "CAUTION";        color = Color.parseColor("#DCC873"); }
+        else if (yoy <= 6.0) { status = "ELEVATED";       color = Color.parseColor("#D98E4F"); }
+        else                 { status = "CRITICAL";        color = Color.parseColor("#C75B4E"); }
 
         if (tvCpiYoYStatus != null) {
             tvCpiYoYStatus.setText(status);
@@ -194,11 +195,11 @@ public class InflationFragment extends Fragment {
         if (tvWageYoYValue != null) tvWageYoYValue.setText(String.format(Locale.US, "%.2f%%", spread));
 
         String status; int color;
-        if (spread < -2.0)      { status = "FALLING BEHIND FAST"; color = Color.parseColor("#F44336"); }
-        else if (spread < 0.0)  { status = "LOSING GROUND";       color = Color.parseColor("#FF9800"); }
-        else if (spread <= 1.0) { status = "BARELY AHEAD";        color = Color.parseColor("#FFEB3B"); }
-        else if (spread <= 2.5) { status = "HEALTHY";             color = Color.parseColor("#4CAF50"); }
-        else                    { status = "STRONG";               color = Color.parseColor("#2196F3"); }
+        if (spread < -2.0)      { status = "FALLING BEHIND FAST"; color = Color.parseColor("#C75B4E"); }
+        else if (spread < 0.0)  { status = "LOSING GROUND";       color = Color.parseColor("#D98E4F"); }
+        else if (spread <= 1.0) { status = "BARELY AHEAD";        color = Color.parseColor("#DCC873"); }
+        else if (spread <= 2.5) { status = "HEALTHY";             color = Color.parseColor("#6FA97A"); }
+        else                    { status = "STRONG";               color = Color.parseColor("#5B8DB8"); }
 
         if (tvWageYoYStatus != null) {
             tvWageYoYStatus.setText(status);
@@ -276,7 +277,7 @@ public class InflationFragment extends Fragment {
             }
         });
 
-        chartComparison.setData(new LineData(makeLineDataSet(cpiEntries, "Consumer Prices (CPI)", "#fbbc04"), makeLineDataSet(wageEntries, "Average Wages", "#9c27b0")));
+        chartComparison.setData(new LineData(makeLineDataSet(cpiEntries, "Consumer Prices (CPI)", "#fbbc04"), makeLineDataSet(wageEntries, "Average Wages", "#8A6E9E")));
         chartComparison.invalidate();
     }
 
@@ -289,11 +290,11 @@ public class InflationFragment extends Fragment {
 
     private void addYoYLimitLines(LineChart chart) {
         LimitLine target = new LimitLine(2.0f, "Fed Target 2%");
-        target.setLineColor(Color.parseColor("#4CAF50")); target.setLineWidth(1f);
-        target.setTextColor(Color.parseColor("#4CAF50")); target.setTextSize(9f); target.enableDashedLine(8f, 4f, 0f);
+        target.setLineColor(Color.parseColor("#6FA97A")); target.setLineWidth(1f);
+        target.setTextColor(Color.parseColor("#6FA97A")); target.setTextSize(9f); target.enableDashedLine(8f, 4f, 0f);
         LimitLine elevated = new LimitLine(3.5f, "Elevated 3.5%");
-        elevated.setLineColor(Color.parseColor("#FF9800")); elevated.setLineWidth(1f);
-        elevated.setTextColor(Color.parseColor("#FF9800")); elevated.setTextSize(9f); elevated.enableDashedLine(8f, 4f, 0f);
+        elevated.setLineColor(Color.parseColor("#D98E4F")); elevated.setLineWidth(1f);
+        elevated.setTextColor(Color.parseColor("#D98E4F")); elevated.setTextSize(9f); elevated.enableDashedLine(8f, 4f, 0f);
         chart.getAxisLeft().addLimitLine(target); chart.getAxisLeft().addLimitLine(elevated);
         chart.getAxisLeft().setDrawLimitLinesBehindData(true);
     }
@@ -306,11 +307,7 @@ public class InflationFragment extends Fragment {
 
     private void showBenchmarkDialog(int layoutRes) {
         if (getContext() == null) return;
-        View dialogView = LayoutInflater.from(getContext()).inflate(layoutRes, null);
-        AlertDialog dialog = new AlertDialog.Builder(getContext()).setView(dialogView).create();
-        View btn = dialogView.findViewById(R.id.btnClose);
-        if (btn != null) btn.setOnClickListener(v -> dialog.dismiss());
-        dialog.show();
+        MetricBottomSheet.show(getContext(), layoutRes);
     }
 
     private void styleChart(LineChart chart) {

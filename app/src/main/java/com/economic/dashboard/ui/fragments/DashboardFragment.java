@@ -21,6 +21,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.facebook.shimmer.ShimmerFrameLayout;
 
 import com.economic.dashboard.R;
+import com.economic.dashboard.ui.MetricBottomSheet;
 import com.economic.dashboard.databinding.FragmentDashboardBinding;
 import com.economic.dashboard.models.EconomicDataPoint;
 import com.economic.dashboard.ui.AiAnalystBottomSheet;
@@ -208,11 +209,7 @@ public class DashboardFragment extends Fragment {
 
     private void showBenchmarkDialog(int layoutRes) {
         if (getContext() == null) return;
-        View dialogView = LayoutInflater.from(getContext()).inflate(layoutRes, null);
-        AlertDialog dialog = new AlertDialog.Builder(getContext()).setView(dialogView).create();
-        View btn = dialogView.findViewById(R.id.btnClose);
-        if (btn != null) btn.setOnClickListener(v -> dialog.dismiss());
-        dialog.show();
+        MetricBottomSheet.show(getContext(), layoutRes);
     }
 
     // ── Skeleton loading state ──────────────────────────────────────────────
@@ -340,10 +337,10 @@ public class DashboardFragment extends Fragment {
         for (int i = Math.max(0, rows.size()-12); i < rows.size(); i++) low = Math.min(low, rows.get(i).getValue());
         double rise = current - low;
         String status; int color;
-        if (current > 7.0 || rise >= 0.5) { status = "RECESSION SIGNAL"; color = Color.parseColor("#F44336"); }
-        else if (current > 5.5)           { status = "ELEVATED";          color = Color.parseColor("#FF9800"); }
-        else if (rise >= 0.3)             { status = "WATCH CLOSELY";     color = Color.parseColor("#FFEB3B"); }
-        else                              { status = "HEALTHY";            color = Color.parseColor("#4CAF50"); }
+        if (current > 7.0 || rise >= 0.5) { status = "RECESSION SIGNAL"; color = Color.parseColor("#C75B4E"); }
+        else if (current > 5.5)           { status = "ELEVATED";          color = Color.parseColor("#D98E4F"); }
+        else if (rise >= 0.3)             { status = "WATCH CLOSELY";     color = Color.parseColor("#DCC873"); }
+        else                              { status = "HEALTHY";            color = Color.parseColor("#6FA97A"); }
         int pct = EconomicViewModel.calculatePercentile(data, "Unemployment Rate", current);
         applyTierToCard(cardUnemployment, color, status, EconomicViewModel.formatPercentile(pct));
     }
@@ -354,11 +351,11 @@ public class DashboardFragment extends Fragment {
         double latest = rows.get(rows.size()-1).getValue();
         double yoy = ((latest - rows.get(rows.size()-13).getValue()) / rows.get(rows.size()-13).getValue()) * 100.0;
         String status; int color;
-        if (yoy < 1.5)       { status = "DEFLATION RISK"; color = Color.parseColor("#2196F3"); }
-        else if (yoy <= 2.5) { status = "HEALTHY";        color = Color.parseColor("#4CAF50"); }
-        else if (yoy <= 3.5) { status = "CAUTION";        color = Color.parseColor("#FFEB3B"); }
-        else if (yoy <= 6.0) { status = "ELEVATED";       color = Color.parseColor("#FF9800"); }
-        else                 { status = "CRITICAL";        color = Color.parseColor("#F44336"); }
+        if (yoy < 1.5)       { status = "DEFLATION RISK"; color = Color.parseColor("#5B8DB8"); }
+        else if (yoy <= 2.5) { status = "HEALTHY";        color = Color.parseColor("#6FA97A"); }
+        else if (yoy <= 3.5) { status = "CAUTION";        color = Color.parseColor("#DCC873"); }
+        else if (yoy <= 6.0) { status = "ELEVATED";       color = Color.parseColor("#D98E4F"); }
+        else                 { status = "CRITICAL";        color = Color.parseColor("#C75B4E"); }
         int pct = EconomicViewModel.calculatePercentile(data, "CPI-U All Items", latest);
         applyTierToCard(cardCpiYoy, color, status, EconomicViewModel.formatPercentile(pct));
     }
@@ -369,13 +366,13 @@ public class DashboardFragment extends Fragment {
         if (longRate == null || shortRate == null) return;
         double spread = longRate.getValue() - shortRate.getValue();
         String status; int color;
-        if (spread >= 3.50)      { status = "STEEP";          color = Color.parseColor("#9C27B0"); }
-        else if (spread >= 2.00) { status = "STRONG";         color = Color.parseColor("#2196F3"); }
-        else if (spread >= 1.00) { status = "HEALTHY";        color = Color.parseColor("#4CAF50"); }
-        else if (spread >= 0.00) { status = "RECOVERING";     color = Color.parseColor("#FFEB3B"); }
-        else if (spread > -0.50) { status = "FLATTENING";     color = Color.parseColor("#FFEB3B"); }
-        else if (spread > -1.50) { status = "INVERTED";       color = Color.parseColor("#FF9800"); }
-        else                     { status = "DEEP INVERSION"; color = Color.parseColor("#F44336"); }
+        if (spread >= 3.50)      { status = "STEEP";          color = Color.parseColor("#8A6E9E"); }
+        else if (spread >= 2.00) { status = "STRONG";         color = Color.parseColor("#5B8DB8"); }
+        else if (spread >= 1.00) { status = "HEALTHY";        color = Color.parseColor("#6FA97A"); }
+        else if (spread >= 0.00) { status = "RECOVERING";     color = Color.parseColor("#DCC873"); }
+        else if (spread > -0.50) { status = "FLATTENING";     color = Color.parseColor("#DCC873"); }
+        else if (spread > -1.50) { status = "INVERTED";       color = Color.parseColor("#D98E4F"); }
+        else                     { status = "DEEP INVERSION"; color = Color.parseColor("#C75B4E"); }
         applyTierToCard(cardSpread, color, status, "");
     }
 
@@ -386,12 +383,12 @@ public class DashboardFragment extends Fragment {
         for (int i = Math.max(0, rows.size()-4); i < rows.size(); i++) { sum += rows.get(i).getValue(); count++; }
         double avg = count > 0 ? sum/count : 0;
         String status; int color;
-        if (avg < 0)         { status = "RECESSION";        color = Color.parseColor("#F44336"); }
-        else if (avg <= 1.0) { status = "STAGNATION";       color = Color.parseColor("#FF9800"); }
-        else if (avg <= 2.0) { status = "BELOW POTENTIAL";  color = Color.parseColor("#FFEB3B"); }
-        else if (avg <= 3.0) { status = "AT POTENTIAL";     color = Color.parseColor("#4CAF50"); }
-        else if (avg <= 4.0) { status = "ABOVE POTENTIAL";  color = Color.parseColor("#2196F3"); }
-        else                 { status = "OVERHEATING RISK"; color = Color.parseColor("#9C27B0"); }
+        if (avg < 0)         { status = "RECESSION";        color = Color.parseColor("#C75B4E"); }
+        else if (avg <= 1.0) { status = "STAGNATION";       color = Color.parseColor("#D98E4F"); }
+        else if (avg <= 2.0) { status = "BELOW POTENTIAL";  color = Color.parseColor("#DCC873"); }
+        else if (avg <= 3.0) { status = "AT POTENTIAL";     color = Color.parseColor("#6FA97A"); }
+        else if (avg <= 4.0) { status = "ABOVE POTENTIAL";  color = Color.parseColor("#5B8DB8"); }
+        else                 { status = "OVERHEATING RISK"; color = Color.parseColor("#8A6E9E"); }
         applyTierToCard(cardGdp, color, status, "");
     }
 
@@ -400,11 +397,11 @@ public class DashboardFragment extends Fragment {
         if (rows.isEmpty()) return;
         double current = rows.get(rows.size()-1).getValue();
         String status; int color;
-        if (current < 3.0)       { status = "HISTORIC LOW"; color = Color.parseColor("#4CAF50"); }
-        else if (current <= 4.0) { status = "FAVORABLE";    color = Color.parseColor("#2196F3"); }
-        else if (current <= 5.0) { status = "MODERATE";     color = Color.parseColor("#FFEB3B"); }
-        else if (current <= 6.5) { status = "ELEVATED";     color = Color.parseColor("#FF9800"); }
-        else                     { status = "HIGH";          color = Color.parseColor("#F44336"); }
+        if (current < 3.0)       { status = "HISTORIC LOW"; color = Color.parseColor("#6FA97A"); }
+        else if (current <= 4.0) { status = "FAVORABLE";    color = Color.parseColor("#5B8DB8"); }
+        else if (current <= 5.0) { status = "MODERATE";     color = Color.parseColor("#DCC873"); }
+        else if (current <= 6.5) { status = "ELEVATED";     color = Color.parseColor("#D98E4F"); }
+        else                     { status = "HIGH";          color = Color.parseColor("#C75B4E"); }
         applyTierToCard(cardMortgage, color, status, "");
     }
 
@@ -413,10 +410,10 @@ public class DashboardFragment extends Fragment {
         if (rows.isEmpty()) return;
         double current = rows.get(rows.size()-1).getValue();
         String status; int color;
-        if (current < 12)      { status = "LOW";      color = Color.parseColor("#4CAF50"); }
-        else if (current < 20) { status = "NORMAL";   color = Color.parseColor("#2196F3"); }
-        else if (current < 30) { status = "ELEVATED"; color = Color.parseColor("#FF9800"); }
-        else                   { status = "EXTREME";  color = Color.parseColor("#F44336"); }
+        if (current < 12)      { status = "LOW";      color = Color.parseColor("#6FA97A"); }
+        else if (current < 20) { status = "NORMAL";   color = Color.parseColor("#5B8DB8"); }
+        else if (current < 30) { status = "ELEVATED"; color = Color.parseColor("#D98E4F"); }
+        else                   { status = "EXTREME";  color = Color.parseColor("#C75B4E"); }
         applyTierToCard(cardVix, color, status, "");
     }
 

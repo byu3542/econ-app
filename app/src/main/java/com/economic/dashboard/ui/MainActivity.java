@@ -282,8 +282,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void showFedFundsHistory() {
-        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_fed_funds_history, null);
-        AlertDialog dialog = new AlertDialog.Builder(this).setView(dialogView).create();
+        View dialogView = MetricBottomSheet.show(this, R.layout.dialog_fed_funds_history);
         RecyclerView rv = dialogView.findViewById(R.id.rvFedFundsHistory);
         if (rv != null) {
             rv.setLayoutManager(new LinearLayoutManager(this));
@@ -291,9 +290,6 @@ public class MainActivity extends AppCompatActivity {
             rv.setAdapter(adapter);
             viewModel.getFedFundsHistory().observe(this, data -> { if (data != null) adapter.setData(data); });
         }
-        View btnClose = dialogView.findViewById(R.id.btnClose);
-        if (btnClose != null) btnClose.setOnClickListener(v -> dialog.dismiss());
-        dialog.show();
     }
 
     private void observeViewModel() {
@@ -313,9 +309,6 @@ public class MainActivity extends AppCompatActivity {
         int quarter = month <= 2 ? 1 : month <= 5 ? 2 : month <= 8 ? 3 : 4;
         TextView tvQuarter = binding.tvHeaderQuarter;
         if (tvQuarter != null) tvQuarter.setText("Q" + quarter + " " + year);
-        // Cache status indicator: show real cache age, not the wall clock
-        CacheManager.getStatus(this, status ->
-                runOnUiThread(() -> binding.tvHeaderSub.setText(status.toDisplayString())));
     }
 
     @Override

@@ -83,10 +83,10 @@ public class BondsFragment extends Fragment {
         double latest = rows.get(rows.size()-1).getValue();
         tvBaaValue.setText(String.format(Locale.US, "%.2f%%", latest));
         String status; int color;
-        if (latest < 1.5) { status = "TIGHT"; color = Color.parseColor("#4CAF50"); }
-        else if (latest < 2.5) { status = "NORMAL"; color = Color.parseColor("#2196F3"); }
-        else if (latest < 3.5) { status = "ELEVATED"; color = Color.parseColor("#FF9800"); }
-        else { status = "DISTRESS"; color = Color.parseColor("#F44336"); }
+        if (latest < 1.5) { status = "TIGHT"; color = Color.parseColor("#6FA97A"); }
+        else if (latest < 2.5) { status = "NORMAL"; color = Color.parseColor("#5B8DB8"); }
+        else if (latest < 3.5) { status = "ELEVATED"; color = Color.parseColor("#D98E4F"); }
+        else { status = "DISTRESS"; color = Color.parseColor("#C75B4E"); }
         tvBaaStatus.setText(status); setDot(viewBaaDot, color);
     }
 
@@ -96,10 +96,10 @@ public class BondsFragment extends Fragment {
         double latest = rows.get(rows.size()-1).getValue();
         tvHyValue.setText(String.format(Locale.US, "%.2f%%", latest));
         String status; int color;
-        if (latest < 3) { status = "TIGHT"; color = Color.parseColor("#4CAF50"); }
-        else if (latest < 5) { status = "NORMAL"; color = Color.parseColor("#2196F3"); }
-        else if (latest < 8) { status = "ELEVATED"; color = Color.parseColor("#FF9800"); }
-        else { status = "DISTRESS"; color = Color.parseColor("#F44336"); }
+        if (latest < 3) { status = "TIGHT"; color = Color.parseColor("#6FA97A"); }
+        else if (latest < 5) { status = "NORMAL"; color = Color.parseColor("#5B8DB8"); }
+        else if (latest < 8) { status = "ELEVATED"; color = Color.parseColor("#D98E4F"); }
+        else { status = "DISTRESS"; color = Color.parseColor("#C75B4E"); }
         tvHyStatus.setText(status); setDot(viewHyDot, color);
     }
 
@@ -119,7 +119,7 @@ public class BondsFragment extends Fragment {
         GradientDrawable gd = new GradientDrawable();
         gd.setColor(Color.TRANSPARENT);
         gd.setCornerRadius(16f * density - insetPx);
-        gd.setStroke(strokePx, Color.parseColor("#C8A84B"));
+        gd.setStroke(strokePx, Color.parseColor("#C9A84C"));
         return new InsetDrawable(gd, insetPx);
     }
 
@@ -169,9 +169,9 @@ public class BondsFragment extends Fragment {
     }
 
     private void addAllBenchmarks(LineChart chart) {
-        addLine(chart, 1.5f, "BAA Tight", "#4CAF50"); addLine(chart, 2.5f, "BAA Normal", "#2196F3");
-        addLine(chart, 3.5f, "BAA Elevated", "#FF9800"); addLine(chart, 3f, "HY Tight", "#4CAF50");
-        addLine(chart, 5f, "HY Normal", "#2196F3"); addLine(chart, 8f, "HY Elevated", "#FF9800");
+        addLine(chart, 1.5f, "BAA Tight", "#6FA97A"); addLine(chart, 2.5f, "BAA Normal", "#5B8DB8");
+        addLine(chart, 3.5f, "BAA Elevated", "#D98E4F"); addLine(chart, 3f, "HY Tight", "#6FA97A");
+        addLine(chart, 5f, "HY Normal", "#5B8DB8"); addLine(chart, 8f, "HY Elevated", "#D98E4F");
         chart.getAxisLeft().setDrawLimitLinesBehindData(true);
     }
 

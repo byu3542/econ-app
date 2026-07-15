@@ -18,6 +18,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.economic.dashboard.databinding.FragmentCpiBinding;
 import com.economic.dashboard.R;
+import com.economic.dashboard.ui.MetricBottomSheet;
 import com.economic.dashboard.models.EconomicDataPoint;
 import com.economic.dashboard.ui.EconomicViewModel;
 import com.economic.dashboard.utils.ChartHelper;
@@ -91,18 +92,7 @@ public class CpiFragment extends Fragment {
 
     private void showCpiBenchmarks() {
         if (getContext() == null) return;
-        View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_cpi_status, null);
-        
-        AlertDialog dialog = new AlertDialog.Builder(getContext())
-                .setView(dialogView)
-                .create();
-
-        View btnDismiss = dialogView.findViewById(R.id.btnClose);
-        if (btnDismiss != null) {
-            btnDismiss.setOnClickListener(v -> dialog.dismiss());
-        }
-
-        dialog.show();
+        MetricBottomSheet.show(getContext(), R.layout.dialog_cpi_status);
     }
 
     private void calculateYoYInflation(List<EconomicDataPoint> data) {
@@ -122,19 +112,19 @@ public class CpiFragment extends Fragment {
         
         if (yoyChange < 1.5) {
             status = "DEFLATION RISK";
-            color = Color.parseColor("#2196F3"); // Blue
+            color = Color.parseColor("#5B8DB8"); // Blue
         } else if (yoyChange <= 2.5) {
             status = "HEALTHY";
-            color = Color.parseColor("#4CAF50"); // Green
+            color = Color.parseColor("#6FA97A"); // Green
         } else if (yoyChange <= 3.5) {
             status = "CAUTION";
-            color = Color.parseColor("#FFEB3B"); // Yellow
+            color = Color.parseColor("#DCC873"); // Yellow
         } else if (yoyChange <= 6.0) {
             status = "ELEVATED";
-            color = Color.parseColor("#FF9800"); // Orange
+            color = Color.parseColor("#D98E4F"); // Orange
         } else {
             status = "CRITICAL";
-            color = Color.parseColor("#F44336"); // Red
+            color = Color.parseColor("#C75B4E"); // Red
         }
 
         // Revert badge background to Header Navy

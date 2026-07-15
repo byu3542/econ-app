@@ -17,6 +17,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.economic.dashboard.databinding.FragmentGdpBinding;
 import com.economic.dashboard.R;
+import com.economic.dashboard.ui.MetricBottomSheet;
 import com.economic.dashboard.models.EconomicDataPoint;
 import com.economic.dashboard.ui.EconomicViewModel;
 import com.github.mikephil.charting.charts.LineChart;
@@ -90,11 +91,7 @@ public class GdpFragment extends Fragment {
 
     private void showGdpBenchmarks() {
         if (getContext() == null) return;
-        View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_gdp_status, null);
-        AlertDialog dialog = new AlertDialog.Builder(getContext()).setView(dialogView).create();
-        View btnDismiss = dialogView.findViewById(R.id.btnClose);
-        if (btnDismiss != null) btnDismiss.setOnClickListener(v -> dialog.dismiss());
-        dialog.show();
+        MetricBottomSheet.show(getContext(), R.layout.dialog_gdp_status);
     }
 
     private void updateGdpIndicator(List<EconomicDataPoint> data) {
@@ -110,12 +107,12 @@ public class GdpFragment extends Fragment {
         tvGdpDesc.setText("4-Quarter Rolling Average");
 
         String status; int dotColor;
-        if (rollingAvg < 0)         { status = "RECESSION";        dotColor = Color.parseColor("#F44336"); }
-        else if (rollingAvg <= 1.0) { status = "STAGNATION";       dotColor = Color.parseColor("#FF9800"); }
-        else if (rollingAvg <= 2.0) { status = "BELOW POTENTIAL";  dotColor = Color.parseColor("#FFEB3B"); }
-        else if (rollingAvg <= 3.0) { status = "AT POTENTIAL";     dotColor = Color.parseColor("#4CAF50"); }
-        else if (rollingAvg <= 4.0) { status = "ABOVE POTENTIAL";  dotColor = Color.parseColor("#2196F3"); }
-        else                        { status = "OVERHEATING RISK"; dotColor = Color.parseColor("#9C27B0"); }
+        if (rollingAvg < 0)         { status = "RECESSION";        dotColor = Color.parseColor("#C75B4E"); }
+        else if (rollingAvg <= 1.0) { status = "STAGNATION";       dotColor = Color.parseColor("#D98E4F"); }
+        else if (rollingAvg <= 2.0) { status = "BELOW POTENTIAL";  dotColor = Color.parseColor("#DCC873"); }
+        else if (rollingAvg <= 3.0) { status = "AT POTENTIAL";     dotColor = Color.parseColor("#6FA97A"); }
+        else if (rollingAvg <= 4.0) { status = "ABOVE POTENTIAL";  dotColor = Color.parseColor("#5B8DB8"); }
+        else                        { status = "OVERHEATING RISK"; dotColor = Color.parseColor("#8A6E9E"); }
 
         tvGdpStatusText.setText(status);
         tvGdpStatusText.setTextColor(Color.parseColor("#BBBBBB"));
@@ -130,9 +127,9 @@ public class GdpFragment extends Fragment {
         double latestValue = gdpRows.get(gdpRows.size()-1).getValue();
 
         String status; int dotColor;
-        if (latestValue < 0) { status = "CONTRACTION"; dotColor = Color.parseColor("#F44336"); }
-        else if (latestValue < 2.0) { status = "SLOWING"; dotColor = Color.parseColor("#FFEB3B"); }
-        else { status = "EXPANSION"; dotColor = Color.parseColor("#4CAF50"); }
+        if (latestValue < 0) { status = "CONTRACTION"; dotColor = Color.parseColor("#C75B4E"); }
+        else if (latestValue < 2.0) { status = "SLOWING"; dotColor = Color.parseColor("#DCC873"); }
+        else { status = "EXPANSION"; dotColor = Color.parseColor("#6FA97A"); }
 
         if (tvGdpLatestQuarterStatus != null) {
             tvGdpLatestQuarterStatus.setText(status);

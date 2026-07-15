@@ -121,7 +121,7 @@ public class EmploymentFragment extends Fragment {
         GradientDrawable gd = new GradientDrawable();
         gd.setColor(Color.TRANSPARENT);
         gd.setCornerRadius(16f * density - insetPx);
-        gd.setStroke(strokePx, Color.parseColor("#C8A84B"));
+        gd.setStroke(strokePx, Color.parseColor("#C9A84C"));
         return new InsetDrawable(gd, insetPx);
     }
 
@@ -148,13 +148,13 @@ public class EmploymentFragment extends Fragment {
         tvUnempLowInfo.setText(String.format(Locale.US, "12-month low: %.1f%% (Rise: +%.1f%%)", low, riseFromLow));
 
         String status; int dotColor;
-        if (currentRate > 7.0) { status = "RECESSION TERRITORY"; dotColor = Color.parseColor("#F44336"); }
-        else if (currentRate > 5.5) { status = "ELEVATED"; dotColor = Color.parseColor("#FF9800"); }
-        else if (riseFromLow >= 0.5) { status = "RECESSION SIGNAL (SAHM RULE)"; dotColor = Color.parseColor("#F44336"); }
+        if (currentRate > 7.0) { status = "RECESSION TERRITORY"; dotColor = Color.parseColor("#C75B4E"); }
+        else if (currentRate > 5.5) { status = "ELEVATED"; dotColor = Color.parseColor("#D98E4F"); }
+        else if (riseFromLow >= 0.5) { status = "RECESSION SIGNAL (SAHM RULE)"; dotColor = Color.parseColor("#C75B4E"); }
         else if (currentRate >= 3.5 && currentRate <= 4.5) {
-            if (riseFromLow >= 0.3) { status = "WATCH CLOSELY"; dotColor = Color.parseColor("#FFEB3B"); }
-            else { status = "HEALTHY"; dotColor = Color.parseColor("#4CAF50"); }
-        } else { status = "STABLE"; dotColor = Color.parseColor("#4CAF50"); }
+            if (riseFromLow >= 0.3) { status = "WATCH CLOSELY"; dotColor = Color.parseColor("#DCC873"); }
+            else { status = "HEALTHY"; dotColor = Color.parseColor("#6FA97A"); }
+        } else { status = "STABLE"; dotColor = Color.parseColor("#6FA97A"); }
 
         tvUnempStatus.setText(status);
         tvUnempStatus.setTextColor(Color.parseColor("#BBBBBB"));
@@ -168,9 +168,9 @@ public class EmploymentFragment extends Fragment {
         double currentRate = rows.get(rows.size()-1).getValue();
         tvLaborValue.setText(String.format(Locale.US, "%.1f%%", currentRate));
         String status; int dotColor;
-        if (currentRate >= 63.3) { status = "HEALTHY"; dotColor = Color.parseColor("#4CAF50"); }
-        else if (currentRate >= 62.0) { status = "DECLINING"; dotColor = Color.parseColor("#FF9800"); }
-        else { status = "CRITICAL"; dotColor = Color.parseColor("#F44336"); }
+        if (currentRate >= 63.3) { status = "HEALTHY"; dotColor = Color.parseColor("#6FA97A"); }
+        else if (currentRate >= 62.0) { status = "DECLINING"; dotColor = Color.parseColor("#D98E4F"); }
+        else { status = "CRITICAL"; dotColor = Color.parseColor("#C75B4E"); }
         tvLaborStatus.setText(status);
         tvLaborStatus.setTextColor(Color.parseColor("#BBBBBB"));
         GradientDrawable dot = new GradientDrawable(); dot.setShape(GradientDrawable.OVAL); dot.setColor(dotColor);
@@ -178,12 +178,12 @@ public class EmploymentFragment extends Fragment {
     }
 
     private void addEmploymentLimitLines(LineChart chart) {
-        addLine(chart, 4.5f, "Healthy ≤4.5%", "#4CAF50");
-        addLine(chart, 5.5f, "Elevated 5.5%", "#FF9800");
-        addLine(chart, 7.0f, "Recession 7.0%", "#F44336");
-        addLine(chart, 63.3f, "Pre-COVID 63.3%", "#4CAF50");
-        addLine(chart, 62.0f, "Declining 62.0%", "#FF9800");
-        addLine(chart, 61.0f, "Critical 61.0%", "#F44336");
+        addLine(chart, 4.5f, "Healthy ≤4.5%", "#6FA97A");
+        addLine(chart, 5.5f, "Elevated 5.5%", "#D98E4F");
+        addLine(chart, 7.0f, "Recession 7.0%", "#C75B4E");
+        addLine(chart, 63.3f, "Pre-COVID 63.3%", "#6FA97A");
+        addLine(chart, 62.0f, "Declining 62.0%", "#D98E4F");
+        addLine(chart, 61.0f, "Critical 61.0%", "#C75B4E");
         chart.getAxisLeft().setDrawLimitLinesBehindData(true);
     }
 

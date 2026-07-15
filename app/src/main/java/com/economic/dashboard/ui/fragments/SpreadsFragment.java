@@ -98,18 +98,18 @@ public class SpreadsFragment extends Fragment {
             valTv.setText(String.format(Locale.US, "%.2f%%", spread));
             int dotColor; String status;
             if (is3M) {
-                if (spread >= 3.50) { dotColor = Color.parseColor("#9C27B0"); status = "STEEP"; }
-                else if (spread >= 2.00) { dotColor = Color.parseColor("#2196F3"); status = "STRONG"; }
-                else if (spread >= 1.00) { dotColor = Color.parseColor("#4CAF50"); status = "HEALTHY"; }
-                else if (spread >= 0.00) { dotColor = Color.parseColor("#FFEB3B"); status = "RECOVERING"; }
-                else if (spread > -0.50) { dotColor = Color.parseColor("#FFEB3B"); status = "FLATTENING"; }
-                else if (spread > -1.50) { dotColor = Color.parseColor("#FF9800"); status = "INVERTED"; }
-                else { dotColor = Color.parseColor("#F44336"); status = "DEEP INVERSION"; }
+                if (spread >= 3.50) { dotColor = Color.parseColor("#8A6E9E"); status = "STEEP"; }
+                else if (spread >= 2.00) { dotColor = Color.parseColor("#5B8DB8"); status = "STRONG"; }
+                else if (spread >= 1.00) { dotColor = Color.parseColor("#6FA97A"); status = "HEALTHY"; }
+                else if (spread >= 0.00) { dotColor = Color.parseColor("#DCC873"); status = "RECOVERING"; }
+                else if (spread > -0.50) { dotColor = Color.parseColor("#DCC873"); status = "FLATTENING"; }
+                else if (spread > -1.50) { dotColor = Color.parseColor("#D98E4F"); status = "INVERTED"; }
+                else { dotColor = Color.parseColor("#C75B4E"); status = "DEEP INVERSION"; }
             } else {
-                if (spread >= 0.50) { dotColor = Color.parseColor("#4CAF50"); status = "HEALTHY"; }
-                else if (spread >= 0.00) { dotColor = Color.parseColor("#FFEB3B"); status = "CAUTION"; }
-                else if (spread > -0.50) { dotColor = Color.parseColor("#FF9800"); status = "WARNING"; }
-                else { dotColor = Color.parseColor("#F44336"); status = "DANGER"; }
+                if (spread >= 0.50) { dotColor = Color.parseColor("#6FA97A"); status = "HEALTHY"; }
+                else if (spread >= 0.00) { dotColor = Color.parseColor("#DCC873"); status = "CAUTION"; }
+                else if (spread > -0.50) { dotColor = Color.parseColor("#D98E4F"); status = "WARNING"; }
+                else { dotColor = Color.parseColor("#C75B4E"); status = "DANGER"; }
             }
             GradientDrawable dot = new GradientDrawable(); dot.setShape(GradientDrawable.OVAL); dot.setColor(dotColor);
             dotView.setBackground(dot); statusTv.setText(status);
@@ -132,7 +132,7 @@ public class SpreadsFragment extends Fragment {
         GradientDrawable gd = new GradientDrawable();
         gd.setColor(Color.TRANSPARENT);
         gd.setCornerRadius(16f * density - insetPx);
-        gd.setStroke(strokePx, Color.parseColor("#C8A84B"));
+        gd.setStroke(strokePx, Color.parseColor("#C9A84C"));
         return new InsetDrawable(gd, insetPx);
     }
 
@@ -140,7 +140,7 @@ public class SpreadsFragment extends Fragment {
         if (swappableChart == null) return;
         List<EconomicDataPoint> data; String label, lineColor;
         if ("3m".equals(activeCard)) { data = current3MData; label = "10Y-3M Spread (%)"; lineColor = "#E91E63"; }
-        else { data = currentYoyData; label = "10Y-2Y Spread (%)"; lineColor = "#FF9800"; }
+        else { data = currentYoyData; label = "10Y-2Y Spread (%)"; lineColor = "#D98E4F"; }
         if (data == null || data.isEmpty()) return;
         List<Entry> entries = new ArrayList<>();
         final List<String> dateLabels = new ArrayList<>();
@@ -178,14 +178,14 @@ public class SpreadsFragment extends Fragment {
 
     private void addSpreadLimitLines(LineChart chart) {
         LimitLine zero = new LimitLine(0f, "Inversion");
-        zero.setLineColor(Color.parseColor("#F44336")); zero.setLineWidth(1.2f);
-        zero.setTextColor(Color.parseColor("#F44336")); zero.setTextSize(9f); zero.enableDashedLine(8f, 4f, 0f);
+        zero.setLineColor(Color.parseColor("#C75B4E")); zero.setLineWidth(1.2f);
+        zero.setTextColor(Color.parseColor("#C75B4E")); zero.setTextSize(9f); zero.enableDashedLine(8f, 4f, 0f);
         LimitLine warn = new LimitLine(-0.5f, "Warning");
-        warn.setLineColor(Color.parseColor("#FF9800")); warn.setLineWidth(1f);
-        warn.setTextColor(Color.parseColor("#FF9800")); warn.setTextSize(9f); warn.enableDashedLine(8f, 4f, 0f);
+        warn.setLineColor(Color.parseColor("#D98E4F")); warn.setLineWidth(1f);
+        warn.setTextColor(Color.parseColor("#D98E4F")); warn.setTextSize(9f); warn.enableDashedLine(8f, 4f, 0f);
         LimitLine deep = new LimitLine(-1.5f, "Deep");
-        deep.setLineColor(Color.parseColor("#9C27B0")); deep.setLineWidth(1f);
-        deep.setTextColor(Color.parseColor("#9C27B0")); deep.setTextSize(9f); deep.enableDashedLine(8f, 4f, 0f);
+        deep.setLineColor(Color.parseColor("#8A6E9E")); deep.setLineWidth(1f);
+        deep.setTextColor(Color.parseColor("#8A6E9E")); deep.setTextSize(9f); deep.enableDashedLine(8f, 4f, 0f);
         chart.getAxisLeft().addLimitLine(zero); chart.getAxisLeft().addLimitLine(warn); chart.getAxisLeft().addLimitLine(deep);
         chart.getAxisLeft().setDrawLimitLinesBehindData(true);
     }
