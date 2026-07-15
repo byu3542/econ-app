@@ -90,4 +90,8 @@ public class TreasuryYield {
                 ", source='" + source + '\'' +
                 ", series='" + series + '\'' +
                 ", date='" + date + '\'' +
-                ", value=" + 
+                ", value=" + value +
+                ", cachedAtMillis=" + cachedAtMillis +
+                '}';
+    }
+}

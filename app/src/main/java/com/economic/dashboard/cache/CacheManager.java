@@ -224,4 +224,11 @@ public final class CacheManager {
             Log.d(TAG, "Purged " + deleted + " rows older than " + cutoff
                     + ". Remaining: " + dao.getCount() + " rows across "
                     + dao.getSeriesCount() + " series ("
-       
+                    + dao.getOldestDate() + " → " + dao.getNewestDate() + ")");
+            return deleted;
+        } catch (Exception e) {
+            Log.e(TAG, "purgeOldData failed", e);
+            return -1;
+        }
+    }
+}

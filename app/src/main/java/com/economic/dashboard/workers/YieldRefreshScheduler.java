@@ -138,4 +138,7 @@ public class YieldRefreshScheduler {
         ZonedDateTime targetToday = now.toLocalDate()
                 .atTime(targetTime)
                 .atZone(mstZone);
-        ZonedDateTime nex
+        ZonedDateTime nextRefresh = targetToday.isAfter(now) ? targetToday : targetToday.plusDays(1);
+        return nextRefresh.toInstant().toEpochMilli();
+    }
+}

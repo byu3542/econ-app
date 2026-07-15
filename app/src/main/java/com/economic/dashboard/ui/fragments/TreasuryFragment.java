@@ -75,3 +75,8 @@ public class TreasuryFragment extends Fragment {
                 default: return new YieldsFragment();
             }
         }
+
+        @Override
+        public int getItemCount() { return 2; }
+    }
+}

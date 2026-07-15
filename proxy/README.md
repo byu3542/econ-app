@@ -47,3 +47,4 @@ is left empty, the AI Analyst shows a setup message instead of calling anything.
   worker route (dashboard → Security → WAF → Rate limiting rules).
 - After confirming the proxy works, ROTATE your Anthropic key at
   https://console.anthropic.com (the old one shipped in previous APK builds and
+  in git history, so treat it as compromised).

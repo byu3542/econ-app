@@ -74,4 +74,7 @@ public class CacheCleanupWorker extends Worker {
 
             Log.d(TAG, "Weekly cache cleanup scheduled");
         } catch (Exception e) {
-     
+            Log.e(TAG, "Failed to schedule cache cleanup", e);
+        }
+    }
+}

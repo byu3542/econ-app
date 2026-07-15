@@ -112,4 +112,4 @@ FRED and Anthropic already read from `local.properties` via `BuildConfig` — re
 - One commit per task; clear commit messages (e.g. `security: move BEA/BLS/News keys to local.properties`).
 - After all tasks, produce a short summary: what changed, which files, anything left as TODO (especially the Task 5 proxy deployment), and any manual testing the user must do.
 - Do not delete the existing real key values without first preserving them in `local.properties`.
-- If a task 
+- If a task turns out to be riskier or larger than expected, stop and report rather than making sweeping speculative changes.

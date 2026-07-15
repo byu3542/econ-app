@@ -523,4 +523,18 @@ public class EconomicRepository {
 
         results.sort((a, b) -> b.getDate().compareTo(a.getDate()));
         if (results.size() > ApiConfig.TREASURY_DAYS_BACK * 8) {
- 
+            results = results.subList(0, ApiConfig.TREASURY_DAYS_BACK * 8);
+        }
+        return results;
+    }
+
+    private String formatTreasuryDate(String rawDate) {
+        if (rawDate == null) return "";
+        if (rawDate.contains("T")) return rawDate.substring(0, 10);
+        return rawDate.length() >= 10 ? rawDate.substring(0, 10) : rawDate;
+    }
+
+    private boolean isValidValue(String value) {
+        return value != null && !value.isEmpty() && !value.equals(".") && !value.equalsIgnoreCase("ND");
+    }
+}

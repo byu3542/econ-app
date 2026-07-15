@@ -137,6 +137,25 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /** If the user denies the notification prompt, turn the toggles back off. */
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode != 1001) return;
+        boolean granted = grantResults.length > 0
+                && grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED;
+        if (!granted) {
+            SettingsManager.setBool(this, SettingsManager.KEY_NOTIFY_BIG_MOVES, false);
+            SettingsManager.setBool(this, SettingsManager.KEY_NOTIFY_RELEASES, false);
+            android.widget.Toast.makeText(this, R.string.notifications_denied,
+                    android.widget.Toast.LENGTH_LONG).show();
+            androidx.fragment.app.Fragment f =
+                    getSupportFragmentManager().findFragmentByTag(SettingsBottomSheet.TAG);
+            if (f instanceof SettingsBottomSheet)
+                ((SettingsBottomSheet) f).onNotificationPermissionDenied();
+        }
+    }
+
     // ── Chat persistence ─────────────────────────────────────────────────────
 
     /** Restores the saved conversation; falls back to the welcome message. */

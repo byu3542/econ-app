@@ -35,4 +35,5 @@ public interface NewsArticleDao {
     LiveData<NewsArticle> getArticleById(int articleId);
 
     @Query("SELECT * FROM news_articles ORDER BY publishedAt DESC LIMIT :limit")
-    List<NewsArticle>
+    List<NewsArticle> getRecentArticlesSync(int limit);
+}

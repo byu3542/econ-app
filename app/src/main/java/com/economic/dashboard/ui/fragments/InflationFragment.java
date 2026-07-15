@@ -323,4 +323,14 @@ public class InflationFragment extends Fragment {
         x.setPosition(XAxis.XAxisPosition.BOTTOM); x.setTextColor(Color.parseColor("#5A6A8A")); x.setTextSize(9f);
         x.setDrawGridLines(true); x.setGridColor(grid); x.setLabelRotationAngle(-45f);
         x.setGranularity(1f); x.setLabelCount(6, false); x.setAvoidFirstLastClipping(true);
- 
+        YAxis y = chart.getAxisLeft();
+        y.setTextColor(Color.parseColor("#8899BB")); y.setTextSize(10f); y.setDrawGridLines(true); y.setGridColor(grid);
+        chart.getAxisRight().setEnabled(false);
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
+    }
+}

@@ -313,4 +313,13 @@ public class EconomicViewModel extends ViewModel {
         List<EconomicDataPoint> rows = filterBySeries(data, series);
         if (rows.size() < 5) return -1;
         int count = 0;
-        for (EconomicDataPoint p : rows) if (p.getValue() <= currentValu
+        for (EconomicDataPoint p : rows) if (p.getValue() <= currentValue) count++;
+        return (int) Math.round((count * 100.0) / rows.size());
+    }
+
+    public static String formatPercentile(int pct) {
+        if (pct < 0) return "";
+        String s = (pct==11||pct==12||pct==13)?"th":(pct%10==1)?"st":(pct%10==2)?"nd":(pct%10==3)?"rd":"th";
+        return pct+s+" pct.";
+    }
+}

@@ -122,3 +122,7 @@ public class TreasuryYieldRepository {
 
     public long getCacheAgeMinutes() {
         long lastCacheTime = dao.getLastCacheTimeSync();
+        if (lastCacheTime == 0) return -1;
+        return (System.currentTimeMillis() - lastCacheTime) / 1000 / 60;
+    }
+}

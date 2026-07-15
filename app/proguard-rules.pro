@@ -39,4 +39,4 @@
 -keep class com.economic.dashboard.workers.** { *; }
 
 # ── MPAndroidChart ───────────────────────────────────────────────────────────
--
+-dontwarn com.github.mikephil.charting.**

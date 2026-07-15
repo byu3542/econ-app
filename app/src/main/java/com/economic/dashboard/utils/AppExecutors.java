@@ -44,4 +44,5 @@ public class AppExecutors {
     public ExecutorService diskIO() { return diskIO; }
 
     /** Post work back to the Android main thread. */
-    public void mai
+    public void mainThread(Runnable r) { mainThread.post(r); }
+}
