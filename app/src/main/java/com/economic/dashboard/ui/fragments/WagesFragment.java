@@ -57,9 +57,15 @@ public class WagesFragment extends Fragment {
         viewModel = new ViewModelProvider(requireActivity()).get(EconomicViewModel.class);
 
         hourlyWageChart = binding.hourlyWageChart;
+        com.economic.dashboard.analyst.AskAnalyst.attachChartExplain(
+                hourlyWageChart, requireActivity(), "average hourly earnings over time");
         comparisonChart = binding.comparisonChart;
+        com.economic.dashboard.analyst.AskAnalyst.attachChartExplain(
+                comparisonChart, requireActivity(), "wage growth compared with inflation");
         
         cardWageYoY     = binding.cardWageYoY;
+        com.economic.dashboard.analyst.AskAnalyst.wireCardLongPress(
+                cardWageYoY, requireActivity(), "real wage growth");
         tvWageYoYValue  = binding.tvWageYoYValue;
         tvWageYoYStatus = binding.tvWageYoYStatus;
         viewWageIndicatorDot = binding.viewWageIndicatorDot;

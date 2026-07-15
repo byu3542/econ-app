@@ -59,6 +59,8 @@ public class SpreadsFragment extends Fragment {
         viewModel = new ViewModelProvider(requireActivity()).get(EconomicViewModel.class);
 
         swappableChart = binding.swappableChart;
+        com.economic.dashboard.analyst.AskAnalyst.attachChartExplain(
+                swappableChart, requireActivity(), "Treasury yield spreads (10Y-2Y and 10Y-3M) over time");
         tvChartTitle = binding.tvChartTitle;
         styleChart(swappableChart);
         addSpreadLimitLines(swappableChart);
@@ -67,10 +69,14 @@ public class SpreadsFragment extends Fragment {
         });
 
         cardSpreadYoY = binding.cardSpreadYoY;
+        com.economic.dashboard.analyst.AskAnalyst.wireCardLongPress(
+                cardSpreadYoY, requireActivity(), "the 10Y-2Y Treasury spread");
         tvSpreadValue = binding.tvSpreadValue;
         tvIndicatorText = binding.tvIndicatorText;
         viewSpreadIndicatorDot = binding.viewSpreadIndicatorDot;
         cardSpread3M = binding.cardSpread3M;
+        com.economic.dashboard.analyst.AskAnalyst.wireCardLongPress(
+                cardSpread3M, requireActivity(), "the 10Y-3M Treasury spread");
         tvSpread3MValue = binding.tvSpread3MValue;
         tvIndicator3MText = binding.tvIndicator3MText;
         viewSpread3MIndicatorDot = binding.viewSpread3MIndicatorDot;

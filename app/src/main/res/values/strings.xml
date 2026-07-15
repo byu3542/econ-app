@@ -65,4 +65,16 @@
     <string name="notify_releases_sub">Morning reminder on jobs-report Fridays</string>
     <string name="notifications_denied">Notifications are blocked, so alerts were turned off. Enable them in system settings.</string>
     <string name="about_data_note">Data: FRED, BLS, BEA, U.S. Treasury. News via public RSS feeds. AI analysis powered by Claude.</string>
+
+    <!-- Settings sheet v2 -->
+    <string name="chart_apply_note">Changes apply the next time a chart screen opens</string>
+    <string name="dec_one">1.2</string>
+    <string name="dec_two">1.23</string>
+    <string name="dec_three">1.234</string>
+    <string name="notif_blocked_tap">Notifications are blocked \u2014 tap to enable them in system settings</string>
+    <string name="news_updated">News feed updated</string>
+    <string name="checking_freshness">Checking data freshness\u2026</string>
+    <!-- Daily AI morning brief -->
+    <string name="daily_brief">Daily AI morning brief</string>
+    <string name="daily_brief_sub">7:30 AM notification summarizing what changed and what to watch (uses one AI request per day)</string>
 </resources>

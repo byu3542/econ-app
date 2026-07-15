@@ -58,12 +58,18 @@ public class GdpFragment extends Fragment {
         viewModel = new ViewModelProvider(requireActivity()).get(EconomicViewModel.class);
 
         gdpChart = binding.gdpChart;
+        com.economic.dashboard.analyst.AskAnalyst.attachChartExplain(
+                gdpChart, requireActivity(), "quarterly U.S. GDP growth");
         tvGdpLatest = binding.tvGdpLatest;
         tvGdpDesc = binding.tvGdpDesc;
         tvGdpStatusText = binding.tvGdpStatusText;
         viewGdpIndicatorDot = binding.viewGdpIndicatorDot;
         cardGdpStatus = binding.cardGdpStatus;
+        com.economic.dashboard.analyst.AskAnalyst.wireCardLongPress(
+                cardGdpStatus, requireActivity(), "GDP growth");
         cardGdpLatestQuarter = binding.cardGdpLatestQuarter;
+        com.economic.dashboard.analyst.AskAnalyst.wireCardLongPress(
+                cardGdpLatestQuarter, requireActivity(), "the latest quarter GDP reading");
         tvGdpLatestQuarterValue = binding.tvGdpLatestQuarterValue;
         tvGdpLatestQuarterLabel = binding.tvGdpLatestQuarterLabel;
         tvGdpLatestQuarterStatus = binding.tvGdpLatestQuarterStatus;

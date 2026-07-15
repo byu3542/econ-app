@@ -143,6 +143,55 @@ public class NewsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         headline.setAlpha(isRead(ctx, url) ? 0.5f : 1f);
     }
 
+    // ─── Long-press → AI Analyst ────────────────────────────────────────────────
+
+    /** Long-press menu: analyze the article, or ask one of the smart prompts. */
+    void showAnalyzeMenu(View anchor, NewsItem item) {
+        Context ctx = anchor.getContext();
+        androidx.fragment.app.FragmentActivity activity = findActivity(ctx);
+        if (activity == null || item.title == null) return;
+
+        android.widget.PopupMenu menu = new android.widget.PopupMenu(ctx, anchor);
+        menu.getMenu().add(0, 1, 0, "✨ Analyze with AI Analyst");
+        java.util.List<String> prompts =
+                com.economic.dashboard.analyst.SmartPromptGenerator.generatePromptsForHeadline(item.title);
+        int shown = Math.min(2, prompts.size());
+        for (int i = 0; i < shown; i++)
+            menu.getMenu().add(0, 2 + i, 1 + i, prompts.get(i));
+
+        final java.util.List<String> finalPrompts = prompts;
+        menu.setOnMenuItemClickListener(mi -> {
+            String query;
+            if (mi.getItemId() == 1) {
+                StringBuilder sb = new StringBuilder("Analyze this news story in the context of the current economic data:\n\n");
+                sb.append("\"").append(item.title).append("\"");
+                if (item.source != null) sb.append(" — ").append(item.source);
+                if (item.summary != null && !item.summary.isEmpty()) {
+                    String sum = item.summary.length() > 300 ? item.summary.substring(0, 300) + "…" : item.summary;
+                    sb.append("\n\n").append(sum);
+                }
+                sb.append("\n\nWhat does this mean for the economic outlook?");
+                query = sb.toString();
+            } else {
+                int idx = mi.getItemId() - 2;
+                if (idx < 0 || idx >= finalPrompts.size()) return false;
+                query = "Regarding the headline \"" + item.title + "\": " + finalPrompts.get(idx);
+            }
+            com.economic.dashboard.analyst.AskAnalyst.openWithQuery(activity, query);
+            return true;
+        });
+        menu.show();
+    }
+
+    private static androidx.fragment.app.FragmentActivity findActivity(Context ctx) {
+        while (ctx instanceof android.content.ContextWrapper) {
+            if (ctx instanceof androidx.fragment.app.FragmentActivity)
+                return (androidx.fragment.app.FragmentActivity) ctx;
+            ctx = ((android.content.ContextWrapper) ctx).getBaseContext();
+        }
+        return null;
+    }
+
     // ─── Header ViewHolder ──────────────────────────────────────────────────────
 
     static class HeaderViewHolder extends RecyclerView.ViewHolder {
@@ -174,6 +223,7 @@ public class NewsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             applyReadDim(tvHeadline, itemView.getContext(), item.url);
 
             itemView.setOnClickListener(v -> adapter.openAndMarkRead(this, item));
+            itemView.setOnLongClickListener(v -> { adapter.showAnalyzeMenu(v, item); return true; });
         }
     }
 
@@ -205,6 +255,7 @@ public class NewsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             ThumbLoader.load(ivThumb, item.imageUrl);
 
             itemView.setOnClickListener(v -> adapter.openAndMarkRead(this, item));
+            itemView.setOnLongClickListener(v -> { adapter.showAnalyzeMenu(v, item); return true; });
         }
     }
 

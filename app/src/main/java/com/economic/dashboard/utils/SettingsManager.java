@@ -35,6 +35,9 @@ public class SettingsManager {
     public static final String KEY_NOTIFY_BIG_MOVES = "notify_big_moves";
     public static final String KEY_NOTIFY_RELEASES  = "notify_releases";
     // Internal bookkeeping (not shown in UI)
+    public static final String KEY_DAILY_BRIEF      = "daily_ai_brief";
+    public static final String KEY_LAST_BRIEF_DATE  = "last_brief_date";
+
     public static final String KEY_LAST_MOVE_NOTIFIED    = "last_move_notified";
     public static final String KEY_LAST_RELEASE_NOTIFIED = "last_release_notified";
 

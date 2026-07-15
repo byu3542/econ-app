@@ -51,6 +51,50 @@
             android:textIsSelectable="false"
             android:lineSpacingExtra="4dp" />
 
+        <!-- Attached image (vision messages) -->
+        <ImageView
+            android:id="@+id/ivChatImage"
+            android:layout_width="180dp"
+            android:layout_height="120dp"
+            android:layout_marginTop="@dimen/space_sm"
+            android:scaleType="centerCrop"
+            android:contentDescription="Attached image"
+            android:visibility="gone" />
+
+        <!-- Inline sparkline rendered from a [CHART:...] tag -->
+        <com.economic.dashboard.views.SparklineView
+            android:id="@+id/sparklineChart"
+            android:layout_width="match_parent"
+            android:layout_height="72dp"
+            android:layout_marginTop="@dimen/space_sm"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/tvChartCaption"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_xs"
+            android:textColor="@color/text_muted"
+            android:textSize="@dimen/text_caption"
+            android:visibility="gone" />
+
+        <!-- Explicit retry affordance for error bubbles -->
+        <TextView
+            android:id="@+id/tvRetry"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_sm"
+            android:text="↻  Retry"
+            android:textSize="@dimen/text_secondary"
+            android:textStyle="bold"
+            android:textColor="@color/error_text"
+            android:background="@drawable/bg_retry_pill"
+            android:paddingHorizontal="@dimen/space_md"
+            android:paddingVertical="@dimen/space_xs"
+            android:clickable="true"
+            android:focusable="true"
+            android:visibility="gone" />
+
         <!-- Typing Indicator Container -->
         <LinearLayout
             android:id="@+id/llTypingIndicator"

@@ -58,10 +58,16 @@ public class BondsFragment extends Fragment {
         viewModel = new ViewModelProvider(requireActivity()).get(EconomicViewModel.class);
 
         cardBaa = binding.cardBaa; cardHy = binding.cardHy;
+        com.economic.dashboard.analyst.AskAnalyst.wireCardLongPress(
+                cardBaa, requireActivity(), "the BAA corporate bond spread");
+        com.economic.dashboard.analyst.AskAnalyst.wireCardLongPress(
+                cardHy, requireActivity(), "the high-yield bond spread");
         tvBaaValue = binding.tvBaaValue; tvBaaStatus = binding.tvBaaStatus;
         tvHyValue = binding.tvHyValue; tvHyStatus = binding.tvHyStatus;
         viewBaaDot = binding.viewBaaDot; viewHyDot = binding.viewHyDot;
         swappableChart = binding.swappableChart; tvChartTitle = binding.tvChartTitle;
+        com.economic.dashboard.analyst.AskAnalyst.attachChartExplain(
+                swappableChart, requireActivity(), "corporate bond spreads (BAA and high-yield) over time");
 
         styleChart(swappableChart); addAllBenchmarks(swappableChart);
 

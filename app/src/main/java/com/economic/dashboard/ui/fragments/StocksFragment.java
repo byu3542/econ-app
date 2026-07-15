@@ -59,8 +59,14 @@ public class StocksFragment extends Fragment {
         viewModel = new ViewModelProvider(requireActivity()).get(EconomicViewModel.class);
 
         cardSp500 = binding.cardSp500;
+        com.economic.dashboard.analyst.AskAnalyst.wireCardLongPress(
+                cardSp500, requireActivity(), "the S&P 500 index");
         cardNasdaq = binding.cardNasdaq;
+        com.economic.dashboard.analyst.AskAnalyst.wireCardLongPress(
+                cardNasdaq, requireActivity(), "the Nasdaq index");
         cardVix = binding.cardVix;
+        com.economic.dashboard.analyst.AskAnalyst.wireCardLongPress(
+                cardVix, requireActivity(), "the VIX volatility index");
         tvSp500Value = binding.tvSp500Value;
         tvSp500Status = binding.tvSp500Status;
         tvNasdaqValue = binding.tvNasdaqValue;
@@ -71,6 +77,8 @@ public class StocksFragment extends Fragment {
         viewNasdaqDot = binding.viewNasdaqDot;
         viewVixDot = binding.viewVixDot;
         swappableChart = binding.swappableChart;
+        com.economic.dashboard.analyst.AskAnalyst.attachChartExplain(
+                swappableChart, requireActivity(), "stock market indices (S&P 500, Nasdaq, VIX)");
         tvChartTitle = binding.tvChartTitle;
 
         styleChart(swappableChart);

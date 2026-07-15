@@ -10,6 +10,8 @@
     <color name="row_alt_bg">#faf9f7</color>
     <color name="divider_sand">#f0ede8</color>
     <color name="accent_gold">#c9a84c</color>
+    <!-- Darker gold for bold text on white cards (chat key figures) -->
+    <color name="gold_ink">#8F6F2A</color>
     <color name="tab_bg_warm_gray">#ede9e3</color>
 
     <color name="text_navy">#1a1a2e</color>

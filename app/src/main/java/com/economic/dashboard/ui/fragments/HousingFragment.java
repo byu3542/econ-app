@@ -111,10 +111,14 @@ public class HousingFragment extends Fragment {
 
         // Swappable chart + title
         chartSwappable   = binding.chartSwappable;
+        com.economic.dashboard.analyst.AskAnalyst.attachChartExplain(
+                chartSwappable, requireActivity(), "housing market activity (housing starts and home sales)");
         tvSwappableTitle = binding.tvSwappableTitle;
 
         // MBS dual-axis chart
         chartMbsMortgage = binding.chartMbsMortgage;
+        com.economic.dashboard.analyst.AskAnalyst.attachChartExplain(
+                chartMbsMortgage, requireActivity(), "mortgage rates and MBS holdings");
 
         // Style swappable chart (dark theme)
         styleSwappableChart();

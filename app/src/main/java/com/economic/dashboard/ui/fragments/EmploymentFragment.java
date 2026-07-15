@@ -63,6 +63,8 @@ public class EmploymentFragment extends Fragment {
         viewModel = new ViewModelProvider(requireActivity()).get(EconomicViewModel.class);
 
         swappableChart = binding.swappableChart;
+        com.economic.dashboard.analyst.AskAnalyst.attachChartExplain(
+                swappableChart, requireActivity(), "U.S. employment data (unemployment rate and related labor series)");
         tvChartTitle = binding.tvChartTitle;
 
         styleChart(swappableChart);
@@ -75,12 +77,16 @@ public class EmploymentFragment extends Fragment {
         });
 
         cardUnemploymentStatus = binding.cardUnemploymentStatus;
+        com.economic.dashboard.analyst.AskAnalyst.wireCardLongPress(
+                cardUnemploymentStatus, requireActivity(), "the unemployment rate");
         tvUnempValue = binding.tvUnempValue;
         tvUnempStatus = binding.tvUnempStatus;
         tvUnempLowInfo = binding.tvUnempLowInfo;
         viewUnempIndicatorDot = binding.viewUnempIndicatorDot;
 
         cardLaborParticipation = binding.cardLaborParticipation;
+        com.economic.dashboard.analyst.AskAnalyst.wireCardLongPress(
+                cardLaborParticipation, requireActivity(), "labor force participation");
         tvLaborValue = binding.tvLaborValue;
         tvLaborStatus = binding.tvLaborStatus;
         viewLaborIndicatorDot = binding.viewLaborIndicatorDot;

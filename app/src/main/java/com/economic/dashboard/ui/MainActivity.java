@@ -55,6 +55,12 @@ public class MainActivity extends AppCompatActivity {
     private static final int CHAT_PERSIST_LIMIT = 200;
 
     private EconomicViewModel viewModel;
+
+    /** Title of the visible tab ("Overview", "Markets", ...) — read by the AI
+        Analyst so the model knows what screen the user is looking at. */
+    private String currentScreenLabel = "Overview";
+
+    public String getCurrentScreenLabel() { return currentScreenLabel; }
     private ActivityMainBinding binding;
 
     /** True only on a fresh launch (not on theme-change/rotation recreates) —
@@ -99,7 +105,13 @@ public class MainActivity extends AppCompatActivity {
 
         viewModel = new ViewModelProvider(this).get(EconomicViewModel.class);
 
-        chatAdapter = new ChatAdapter(this::retryLastQuery);
+        chatAdapter = new ChatAdapter(this::retryLastQuery,
+                new ChatAdapter.OnAnalystActionListener() {
+                    @Override public void onMetricTapped(String tabKey) { navigateToTab(tabKey); }
+                    @Override public void onAskAi(String query) {
+                        com.economic.dashboard.analyst.AskAnalyst.openWithQuery(MainActivity.this, query);
+                    }
+                });
         loadPersistedChat();
 
         setupBottomNav();
@@ -116,6 +128,12 @@ public class MainActivity extends AppCompatActivity {
             CacheManager.forceRefreshAll(this, success -> runOnUiThread(this::updateHeader));
         }
         NewsRepository.getInstance().fetchAllFeedsIfStale();
+
+        // Daily AI brief scheduling (no-op unless the setting is on; KEEP policy)
+        com.economic.dashboard.workers.DailyBriefWorker.scheduleDaily(this);
+
+        // If the app was launched via the share sheet, route into the AI Analyst
+        handleShareIntent(getIntent());
     }
 
     // ── Settings ─────────────────────────────────────────────────────────────
@@ -147,6 +165,7 @@ public class MainActivity extends AppCompatActivity {
         if (!granted) {
             SettingsManager.setBool(this, SettingsManager.KEY_NOTIFY_BIG_MOVES, false);
             SettingsManager.setBool(this, SettingsManager.KEY_NOTIFY_RELEASES, false);
+            SettingsManager.setBool(this, SettingsManager.KEY_DAILY_BRIEF, false);
             android.widget.Toast.makeText(this, R.string.notifications_denied,
                     android.widget.Toast.LENGTH_LONG).show();
             androidx.fragment.app.Fragment f =
@@ -220,6 +239,47 @@ public class MainActivity extends AppCompatActivity {
         chatAdapter.addMessage(new ChatMessage(WELCOME_TEXT, false));
     }
 
+    // ── Share target (text / images shared from other apps) ──────────────────
+
+    @Override
+    protected void onNewIntent(android.content.Intent intent) {
+        super.onNewIntent(intent);
+        handleShareIntent(intent);
+    }
+
+    /** Routes ACTION_SEND text or images into the AI Analyst for analysis. */
+    private void handleShareIntent(android.content.Intent intent) {
+        if (intent == null || !android.content.Intent.ACTION_SEND.equals(intent.getAction())) return;
+        String type = intent.getType();
+        if (type == null) return;
+        intent.setAction("");  // consume so rotation doesn't re-trigger
+
+        if (type.startsWith("image/")) {
+            android.net.Uri uri = intent.getParcelableExtra(android.content.Intent.EXTRA_STREAM);
+            if (uri == null) return;
+            if (getSupportFragmentManager().findFragmentByTag(AiAnalystBottomSheet.TAG) == null)
+                AiAnalystBottomSheet.newInstanceForImage(uri, null)
+                        .show(getSupportFragmentManager(), AiAnalystBottomSheet.TAG);
+        } else if ("text/plain".equals(type)) {
+            String shared = intent.getStringExtra(android.content.Intent.EXTRA_TEXT);
+            if (shared == null || shared.trim().isEmpty()) return;
+            com.economic.dashboard.analyst.AskAnalyst.openWithQuery(this,
+                    "Analyze this in the context of the current U.S. economic data. If it's a "
+                    + "link or headline, explain what it means for the economy:\n\n" + shared.trim());
+        }
+    }
+
+    /** Metric citation tapped in chat — close the sheet and jump to that tab. */
+    public void navigateToTab(String tabKey) {
+        Fragment sheet = getSupportFragmentManager().findFragmentByTag(AiAnalystBottomSheet.TAG);
+        if (sheet instanceof AiAnalystBottomSheet && sheet.isAdded())
+            ((AiAnalystBottomSheet) sheet).dismiss();
+        if ("markets".equals(tabKey))       binding.bottomNav.setSelectedItemId(R.id.nav_markets);
+        else if ("economy".equals(tabKey))  binding.bottomNav.setSelectedItemId(R.id.nav_economy);
+        else if ("news".equals(tabKey))     binding.bottomNav.setSelectedItemId(R.id.navigation_news);
+        else                                 binding.bottomNav.setSelectedItemId(R.id.nav_overview);
+    }
+
     // ── Navigation ───────────────────────────────────────────────────────────
 
     private void setupBottomNav() {
@@ -246,6 +306,7 @@ public class MainActivity extends AppCompatActivity {
                 else if (id == R.id.navigation_news) { index = 4; title = "News"; loadFragment(new NewsFragment(), "news"); }
                 else { loadFragment(new DashboardFragment(), "overview"); }
                 binding.tvHeaderLine1.setText(title);
+                currentScreenLabel = title;
 
                 binding.navActiveIndicator.animate()
                         .translationX(index * itemWidth + indOffset)

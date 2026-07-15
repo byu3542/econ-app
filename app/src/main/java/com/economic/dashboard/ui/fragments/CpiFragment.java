@@ -57,9 +57,15 @@ public class CpiFragment extends Fragment {
         viewModel = new ViewModelProvider(requireActivity()).get(EconomicViewModel.class);
 
         cpiChart  = binding.cpiUChart;
+        com.economic.dashboard.analyst.AskAnalyst.attachChartExplain(
+                cpiChart, requireActivity(), "the CPI-U consumer price index trend");
         cpiWChart = binding.cpiWChart;
+        com.economic.dashboard.analyst.AskAnalyst.attachChartExplain(
+                cpiWChart, requireActivity(), "the CPI-W consumer price index trend");
         
         cardCpiYoY     = binding.cardCpiYoY;
+        com.economic.dashboard.analyst.AskAnalyst.wireCardLongPress(
+                cardCpiYoY, requireActivity(), "CPI inflation (YoY)");
         tvCpiYoYValue  = binding.tvCpiYoYValue;
         tvCpiYoYDate   = binding.tvCpiYoYDate;
         tvCpiYoYStatus = binding.tvCpiYoYStatus;

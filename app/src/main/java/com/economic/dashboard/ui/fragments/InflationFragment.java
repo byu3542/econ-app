@@ -69,24 +69,34 @@ public class InflationFragment extends Fragment {
         viewModel = new ViewModelProvider(requireActivity()).get(EconomicViewModel.class);
 
         cardPceStatus   = binding.cardPceStatus;
+        com.economic.dashboard.analyst.AskAnalyst.wireCardLongPress(
+                cardPceStatus, requireActivity(), "PCE inflation");
         tvPceValue      = binding.tvPceValue;
         tvPceStatus     = binding.tvPceStatus;
         tvPcePercentile = binding.tvPcePercentile;
         viewPceDot      = binding.viewPceDot;
 
         cardCpiYoY      = binding.cardCpiYoY;
+        com.economic.dashboard.analyst.AskAnalyst.wireCardLongPress(
+                cardCpiYoY, requireActivity(), "CPI inflation (YoY)");
         tvCpiYoYValue   = binding.tvCpiYoYValue;
         tvCpiYoYStatus  = binding.tvCpiYoYStatus;
         tvCpiPercentile = binding.tvCpiPercentile;
         viewCpiDot      = binding.viewCpiIndicatorDot;
 
         cardWageYoY     = binding.cardWageYoY;
+        com.economic.dashboard.analyst.AskAnalyst.wireCardLongPress(
+                cardWageYoY, requireActivity(), "wage growth vs inflation");
         tvWageYoYValue  = binding.tvWageYoYValue;
         tvWageYoYStatus = binding.tvWageYoYStatus;
         viewWageDot     = binding.viewWageIndicatorDot;
 
         chartPceCpi     = binding.chartPceCpi;
+        com.economic.dashboard.analyst.AskAnalyst.attachChartExplain(
+                chartPceCpi, requireActivity(), "PCE and CPI inflation trends");
         chartComparison = binding.comparisonChart;
+        com.economic.dashboard.analyst.AskAnalyst.attachChartExplain(
+                chartComparison, requireActivity(), "a comparison of inflation measures");
 
         styleChart(chartPceCpi);
         styleChart(chartComparison);

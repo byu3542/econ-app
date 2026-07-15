@@ -39,6 +39,8 @@
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_toStartOf="@+id/btnClearChat"
                 android:layout_centerVertical="true"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
@@ -53,11 +55,13 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="AI ECONOMIC ANALYST"
+                    android:text="AI ANALYST"
                     android:textColor="@color/accent_gold"
                     android:textSize="@dimen/text_body"
                     android:textStyle="bold"
                     android:textAllCaps="true"
+                    android:maxLines="1"
+                    android:ellipsize="end"
                     android:letterSpacing="0.2" />
 
             </LinearLayout>
@@ -67,6 +71,7 @@
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:layout_toStartOf="@+id/btnClose"
+                android:layout_marginEnd="@dimen/space_sm"
                 android:layout_centerVertical="true"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/ic_clear_chat"
@@ -97,6 +102,7 @@
 
     <!-- Quick-ask chip row -->
     <TextView
+        android:id="@+id/tvAskAbout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="ASK ABOUT"
@@ -108,6 +114,7 @@
         android:layout_marginStart="@dimen/space_lg" />
 
     <HorizontalScrollView
+        android:id="@+id/hsvChips"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:scrollbars="none"
@@ -208,6 +215,45 @@
             android:clipToPadding="false"
             android:clipChildren="false" />
 
+        <!-- Empty state: shown until the first message is sent -->
+        <LinearLayout
+            android:id="@+id/llEmptyState"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:paddingHorizontal="40dp"
+            android:visibility="gone">
+
+            <ImageView
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:src="@drawable/ic_ai_agent"
+                app:tint="@color/accent_gold"
+                android:importantForAccessibility="no" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_md"
+                android:text="Your AI Economic Analyst"
+                android:textColor="@color/text_navy"
+                android:textSize="@dimen/text_body"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_xs"
+                android:text="Ask anything about the economy — answers use the live dashboard data and 24 months of history."
+                android:textColor="@color/text_secondary"
+                android:textSize="@dimen/text_secondary"
+                android:gravity="center"
+                android:lineSpacingExtra="3dp" />
+
+        </LinearLayout>
+
         <TextView
             android:id="@+id/pillNewReply"
             android:layout_width="wrap_content"
@@ -216,8 +262,8 @@
             android:layout_marginBottom="@dimen/space_md"
             android:text="↓ New reply"
             android:textSize="@dimen/text_secondary"
-            android:textColor="@color/text_navy"
-            android:background="@drawable/bg_chip_outline"
+            android:textColor="@color/accent_gold"
+            android:background="@drawable/bg_pill_navy"
             android:paddingHorizontal="@dimen/space_lg"
             android:paddingVertical="@dimen/space_sm"
             android:elevation="4dp"
@@ -228,6 +274,45 @@
     </FrameLayout>
 
     <!-- Input area -->
+
+    <!-- Pending image preview (vision analysis) -->
+    <LinearLayout
+        android:id="@+id/llImagePreview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="@dimen/space_lg"
+        android:paddingTop="@dimen/space_sm"
+        android:visibility="gone">
+
+        <ImageView
+            android:id="@+id/ivImagePreview"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:scaleType="centerCrop"
+            android:contentDescription="Attached image preview" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="@dimen/space_md"
+            android:text="Image attached — will be analyzed with your next message"
+            android:textColor="@color/text_muted"
+            android:textSize="@dimen/text_caption" />
+
+        <ImageButton
+            android:id="@+id/btnRemoveImage"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            app:tint="@color/text_muted"
+            android:contentDescription="Remove attached image" />
+
+    </LinearLayout>
+
     <LinearLayout
         android:id="@+id/llInputArea"
         android:layout_width="match_parent"
@@ -238,7 +323,8 @@
 
         <LinearLayout
             android:layout_width="0dp"
-            android:layout_height="56dp"
+            android:layout_height="wrap_content"
+            android:minHeight="56dp"
             android:layout_weight="1"
             android:background="@drawable/bg_chat_input_capsule"
             android:orientation="horizontal"
@@ -246,11 +332,21 @@
             android:paddingStart="@dimen/space_lg"
             android:paddingEnd="@dimen/space_sm">
 
+            <ImageButton
+                android:id="@+id/btnAttach"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_attach_image"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                app:tint="@color/text_muted"
+                android:contentDescription="Attach an image for analysis" />
+
             <EditText
                 android:id="@+id/etMessage"
                 android:layout_width="0dp"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:paddingVertical="@dimen/space_md"
                 android:hint="Ask about the economy..."
                 android:background="@null"
                 android:textColor="@color/text_navy"
@@ -258,7 +354,7 @@
                 android:textSize="@dimen/text_body"
                 android:inputType="textCapSentences"
                 android:imeOptions="actionSend"
-                android:maxLines="1" />
+                android:maxLines="4" />
 
             <ImageButton
                 android:id="@+id/btnSend"

@@ -157,8 +157,42 @@
         <item name="android:textStyle">bold</item>
         <item name="android:letterSpacing">0.2</item>
         <item name="android:textColor">@color/text_muted</item>
-        <item name="android:layout_marginTop">18dp</item>
-        <item name="android:layout_marginBottom">4dp</item>
+        <item name="android:drawablePadding">6dp</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:layout_marginBottom">@dimen/space_sm</item>
+    </style>
+
+    <!-- Card that wraps each settings section -->
+    <style name="SettingsCard" parent="Widget.MaterialComponents.CardView">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">@dimen/space_md</item>
+        <item name="cardBackgroundColor">@color/surface_card</item>
+        <item name="cardElevation">0dp</item>
+        <item name="cardCornerRadius">12dp</item>
+        <item name="strokeColor">@color/divider_sand</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="contentPadding">@dimen/space_lg</item>
+        <item name="contentPaddingBottom">@dimen/space_md</item>
+        <item name="contentPaddingTop">@dimen/space_md</item>
+    </style>
+
+    <!-- Brand-tinted switch: gold track when on, muted when off -->
+    <style name="SettingsSwitch" parent="Widget.MaterialComponents.CompoundButton.Switch">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="useMaterialThemeColors">false</item>
+        <item name="thumbTint">@color/settings_switch_thumb</item>
+        <item name="trackTint">@color/settings_switch_track</item>
+    </style>
+
+    <!-- Destructive outlined button (clear chat / clear cache) -->
+    <style name="SettingsDestructiveButton" parent="Widget.MaterialComponents.Button.OutlinedButton">
+        <item name="android:textSize">@dimen/text_body</item>
+        <item name="android:textColor">@color/error_text</item>
+        <item name="strokeColor">@color/error_bubble_stroke</item>
+        <item name="rippleColor">@color/error_bubble_bg</item>
+        <item name="android:textAllCaps">false</item>
     </style>
 
     <style name="SettingsRow">

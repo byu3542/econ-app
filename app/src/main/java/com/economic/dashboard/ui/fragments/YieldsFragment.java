@@ -51,6 +51,8 @@ public class YieldsFragment extends Fragment {
         viewModel = new ViewModelProvider(requireActivity()).get(EconomicViewModel.class);
 
         yieldCurveChart = binding.yieldCurveChart;
+        com.economic.dashboard.analyst.AskAnalyst.attachChartExplain(
+                yieldCurveChart, requireActivity(), "the current Treasury yield curve across maturities");
         styleChart(yieldCurveChart);
         yieldCurveChart.getAxisLeft().setValueFormatter(new ValueFormatter() {
             @Override public String getFormattedValue(float value) {
