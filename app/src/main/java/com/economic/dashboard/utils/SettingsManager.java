@@ -31,6 +31,7 @@ public class SettingsManager {
     // Charts
     public static final String KEY_CHART_GRIDLINES  = "chart_gridlines";
     public static final String KEY_CHART_DECIMALS   = "chart_decimals";   // 1..3
+    public static final String KEY_CHART_TIMEFRAME  = "chart_timeframe";  // months: 3,6,12,24,60
     // Notifications
     public static final String KEY_NOTIFY_BIG_MOVES = "notify_big_moves";
     public static final String KEY_NOTIFY_RELEASES  = "notify_releases";
@@ -79,6 +80,9 @@ public class SettingsManager {
     }
     public static int getChartDecimals(Context c) {
         return getInt(c, KEY_CHART_DECIMALS, 2);
+    }
+    public static int getChartTimeframeMonths(Context c) {
+        return getInt(c, KEY_CHART_TIMEFRAME, 60);
     }
     public static boolean gridlinesEnabled(Context c) {
         return getBool(c, KEY_CHART_GRIDLINES, true);

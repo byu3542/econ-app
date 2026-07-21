@@ -151,6 +151,7 @@ public class CpiFragment extends Fragment {
     private void buildChart(List<EconomicDataPoint> data, String series, LineChart chart, String hexColor) {
         List<EconomicDataPoint> rows = EconomicViewModel.filterBySeries(data, series);
         if (rows.isEmpty()) return;
+        rows = EconomicViewModel.filterByTimeframe(requireContext(), rows);
 
         List<Entry> entries = new ArrayList<>();
         final List<String> dates = new ArrayList<>();

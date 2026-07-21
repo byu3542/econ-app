@@ -84,6 +84,11 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
      */
     private volatile String historicalContext = "";
 
+    /** Application context captured at view creation. The tool loop runs on
+     *  OkHttp threads and must not silently drop a tool round (finalizing a
+     *  dangling "Let me fetch..." reply) just because the sheet detached. */
+    private volatile android.content.Context appContext;
+
     /** Extra "the user is looking at X" block injected by entry points. */
     private String screenContext = "";
 
@@ -202,6 +207,7 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
         // ready before the first question is sent (Room must stay off the
         // main thread). Uses application context — safe if the sheet closes.
         final android.content.Context appCtx = requireContext().getApplicationContext();
+        appContext = appCtx;
         AppExecutors.getInstance().diskIO().execute(() -> historicalContext = HistoricalContextBuilder.build(appCtx));
 
         if (chatAdapter().getItemCount() > 0)
@@ -553,9 +559,14 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
             // Cap context at the most recent HISTORY_CAP entries to keep
             // request latency flat in long conversations.
             JSONArray messages = new JSONArray();
-            int start = Math.max(0, conversationHistory().length() - HISTORY_CAP);
-            for (int i = start; i < conversationHistory().length(); i++)
-                messages.put(conversationHistory().get(i));
+            JSONArray history = conversationHistory();
+            // History is committed from OkHttp background threads; lock while
+            // slicing so a concurrent commit can't interleave.
+            synchronized (history) {
+                int start = Math.max(0, history.length() - HISTORY_CAP);
+                for (int i = start; i < history.length(); i++)
+                    messages.put(history.get(i));
+            }
 
             String enrichedQuery = userQuery + NewsContextBuilder.buildBrief(cachedNews);
             JSONObject userMsg = new JSONObject();
@@ -620,7 +631,11 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
                 + "TOOLS: You can call get_series for full point-by-point history of any cached "
                 + "series, and get_headlines for more news than the prompt includes. Use them "
                 + "when the summaries below lack the detail a question needs; otherwise answer "
-                + "directly from the data provided.\n\n"
+                + "directly from the data provided. If you decide to use a tool, call it "
+                + "immediately in the same turn — NEVER end a reply by announcing that you are "
+                + "about to look something up. get_series only covers the six series listed "
+                + "below; for anything else (e.g. S&P 500, Nasdaq, VIX, CPI history) use the "
+                + "data already in this prompt and say so rather than attempting a lookup.\n\n"
                 + "INLINE CHARTS: When a visual trend would genuinely help, you may include AT "
                 + "MOST ONE chart tag on its own line, formatted exactly [CHART:SERIES_ID:<N>M] "
                 + "where SERIES_ID is one of DGS10, DGS2, DGS3MO, MORTGAGE30US, LNS14000000, "
@@ -646,12 +661,22 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
         try {
             JSONObject body = new JSONObject();
             body.put("model", "claude-haiku-4-5-20251001");
-            body.put("max_tokens", 1024);
+            // 1024 truncated longer answers (and could cut tool-call JSON
+            // mid-stream, yielding empty tool inputs). Each round gets its own
+            // budget, so a bigger cap only costs tokens actually generated.
+            body.put("max_tokens", 4096);
             body.put("stream", true);
             body.put("system", systemPrompt);
             body.put("messages", messages);
-            if (depth < MAX_TOOL_DEPTH - 1)
-                body.put("tools", AnalystToolExecutor.buildToolsJson());
+            // Always send tools: the API rejects a request whose message history
+            // contains tool_use/tool_result blocks but has no tools parameter,
+            // which used to 400 on the final round of a tool loop.
+            body.put("tools", AnalystToolExecutor.buildToolsJson());
+            // Final allowed round: force a text answer. Without this the model
+            // could stop for yet another tool call at the cap, leaving a dangling
+            // "Let me fetch..." as the visible reply.
+            if (depth >= MAX_TOOL_DEPTH - 1)
+                body.put("tool_choice", new JSONObject().put("type", "none"));
 
             // Calls the proxy (see proxy/README.md) — the Anthropic key stays
             // server-side and is never shipped inside the APK.
@@ -662,6 +687,8 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
                     .build();
 
             final AtomicBoolean retried = new AtomicBoolean(false);
+            // Text accumulated before this round; a mid-stream retry rewinds here.
+            final int accLenAtSend = st.acc.length();
 
             Call apiCall = httpClient().newCall(request);
             currentCall = apiCall;
@@ -702,19 +729,32 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
                         } else if (r.isSuccessful()) {
                             handleJsonResponse(r, committedQuery, messages, systemPrompt, st, depth);
                         } else {
+                            final String apiMsg = readApiError(r);
                             runOnUi(() -> {
                                 requestFinished();
                                 chatAdapter().removeTypingIndicator();
-                                chatAdapter().addMessage(new ChatMessage("API error " + r.code() + ".", false, false, true));
+                                chatAdapter().addMessage(new ChatMessage(apiMsg, false, false, true));
                                 maybeScrollToBottom(false);
                             });
                         }
                     } catch (Exception e) {
+                        // Streams that die partway through (timeout, dropped
+                        // connection, transient server error) get one automatic
+                        // retry of this round. Rewind the accumulated text so the
+                        // re-streamed round doesn't duplicate what already showed.
+                        if (e instanceof IOException && !call.isCanceled()
+                                && retried.compareAndSet(false, true)) {
+                            st.acc.setLength(accLenAtSend);
+                            new Handler(Looper.getMainLooper()).postDelayed(
+                                    () -> sendTurn(messages, systemPrompt, committedQuery, st, depth), 1200);
+                            return;
+                        }
+                        final String friendly = friendlyError(e);
                         runOnUi(() -> {
                             requestFinished();
                             chatAdapter().removeTypingIndicator();
                             if (!call.isCanceled())
-                                chatAdapter().addMessage(new ChatMessage("Failed to parse the response.", false, false, true));
+                                chatAdapter().addMessage(new ChatMessage(friendly, false, false, true));
                             maybeScrollToBottom(false);
                         });
                     }
@@ -745,16 +785,22 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
                                         StreamState st, int depth) throws Exception {
         if (r.body() == null) throw new IOException("empty body");
         okio.BufferedSource source = r.body().source();
+        // acc may already hold earlier rounds' text; only text streamed in THIS
+        // round belongs in this round's assistant message.
+        final int roundStart = st.acc.length();
 
         java.util.Map<Integer, ToolUseBlock> toolBlocks = new java.util.LinkedHashMap<>();
         String stopReason = null;
+        boolean sawMessageStop = false;
 
         String line;
         while ((line = readLineSafe(source, call)) != null) {
             if (!line.startsWith("data:")) continue;
             String payload = line.substring(5).trim();
             if (payload.isEmpty()) continue;
-            JSONObject evt = new JSONObject(payload);
+            JSONObject evt;
+            try { evt = new JSONObject(payload); }
+            catch (Exception malformed) { continue; } // keep-alives / non-JSON lines like "[DONE]"
             String type = evt.optString("type");
             if ("content_block_start".equals(type)) {
                 JSONObject block = evt.optJSONObject("content_block");
@@ -793,21 +839,34 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
                 JSONObject delta = evt.optJSONObject("delta");
                 if (delta != null) stopReason = delta.optString("stop_reason", stopReason);
             } else if ("message_stop".equals(type)) {
+                sawMessageStop = true;
                 break;
             } else if ("error".equals(type)) {
-                throw new IOException("stream error");
+                JSONObject err = evt.optJSONObject("error");
+                String msg = err != null ? err.optString("message", "") : "";
+                throw new IOException("Analyst service error" + (msg.isEmpty() ? "." : ": " + msg));
             }
         }
+
+        // A clean EOF before message_stop / any stop_reason means the proxy or
+        // network dropped the stream mid-reply. The text so far LOOKS complete
+        // (it often ends right after a "Let me fetch..." lead-in, because the
+        // tool-call JSON was next on the wire), but it isn't — throw so the
+        // round is retried once instead of committing a cut-off answer.
+        if (!sawMessageStop && stopReason == null && !call.isCanceled())
+            throw new IOException("The stream ended before the response finished.");
 
         // ── Tool round-trip: run tools on-device, then continue the turn ──────
         if ("tool_use".equals(stopReason) && !toolBlocks.isEmpty() && depth < MAX_TOOL_DEPTH - 1
                 && !call.isCanceled()) {
-            android.content.Context appCtx = getActivity() != null
-                    ? getActivity().getApplicationContext() : null;
+            android.content.Context appCtx = appContext;
             if (appCtx != null) {
                 JSONArray assistantContent = new JSONArray();
-                if (st.acc.length() > 0)
-                    assistantContent.put(new JSONObject().put("type", "text").put("text", st.acc.toString()));
+                // Only THIS round's text — resending the whole accumulated reply
+                // made the model see itself repeating and re-announce tool calls.
+                String roundText = st.acc.substring(roundStart);
+                if (!roundText.trim().isEmpty())
+                    assistantContent.put(new JSONObject().put("type", "text").put("text", roundText));
                 JSONArray toolResults = new JSONArray();
                 for (ToolUseBlock tb : toolBlocks.values()) {
                     JSONObject input;
@@ -824,10 +883,17 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
                 }
                 messages.put(new JSONObject().put("role", "assistant").put("content", assistantContent));
                 messages.put(new JSONObject().put("role", "user").put("content", toolResults));
+                // Paragraph break so the next round's text doesn't run into this one.
+                if (st.acc.length() > 0) st.acc.append("\n\n");
                 sendTurn(messages, systemPrompt, committedQuery, st, depth + 1);
                 return;
             }
         }
+
+        // Model asked for another tool round past the cap and produced no text —
+        // explain that instead of surfacing an empty reply as a failure.
+        if ("tool_use".equals(stopReason) && st.acc.length() == 0)
+            st.acc.append("I ran out of data-lookup rounds for that question — try asking it a bit more specifically.");
 
         finalizeTurn(committedQuery, call, st);
     }
@@ -860,6 +926,28 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
         });
     }
 
+    /** Maps low-level failures to a message that says what actually happened. */
+    private static String friendlyError(Exception e) {
+        if (e instanceof java.net.SocketTimeoutException)
+            return "The response timed out — please try again.";
+        String m = e.getMessage();
+        if (m != null && m.startsWith("Analyst service error")) return m;
+        if (e instanceof IOException)
+            return "The connection dropped while receiving the response — please try again.";
+        return "Couldn't read the response — please try again.";
+    }
+
+    /** Extracts the server's error message from a non-2xx response body, if present. */
+    private static String readApiError(Response r) {
+        String fallback = "API error " + r.code() + ".";
+        try {
+            String body = r.body() != null ? r.body().string() : "";
+            JSONObject err = new JSONObject(body.trim()).optJSONObject("error");
+            String msg = err != null ? err.optString("message", "") : "";
+            return msg.isEmpty() ? fallback : fallback + " " + msg;
+        } catch (Exception ignored) { return fallback; }
+    }
+
     /** Reads the next SSE line; a user-cancelled stream ends cleanly instead of throwing. */
     private static String readLineSafe(okio.BufferedSource source, Call call) throws IOException {
         try {
@@ -884,12 +972,15 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
         String text;
         if (trimmed.startsWith("{")) {
             JSONObject json = new JSONObject(trimmed);
-            JSONArray content = json.getJSONArray("content");
+            JSONObject apiErr = json.optJSONObject("error");
+            if (apiErr != null)
+                throw new IOException("Analyst service error: " + apiErr.optString("message", "unknown error"));
+            JSONArray content = json.optJSONArray("content");
+            if (content == null) throw new IOException("unrecognized response body");
 
             // Tool use in a non-streamed reply: run tools and continue the turn.
             if ("tool_use".equals(json.optString("stop_reason")) && depth < MAX_TOOL_DEPTH - 1) {
-                android.content.Context appCtx = getActivity() != null
-                        ? getActivity().getApplicationContext() : null;
+                android.content.Context appCtx = appContext;
                 if (appCtx != null) {
                     JSONArray toolResults = new JSONArray();
                     for (int i = 0; i < content.length(); i++) {
@@ -906,6 +997,8 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
                     }
                     messages.put(new JSONObject().put("role", "assistant").put("content", content));
                     messages.put(new JSONObject().put("role", "user").put("content", toolResults));
+                    // Paragraph break so the next round's text doesn't run into this one.
+                    if (st.acc.length() > 0) st.acc.append("\n\n");
                     sendTurn(messages, systemPrompt, committedQuery, st, depth + 1);
                     return;
                 }
@@ -917,6 +1010,8 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
                 if ("text".equals(block.optString("type"))) sb.append(block.optString("text"));
             }
             text = sb.toString();
+            if (text.isEmpty() && "tool_use".equals(json.optString("stop_reason")))
+                text = "I ran out of data-lookup rounds for that question — try asking it a bit more specifically.";
         } else if (trimmed.contains("data:")) {
             text = extractTextFromSseString(trimmed);
             if (text.isEmpty()) throw new IOException("empty SSE payload");
@@ -961,11 +1056,17 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
     private void commitToHistory(String userQuery, String assistantText) throws Exception {
         JSONObject committedUser = new JSONObject();
         committedUser.put("role", "user"); committedUser.put("content", userQuery);
-        conversationHistory().put(committedUser);
 
         JSONObject assistantMsg = new JSONObject();
         assistantMsg.put("role", "assistant"); assistantMsg.put("content", assistantText);
-        conversationHistory().put(assistantMsg);
+
+        JSONArray history = conversationHistory();
+        synchronized (history) {
+            // Committed as a pair so a HISTORY_CAP slice always starts on a
+            // "user" message (the API requires user-first, alternating roles).
+            history.put(committedUser);
+            history.put(assistantMsg);
+        }
     }
 
     private String constructEconomicContext() {

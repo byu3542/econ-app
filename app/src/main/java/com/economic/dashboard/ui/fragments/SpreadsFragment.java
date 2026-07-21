@@ -148,6 +148,7 @@ public class SpreadsFragment extends Fragment {
         if ("3m".equals(activeCard)) { data = current3MData; label = "10Y-3M Spread (%)"; lineColor = "#E91E63"; }
         else { data = currentYoyData; label = "10Y-2Y Spread (%)"; lineColor = "#D98E4F"; }
         if (data == null || data.isEmpty()) return;
+        data = EconomicViewModel.filterByTimeframe(requireContext(), data);
         List<Entry> entries = new ArrayList<>();
         final List<String> dateLabels = new ArrayList<>();
         for (int i = 0; i < data.size(); i++) {

@@ -146,7 +146,7 @@
         </LinearLayout>
 
         <!-- ═══════════════════════════════════════════════════════════════════
-             MBS BADGE ROW — Tappable badges for 30-Yr Rate, Bank MBS, Fed MBS
+             RATES BADGE ROW — Tappable badges for 30-Yr Rate, 10Y Treasury, Spread
              ═══════════════════════════════════════════════════════════════════ -->
         <LinearLayout
             android:layout_width="match_parent"
@@ -217,9 +217,9 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- BANK MBS Badge -->
+            <!-- 10Y T-RATE Badge -->
             <androidx.cardview.widget.CardView
-                android:id="@+id/badgeBankMbs"
+                android:id="@+id/badge10Y"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -238,14 +238,14 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="BANK MBS"
+                        android:text="10Y T-RATE"
                         android:textColor="@color/accent_gold"
                         android:textSize="@dimen/text_caption"
                         android:textStyle="bold"
                         android:letterSpacing="0.05" />
 
                     <TextView
-                        android:id="@+id/tvBadgeBankMbsValue"
+                        android:id="@+id/tvBadge10YValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="\u2014"
@@ -262,14 +262,14 @@
                         android:layout_marginTop="@dimen/space_hairline">
 
                         <View
-                            android:id="@+id/viewBadgeBankMbsDot"
+                            android:id="@+id/viewBadge10YDot"
                             android:layout_width="6dp"
                             android:layout_height="6dp"
                             android:background="@drawable/dot_neutral"
                             android:layout_marginEnd="@dimen/space_xs" />
 
                         <TextView
-                            android:id="@+id/tvBadgeBankMbsStatus"
+                            android:id="@+id/tvBadge10YStatus"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="\u2014"
@@ -279,9 +279,9 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- FED MBS Badge -->
+            <!-- SPREAD Badge -->
             <androidx.cardview.widget.CardView
-                android:id="@+id/badgeFedMbs"
+                android:id="@+id/badgeSpread"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -300,14 +300,14 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="FED MBS"
+                        android:text="SPREAD"
                         android:textColor="@color/accent_gold"
                         android:textSize="@dimen/text_caption"
                         android:textStyle="bold"
                         android:letterSpacing="0.05" />
 
                     <TextView
-                        android:id="@+id/tvBadgeFedMbsValue"
+                        android:id="@+id/tvBadgeSpreadValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="\u2014"
@@ -324,14 +324,14 @@
                         android:layout_marginTop="@dimen/space_hairline">
 
                         <View
-                            android:id="@+id/viewBadgeFedMbsDot"
+                            android:id="@+id/viewBadgeSpreadDot"
                             android:layout_width="6dp"
                             android:layout_height="6dp"
                             android:background="@drawable/dot_neutral"
                             android:layout_marginEnd="@dimen/space_xs" />
 
                         <TextView
-                            android:id="@+id/tvBadgeFedMbsStatus"
+                            android:id="@+id/tvBadgeSpreadStatus"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="\u2014"

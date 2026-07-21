@@ -326,6 +326,44 @@
                         android:text="@string/dec_three"/>
                 </com.google.android.material.button.MaterialButtonToggleGroup>
 
+                <TextView style="@style/SettingsRowTitle"
+                    android:layout_marginTop="@dimen/space_sm"
+                    android:layout_marginBottom="@dimen/space_xs"
+                    android:text="@string/chart_timeframe"/>
+
+                <com.google.android.material.button.MaterialButtonToggleGroup
+                    android:id="@+id/tgTimeframe"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:singleSelection="true"
+                    app:selectionRequired="true">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnTf3m"
+                        style="@style/SettingsSegmentButton"
+                        android:text="@string/tf_3m"/>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnTf6m"
+                        style="@style/SettingsSegmentButton"
+                        android:text="@string/tf_6m"/>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnTf1y"
+                        style="@style/SettingsSegmentButton"
+                        android:text="@string/tf_1y"/>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnTf2y"
+                        style="@style/SettingsSegmentButton"
+                        android:text="@string/tf_2y"/>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnTf5y"
+                        style="@style/SettingsSegmentButton"
+                        android:text="@string/tf_5y"/>
+                </com.google.android.material.button.MaterialButtonToggleGroup>
+
                 <TextView style="@style/SettingsRowSub"
                     android:layout_marginTop="@dimen/space_sm"
                     android:textStyle="italic"

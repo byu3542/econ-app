@@ -1,5 +1,7 @@
 package com.economic.dashboard.ui;
 
+import android.content.Context;
+
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
@@ -7,9 +9,14 @@ import androidx.lifecycle.ViewModel;
 import com.economic.dashboard.api.ApiConfig;
 import com.economic.dashboard.api.EconomicRepository;
 import com.economic.dashboard.models.EconomicDataPoint;
+import com.economic.dashboard.utils.SettingsManager;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -307,6 +314,39 @@ public class EconomicViewModel extends ViewModel {
         if (data != null) for (EconomicDataPoint p : data) if (p.getSeries().equals(series)) result.add(p);
         result.sort((a,b)->a.getDate().compareTo(b.getDate()));
         return result;
+    }
+
+    /**
+     * Returns the tail of a date-sorted (yyyy-MM-dd) series that falls within the
+     * given number of months of its most recent point. This standardizes the
+     * x-axis window across every chart in the app. Falls back to the full list
+     * when the window would leave fewer than two points, so sparse series
+     * (e.g. quarterly GDP) stay drawable, and when a date fails to parse.
+     */
+    public static List<EconomicDataPoint> filterByMonths(List<EconomicDataPoint> sortedRows, int months) {
+        if (sortedRows == null || sortedRows.size() < 2 || months <= 0) return sortedRows;
+        String latest = sortedRows.get(sortedRows.size() - 1).getDate();
+        if (latest == null || latest.length() < 10) return sortedRows;
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+            Date d = sdf.parse(latest);
+            if (d == null) return sortedRows;
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(d);
+            cal.add(Calendar.MONTH, -months);
+            String cutoff = sdf.format(cal.getTime());
+            List<EconomicDataPoint> result = new ArrayList<>();
+            for (EconomicDataPoint p : sortedRows)
+                if (p.getDate() != null && p.getDate().compareTo(cutoff) >= 0) result.add(p);
+            return result.size() >= 2 ? result : sortedRows;
+        } catch (ParseException e) {
+            return sortedRows;
+        }
+    }
+
+    /** Windows a date-sorted series using the user's chart-timeframe setting. */
+    public static List<EconomicDataPoint> filterByTimeframe(Context ctx, List<EconomicDataPoint> sortedRows) {
+        return filterByMonths(sortedRows, SettingsManager.getChartTimeframeMonths(ctx));
     }
 
     public static int calculatePercentile(List<EconomicDataPoint> data, String series, double currentValue) {

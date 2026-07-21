@@ -17,6 +17,14 @@
         <!-- Alabaster specific styling -->
         <item name="toolbarStyle">@style/AlabasterToolbar</item>
         <item name="tabStyle">@style/AlabasterTabLayout</item>
+
+        <!-- Rounded long-press context menus (Ask AI Analyst / Explain chart / news) -->
+        <item name="android:popupMenuStyle">@style/RoundedPopupMenu</item>
+        <item name="popupMenuStyle">@style/RoundedPopupMenu</item>
+    </style>
+
+    <style name="RoundedPopupMenu" parent="Widget.MaterialComponents.PopupMenu">
+        <item name="android:popupBackground">@drawable/bg_popup_rounded</item>
     </style>
 
     <!-- Full screen dialog theme for AI Chat (kept for reference) -->

@@ -260,6 +260,21 @@ public class SettingsBottomSheet extends BottomSheetDialogFragment {
                 if (ids[i] == checkedId)
                     SettingsManager.setInt(requireContext(), SettingsManager.KEY_CHART_DECIMALS, i + 1);
         });
+
+        // Default chart time range — standardizes the x-axis window on every chart
+        MaterialButtonToggleGroup tgTf = v.findViewById(R.id.tgTimeframe);
+        final int[] tfIds    = { R.id.btnTf3m, R.id.btnTf6m, R.id.btnTf1y, R.id.btnTf2y, R.id.btnTf5y };
+        final int[] tfMonths = { 3, 6, 12, 24, 60 };
+        int currentMonths = SettingsManager.getChartTimeframeMonths(requireContext());
+        int sel = tfMonths.length - 1; // default -> 5Y
+        for (int i = 0; i < tfMonths.length; i++) if (tfMonths[i] == currentMonths) { sel = i; break; }
+        tgTf.check(tfIds[sel]);
+        tgTf.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+            if (!isChecked) return;
+            for (int i = 0; i < tfIds.length; i++)
+                if (tfIds[i] == checkedId)
+                    SettingsManager.setInt(requireContext(), SettingsManager.KEY_CHART_TIMEFRAME, tfMonths[i]);
+        });
     }
 
     // -- Notifications --------------------------------------------------------------

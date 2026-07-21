@@ -174,6 +174,7 @@ public class WagesFragment extends Fragment {
     private void buildHourlyChart(List<EconomicDataPoint> data) {
         List<EconomicDataPoint> rows = EconomicViewModel.filterBySeries(data, "Average Hourly Earnings - Private");
         if (rows.isEmpty()) return;
+        rows = EconomicViewModel.filterByTimeframe(requireContext(), rows);
 
         List<Entry> entries = new ArrayList<>();
         final List<String> dates = new ArrayList<>();
@@ -220,8 +221,12 @@ public class WagesFragment extends Fragment {
 
         if (cpiRows.isEmpty() || wageRows.isEmpty()) return;
 
+        // Window the driving CPI series to the standardized chart time range;
+        // wages are matched by date, so trimming CPI drives the x-axis.
+        cpiRows = EconomicViewModel.filterByTimeframe(requireContext(), cpiRows);
+        if (cpiRows.isEmpty()) return;
         double cpiBase  = cpiRows.get(0).getValue();
-        double wageBase = wageRows.get(0).getValue();
+        double wageBase = -1.0; // set at the first wage point in the window
 
         List<Entry> cpiEntries  = new ArrayList<>();
         List<Entry> wageEntries = new ArrayList<>();
@@ -242,6 +247,7 @@ public class WagesFragment extends Fragment {
 
             for (EconomicDataPoint w : wageRows) {
                 if (w.getDate().equals(date)) {
+                    if (wageBase < 0) wageBase = w.getValue();
                     double indexedWage = (w.getValue() / wageBase) * 100.0;
                     wageEntries.add(new Entry(i, (float) indexedWage));
                     break;

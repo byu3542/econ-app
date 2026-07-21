@@ -154,9 +154,7 @@ public class GdpFragment extends Fragment {
             gdpRows = EconomicViewModel.filterBySeries(data, data.get(0).getSeries());
         if (gdpRows.isEmpty()) return;
 
-        List<EconomicDataPoint> chartRows = new ArrayList<>();
-        for (EconomicDataPoint dp : gdpRows)
-            if (dp.getDate().compareTo("2022-01-01") >= 0) chartRows.add(dp);
+        List<EconomicDataPoint> chartRows = EconomicViewModel.filterByTimeframe(requireContext(), gdpRows);
         if (chartRows.isEmpty()) chartRows = gdpRows;
 
         List<Entry> entries = new ArrayList<>();

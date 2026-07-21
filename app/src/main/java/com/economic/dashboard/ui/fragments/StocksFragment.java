@@ -180,6 +180,7 @@ public class StocksFragment extends Fragment {
         if (data == null) return;
         List<EconomicDataPoint> rows = EconomicViewModel.filterBySeries(data, seriesName);
         if (rows.isEmpty()) return;
+        rows = EconomicViewModel.filterByTimeframe(requireContext(), rows);
         List<Entry> entries = new ArrayList<>();
         final List<String> dateLabels = new ArrayList<>();
         for (int i = 0; i < rows.size(); i++) {

@@ -31,14 +31,13 @@ import com.github.mikephil.charting.formatter.ValueFormatter;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
 /**
  * Housing tab — Housing Starts (HOUST), Existing Home Sales (EXHOSLUSM495S),
- * MBS holdings, and 30-Year Mortgage Rate.
+ * 30-Year Mortgage Rate, 10Y Treasury rate, mortgage-treasury spread, and MBS holdings chart.
  */
 public class HousingFragment extends Fragment {
 
@@ -54,11 +53,11 @@ public class HousingFragment extends Fragment {
     private TextView tvSalesValue, tvSalesStatus;
     private View viewSalesDot;
 
-    // MBS Badge cards
-    private CardView badgeMortgage, badgeBankMbs, badgeFedMbs;
-    private TextView tvBadgeMortgageValue, tvBadgeBankMbsValue, tvBadgeFedMbsValue;
-    private TextView tvBadgeMortgageStatus, tvBadgeBankMbsStatus, tvBadgeFedMbsStatus;
-    private View viewBadgeMortgageDot, viewBadgeBankMbsDot, viewBadgeFedMbsDot;
+    // Rate badge cards
+    private CardView badgeMortgage, badge10Y, badgeSpread;
+    private TextView tvBadgeMortgageValue, tvBadge10YValue, tvBadgeSpreadValue;
+    private TextView tvBadgeMortgageStatus, tvBadge10YStatus, tvBadgeSpreadStatus;
+    private View viewBadgeMortgageDot, viewBadge10YDot, viewBadgeSpreadDot;
 
     // Swappable chart
     private LineChart chartSwappable;
@@ -70,6 +69,7 @@ public class HousingFragment extends Fragment {
     // State
     private String activeBadge = "mortgage";
     private List<EconomicDataPoint> currentMbsData;
+    private List<EconomicDataPoint> currentTreasuryData;
 
     @Nullable
     @Override
@@ -95,19 +95,19 @@ public class HousingFragment extends Fragment {
         tvSalesStatus       = binding.tvSalesStatus;
         viewSalesDot        = binding.viewSalesDot;
 
-        // MBS Badge cards
+        // Rate badge cards
         badgeMortgage         = binding.badgeMortgage;
-        badgeBankMbs          = binding.badgeBankMbs;
-        badgeFedMbs           = binding.badgeFedMbs;
+        badge10Y              = binding.badge10Y;
+        badgeSpread           = binding.badgeSpread;
         tvBadgeMortgageValue  = binding.tvBadgeMortgageValue;
-        tvBadgeBankMbsValue   = binding.tvBadgeBankMbsValue;
-        tvBadgeFedMbsValue    = binding.tvBadgeFedMbsValue;
+        tvBadge10YValue       = binding.tvBadge10YValue;
+        tvBadgeSpreadValue    = binding.tvBadgeSpreadValue;
         tvBadgeMortgageStatus = binding.tvBadgeMortgageStatus;
-        tvBadgeBankMbsStatus  = binding.tvBadgeBankMbsStatus;
-        tvBadgeFedMbsStatus   = binding.tvBadgeFedMbsStatus;
+        tvBadge10YStatus      = binding.tvBadge10YStatus;
+        tvBadgeSpreadStatus   = binding.tvBadgeSpreadStatus;
         viewBadgeMortgageDot  = binding.viewBadgeMortgageDot;
-        viewBadgeBankMbsDot   = binding.viewBadgeBankMbsDot;
-        viewBadgeFedMbsDot    = binding.viewBadgeFedMbsDot;
+        viewBadge10YDot       = binding.viewBadge10YDot;
+        viewBadgeSpreadDot    = binding.viewBadgeSpreadDot;
 
         // Swappable chart + title
         chartSwappable   = binding.chartSwappable;
@@ -129,14 +129,14 @@ public class HousingFragment extends Fragment {
             setActiveBadge("mortgage");
             buildSwappableChart();
         });
-        badgeBankMbs.setOnClickListener(v -> {
-            activeBadge = "bankMbs";
-            setActiveBadge("bankMbs");
+        badge10Y.setOnClickListener(v -> {
+            activeBadge = "tenYear";
+            setActiveBadge("tenYear");
             buildSwappableChart();
         });
-        badgeFedMbs.setOnClickListener(v -> {
-            activeBadge = "fedMbs";
-            setActiveBadge("fedMbs");
+        badgeSpread.setOnClickListener(v -> {
+            activeBadge = "spread";
+            setActiveBadge("spread");
             buildSwappableChart();
         });
 
@@ -228,9 +228,18 @@ public class HousingFragment extends Fragment {
         viewModel.getMbsMortgageData().observe(getViewLifecycleOwner(), mbsData -> {
             if (mbsData != null) {
                 currentMbsData = mbsData;
-                updateBadges(mbsData);
+                updateBadges();
                 buildSwappableChart();
                 buildMbsMortgageChart(mbsData);
+            }
+        });
+
+        // Observe Treasury yield data (10Y T-Rate badge + Spread badge + swappable chart)
+        viewModel.getTreasuryData().observe(getViewLifecycleOwner(), treasury -> {
+            if (treasury != null) {
+                currentTreasuryData = treasury;
+                updateBadges();
+                buildSwappableChart();
             }
         });
     }
@@ -280,68 +289,101 @@ public class HousingFragment extends Fragment {
         setDot(viewSalesDot, color);
     }
 
-    // ── MBS Badges ─────────────────────────────────────────────────────────────
+    // ── Rate Badges ── (10Y T-Rate + Spread pull from the Yields-tab treasury data)
 
-    private void updateBadges(List<EconomicDataPoint> mbsData) {
+    private void updateBadges() {
         // 30-Yr Mortgage Rate
-        List<EconomicDataPoint> mortgageRows = EconomicViewModel.filterBySeries(mbsData, "30-Yr Mortgage Rate");
-        if (!mortgageRows.isEmpty()) {
-            double val = mortgageRows.get(mortgageRows.size() - 1).getValue();
-            if (tvBadgeMortgageValue != null)
-                tvBadgeMortgageValue.setText(String.format(Locale.US, "%.2f%%", val));
-            String status; int color;
-            if (val < 4.0)       { status = "LOW";       color = Color.parseColor("#6FA97A"); }
-            else if (val < 5.5)  { status = "MODERATE";  color = Color.parseColor("#D98E4F"); }
-            else if (val < 7.0)  { status = "HIGH";      color = Color.parseColor("#C75B4E"); }
-            else                 { status = "VERY HIGH"; color = Color.parseColor("#8E3B32"); }
-            if (tvBadgeMortgageStatus != null) tvBadgeMortgageStatus.setText(status);
-            setDot(viewBadgeMortgageDot, color);
+        if (currentMbsData != null) {
+            List<EconomicDataPoint> mortgageRows = EconomicViewModel.filterBySeries(currentMbsData, "30-Yr Mortgage Rate");
+            if (!mortgageRows.isEmpty()) {
+                double val = mortgageRows.get(mortgageRows.size() - 1).getValue();
+                if (tvBadgeMortgageValue != null)
+                    tvBadgeMortgageValue.setText(String.format(Locale.US, "%.2f%%", val));
+                String status; int color;
+                if (val < 4.0)       { status = "LOW";       color = Color.parseColor("#6FA97A"); }
+                else if (val < 5.5)  { status = "MODERATE";  color = Color.parseColor("#D98E4F"); }
+                else if (val < 7.0)  { status = "HIGH";      color = Color.parseColor("#C75B4E"); }
+                else                 { status = "VERY HIGH"; color = Color.parseColor("#8E3B32"); }
+                if (tvBadgeMortgageStatus != null) tvBadgeMortgageStatus.setText(status);
+                setDot(viewBadgeMortgageDot, color);
+            }
         }
 
-        // Bank MBS Holdings (billions)
-        List<EconomicDataPoint> bankRows = EconomicViewModel.filterBySeries(mbsData, "Bank MBS Holdings");
-        if (!bankRows.isEmpty()) {
-            double val = bankRows.get(bankRows.size() - 1).getValue();
-            if (tvBadgeBankMbsValue != null)
-                tvBadgeBankMbsValue.setText(String.format(Locale.US, "$%.0fB", val));
-            String status; int color;
-            if (val < 2500)      { status = "DECLINING"; color = Color.parseColor("#D98E4F"); }
-            else if (val < 2800) { status = "STABLE";    color = Color.parseColor("#6FA97A"); }
-            else                 { status = "GROWING";   color = Color.parseColor("#5B8DB8"); }
-            if (tvBadgeBankMbsStatus != null) tvBadgeBankMbsStatus.setText(status);
-            setDot(viewBadgeBankMbsDot, color);
+        // 10Y Treasury Rate (same data source as the Markets / Yields tab)
+        if (currentTreasuryData != null) {
+            List<EconomicDataPoint> tenYearRows = EconomicViewModel.filterBySeries(currentTreasuryData, "10 Year");
+            if (!tenYearRows.isEmpty()) {
+                double val = tenYearRows.get(tenYearRows.size() - 1).getValue();
+                if (tvBadge10YValue != null)
+                    tvBadge10YValue.setText(String.format(Locale.US, "%.2f%%", val));
+                String status; int color;
+                if (val < 3.0)       { status = "LOW";       color = Color.parseColor("#6FA97A"); }
+                else if (val < 4.0)  { status = "MODERATE";  color = Color.parseColor("#D98E4F"); }
+                else if (val < 5.0)  { status = "HIGH";      color = Color.parseColor("#C75B4E"); }
+                else                 { status = "VERY HIGH"; color = Color.parseColor("#8E3B32"); }
+                if (tvBadge10YStatus != null) tvBadge10YStatus.setText(status);
+                setDot(viewBadge10YDot, color);
+            }
         }
 
-        // Fed MBS Holdings (millions → convert to billions for display)
-        List<EconomicDataPoint> fedRows = EconomicViewModel.filterBySeries(mbsData, "Fed MBS Holdings");
-        if (!fedRows.isEmpty()) {
-            double valMillions = fedRows.get(fedRows.size() - 1).getValue();
-            double valBillions = valMillions / 1000.0;
-            if (tvBadgeFedMbsValue != null)
-                tvBadgeFedMbsValue.setText(String.format(Locale.US, "$%.0fB", valBillions));
+        // Spread: 30-Yr Mortgage Rate minus 10Y Treasury (long-run norm ~1.7%)
+        List<EconomicDataPoint> spreadRows = computeSpreadRows();
+        if (!spreadRows.isEmpty()) {
+            double val = spreadRows.get(spreadRows.size() - 1).getValue();
+            if (tvBadgeSpreadValue != null)
+                tvBadgeSpreadValue.setText(String.format(Locale.US, "%.2f%%", val));
             String status; int color;
-            if (valBillions < 2300)      { status = "QT ACTIVE";  color = Color.parseColor("#D98E4F"); }
-            else if (valBillions < 2600) { status = "REDUCING";   color = Color.parseColor("#6FA97A"); }
-            else                         { status = "ELEVATED";   color = Color.parseColor("#5B8DB8"); }
-            if (tvBadgeFedMbsStatus != null) tvBadgeFedMbsStatus.setText(status);
-            setDot(viewBadgeFedMbsDot, color);
+            if (val < 1.5)       { status = "NARROW";    color = Color.parseColor("#5B8DB8"); }
+            else if (val < 2.2)  { status = "NORMAL";    color = Color.parseColor("#6FA97A"); }
+            else if (val < 2.8)  { status = "WIDE";      color = Color.parseColor("#D98E4F"); }
+            else                 { status = "VERY WIDE"; color = Color.parseColor("#C75B4E"); }
+            if (tvBadgeSpreadStatus != null) tvBadgeSpreadStatus.setText(status);
+            setDot(viewBadgeSpreadDot, color);
         }
+    }
+
+    /**
+     * Pairs each weekly 30-Yr mortgage print with the most recent daily 10Y
+     * Treasury close on or before that date and returns the spread series.
+     * Treasury data covers the current year, so the spread series is YTD only.
+     */
+    private List<EconomicDataPoint> computeSpreadRows() {
+        List<EconomicDataPoint> result = new ArrayList<>();
+        if (currentMbsData == null || currentTreasuryData == null) return result;
+        List<EconomicDataPoint> mortgageRows = EconomicViewModel.filterBySeries(currentMbsData, "30-Yr Mortgage Rate");
+        List<EconomicDataPoint> treasuryRows = EconomicViewModel.filterBySeries(currentTreasuryData, "10 Year");
+        if (mortgageRows.isEmpty() || treasuryRows.isEmpty()) return result;
+
+        int tIdx = 0;
+        EconomicDataPoint lastTreasury = null;
+        for (EconomicDataPoint m : mortgageRows) {
+            while (tIdx < treasuryRows.size()
+                    && treasuryRows.get(tIdx).getDate().compareTo(m.getDate()) <= 0) {
+                lastTreasury = treasuryRows.get(tIdx);
+                tIdx++;
+            }
+            if (lastTreasury != null) {
+                result.add(new EconomicDataPoint("Calculated", "Housing", "Mortgage-10Y Spread",
+                        m.getDate(), m.getValue() - lastTreasury.getValue(), "%"));
+            }
+        }
+        return result;
     }
 
     private void setActiveBadge(String which) {
         if (badgeMortgage != null)
             badgeMortgage.setForeground("mortgage".equals(which) ? makeActiveBorder() : null);
-        if (badgeBankMbs != null)
-            badgeBankMbs.setForeground("bankMbs".equals(which) ? makeActiveBorder() : null);
-        if (badgeFedMbs != null)
-            badgeFedMbs.setForeground("fedMbs".equals(which) ? makeActiveBorder() : null);
+        if (badge10Y != null)
+            badge10Y.setForeground("tenYear".equals(which) ? makeActiveBorder() : null);
+        if (badgeSpread != null)
+            badgeSpread.setForeground("spread".equals(which) ? makeActiveBorder() : null);
 
         // Update swappable chart title
         if (tvSwappableTitle != null) {
             switch (which) {
                 case "mortgage": tvSwappableTitle.setText("30-Year Mortgage Rate (%)"); break;
-                case "bankMbs":  tvSwappableTitle.setText("Bank MBS Holdings ($B)"); break;
-                case "fedMbs":   tvSwappableTitle.setText("Fed MBS Holdings ($B)"); break;
+                case "tenYear":  tvSwappableTitle.setText("10-Year Treasury Rate (%)"); break;
+                case "spread":   tvSwappableTitle.setText("Mortgage - 10Y Treasury Spread (%)"); break;
             }
         }
     }
@@ -406,37 +448,39 @@ public class HousingFragment extends Fragment {
     }
 
     private void buildSwappableChart() {
-        if (chartSwappable == null || currentMbsData == null) return;
+        if (chartSwappable == null) return;
 
-        String seriesName;
+        String seriesLabel;
         String lineColor;
-        boolean convertToB = false;
+        List<EconomicDataPoint> rows;
+        boolean twoDecimals = false;
 
         switch (activeBadge) {
-            case "bankMbs":
-                seriesName = "Bank MBS Holdings";
+            case "tenYear":
+                if (currentTreasuryData == null) return;
+                rows = EconomicViewModel.filterBySeries(currentTreasuryData, "10 Year");
+                seriesLabel = "10Y Treasury Rate";
                 lineColor = "#C9A84C";
                 break;
-            case "fedMbs":
-                seriesName = "Fed MBS Holdings";
+            case "spread":
+                rows = computeSpreadRows();
+                seriesLabel = "Mortgage-10Y Spread";
                 lineColor = "#BBBBBB";
-                convertToB = true; // Fed MBS in millions, display in billions
+                twoDecimals = true;
                 break;
             default: // mortgage
-                seriesName = "30-Yr Mortgage Rate";
+                if (currentMbsData == null) return;
+                rows = EconomicViewModel.filterBySeries(currentMbsData, "30-Yr Mortgage Rate");
+                seriesLabel = "30-Yr Mortgage Rate";
                 lineColor = "#E07060";
                 break;
         }
 
-        List<EconomicDataPoint> rows = EconomicViewModel.filterBySeries(currentMbsData, seriesName);
         if (rows.isEmpty()) return;
 
-        // Filter to last 5 years
+        // Standardized chart window (Settings -> Charts -> time range)
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
-        Calendar cal = Calendar.getInstance();
-        cal.add(Calendar.YEAR, -5);
-        String cutoff = sdf.format(cal.getTime());
-        rows = filterAfterDate(rows, cutoff);
+        rows = EconomicViewModel.filterByTimeframe(requireContext(), rows);
         if (rows.isEmpty()) return;
 
         List<Entry> entries = new ArrayList<>();
@@ -445,7 +489,6 @@ public class HousingFragment extends Fragment {
 
         for (int i = 0; i < rows.size(); i++) {
             double val = rows.get(i).getValue();
-            if (convertToB) val /= 1000.0;
             entries.add(new Entry(i, (float) val));
             try {
                 Date date = sdf.parse(rows.get(i).getDate());
@@ -462,17 +505,15 @@ public class HousingFragment extends Fragment {
             }
         });
 
-        // Configure left axis formatter based on active series
-        final boolean isMortgage = "mortgage".equals(activeBadge);
+        // All swappable series are percentages; the spread gets extra precision
+        final boolean useTwoDecimals = twoDecimals;
         chartSwappable.getAxisLeft().setValueFormatter(new ValueFormatter() {
             @Override public String getFormattedValue(float v) {
-                return isMortgage
-                        ? String.format(Locale.US, "%.1f%%", v)
-                        : String.format(Locale.US, "$%.0fB", v);
+                return String.format(Locale.US, useTwoDecimals ? "%.2f%%" : "%.1f%%", v);
             }
         });
 
-        LineDataSet ds = makeLineDataSet(entries, seriesName, lineColor, false);
+        LineDataSet ds = makeLineDataSet(entries, seriesLabel, lineColor, false);
         ds.setDrawCircles(false);
         ds.setDrawCircleHole(false);
         ds.setLineWidth(1.5f);
@@ -494,15 +535,12 @@ public class HousingFragment extends Fragment {
 
         if (bankRows.isEmpty() && fedRows.isEmpty() && mortgageRows.isEmpty()) return;
 
-        // Filter to last 5 years
+        // Standardized chart window (Settings -> Charts -> time range)
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
-        Calendar cal = Calendar.getInstance();
-        cal.add(Calendar.YEAR, -5);
-        String cutoff = sdf.format(cal.getTime());
 
-        bankRows     = filterAfterDate(bankRows, cutoff);
-        fedRows      = filterAfterDate(fedRows, cutoff);
-        mortgageRows = filterAfterDate(mortgageRows, cutoff);
+        bankRows     = EconomicViewModel.filterByTimeframe(requireContext(), bankRows);
+        fedRows      = EconomicViewModel.filterByTimeframe(requireContext(), fedRows);
+        mortgageRows = EconomicViewModel.filterByTimeframe(requireContext(), mortgageRows);
 
         // Build a unified date index from all three series
         List<String> allDates = new ArrayList<>();
@@ -575,15 +613,6 @@ public class HousingFragment extends Fragment {
 
         chartMbsMortgage.setData(new LineData(bankSet, fedSet, mortgageSet));
         chartMbsMortgage.invalidate();
-    }
-
-    /** Filters data points to those on or after the given cutoff date string. */
-    private List<EconomicDataPoint> filterAfterDate(List<EconomicDataPoint> rows, String cutoff) {
-        List<EconomicDataPoint> result = new ArrayList<>();
-        for (EconomicDataPoint p : rows) {
-            if (p.getDate().compareTo(cutoff) >= 0) result.add(p);
-        }
-        return result;
     }
 
     /** Builds chart Entry list by mapping data points onto a shared date index. */

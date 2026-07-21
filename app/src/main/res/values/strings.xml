@@ -68,6 +68,12 @@
 
     <!-- Settings sheet v2 -->
     <string name="chart_apply_note">Changes apply the next time a chart screen opens</string>
+    <string name="chart_timeframe">Default time range</string>
+    <string name="tf_3m">3M</string>
+    <string name="tf_6m">6M</string>
+    <string name="tf_1y">1Y</string>
+    <string name="tf_2y">2Y</string>
+    <string name="tf_5y">5Y</string>
     <string name="dec_one">1.2</string>
     <string name="dec_two">1.23</string>
     <string name="dec_three">1.234</string>

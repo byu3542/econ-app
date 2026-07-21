@@ -20,6 +20,7 @@ import com.economic.dashboard.R;
 import com.economic.dashboard.ui.MetricBottomSheet;
 import com.economic.dashboard.models.EconomicDataPoint;
 import com.economic.dashboard.ui.EconomicViewModel;
+import com.economic.dashboard.utils.SettingsManager;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.LimitLine;
 import com.github.mikephil.charting.components.XAxis;
@@ -230,7 +231,9 @@ public class InflationFragment extends Fragment {
         List<Entry> cpiEntries = new ArrayList<>();
         final List<String> dates = new ArrayList<>();
 
-        int pcStart = Math.max(12, pceRows.size()-24);
+        // Number of YoY months shown follows the standardized chart time range.
+        int months = SettingsManager.getChartTimeframeMonths(requireContext());
+        int pcStart = Math.max(12, pceRows.size()-months);
         for (int i = pcStart; i < pceRows.size(); i++) {
             double yoy = ((pceRows.get(i).getValue() - pceRows.get(i-12).getValue()) / pceRows.get(i-12).getValue()) * 100.0;
             pceEntries.add(new Entry(pceEntries.size(), (float) yoy));
@@ -238,7 +241,7 @@ public class InflationFragment extends Fragment {
             dates.add(d.length() >= 7 ? d.substring(5,7)+"/"+d.substring(2,4) : d);
         }
 
-        int ciStart = Math.max(12, cpiRows.size()-24);
+        int ciStart = Math.max(12, cpiRows.size()-months);
         for (int i = ciStart; i < cpiRows.size() && cpiEntries.size() < pceEntries.size(); i++) {
             double cYoy = ((cpiRows.get(i).getValue() - cpiRows.get(i-12).getValue()) / cpiRows.get(i-12).getValue()) * 100.0;
             cpiEntries.add(new Entry(cpiEntries.size(), (float) cYoy));
@@ -270,8 +273,12 @@ public class InflationFragment extends Fragment {
                 : new ArrayList<>();
         if (cpiRows.isEmpty() || wageRows.isEmpty()) return;
 
+        // Window the driving CPI series to the standardized chart time range;
+        // wage/PCE are matched by date, so trimming CPI drives the x-axis.
+        cpiRows = EconomicViewModel.filterByTimeframe(requireContext(), cpiRows);
+        if (cpiRows.isEmpty()) return;
         double cpiBase  = cpiRows.get(0).getValue();
-        double wageBase = wageRows.get(0).getValue();
+        double wageBase = -1.0; // set at the first wage point in the window
         double pceBase  = -1.0; // set at the first PCE point that lines up with a plotted CPI date
         List<Entry> cpiEntries  = new ArrayList<>();
         List<Entry> wageEntries = new ArrayList<>();
@@ -284,6 +291,7 @@ public class InflationFragment extends Fragment {
             dates.add(date.length() >= 7 ? date.substring(5,7)+"-"+date.substring(0,4) : date);
             for (EconomicDataPoint w : wageRows) {
                 if (w.getDate().equals(date)) {
+                    if (wageBase < 0) wageBase = w.getValue();
                     wageEntries.add(new Entry(i, (float)((w.getValue()/wageBase)*100.0))); break;
                 }
             }
