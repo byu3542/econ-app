@@ -28,6 +28,7 @@ import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.formatter.ValueFormatter;
+import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -119,6 +120,7 @@ public class InflationFragment extends Fragment {
             if (pce != null) {
                 updatePceCard(pce);
                 buildPceCpiChart(pce, viewModel.getCpiData().getValue());
+                tryBuildComparisonChart();
             }
         });
         viewModel.getCpiData().observe(getViewLifecycleOwner(), cpi -> {
@@ -258,16 +260,22 @@ public class InflationFragment extends Fragment {
     private void tryBuildComparisonChart() {
         List<EconomicDataPoint> cpiData  = viewModel.getCpiData().getValue();
         List<EconomicDataPoint> wageData = viewModel.getWageData().getValue();
+        List<EconomicDataPoint> pceData  = viewModel.getPceData().getValue();
         if (cpiData == null || wageData == null || chartComparison == null) return;
 
         List<EconomicDataPoint> cpiRows  = EconomicViewModel.filterBySeries(cpiData,  "CPI-U All Items");
         List<EconomicDataPoint> wageRows = EconomicViewModel.filterBySeries(wageData, "Average Hourly Earnings - Private");
+        List<EconomicDataPoint> pceRows  = pceData != null
+                ? EconomicViewModel.filterBySeries(pceData, "PCE Price Index")
+                : new ArrayList<>();
         if (cpiRows.isEmpty() || wageRows.isEmpty()) return;
 
         double cpiBase  = cpiRows.get(0).getValue();
         double wageBase = wageRows.get(0).getValue();
+        double pceBase  = -1.0; // set at the first PCE point that lines up with a plotted CPI date
         List<Entry> cpiEntries  = new ArrayList<>();
         List<Entry> wageEntries = new ArrayList<>();
+        List<Entry> pceEntries  = new ArrayList<>();
         final List<String> dates = new ArrayList<>();
 
         for (int i = 0; i < cpiRows.size(); i++) {
@@ -279,6 +287,12 @@ public class InflationFragment extends Fragment {
                     wageEntries.add(new Entry(i, (float)((w.getValue()/wageBase)*100.0))); break;
                 }
             }
+            for (EconomicDataPoint p : pceRows) {
+                if (p.getDate().equals(date)) {
+                    if (pceBase < 0) pceBase = p.getValue();
+                    pceEntries.add(new Entry(i, (float)((p.getValue()/pceBase)*100.0))); break;
+                }
+            }
         }
 
         chartComparison.getXAxis().setValueFormatter(new ValueFormatter() {
@@ -287,7 +301,11 @@ public class InflationFragment extends Fragment {
             }
         });
 
-        chartComparison.setData(new LineData(makeLineDataSet(cpiEntries, "Consumer Prices (CPI)", "#fbbc04"), makeLineDataSet(wageEntries, "Average Wages", "#8A6E9E")));
+        List<ILineDataSet> sets = new ArrayList<>();
+        sets.add(makeLineDataSet(cpiEntries, "CPI-U", "#fbbc04"));
+        if (!pceEntries.isEmpty()) sets.add(makeLineDataSet(pceEntries, "PCE", "#4285F4"));
+        sets.add(makeLineDataSet(wageEntries, "Average Wages", "#8A6E9E"));
+        chartComparison.setData(new LineData(sets));
         chartComparison.invalidate();
     }
 
