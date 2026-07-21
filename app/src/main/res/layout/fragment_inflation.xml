@@ -153,7 +153,11 @@
                         <View android:layout_width="24dp" android:layout_height="3dp" android:background="@color/google_amber"
                             android:layout_gravity="center_vertical" android:layout_marginEnd="@dimen/space_xs" />
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:text="Consumer Prices (CPI)" android:textColor="@color/slate_soft" android:textSize="@dimen/text_caption" android:layout_marginEnd="@dimen/space_md" />
+                            android:text="CPI-U" android:textColor="@color/slate_soft" android:textSize="@dimen/text_caption" android:layout_marginEnd="@dimen/space_md" />
+                        <View android:layout_width="24dp" android:layout_height="3dp" android:background="@color/google_blue"
+                            android:layout_gravity="center_vertical" android:layout_marginEnd="@dimen/space_xs" />
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="PCE" android:textColor="@color/slate_soft" android:textSize="@dimen/text_caption" android:layout_marginEnd="@dimen/space_md" />
                         <View android:layout_width="24dp" android:layout_height="3dp" android:background="@color/accent_purple"
                             android:layout_gravity="center_vertical" android:layout_marginEnd="@dimen/space_xs" />
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
