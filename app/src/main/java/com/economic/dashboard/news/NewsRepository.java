@@ -34,8 +34,17 @@ public class NewsRepository {
     private List<NewsItem> cachedItems    = null;
     private long           cacheTimestamp = 0;
 
+    /** Notified after every successful fetch so the UI can refresh the News
+        unread badge (TICKET-17). Runs on the fetch's background thread — the
+        listener is responsible for hopping to the main thread. */
+    private volatile Runnable onFetchComplete = null;
+
     public static void init(Context context) {
         appContext = context.getApplicationContext();
+    }
+
+    public void setOnFetchCompleteListener(Runnable r) {
+        this.onFetchComplete = r;
     }
 
     public static synchronized NewsRepository getInstance() {
@@ -138,7 +147,27 @@ public class NewsRepository {
 
         cachedItems    = new ArrayList<>(capped);
         cacheTimestamp = System.currentTimeMillis();
+        Runnable cb = onFetchComplete;
+        if (cb != null) cb.run(); // let the UI recompute the unread badge
         return cachedItems;
+    }
+
+    /** Newest item's publish time (epoch millis), or 0 if the cache is cold. */
+    public synchronized long getNewestPubDate() {
+        if (cachedItems == null || cachedItems.isEmpty()) return 0L;
+        long newest = 0L;
+        for (NewsItem item : cachedItems)
+            if (item.pubDateMillis > newest) newest = item.pubDateMillis;
+        return newest;
+    }
+
+    /** How many cached items are newer than {@code sinceMillis} (for the badge). */
+    public synchronized int getUnreadCount(long sinceMillis) {
+        if (cachedItems == null) return 0;
+        int n = 0;
+        for (NewsItem item : cachedItems)
+            if (item.pubDateMillis > sinceMillis) n++;
+        return n;
     }
 
     /**

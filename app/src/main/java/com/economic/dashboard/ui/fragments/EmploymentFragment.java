@@ -19,6 +19,7 @@ import androidx.lifecycle.ViewModelProvider;
 import com.economic.dashboard.databinding.FragmentEmploymentBinding;
 import com.economic.dashboard.models.EconomicDataPoint;
 import com.economic.dashboard.ui.EconomicViewModel;
+import com.economic.dashboard.utils.NumberFormatUtil;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.LimitLine;
 import com.github.mikephil.charting.components.XAxis;
@@ -35,6 +36,7 @@ import java.util.Locale;
 public class EmploymentFragment extends Fragment {
 
     private FragmentEmploymentBinding binding;
+    private com.economic.dashboard.ui.views.SkeletonController skeleton;
 
     private EconomicViewModel viewModel;
     private LineChart swappableChart;
@@ -54,7 +56,8 @@ public class EmploymentFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = FragmentEmploymentBinding.inflate(inflater, container, false);
-        return binding.getRoot();
+        skeleton = com.economic.dashboard.ui.views.SkeletonController.wrap(binding.getRoot());
+        return skeleton.getRoot();
     }
 
     @Override
@@ -62,13 +65,35 @@ public class EmploymentFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         viewModel = new ViewModelProvider(requireActivity()).get(EconomicViewModel.class);
 
+        // TICKET-18: per-screen retry chip for this screen's series
+        android.widget.TextView retryChip = view.findViewById(com.economic.dashboard.R.id.tvRetry);
+        final String[] retryKeys = { EconomicViewModel.CACHE_EMPLOYMENT };
+        viewModel.getFailedSeries().observe(getViewLifecycleOwner(), failed -> {
+            if (retryChip == null) return;
+            String hit = null;
+            if (failed != null) for (String k : retryKeys) if (failed.contains(k)) { hit = k; break; }
+            if (hit != null) {
+                final String key = hit;
+                retryChip.setOnClickListener(x -> viewModel.retrySeries(key));
+                retryChip.setVisibility(View.VISIBLE);
+            } else {
+                retryChip.setVisibility(View.GONE);
+            }
+        });
+
         swappableChart = binding.swappableChart;
         com.economic.dashboard.analyst.AskAnalyst.attachChartExplain(
                 swappableChart, requireActivity(), "U.S. employment data (unemployment rate and related labor series)");
         tvChartTitle = binding.tvChartTitle;
 
         styleChart(swappableChart);
+        com.economic.dashboard.utils.ChartHelper.declutterDark(swappableChart);
+        com.economic.dashboard.utils.ChartHelper.attachCrosshair(swappableChart); // TICKET-23
         addEmploymentLimitLines(swappableChart);
+
+        // TICKET-11: inline range switcher redraws the active labor series.
+        android.widget.LinearLayout tfSel = view.findViewById(com.economic.dashboard.R.id.timeframeSelector);
+        com.economic.dashboard.utils.TimeframeSelector.attach(tfSel, "employment", months -> buildSwappableChart());
 
         swappableChart.getAxisLeft().setValueFormatter(new ValueFormatter() {
             @Override public String getFormattedValue(float value) {
@@ -107,6 +132,7 @@ public class EmploymentFragment extends Fragment {
                 calculateUnemploymentStatus(data);
                 calculateLaborParticipationStatus(data);
                 buildSwappableChart();
+                if (skeleton != null) skeleton.reveal();
             }
         });
     }
@@ -150,8 +176,9 @@ public class EmploymentFragment extends Fragment {
         for (int i = startIndex; i < rows.size(); i++) low = Math.min(low, rows.get(i).getValue());
         double riseFromLow = currentRate - low;
 
-        tvUnempValue.setText(String.format(Locale.US, "%.1f%%", currentRate));
-        tvUnempLowInfo.setText(String.format(Locale.US, "12-month low: %.1f%% (Rise: +%.1f%%)", low, riseFromLow));
+        tvUnempValue.setText(NumberFormatUtil.percent(currentRate, 1)); // TICKET-19
+        tvUnempLowInfo.setText("12-month low: " + NumberFormatUtil.percent(low, 1)
+                + " (Rise: " + NumberFormatUtil.signedPercent(riseFromLow, 1) + ")");
 
         String status; int dotColor;
         if (currentRate > 7.0) { status = "RECESSION TERRITORY"; dotColor = Color.parseColor("#C75B4E"); }
@@ -172,7 +199,7 @@ public class EmploymentFragment extends Fragment {
         List<EconomicDataPoint> rows = EconomicViewModel.filterBySeries(data, "Labor Force Participation Rate");
         if (rows.isEmpty()) return;
         double currentRate = rows.get(rows.size()-1).getValue();
-        tvLaborValue.setText(String.format(Locale.US, "%.1f%%", currentRate));
+        tvLaborValue.setText(NumberFormatUtil.percent(currentRate, 1)); // TICKET-19
         String status; int dotColor;
         if (currentRate >= 63.3) { status = "HEALTHY"; dotColor = Color.parseColor("#6FA97A"); }
         else if (currentRate >= 62.0) { status = "DECLINING"; dotColor = Color.parseColor("#D98E4F"); }
@@ -203,7 +230,7 @@ public class EmploymentFragment extends Fragment {
     private void buildChart(List<EconomicDataPoint> data, String series, LineChart chart, String hexColor) {
         List<EconomicDataPoint> rows = EconomicViewModel.filterBySeries(data, series);
         if (rows.isEmpty()) return;
-        rows = EconomicViewModel.filterByTimeframe(requireContext(), rows);
+        rows = EconomicViewModel.filterByTimeframe(requireContext(), rows, "employment");
         List<Entry> entries = new ArrayList<>();
         final List<String> dates = new ArrayList<>();
         for (int i = 0; i < rows.size(); i++) {

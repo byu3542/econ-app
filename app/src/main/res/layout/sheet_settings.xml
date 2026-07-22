@@ -64,6 +64,17 @@
                         style="@style/SettingsSegmentButton"
                         android:text="@string/theme_system"/>
                 </com.google.android.material.button.MaterialButtonToggleGroup>
+
+                <LinearLayout style="@style/SettingsRow">
+                    <LinearLayout style="@style/SettingsRowText">
+                        <TextView style="@style/SettingsRowTitle" android:text="@string/colorblind_title"/>
+                        <TextView style="@style/SettingsRowSub" android:text="@string/colorblind_sub"/>
+                    </LinearLayout>
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchColorblind"
+                        style="@style/SettingsSwitch"
+                        android:contentDescription="@string/colorblind_title"/>
+                </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 

@@ -19,6 +19,8 @@ import androidx.lifecycle.ViewModelProvider;
 import com.economic.dashboard.databinding.FragmentSpreadsBinding;
 import com.economic.dashboard.models.EconomicDataPoint;
 import com.economic.dashboard.ui.EconomicViewModel;
+import com.economic.dashboard.utils.ChartHelper;
+import com.economic.dashboard.utils.NumberFormatUtil;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.LimitLine;
 import com.github.mikephil.charting.components.XAxis;
@@ -35,6 +37,7 @@ import java.util.Locale;
 public class SpreadsFragment extends Fragment {
 
     private FragmentSpreadsBinding binding;
+    private com.economic.dashboard.ui.views.SkeletonController skeleton;
 
     private EconomicViewModel viewModel;
     private LineChart swappableChart;
@@ -50,7 +53,8 @@ public class SpreadsFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = FragmentSpreadsBinding.inflate(inflater, container, false);
-        return binding.getRoot();
+        skeleton = com.economic.dashboard.ui.views.SkeletonController.wrap(binding.getRoot());
+        return skeleton.getRoot();
     }
 
     @Override
@@ -58,15 +62,37 @@ public class SpreadsFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         viewModel = new ViewModelProvider(requireActivity()).get(EconomicViewModel.class);
 
+        // TICKET-18: per-screen retry chip for this screen's series
+        android.widget.TextView retryChip = view.findViewById(com.economic.dashboard.R.id.tvRetry);
+        final String[] retryKeys = { EconomicViewModel.CACHE_TREASURY };
+        viewModel.getFailedSeries().observe(getViewLifecycleOwner(), failed -> {
+            if (retryChip == null) return;
+            String hit = null;
+            if (failed != null) for (String k : retryKeys) if (failed.contains(k)) { hit = k; break; }
+            if (hit != null) {
+                final String key = hit;
+                retryChip.setOnClickListener(x -> viewModel.retrySeries(key));
+                retryChip.setVisibility(View.VISIBLE);
+            } else {
+                retryChip.setVisibility(View.GONE);
+            }
+        });
+
         swappableChart = binding.swappableChart;
         com.economic.dashboard.analyst.AskAnalyst.attachChartExplain(
                 swappableChart, requireActivity(), "Treasury yield spreads (10Y-2Y and 10Y-3M) over time");
         tvChartTitle = binding.tvChartTitle;
         styleChart(swappableChart);
+        com.economic.dashboard.utils.ChartHelper.declutterDark(swappableChart);
+        ChartHelper.attachCrosshair(swappableChart); // TICKET-23
         addSpreadLimitLines(swappableChart);
         swappableChart.getAxisLeft().setValueFormatter(new ValueFormatter() {
             @Override public String getFormattedValue(float value) { return String.format(Locale.US, "%.1f%%", value); }
         });
+
+        // TICKET-11: inline range switcher redraws the active spread series.
+        android.widget.LinearLayout tfSel = view.findViewById(com.economic.dashboard.R.id.timeframeSelector);
+        com.economic.dashboard.utils.TimeframeSelector.attach(tfSel, "spreads", months -> buildSwappableChart());
 
         cardSpreadYoY = binding.cardSpreadYoY;
         com.economic.dashboard.analyst.AskAnalyst.wireCardLongPress(
@@ -85,8 +111,8 @@ public class SpreadsFragment extends Fragment {
         cardSpread3M.setOnClickListener(v -> { activeCard = "3m"; setActiveCard("3m"); buildSwappableChart(); });
         setActiveCard("yoy");
 
-        viewModel.getTreasuryData().observe(getViewLifecycleOwner(), data -> { if (data != null) updateSpreadIndicators(data); });
-        viewModel.getCalculatedSpreadData().observe(getViewLifecycleOwner(), data -> { if (data != null) { currentYoyData = data; buildSwappableChart(); } });
+        viewModel.getTreasuryData().observe(getViewLifecycleOwner(), data -> { if (data != null) { updateSpreadIndicators(data); if (skeleton != null) skeleton.reveal(); } });
+        viewModel.getCalculatedSpreadData().observe(getViewLifecycleOwner(), data -> { if (data != null) { currentYoyData = data; buildSwappableChart(); if (skeleton != null) skeleton.reveal(); } });
         viewModel.getCalculatedSpread3MData().observe(getViewLifecycleOwner(), data -> { if (data != null) { current3MData = data; buildSwappableChart(); } });
     }
 
@@ -101,7 +127,7 @@ public class SpreadsFragment extends Fragment {
         EconomicDataPoint shortRate = EconomicViewModel.getLatest(data, shortKey);
         if (longRate != null && shortRate != null) {
             double spread = longRate.getValue() - shortRate.getValue();
-            valTv.setText(String.format(Locale.US, "%.2f%%", spread));
+            valTv.setText(NumberFormatUtil.percent(spread)); // TICKET-19
             int dotColor; String status;
             if (is3M) {
                 if (spread >= 3.50) { dotColor = Color.parseColor("#8A6E9E"); status = "STEEP"; }
@@ -148,7 +174,7 @@ public class SpreadsFragment extends Fragment {
         if ("3m".equals(activeCard)) { data = current3MData; label = "10Y-3M Spread (%)"; lineColor = "#E91E63"; }
         else { data = currentYoyData; label = "10Y-2Y Spread (%)"; lineColor = "#D98E4F"; }
         if (data == null || data.isEmpty()) return;
-        data = EconomicViewModel.filterByTimeframe(requireContext(), data);
+        data = EconomicViewModel.filterByTimeframe(requireContext(), data, "spreads");
         List<Entry> entries = new ArrayList<>();
         final List<String> dateLabels = new ArrayList<>();
         for (int i = 0; i < data.size(); i++) {

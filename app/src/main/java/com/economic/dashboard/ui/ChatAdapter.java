@@ -118,6 +118,11 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
     private final OnAnalystActionListener actionListener;
     private Markwon markwon;
 
+    /** TICKET-12 (Peak): analyst insights we've already played the reveal for,
+     *  so each insight animates in exactly once (WeakHashMap avoids leaks). */
+    private final java.util.Set<ChatMessage> revealed =
+            java.util.Collections.newSetFromMap(new java.util.WeakHashMap<>());
+
     public ChatAdapter(OnRetryListener retryListener, OnAnalystActionListener actionListener) {
         this.retryListener = retryListener;
         this.actionListener = actionListener;
@@ -395,6 +400,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
                     holder.tvMessage.setTextIsSelectable(false);
                     holder.tvMessage.setTextIsSelectable(true);
                     attachAskAiSelection(holder.tvMessage);
+                    maybeRevealInsight(holder, m);
                 }
             }
         }
@@ -412,6 +418,29 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
         holder.llBubbleContainer.setLayoutParams(bubbleParams);
         holder.tvSenderLabel.setLayoutParams(labelParams);
         holder.tvTimestamp.setLayoutParams(timeParams);
+    }
+
+    /**
+     * TICKET-12 (Peak): plays a subtle rise-and-fade the first time an analyst
+     * insight is shown, so the reply lands as a clear visual "peak" rather than
+     * appearing as a flat block. Runs once per message.
+     */
+    private void maybeRevealInsight(ViewHolder holder, ChatMessage m) {
+        if (m == null || revealed.contains(m)) return;
+        revealed.add(m);
+        View bubble = holder.llBubbleContainer;
+        // TICKET-28: respect "reduce motion" — show the insight instantly.
+        if (!com.economic.dashboard.utils.MotionUtil.animationsEnabled(bubble.getContext())) {
+            bubble.setAlpha(1f);
+            bubble.setTranslationY(0f);
+            return;
+        }
+        float dy = 12f * bubble.getResources().getDisplayMetrics().density;
+        bubble.setAlpha(0f);
+        bubble.setTranslationY(dy);
+        bubble.animate().alpha(1f).translationY(0f).setDuration(320)
+                .setInterpolator(new android.view.animation.DecelerateInterpolator())
+                .start();
     }
 
     /** Adds an "Ask AI" item to the text-selection toolbar of analyst bubbles. */

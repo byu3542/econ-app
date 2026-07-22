@@ -19,6 +19,8 @@ import androidx.lifecycle.ViewModelProvider;
 import com.economic.dashboard.databinding.FragmentStocksBinding;
 import com.economic.dashboard.models.EconomicDataPoint;
 import com.economic.dashboard.ui.EconomicViewModel;
+import com.economic.dashboard.utils.ChartHelper;
+import com.economic.dashboard.utils.NumberFormatUtil;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.LimitLine;
 import com.github.mikephil.charting.components.XAxis;
@@ -36,6 +38,7 @@ public class StocksFragment extends Fragment {
 
     private EconomicViewModel viewModel;
     private FragmentStocksBinding binding;
+    private com.economic.dashboard.ui.views.SkeletonController skeleton;
     private CardView cardSp500, cardNasdaq, cardVix;
     private TextView tvSp500Value, tvSp500Status, tvNasdaqValue, tvNasdaqStatus, tvVixValue, tvVixStatus;
     private View viewSp500Dot, viewNasdaqDot, viewVixDot;
@@ -50,13 +53,30 @@ public class StocksFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = FragmentStocksBinding.inflate(inflater, container, false);
-        return binding.getRoot();
+        skeleton = com.economic.dashboard.ui.views.SkeletonController.wrap(binding.getRoot());
+        return skeleton.getRoot();
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         viewModel = new ViewModelProvider(requireActivity()).get(EconomicViewModel.class);
+
+        // TICKET-18: per-screen retry chip for this screen's series
+        android.widget.TextView retryChip = view.findViewById(com.economic.dashboard.R.id.tvRetry);
+        final String[] retryKeys = { EconomicViewModel.KEY_SP500, EconomicViewModel.KEY_NASDAQ, EconomicViewModel.CACHE_VIX };
+        viewModel.getFailedSeries().observe(getViewLifecycleOwner(), failed -> {
+            if (retryChip == null) return;
+            String hit = null;
+            if (failed != null) for (String k : retryKeys) if (failed.contains(k)) { hit = k; break; }
+            if (hit != null) {
+                final String key = hit;
+                retryChip.setOnClickListener(x -> viewModel.retrySeries(key));
+                retryChip.setVisibility(View.VISIBLE);
+            } else {
+                retryChip.setVisibility(View.GONE);
+            }
+        });
 
         cardSp500 = binding.cardSp500;
         com.economic.dashboard.analyst.AskAnalyst.wireCardLongPress(
@@ -82,7 +102,13 @@ public class StocksFragment extends Fragment {
         tvChartTitle = binding.tvChartTitle;
 
         styleChart(swappableChart);
+        com.economic.dashboard.utils.ChartHelper.declutterDark(swappableChart);
+        ChartHelper.attachCrosshair(swappableChart); // TICKET-23
         addVixBenchmarks(swappableChart);
+
+        // TICKET-11: inline range switcher redraws the active index/series.
+        android.widget.LinearLayout tfSel = view.findViewById(com.economic.dashboard.R.id.timeframeSelector);
+        com.economic.dashboard.utils.TimeframeSelector.attach(tfSel, "stocks", months -> buildSwappableChart());
 
         cardSp500.setOnClickListener(v -> { activeCard = "sp500"; setActiveCard("sp500"); buildSwappableChart(); });
         cardNasdaq.setOnClickListener(v -> { activeCard = "nasdaq"; setActiveCard("nasdaq"); buildSwappableChart(); });
@@ -91,13 +117,13 @@ public class StocksFragment extends Fragment {
         setActiveCard("sp500");
 
         viewModel.getSp500Data().observe(getViewLifecycleOwner(), data -> {
-            if (data != null) { currentSp500Data = data; updateSp500Card(data); buildSwappableChart(); }
+            if (data != null) { currentSp500Data = data; updateSp500Card(data); buildSwappableChart(); if (skeleton != null) skeleton.reveal(); }
         });
         viewModel.getNasdaqData().observe(getViewLifecycleOwner(), data -> {
-            if (data != null) { currentNasdaqData = data; updateNasdaqCard(data); buildSwappableChart(); }
+            if (data != null) { currentNasdaqData = data; updateNasdaqCard(data); buildSwappableChart(); if (skeleton != null) skeleton.reveal(); }
         });
         viewModel.getVixData().observe(getViewLifecycleOwner(), data -> {
-            if (data != null) { currentVixData = data; updateVixCard(data); buildSwappableChart(); }
+            if (data != null) { currentVixData = data; updateVixCard(data); buildSwappableChart(); if (skeleton != null) skeleton.reveal(); }
         });
     }
 
@@ -131,7 +157,7 @@ public class StocksFragment extends Fragment {
         List<EconomicDataPoint> rows = EconomicViewModel.filterBySeries(data, "VIX Volatility Index");
         if (rows.isEmpty()) return;
         double latest = rows.get(rows.size() - 1).getValue();
-        tvVixValue.setText(String.format(Locale.US, "%.1f", latest));
+        tvVixValue.setText(NumberFormatUtil.indexPoints(latest, 1)); // TICKET-19
         String status; int color;
         if (latest < 12) { status = "LOW"; color = Color.parseColor("#6FA97A"); }
         else if (latest < 20) { status = "NORMAL"; color = Color.parseColor("#5B8DB8"); }
@@ -180,7 +206,7 @@ public class StocksFragment extends Fragment {
         if (data == null) return;
         List<EconomicDataPoint> rows = EconomicViewModel.filterBySeries(data, seriesName);
         if (rows.isEmpty()) return;
-        rows = EconomicViewModel.filterByTimeframe(requireContext(), rows);
+        rows = EconomicViewModel.filterByTimeframe(requireContext(), rows, "stocks");
         List<Entry> entries = new ArrayList<>();
         final List<String> dateLabels = new ArrayList<>();
         for (int i = 0; i < rows.size(); i++) {
@@ -236,7 +262,9 @@ public class StocksFragment extends Fragment {
     }
 
     private String formatValueWithK(double value) {
-        return value >= 10000 ? String.format(Locale.US, "%.0fK", value/1000) : String.format(Locale.US, "%.0f", value);
+        // TICKET-19: route index levels through NumberFormatUtil for thousands
+        // separators consistent with the rest of the app (e.g. "5,900").
+        return NumberFormatUtil.number(value, 0);
     }
 
     @Override

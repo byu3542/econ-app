@@ -19,6 +19,7 @@ import androidx.lifecycle.ViewModelProvider;
 import com.economic.dashboard.databinding.FragmentHousingBinding;
 import com.economic.dashboard.models.EconomicDataPoint;
 import com.economic.dashboard.ui.EconomicViewModel;
+import com.economic.dashboard.utils.NumberFormatUtil;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.components.XAxis;
@@ -42,6 +43,7 @@ import java.util.Locale;
 public class HousingFragment extends Fragment {
 
     private FragmentHousingBinding binding;
+    private com.economic.dashboard.ui.views.SkeletonController skeleton;
 
     private EconomicViewModel viewModel;
 
@@ -77,13 +79,30 @@ public class HousingFragment extends Fragment {
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
         binding = FragmentHousingBinding.inflate(inflater, container, false);
-        return binding.getRoot();
+        skeleton = com.economic.dashboard.ui.views.SkeletonController.wrap(binding.getRoot());
+        return skeleton.getRoot();
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         viewModel = new ViewModelProvider(requireActivity()).get(EconomicViewModel.class);
+
+        // TICKET-18: per-screen retry chip for this screen's series
+        android.widget.TextView retryChip = view.findViewById(com.economic.dashboard.R.id.tvRetry);
+        final String[] retryKeys = { EconomicViewModel.CACHE_MBS, EconomicViewModel.CACHE_TREASURY, EconomicViewModel.KEY_HOUSING };
+        viewModel.getFailedSeries().observe(getViewLifecycleOwner(), failed -> {
+            if (retryChip == null) return;
+            String hit = null;
+            if (failed != null) for (String k : retryKeys) if (failed.contains(k)) { hit = k; break; }
+            if (hit != null) {
+                final String key = hit;
+                retryChip.setOnClickListener(x -> viewModel.retrySeries(key));
+                retryChip.setVisibility(View.VISIBLE);
+            } else {
+                retryChip.setVisibility(View.GONE);
+            }
+        });
 
         // Housing Starts badge
         tvStartsValue       = binding.tvStartsValue;
@@ -122,6 +141,15 @@ public class HousingFragment extends Fragment {
 
         // Style swappable chart (dark theme)
         styleSwappableChart();
+        com.economic.dashboard.utils.ChartHelper.declutterDark(chartSwappable);
+        com.economic.dashboard.utils.ChartHelper.attachCrosshair(chartSwappable); // TICKET-23
+
+        // TICKET-11: one inline range switcher drives both Housing charts.
+        android.widget.LinearLayout tfSel = view.findViewById(com.economic.dashboard.R.id.timeframeSelector);
+        com.economic.dashboard.utils.TimeframeSelector.attach(tfSel, "housing", months -> {
+            buildSwappableChart();
+            if (currentMbsData != null) buildMbsMortgageChart(currentMbsData);
+        });
 
         // Badge tap listeners
         badgeMortgage.setOnClickListener(v -> {
@@ -217,10 +245,14 @@ public class HousingFragment extends Fragment {
         mbsLegend.setYOffset(5f);
 
         // Observe housing data (metric cards only)
+        com.economic.dashboard.utils.ChartHelper.declutterDark(chartMbsMortgage);
+        com.economic.dashboard.utils.ChartHelper.attachCrosshair(chartMbsMortgage); // TICKET-23
+
         viewModel.getHousingData().observe(getViewLifecycleOwner(), housing -> {
             if (housing != null) {
                 updateStartsCard(housing);
                 updateSalesCard(housing);
+                if (skeleton != null) skeleton.reveal();
             }
         });
 
@@ -231,6 +263,7 @@ public class HousingFragment extends Fragment {
                 updateBadges();
                 buildSwappableChart();
                 buildMbsMortgageChart(mbsData);
+                if (skeleton != null) skeleton.reveal();
             }
         });
 
@@ -252,7 +285,7 @@ public class HousingFragment extends Fragment {
 
         double latest = rows.get(rows.size() - 1).getValue();
         if (tvStartsValue != null)
-            tvStartsValue.setText(String.format(Locale.US, "%.0fK", latest));
+            tvStartsValue.setText(NumberFormatUtil.number(latest, 0) + "K"); // TICKET-19
 
         // Thresholds in thousands of units (annualized monthly rate)
         String status; int color;
@@ -275,7 +308,7 @@ public class HousingFragment extends Fragment {
         double latest = rows.get(rows.size() - 1).getValue();
         // EXHOSLUSM495S returns values in THOUSANDS of units (SAAR), e.g. 3900 = 3.9M
         if (tvSalesValue != null)
-            tvSalesValue.setText(String.format(Locale.US, "%.2fM", latest / 1_000.0));
+            tvSalesValue.setText(NumberFormatUtil.number(latest / 1_000.0, 2) + "M"); // TICKET-19
 
         // Thresholds in thousands of units (matching FRED units)
         String status; int color;
@@ -298,7 +331,7 @@ public class HousingFragment extends Fragment {
             if (!mortgageRows.isEmpty()) {
                 double val = mortgageRows.get(mortgageRows.size() - 1).getValue();
                 if (tvBadgeMortgageValue != null)
-                    tvBadgeMortgageValue.setText(String.format(Locale.US, "%.2f%%", val));
+                    tvBadgeMortgageValue.setText(NumberFormatUtil.percent(val)); // TICKET-19
                 String status; int color;
                 if (val < 4.0)       { status = "LOW";       color = Color.parseColor("#6FA97A"); }
                 else if (val < 5.5)  { status = "MODERATE";  color = Color.parseColor("#D98E4F"); }
@@ -315,7 +348,7 @@ public class HousingFragment extends Fragment {
             if (!tenYearRows.isEmpty()) {
                 double val = tenYearRows.get(tenYearRows.size() - 1).getValue();
                 if (tvBadge10YValue != null)
-                    tvBadge10YValue.setText(String.format(Locale.US, "%.2f%%", val));
+                    tvBadge10YValue.setText(NumberFormatUtil.percent(val)); // TICKET-19
                 String status; int color;
                 if (val < 3.0)       { status = "LOW";       color = Color.parseColor("#6FA97A"); }
                 else if (val < 4.0)  { status = "MODERATE";  color = Color.parseColor("#D98E4F"); }
@@ -331,7 +364,7 @@ public class HousingFragment extends Fragment {
         if (!spreadRows.isEmpty()) {
             double val = spreadRows.get(spreadRows.size() - 1).getValue();
             if (tvBadgeSpreadValue != null)
-                tvBadgeSpreadValue.setText(String.format(Locale.US, "%.2f%%", val));
+                tvBadgeSpreadValue.setText(NumberFormatUtil.percent(val)); // TICKET-19
             String status; int color;
             if (val < 1.5)       { status = "NARROW";    color = Color.parseColor("#5B8DB8"); }
             else if (val < 2.2)  { status = "NORMAL";    color = Color.parseColor("#6FA97A"); }
@@ -480,7 +513,7 @@ public class HousingFragment extends Fragment {
 
         // Standardized chart window (Settings -> Charts -> time range)
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
-        rows = EconomicViewModel.filterByTimeframe(requireContext(), rows);
+        rows = EconomicViewModel.filterByTimeframe(requireContext(), rows, "housing");
         if (rows.isEmpty()) return;
 
         List<Entry> entries = new ArrayList<>();
@@ -538,9 +571,9 @@ public class HousingFragment extends Fragment {
         // Standardized chart window (Settings -> Charts -> time range)
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
 
-        bankRows     = EconomicViewModel.filterByTimeframe(requireContext(), bankRows);
-        fedRows      = EconomicViewModel.filterByTimeframe(requireContext(), fedRows);
-        mortgageRows = EconomicViewModel.filterByTimeframe(requireContext(), mortgageRows);
+        bankRows     = EconomicViewModel.filterByTimeframe(requireContext(), bankRows, "housing");
+        fedRows      = EconomicViewModel.filterByTimeframe(requireContext(), fedRows, "housing");
+        mortgageRows = EconomicViewModel.filterByTimeframe(requireContext(), mortgageRows, "housing");
 
         // Build a unified date index from all three series
         List<String> allDates = new ArrayList<>();

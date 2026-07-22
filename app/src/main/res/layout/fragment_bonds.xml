@@ -12,6 +12,9 @@
         android:orientation="vertical"
         android:padding="@dimen/space_lg">
 
+        <!-- TICKET-18: per-screen retry chip (hidden until this screen's fetch fails) -->
+        <include layout="@layout/view_retry_chip" />
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -33,8 +36,9 @@
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                         android:text="BAA SPREAD" android:textColor="@color/accent_gold"
                         android:textSize="@dimen/text_secondary" android:textStyle="bold" android:textAllCaps="true" />
+                    <!-- TICKET-21: screen hero — largest type -->
                     <TextView android:id="@+id/tvBaaValue" android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" android:text="—" android:textSize="@dimen/text_display"
+                        android:layout_height="wrap_content" android:text="—" android:textSize="@dimen/text_display_lg"
                         android:textColor="@color/card_white" android:textStyle="bold" android:layout_marginTop="@dimen/space_xs" />
                     <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
                         android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="@dimen/space_xs">
@@ -59,9 +63,10 @@
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                         android:text="HIGH YIELD" android:textColor="@color/accent_gold"
                         android:textSize="@dimen/text_secondary" android:textStyle="bold" android:textAllCaps="true" />
+                    <!-- TICKET-21: demoted sibling — smaller, muted -->
                     <TextView android:id="@+id/tvHyValue" android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" android:text="—" android:textSize="@dimen/text_display"
-                        android:textColor="@color/card_white" android:textStyle="bold" android:layout_marginTop="@dimen/space_xs" />
+                        android:layout_height="wrap_content" android:text="—" android:textSize="@dimen/text_headline"
+                        android:textColor="@color/text_on_navy_muted" android:textStyle="bold" android:layout_marginTop="@dimen/space_xs" />
                     <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
                         android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="@dimen/space_xs">
                         <View android:id="@+id/viewHyDot" android:layout_width="8dp" android:layout_height="8dp" android:layout_marginEnd="@dimen/space_sm" />
@@ -72,6 +77,9 @@
             </androidx.cardview.widget.CardView>
 
         </LinearLayout>
+
+        <!-- TICKET-11: inline range switcher -->
+        <include layout="@layout/view_timeframe_selector" />
 
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
@@ -91,6 +99,8 @@
                 </LinearLayout>
                 <com.github.mikephil.charting.charts.LineChart
                     android:id="@+id/swappableChart"
+                    android:importantForAccessibility="yes"
+                    android:contentDescription="Bond market trend chart"
                     android:layout_width="match_parent"
                     android:layout_height="300dp"
                     android:padding="@dimen/space_md" />

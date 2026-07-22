@@ -261,4 +261,27 @@
         <item name="android:layout_weight">1</item>
         <item name="android:background">@drawable/bg_skeleton_block</item>
     </style>
+
+    <!-- ── Overview metric grouping (TICKET-05) ──────────────────────────── -->
+    <!-- Gold, all-caps label above each KPI cluster. -->
+    <style name="MetricGroupHeader">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textSize">@dimen/text_caption</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:letterSpacing">0.12</item>
+        <item name="android:textColor">@color/accent_gold</item>
+        <item name="android:layout_marginBottom">@dimen/space_sm</item>
+    </style>
+
+    <!-- Bordered "common region" holding a cluster's KPI cards. -->
+    <style name="MetricGroupRegion">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:baselineAligned">false</item>
+        <item name="android:background">@drawable/bg_metric_group</item>
+        <item name="android:padding">@dimen/space_sm</item>
+    </style>
 </resources>

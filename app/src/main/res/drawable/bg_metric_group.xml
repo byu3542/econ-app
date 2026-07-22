@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- TICKET-05 — bordered "common region" behind each Overview metric cluster.
+     A soft rounded container that groups 2 related KPI cards so the screen
+     reads as a few labelled clusters rather than one flat list. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/row_alt_bg" />
+    <corners android:radius="18dp" />
+    <stroke
+        android:width="1dp"
+        android:color="@color/divider_sand" />
+</shape>

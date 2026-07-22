@@ -29,6 +29,32 @@
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
     <string name="theme_system">System</string>
+    <string name="colorblind_title">Colorblind-safe colors</string>
+    <string name="colorblind_sub">Use a blue/orange palette for up/down changes</string>
+    <string name="couldnt_refresh">Couldn\'t refresh · tap to retry</string>
+    <!-- TICKET-22: since-last-open strip -->
+    <string name="dismiss_since_last_open">Dismiss</string>
+    <!-- TICKET-24: threshold alerts -->
+    <string name="add_alert">＋ Add alert</string>
+    <string name="alert_op_above">Notify when it rises above…</string>
+    <string name="alert_op_below">Notify when it falls below…</string>
+    <string name="alert_op_change">Notify on any change</string>
+    <string name="alert_threshold_hint">Threshold (e.g. 4.5)</string>
+    <string name="remove_alerts">Remove this metric\'s alerts</string>
+    <string name="alert_saved">Alert saved</string>
+    <string name="alerts_removed">Alerts removed</string>
+    <!-- TICKET-25: watchlist onboarding -->
+    <string name="watchlist_title">What do you watch?</string>
+    <string name="watchlist_subtitle">Pick the metrics you care about — your Overview will show them first. Tap in your order of importance.</string>
+    <string name="watchlist_progress_zero">0 of 6</string>
+    <string name="watchlist_gdp">GDP growth</string>
+    <string name="watchlist_spread">10Y-3M Treasury spread</string>
+    <string name="watchlist_cpi">CPI inflation (YoY)</string>
+    <string name="watchlist_unemployment">Unemployment rate</string>
+    <string name="watchlist_mortgage">30-year mortgage rate</string>
+    <string name="watchlist_vix">VIX volatility index</string>
+    <string name="watchlist_skip">Skip</string>
+    <string name="watchlist_done">Done</string>
     <string name="refresh_data">Refresh data</string>
     <string name="refresh_done">Data refreshed</string>
     <string name="refresh_failed">Refresh failed — check your connection</string>

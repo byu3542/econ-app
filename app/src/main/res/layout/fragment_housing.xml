@@ -12,6 +12,9 @@
         android:orientation="vertical"
         android:padding="@dimen/space_lg">
 
+        <!-- TICKET-18: per-screen retry chip (hidden until this screen's fetch fails) -->
+        <include layout="@layout/view_retry_chip" />
+
         <!-- ═══════════════════════════════════════════════════════════════════
              HOUSING METRIC BADGES — Housing Starts & Existing Home Sales
              ═══════════════════════════════════════════════════════════════════ -->
@@ -182,13 +185,14 @@
                         android:textStyle="bold"
                         android:letterSpacing="0.05" />
 
+                    <!-- TICKET-21: screen hero \u2014 largest type -->
                     <TextView
                         android:id="@+id/tvBadgeMortgageValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="\u2014"
                         android:textColor="@color/card_white"
-                        android:textSize="@dimen/text_secondary"
+                        android:textSize="@dimen/text_headline"
                         android:textStyle="bold"
                         android:layout_marginTop="@dimen/space_hairline" />
 
@@ -244,12 +248,13 @@
                         android:textStyle="bold"
                         android:letterSpacing="0.05" />
 
+                    <!-- TICKET-21: demoted sibling \u2014 muted -->
                     <TextView
                         android:id="@+id/tvBadge10YValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="\u2014"
-                        android:textColor="@color/card_white"
+                        android:textColor="@color/text_on_navy_muted"
                         android:textSize="@dimen/text_secondary"
                         android:textStyle="bold"
                         android:layout_marginTop="@dimen/space_hairline" />
@@ -306,12 +311,13 @@
                         android:textStyle="bold"
                         android:letterSpacing="0.05" />
 
+                    <!-- TICKET-21: demoted sibling \u2014 muted -->
                     <TextView
                         android:id="@+id/tvBadgeSpreadValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="\u2014"
-                        android:textColor="@color/card_white"
+                        android:textColor="@color/text_on_navy_muted"
                         android:textSize="@dimen/text_secondary"
                         android:textStyle="bold"
                         android:layout_marginTop="@dimen/space_hairline" />
@@ -345,6 +351,9 @@
         <!-- ═══════════════════════════════════════════════════════════════════
              SWAPPABLE CHART — Changes based on selected badge
              ═══════════════════════════════════════════════════════════════════ -->
+        <!-- TICKET-11: inline range switcher (drives both Housing charts) -->
+        <include layout="@layout/view_timeframe_selector" />
+
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -384,6 +393,8 @@
 
                 <com.github.mikephil.charting.charts.LineChart
                     android:id="@+id/chartSwappable"
+                    android:importantForAccessibility="yes"
+                    android:contentDescription="Housing market trend chart"
                     android:layout_width="match_parent"
                     android:layout_height="180dp"
                     android:padding="@dimen/space_md" />
@@ -432,6 +443,8 @@
 
                 <com.github.mikephil.charting.charts.LineChart
                     android:id="@+id/chartMbsMortgage"
+                    android:importantForAccessibility="yes"
+                    android:contentDescription="Mortgage rate and MBS spread chart"
                     android:layout_width="match_parent"
                     android:layout_height="320dp"
                     android:padding="@dimen/space_lg" />

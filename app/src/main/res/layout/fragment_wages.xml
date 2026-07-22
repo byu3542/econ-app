@@ -12,6 +12,9 @@
         android:orientation="vertical"
         android:padding="@dimen/space_lg">
 
+        <!-- TICKET-18: per-screen retry chip (hidden until this screen's fetch fails) -->
+        <include layout="@layout/view_retry_chip" />
+
         <!-- REAL WAGE GROWTH CARD (GDP Style) -->
         <androidx.cardview.widget.CardView
             android:id="@+id/cardWageYoY"
@@ -91,6 +94,9 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
+        <!-- TICKET-20: inline range switcher — drives both Wages charts -->
+        <include layout="@layout/view_timeframe_selector" />
+
         <!-- AVERAGE HOURLY EARNINGS SECTION -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
@@ -130,6 +136,8 @@
 
                 <com.github.mikephil.charting.charts.LineChart
                     android:id="@+id/hourlyWageChart"
+                    android:importantForAccessibility="yes"
+                    android:contentDescription="Average hourly earnings trend chart"
                     android:layout_width="match_parent"
                     android:layout_height="300dp"
                     android:padding="@dimen/space_lg"/>
@@ -176,6 +184,8 @@
 
                 <com.github.mikephil.charting.charts.LineChart
                     android:id="@+id/comparisonChart"
+                    android:importantForAccessibility="yes"
+                    android:contentDescription="Wages versus inflation comparison chart"
                     android:layout_width="match_parent"
                     android:layout_height="300dp"
                     android:padding="@dimen/space_lg"/>

@@ -17,6 +17,7 @@ import com.economic.dashboard.databinding.FragmentYieldsBinding;
 import com.economic.dashboard.R;
 import com.economic.dashboard.models.EconomicDataPoint;
 import com.economic.dashboard.ui.EconomicViewModel;
+import com.economic.dashboard.utils.NumberFormatUtil;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
@@ -32,6 +33,7 @@ import java.util.Locale;
 public class YieldsFragment extends Fragment {
 
     private FragmentYieldsBinding binding;
+    private com.economic.dashboard.ui.views.SkeletonController skeleton;
 
     private EconomicViewModel viewModel;
     private LineChart yieldCurveChart;
@@ -42,7 +44,8 @@ public class YieldsFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = FragmentYieldsBinding.inflate(inflater, container, false);
-        return binding.getRoot();
+        skeleton = com.economic.dashboard.ui.views.SkeletonController.wrap(binding.getRoot());
+        return skeleton.getRoot();
     }
 
     @Override
@@ -50,10 +53,27 @@ public class YieldsFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         viewModel = new ViewModelProvider(requireActivity()).get(EconomicViewModel.class);
 
+        // TICKET-18: per-screen retry chip for this screen's series
+        android.widget.TextView retryChip = view.findViewById(R.id.tvRetry);
+        final String[] retryKeys = { EconomicViewModel.CACHE_TREASURY };
+        viewModel.getFailedSeries().observe(getViewLifecycleOwner(), failed -> {
+            if (retryChip == null) return;
+            String hit = null;
+            if (failed != null) for (String k : retryKeys) if (failed.contains(k)) { hit = k; break; }
+            if (hit != null) {
+                final String key = hit;
+                retryChip.setOnClickListener(x -> viewModel.retrySeries(key));
+                retryChip.setVisibility(View.VISIBLE);
+            } else {
+                retryChip.setVisibility(View.GONE);
+            }
+        });
+
         yieldCurveChart = binding.yieldCurveChart;
         com.economic.dashboard.analyst.AskAnalyst.attachChartExplain(
                 yieldCurveChart, requireActivity(), "the current Treasury yield curve across maturities");
         styleChart(yieldCurveChart);
+        com.economic.dashboard.utils.ChartHelper.declutterDark(yieldCurveChart);
         yieldCurveChart.getAxisLeft().setValueFormatter(new ValueFormatter() {
             @Override public String getFormattedValue(float value) {
                 return String.format(Locale.US, "%.1f%%", value);
@@ -75,7 +95,7 @@ public class YieldsFragment extends Fragment {
         applyZebra();
 
         viewModel.getTreasuryData().observe(getViewLifecycleOwner(), data -> {
-            if (data != null) { buildYieldCurveChart(data); updateTreasury(data); }
+            if (data != null) { buildYieldCurveChart(data); updateTreasury(data); if (skeleton != null) skeleton.reveal(); }
         });
     }
 
@@ -147,7 +167,7 @@ public class YieldsFragment extends Fragment {
         TextView changeView = row.findViewById(R.id.tvChange);
         if (!rows.isEmpty()) {
             EconomicDataPoint p = rows.get(rows.size() - 1);
-            if (valView  != null) valView.setText(String.format(Locale.US, "%.2f%%", p.getValue()));
+            if (valView  != null) valView.setText(NumberFormatUtil.percent(p.getValue())); // TICKET-19
             if (dateView != null) dateView.setText(p.getDate());
             if (changeView != null && rows.size() >= 2) {
                 double bps = (p.getValue() - rows.get(rows.size() - 2).getValue()) * 100.0;

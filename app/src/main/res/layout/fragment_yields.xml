@@ -12,6 +12,9 @@
         android:orientation="vertical"
         android:padding="@dimen/space_lg">
 
+        <!-- TICKET-18: per-screen retry chip (hidden until this screen's fetch fails) -->
+        <include layout="@layout/view_retry_chip" />
+
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent" android:layout_height="wrap_content"
             android:layout_marginBottom="@dimen/space_2xl" app:cardCornerRadius="16dp"
@@ -27,6 +30,8 @@
                 </LinearLayout>
                 <com.github.mikephil.charting.charts.LineChart
                     android:id="@+id/yieldCurveChart"
+                    android:importantForAccessibility="yes"
+                    android:contentDescription="Treasury yield curve chart"
                     android:layout_width="match_parent" android:layout_height="300dp" android:padding="@dimen/space_md" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>

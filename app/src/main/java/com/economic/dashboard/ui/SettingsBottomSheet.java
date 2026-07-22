@@ -111,6 +111,11 @@ public class SettingsBottomSheet extends BottomSheetDialogFragment {
             // automatically afterwards, so the user can keep comparing themes.
             AppCompatDelegate.setDefaultNightMode(newMode);
         });
+
+        // Colorblind-safe delta palette. Re-fetch so every delta chip repaints
+        // with the new palette immediately.
+        bindSwitch(v, R.id.switchColorblind, SettingsManager.KEY_COLORBLIND, false,
+                () -> host().getViewModel().fetchAllData());
     }
 
     // -- Data -----------------------------------------------------------------

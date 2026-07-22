@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Generic loading skeleton for the chart/data leaf screens (Inflation, Housing,
+  GDP, Employment, Stocks, Bonds, Yields, Spreads). Overlaid on top of the real
+  content by SkeletonController and faded out on first data. Mirrors the common
+  layout: a badge row up top, then two chart cards.
+-->
+<com.facebook.shimmer.ShimmerFrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_warm_off_white"
+    app:shimmer_auto_start="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="@dimen/space_lg">
+
+        <!-- Badge row -->
+        <LinearLayout style="@style/SkeletonRow">
+            <View style="@style/SkeletonCard" android:layout_marginEnd="@dimen/space_sm" />
+            <View style="@style/SkeletonCard" android:layout_marginStart="@dimen/space_sm" />
+        </LinearLayout>
+
+        <!-- Chart card 1 -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="280dp"
+            android:layout_marginBottom="@dimen/space_lg"
+            android:background="@drawable/bg_skeleton_block" />
+
+        <!-- Chart card 2 -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="280dp"
+            android:background="@drawable/bg_skeleton_block" />
+
+    </LinearLayout>
+
+</com.facebook.shimmer.ShimmerFrameLayout>

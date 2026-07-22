@@ -33,6 +33,11 @@
     <!-- Delta chips on KPI cards -->
     <color name="delta_good">#6FA97A</color>
     <color name="delta_bad">#C75B4E</color>
+    <!-- Colorblind-safe delta palette (Okabe–Ito blue/orange), used when the
+         "Colorblind-safe colors" setting is on. Direction is still carried by
+         the ▲/▼ glyph + sign, so meaning survives even in grayscale. -->
+    <color name="delta_good_cb">#0072B2</color>
+    <color name="delta_bad_cb">#E69F00</color>
 
     <!-- Map missing names used in themes.xml -->
     <color name="cardBackground">@color/card_white</color>

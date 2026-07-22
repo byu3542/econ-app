@@ -22,6 +22,8 @@ import com.economic.dashboard.ui.MetricBottomSheet;
 import com.economic.dashboard.models.EconomicDataPoint;
 import com.economic.dashboard.ui.EconomicViewModel;
 import com.economic.dashboard.utils.ChartHelper;
+import com.economic.dashboard.utils.NumberFormatUtil;
+import com.economic.dashboard.utils.TimeframeSelector;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
@@ -56,6 +58,22 @@ public class WagesFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         viewModel = new ViewModelProvider(requireActivity()).get(EconomicViewModel.class);
 
+        // TICKET-18: per-screen retry chip for this screen's series
+        android.widget.TextView retryChip = view.findViewById(R.id.tvRetry);
+        final String[] retryKeys = { EconomicViewModel.KEY_WAGES, EconomicViewModel.CACHE_CPI };
+        viewModel.getFailedSeries().observe(getViewLifecycleOwner(), failed -> {
+            if (retryChip == null) return;
+            String hit = null;
+            if (failed != null) for (String k : retryKeys) if (failed.contains(k)) { hit = k; break; }
+            if (hit != null) {
+                final String key = hit;
+                retryChip.setOnClickListener(x -> viewModel.retrySeries(key));
+                retryChip.setVisibility(View.VISIBLE);
+            } else {
+                retryChip.setVisibility(View.GONE);
+            }
+        });
+
         hourlyWageChart = binding.hourlyWageChart;
         com.economic.dashboard.analyst.AskAnalyst.attachChartExplain(
                 hourlyWageChart, requireActivity(), "average hourly earnings over time");
@@ -72,6 +90,19 @@ public class WagesFragment extends Fragment {
 
         ChartHelper.styleLineChart(hourlyWageChart, "Average Hourly Earnings (Private Sector)", "Month", "Wage ($)");
         ChartHelper.styleLineChart(comparisonChart,  "Inflation vs Wage Growth (Indexed to 100)", "Month", "Index");
+        // TICKET-08: the comparison chart is multi-series — label each line at
+        // its right end in its own colour instead of a detached legend.
+        ChartHelper.useDirectLabels(comparisonChart);
+        ChartHelper.attachCrosshair(hourlyWageChart);  // TICKET-23
+        ChartHelper.attachCrosshair(comparisonChart);
+
+        // TICKET-20: inline range switcher — one control drives both Wages charts.
+        android.widget.LinearLayout tfSel = view.findViewById(R.id.timeframeSelector);
+        TimeframeSelector.attach(tfSel, "wages", months -> {
+            List<EconomicDataPoint> w = viewModel.getWageData().getValue();
+            if (w != null) buildHourlyChart(w);
+            buildComparisonIfReady();
+        });
 
         // Add Y-Axis unit labeling
         hourlyWageChart.getAxisLeft().setValueFormatter(new ValueFormatter() {
@@ -109,7 +140,9 @@ public class WagesFragment extends Fragment {
 
     private void showWagesBenchmarks() {
         if (getContext() == null) return;
-        MetricBottomSheet.show(getContext(), R.layout.dialog_wages_status);
+        // TICKET-24: metric-aware sheet — offers "Add alert" for wage growth.
+        MetricBottomSheet.show(getContext(), R.layout.dialog_wages_status,
+                EconomicViewModel.KEY_WAGES, "Wage growth");
     }
 
     private void calculateRealWageGrowth() {
@@ -136,8 +169,8 @@ public class WagesFragment extends Fragment {
         // "Real Wage Growth" calculation (Spread)
         double spread = wageYoY - cpiYoY;
 
-        // Display the calculated difference as the main value
-        tvWageYoYValue.setText(String.format(Locale.US, "%.2f%%", spread));
+        // Display the calculated difference as the main value (TICKET-19)
+        tvWageYoYValue.setText(NumberFormatUtil.percent(spread));
 
         String reading;
         int dotColor;
@@ -174,7 +207,7 @@ public class WagesFragment extends Fragment {
     private void buildHourlyChart(List<EconomicDataPoint> data) {
         List<EconomicDataPoint> rows = EconomicViewModel.filterBySeries(data, "Average Hourly Earnings - Private");
         if (rows.isEmpty()) return;
-        rows = EconomicViewModel.filterByTimeframe(requireContext(), rows);
+        rows = EconomicViewModel.filterByTimeframe(requireContext(), rows, "wages");
 
         List<Entry> entries = new ArrayList<>();
         final List<String> dates = new ArrayList<>();
@@ -223,7 +256,7 @@ public class WagesFragment extends Fragment {
 
         // Window the driving CPI series to the standardized chart time range;
         // wages are matched by date, so trimming CPI drives the x-axis.
-        cpiRows = EconomicViewModel.filterByTimeframe(requireContext(), cpiRows);
+        cpiRows = EconomicViewModel.filterByTimeframe(requireContext(), cpiRows, "wages");
         if (cpiRows.isEmpty()) return;
         double cpiBase  = cpiRows.get(0).getValue();
         double wageBase = -1.0; // set at the first wage point in the window
@@ -275,6 +308,9 @@ public class WagesFragment extends Fragment {
         wageSet.setLineWidth(3f);
         wageSet.setCircleRadius(3f);
         wageSet.setDrawValues(false);
+
+        ChartHelper.labelLineEnd(cpiSet, "CPI");
+        ChartHelper.labelLineEnd(wageSet, "Wages");
 
         LineData lineData = new LineData(cpiSet, wageSet);
         comparisonChart.setData(lineData);

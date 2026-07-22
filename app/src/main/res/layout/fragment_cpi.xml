@@ -12,6 +12,9 @@
         android:orientation="vertical"
         android:padding="@dimen/space_lg">
 
+        <!-- TICKET-18: per-screen retry chip (hidden until this screen's fetch fails) -->
+        <include layout="@layout/view_retry_chip" />
+
         <!-- YoY INFLATION CARD (GDP Style) -->
         <androidx.cardview.widget.CardView
             android:id="@+id/cardCpiYoY"
@@ -85,6 +88,9 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
+        <!-- TICKET-20: inline range switcher — drives both CPI charts -->
+        <include layout="@layout/view_timeframe_selector" />
+
         <!-- CPI-U SECTION -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
@@ -124,6 +130,8 @@
 
                 <com.github.mikephil.charting.charts.LineChart
                     android:id="@+id/cpiUChart"
+                    android:importantForAccessibility="yes"
+                    android:contentDescription="CPI-U inflation trend chart"
                     android:layout_width="match_parent"
                     android:layout_height="300dp"
                     android:padding="@dimen/space_lg"/>
@@ -170,6 +178,8 @@
 
                 <com.github.mikephil.charting.charts.LineChart
                     android:id="@+id/cpiWChart"
+                    android:importantForAccessibility="yes"
+                    android:contentDescription="CPI-W inflation trend chart"
                     android:layout_width="match_parent"
                     android:layout_height="300dp"
                     android:padding="@dimen/space_lg"/>

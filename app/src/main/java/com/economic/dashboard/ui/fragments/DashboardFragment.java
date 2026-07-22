@@ -28,6 +28,10 @@ import com.economic.dashboard.ui.AiAnalystBottomSheet;
 import com.economic.dashboard.ui.EconomicViewModel;
 import com.economic.dashboard.ui.MainActivity;
 import com.economic.dashboard.ui.views.SparklineView;
+import com.economic.dashboard.utils.DeltaFormatter;
+import com.economic.dashboard.utils.MotionUtil;
+import com.economic.dashboard.utils.NumberFormatUtil;
+import com.economic.dashboard.utils.ValueAnimatorUtil;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -44,9 +48,11 @@ public class DashboardFragment extends Fragment {
     private View cardUnemployment, cardCpiYoy, cardGdp, cardSpread, cardMortgage, cardVix;
     // Fed funds hero views — bound directly so they never fail silently
     private TextView tvFedFundsHeroValue, changeFedFunds, tvFedFundsHeroCycle, tvFedFundsHeroDate;
+    private TextView tvFedFundsRetry;
     private SwipeRefreshLayout swipeRefresh;
     private ShimmerFrameLayout skeletonShimmer;
     private View contentContainer;
+    private TextView tvCacheAsOf;
     private boolean skeletonHidden = false;
     private boolean wasLoading = false;
 
@@ -75,6 +81,66 @@ public class DashboardFragment extends Fragment {
         viewModel = new ViewModelProvider(requireActivity()).get(EconomicViewModel.class);
         bindViews(view);
         observeData();
+
+        // Cache-first paint: if we have a cached snapshot, reveal content
+        // immediately and never show the skeleton — only a first-ever launch
+        // (empty cache) waits on the shimmer.
+        if (viewModel.hasCache()) {
+            hideSkeleton();
+        }
+        viewModel.getCacheAsOf().observe(getViewLifecycleOwner(), label -> {
+            if (tvCacheAsOf == null) return;
+            if (label == null || label.isEmpty()) {
+                tvCacheAsOf.setVisibility(View.GONE);
+            } else {
+                tvCacheAsOf.setText(label);
+                tvCacheAsOf.setVisibility(View.VISIBLE);
+            }
+        });
+
+        // TICKET-22: "Since you last opened" strip — warm launches only,
+        // dismissible for the session (flag lives on the VM).
+        View stripSince = view.findViewById(R.id.stripSinceLastOpen);
+        TextView tvSince = view.findViewById(R.id.tvSinceLastOpen);
+        View btnSinceClose = view.findViewById(R.id.btnSinceLastOpenClose);
+        if (btnSinceClose != null) {
+            btnSinceClose.setOnClickListener(x -> viewModel.dismissSinceLastOpen());
+        }
+        viewModel.getSinceLastOpen().observe(getViewLifecycleOwner(), text -> {
+            if (stripSince == null || tvSince == null) return;
+            if (text == null || text.isEmpty() || viewModel.isSinceLastOpenDismissed()) {
+                stripSince.setVisibility(View.GONE);
+            } else {
+                tvSince.setText(text);
+                stripSince.setVisibility(View.VISIBLE);
+            }
+        });
+
+        // Partial-failure: show a per-card retry chip for any series that failed
+        // to refresh, without blanking the cards that succeeded.
+        viewModel.getFailedSeries().observe(getViewLifecycleOwner(), failed -> {
+            java.util.Set<String> f = failed != null ? failed : java.util.Collections.emptySet();
+            toggleRetry(cardGdp,          EconomicViewModel.CACHE_GDP,        f);
+            toggleRetry(cardCpiYoy,       EconomicViewModel.CACHE_CPI,        f);
+            toggleRetry(cardSpread,       EconomicViewModel.CACHE_TREASURY,   f);
+            toggleRetry(cardUnemployment, EconomicViewModel.CACHE_EMPLOYMENT, f);
+            toggleRetry(cardMortgage,     EconomicViewModel.CACHE_MBS,        f);
+            toggleRetry(cardVix,          EconomicViewModel.CACHE_VIX,        f);
+            toggleHeroRetry(f.contains(EconomicViewModel.CACHE_FED_FUNDS));
+        });
+
+        // TICKET-25: rank the Overview clusters by the user's watchlist, and
+        // show the one-time first-run watchlist setup sheet.
+        applyWatchlistOrder(view);
+        if (getContext() != null
+                && !com.economic.dashboard.utils.SettingsManager.isOnboardingComplete(getContext())) {
+            com.economic.dashboard.ui.onboarding.WatchlistSetupFragment sheet =
+                    new com.economic.dashboard.ui.onboarding.WatchlistSetupFragment();
+            sheet.setListener(() -> { if (getView() != null) applyWatchlistOrder(getView()); });
+            sheet.show(getParentFragmentManager(),
+                    com.economic.dashboard.ui.onboarding.WatchlistSetupFragment.TAG);
+        }
+
         swipeRefresh.setOnRefreshListener(() -> viewModel.fetchAllData());
         viewModel.getIsLoading().observe(getViewLifecycleOwner(), loading -> {
             // Haptic tick when a refresh completes
@@ -93,6 +159,7 @@ public class DashboardFragment extends Fragment {
         swipeRefresh = binding.swipeRefresh;
         skeletonShimmer  = v.findViewById(R.id.skeletonShimmer);
         contentContainer = v.findViewById(R.id.contentContainer);
+        tvCacheAsOf      = v.findViewById(R.id.tvCacheAsOf);
 
         // KPI badges
         // These are <include layout="@layout/card_kpi_badge"> entries, so view
@@ -116,10 +183,16 @@ public class DashboardFragment extends Fragment {
         startSkeleton(cardUnemployment); startSkeleton(cardMortgage); startSkeleton(cardVix);
 
         // Tap KPI card → matching benchmark/status dialog
-        wireCardDialog(cardGdp,          R.layout.dialog_gdp_status);
-        wireCardDialog(cardCpiYoy,       R.layout.dialog_cpi_status);
-        wireCardDialog(cardSpread,       R.layout.dialog_treasury_3m_status);
-        wireCardDialog(cardUnemployment, R.layout.dialog_unemployment_status);
+        // TICKET-24: pass the series key/label so each sheet offers "Add alert".
+        wireCardDialog(cardGdp,          R.layout.dialog_gdp_status,          EconomicViewModel.CACHE_GDP,        "GDP growth");
+        wireCardDialog(cardCpiYoy,       R.layout.dialog_cpi_status,          EconomicViewModel.CACHE_CPI,        "CPI YoY");
+        wireCardDialog(cardSpread,       R.layout.dialog_treasury_3m_status,  EconomicViewModel.ALERT_SPREAD_3M,  "10Y-3M spread");
+        wireCardDialog(cardUnemployment, R.layout.dialog_unemployment_status, EconomicViewModel.CACHE_EMPLOYMENT, "Unemployment");
+
+        // TICKET-13: Mortgage & VIX have no benchmark dialog — make the whole
+        // card a tap target (not just a long-press) that opens the AI Analyst.
+        wireCardTapAnalyst(cardMortgage, "the 30-year mortgage rate");
+        wireCardTapAnalyst(cardVix,      "the VIX index");
 
         // Long-press KPI card → ask the AI Analyst about that metric
         wireAskAnalyst(cardGdp,          "GDP growth");
@@ -134,6 +207,10 @@ public class DashboardFragment extends Fragment {
         changeFedFunds      = v.findViewById(R.id.change_fed_funds);
         tvFedFundsHeroCycle = v.findViewById(R.id.tvFedFundsHeroCycle);
         tvFedFundsHeroDate  = v.findViewById(R.id.tvFedFundsHeroDate);
+        tvFedFundsRetry     = v.findViewById(R.id.tvFedFundsRetry);
+        if (tvFedFundsRetry != null)
+            tvFedFundsRetry.setOnClickListener(x ->
+                    viewModel.retrySeries(EconomicViewModel.CACHE_FED_FUNDS));
 
         updateNextFomcLabel();
 
@@ -151,6 +228,17 @@ public class DashboardFragment extends Fragment {
                 return true;
             });
         }
+    }
+
+    /** TICKET-13: whole-card tap opens the AI Analyst for metrics with no dialog. */
+    private void wireCardTapAnalyst(View card, String label) {
+        if (card == null) return;
+        card.setOnClickListener(v -> {
+            v.performHapticFeedback(android.view.HapticFeedbackConstants.CONTEXT_CLICK);
+            TextView tv = card.findViewById(R.id.tvMetricValue);
+            String value = tv != null ? tv.getText().toString() : "";
+            openAnalystWith(buildAskQuery(label, value));
+        });
     }
 
     /** Long-press → menu offering to ask the AI Analyst about this card. */
@@ -193,6 +281,65 @@ public class DashboardFragment extends Fragment {
             AiAnalystBottomSheet.newInstance(query).show(fm, AiAnalystBottomSheet.TAG);
     }
 
+    // ── TICKET-25: watchlist-driven cluster order ──────────────────────────
+
+    /**
+     * Reorders the three Overview metric clusters (header + region pairs) so
+     * the cluster containing the user's highest-ranked watchlist metric comes
+     * first. No-op when views are missing or the order is already right.
+     */
+    private void applyWatchlistOrder(View root) {
+        if (getContext() == null) return;
+        java.util.List<String> watch =
+                com.economic.dashboard.utils.SettingsManager.getWatchlist(getContext());
+
+        View hGrowth    = root.findViewById(R.id.headerGroupGrowth);
+        View rGrowth    = root.findViewById(R.id.regionGroupGrowth);
+        View hInflation = root.findViewById(R.id.headerGroupInflation);
+        View rInflation = root.findViewById(R.id.regionGroupInflation);
+        View hMarkets   = root.findViewById(R.id.headerGroupMarkets);
+        View rMarkets   = root.findViewById(R.id.regionGroupMarkets);
+        if (hGrowth == null || rGrowth == null || hInflation == null
+                || rInflation == null || hMarkets == null || rMarkets == null) return;
+        if (!(contentContainer instanceof android.widget.LinearLayout)) return;
+        android.widget.LinearLayout column = (android.widget.LinearLayout) contentContainer;
+
+        // Cluster rank = best (lowest) watchlist position of its metrics.
+        final class Group {
+            final View header, region; final int rank;
+            Group(View h, View r, int rk) { header = h; region = r; rank = rk; }
+        }
+        java.util.List<Group> groups = new java.util.ArrayList<>();
+        groups.add(new Group(hGrowth,    rGrowth,    bestRank(watch, "gdp", "spread_10y3m")));
+        groups.add(new Group(hInflation, rInflation, bestRank(watch, "cpi", "employment")));
+        groups.add(new Group(hMarkets,   rMarkets,   bestRank(watch, "mbs_mortgage", "vix")));
+        java.util.Collections.sort(groups, (a, b) -> Integer.compare(a.rank, b.rank));
+
+        // Re-insert the pairs, in rank order, at the first cluster's position.
+        int insertAt = column.indexOfChild(hGrowth);
+        for (Group g : groups) {
+            insertAt = Math.min(insertAt, column.indexOfChild(g.header));
+        }
+        for (Group g : groups) {
+            column.removeView(g.header);
+            column.removeView(g.region);
+        }
+        for (Group g : groups) {
+            column.addView(g.header, insertAt++);
+            column.addView(g.region, insertAt++);
+        }
+    }
+
+    /** Lowest index of any of the keys in the watchlist; large if none listed. */
+    private static int bestRank(java.util.List<String> watch, String... keys) {
+        int best = Integer.MAX_VALUE;
+        for (String k : keys) {
+            int i = watch.indexOf(k);
+            if (i >= 0 && i < best) best = i;
+        }
+        return best;
+    }
+
     private void setupCardLabel(View card, String label) {
         if (card == null) return;
         TextView tv = card.findViewById(R.id.tvMetricLabel);
@@ -200,16 +347,25 @@ public class DashboardFragment extends Fragment {
     }
 
     private void wireCardDialog(View card, int layoutRes) {
+        wireCardDialog(card, layoutRes, null, null);
+    }
+
+    /** TICKET-24: metric-aware overload — the sheet gains an "Add alert" row. */
+    private void wireCardDialog(View card, int layoutRes, String seriesKey, String seriesLabel) {
         if (card == null) return;
         card.setOnClickListener(v -> {
             v.performHapticFeedback(android.view.HapticFeedbackConstants.CONTEXT_CLICK);
-            showBenchmarkDialog(layoutRes);
+            showBenchmarkDialog(layoutRes, seriesKey, seriesLabel);
         });
     }
 
     private void showBenchmarkDialog(int layoutRes) {
+        showBenchmarkDialog(layoutRes, null, null);
+    }
+
+    private void showBenchmarkDialog(int layoutRes, String seriesKey, String seriesLabel) {
         if (getContext() == null) return;
-        MetricBottomSheet.show(getContext(), layoutRes);
+        MetricBottomSheet.show(getContext(), layoutRes, seriesKey, seriesLabel);
     }
 
     // ── Skeleton loading state ──────────────────────────────────────────────
@@ -229,34 +385,44 @@ public class DashboardFragment extends Fragment {
     private void hideSkeleton() {
         if (skeletonHidden) return;
         skeletonHidden = true;
+        // TICKET-28: respect "reduce motion" — reveal instantly, no cross-fade.
+        boolean animate = getContext() == null || MotionUtil.animationsEnabled(getContext());
         if (contentContainer != null) {
-            contentContainer.setAlpha(0f);
-            contentContainer.setVisibility(View.VISIBLE);
-            contentContainer.animate().alpha(1f).setDuration(300).start();
+            if (animate) {
+                contentContainer.setAlpha(0f);
+                contentContainer.setVisibility(View.VISIBLE);
+                contentContainer.animate().alpha(1f).setDuration(300).start();
+            } else {
+                contentContainer.setAlpha(1f);
+                contentContainer.setVisibility(View.VISIBLE);
+            }
         }
         if (skeletonShimmer != null) {
             skeletonShimmer.stopShimmer();
-            skeletonShimmer.animate().alpha(0f).setDuration(300)
-                    .withEndAction(() -> skeletonShimmer.setVisibility(View.GONE))
-                    .start();
+            if (animate) {
+                skeletonShimmer.animate().alpha(0f).setDuration(300)
+                        .withEndAction(() -> skeletonShimmer.setVisibility(View.GONE))
+                        .start();
+            } else {
+                skeletonShimmer.setVisibility(View.GONE);
+            }
         }
     }
 
-    /** Sets the metric value, stops the skeleton pulse, fades in changed values. */
+    /**
+     * Sets the metric value, stops the skeleton pulse, and — when a fresh value
+     * replaces a real cached one — rolls the number to its new value (TICKET-27).
+     * Count-up is skipped for unchanged values, first paint, and when motion is
+     * disabled (TICKET-28); in those cases the text is set instantly.
+     */
     private void setCardValue(View card, String text) {
         if (card == null) return;
         TextView tv = card.findViewById(R.id.tvMetricValue);
         if (tv == null) return;
         String old = tv.getText() != null ? tv.getText().toString() : "";
         tv.clearAnimation();
-        tv.setText(text);
-        if (!old.equals(text) && !old.isEmpty() && !old.equals("—")) {
-            // Fresh data replacing a real value — brief fade so the change registers
-            tv.setAlpha(0.25f);
-            tv.animate().alpha(1f).setDuration(400).start();
-        } else {
-            tv.setAlpha(1f);
-        }
+        tv.setAlpha(1f);
+        ValueAnimatorUtil.animateOrSet(tv, old, text);
     }
 
     private void setCardDate(View card, String text) {
@@ -277,12 +443,31 @@ public class DashboardFragment extends Fragment {
         TextView tv = card.findViewById(R.id.tvMetricDelta);
         if (tv == null) return;
         if (Math.abs(delta) < 1e-9) { tv.setVisibility(View.GONE); return; }
-        boolean good = goodWhenDown ? delta < 0 : delta > 0;
-        String arrow = delta > 0 ? "▲" : "▼";
-        tv.setTextColor(ContextCompat.getColor(getContext(),
-                good ? R.color.delta_good : R.color.delta_bad));
-        tv.setText(String.format(Locale.US, "%s " + fmt, arrow, Math.abs(delta)));
+        // Direction is carried by glyph + sign + color, so it survives grayscale
+        // and colorblind viewing. Palette honors the colorblind-safe setting.
+        tv.setTextColor(DeltaFormatter.color(getContext(), delta, goodWhenDown));
+        tv.setText(DeltaFormatter.format(delta, fmt));
         tv.setVisibility(View.VISIBLE);
+    }
+
+    // ── Partial-failure retry chips ───────────────────────────────────────────
+
+    /** Shows/hides a KPI card's retry chip and wires a single-series re-fetch. */
+    private void toggleRetry(View card, String seriesKey, java.util.Set<String> failed) {
+        if (card == null) return;
+        TextView tv = card.findViewById(R.id.tvRetry);
+        if (tv == null) return;
+        if (failed.contains(seriesKey)) {
+            tv.setOnClickListener(x -> viewModel.retrySeries(seriesKey));
+            tv.setVisibility(View.VISIBLE);
+        } else {
+            tv.setVisibility(View.GONE);
+        }
+    }
+
+    private void toggleHeroRetry(boolean show) {
+        if (tvFedFundsRetry != null)
+            tvFedFundsRetry.setVisibility(show ? View.VISIBLE : View.GONE);
     }
 
     // ── Sparkline ───────────────────────────────────────────────────────────
@@ -437,8 +622,13 @@ public class DashboardFragment extends Fragment {
         List<EconomicDataPoint> rows = EconomicViewModel.filterBySeries(data, "Federal Funds Effective Rate");
         if (rows.isEmpty()) return;
         EconomicDataPoint current = rows.get(rows.size()-1);
-        if (tvFedFundsHeroValue != null)
-            tvFedFundsHeroValue.setText(String.format(Locale.US, "%.2f%%", current.getValue()));
+        if (tvFedFundsHeroValue != null) {
+            // TICKET-27: roll the hero value up/down on refresh.
+            String heroOld = tvFedFundsHeroValue.getText() != null
+                    ? tvFedFundsHeroValue.getText().toString() : "";
+            ValueAnimatorUtil.animateOrSet(tvFedFundsHeroValue, heroOld,
+                    NumberFormatUtil.percent(current.getValue()));
+        }
 
         double lastChange = 0.0;
         for (int i = rows.size()-1; i >= 1; i--) {
@@ -499,7 +689,7 @@ public class DashboardFragment extends Fragment {
         }
         if (!spreads.isEmpty()) {
             EconomicDataPoint latest = spreads.get(spreads.size()-1);
-            setCardValue(cardSpread, String.format(Locale.US, "%.2f%%", latest.getValue()));
+            setCardValue(cardSpread, NumberFormatUtil.percent(latest.getValue()));
             setCardDate(cardSpread, latest.getDate());
             if (spreads.size() >= 2)
                 applyDelta(cardSpread, latest.getValue() - spreads.get(spreads.size()-2).getValue(),
@@ -521,7 +711,7 @@ public class DashboardFragment extends Fragment {
         }
         if (yoySeries.isEmpty()) return;
         float latest = yoySeries.get(yoySeries.size()-1);
-        setCardValue(cardCpiYoy, String.format(Locale.US, "%.2f%%", latest));
+        setCardValue(cardCpiYoy, NumberFormatUtil.percent(latest));
         setCardDate(cardCpiYoy, rows.get(rows.size()-1).getDate());
         if (yoySeries.size() >= 2)
             applyDelta(cardCpiYoy, latest - yoySeries.get(yoySeries.size()-2), "%.2fpp", true);
@@ -534,7 +724,7 @@ public class DashboardFragment extends Fragment {
         if (rows.isEmpty()) return;
         double sum = 0; int count = 0;
         for (int i = Math.max(0, rows.size()-4); i < rows.size(); i++) { sum += rows.get(i).getValue(); count++; }
-        setCardValue(cardGdp, String.format(Locale.US, "%.2f%%", count > 0 ? sum/count : 0));
+        setCardValue(cardGdp, NumberFormatUtil.percent(count > 0 ? sum/count : 0));
         setCardDate(cardGdp, rows.get(rows.size()-1).getDate());
         if (rows.size() >= 2)
             applyDelta(cardGdp, rows.get(rows.size()-1).getValue() - rows.get(rows.size()-2).getValue(),
@@ -543,7 +733,8 @@ public class DashboardFragment extends Fragment {
     }
 
     private void updateVix(List<EconomicDataPoint> data) {
-        updateSimpleCard(data, "VIX Volatility Index", cardVix, "%.1f", "%.1f", true, 30);
+        // VIX is an index level — carry a "pt" unit so it isn't a bare number.
+        updateSimpleCard(data, "VIX Volatility Index", cardVix, "%.1f pt", "%.1f", true, 30);
     }
 
     private void updateEmployment(List<EconomicDataPoint> data) {

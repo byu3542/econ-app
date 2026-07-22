@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- TICKET-24: content for the "Add alert" dialog. Shown in a standard
+     AlertDialog (light surface), launched from a metric's bottom sheet. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="@dimen/space_xl">
+
+    <TextView
+        android:id="@+id/tvAlertMetricName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="@color/text_navy"
+        android:textSize="@dimen/text_body"
+        android:textStyle="bold"
+        android:layout_marginBottom="@dimen/space_md" />
+
+    <RadioGroup
+        android:id="@+id/rgAlertOp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <RadioButton
+            android:id="@+id/rbAbove"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:checked="true"
+            android:text="@string/alert_op_above" />
+
+        <RadioButton
+            android:id="@+id/rbBelow"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:text="@string/alert_op_below" />
+
+        <RadioButton
+            android:id="@+id/rbChange"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:text="@string/alert_op_change" />
+    </RadioGroup>
+
+    <EditText
+        android:id="@+id/etAlertThreshold"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="48dp"
+        android:layout_marginTop="@dimen/space_sm"
+        android:inputType="numberDecimal|numberSigned"
+        android:hint="@string/alert_threshold_hint"
+        android:importantForAutofill="no" />
+
+    <!-- Existing rules for this metric + a way to remove them -->
+    <TextView
+        android:id="@+id/tvExistingAlerts"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_md"
+        android:text=""
+        android:textColor="@color/text_muted"
+        android:textSize="@dimen/text_secondary"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/btnRemoveAlerts"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:minHeight="48dp"
+        android:gravity="center_vertical"
+        android:layout_marginTop="@dimen/space_xs"
+        android:text="@string/remove_alerts"
+        android:textColor="@color/delta_bad"
+        android:textSize="@dimen/text_secondary"
+        android:textStyle="bold"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone" />
+</LinearLayout>

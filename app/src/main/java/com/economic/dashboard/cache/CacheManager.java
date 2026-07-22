@@ -195,6 +195,7 @@ public final class CacheManager {
                 YieldDatabase db = YieldDatabase.getInstance(context);
                 db.economicHistoryDao().clearAll();
                 db.treasuryYieldDao().clear();
+                DashboardDataCache.clear(context);   // dashboard snapshot cache
                 Log.d(TAG, "All caches cleared");
             } catch (Exception e) {
                 Log.e(TAG, "clearAllCaches failed", e);

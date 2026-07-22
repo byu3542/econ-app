@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- TICKET-11 — inline timeframe segmented control (TradingView-style).
+     Four ≥48dp targets. Segment tags carry the month window; the active
+     range is highlighted and remembered per chart by TimeframeSelector.
+     Segment look (selected / unselected) is applied in code so no extra
+     drawable files are needed, and duplicate ids are avoided when the
+     control is included above more than one chart on a screen. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/timeframeSelector"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:layout_marginBottom="@dimen/space_sm"
+    android:baselineAligned="false">
+
+    <TextView
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:layout_weight="1"
+        android:tag="3"
+        android:gravity="center"
+        android:text="@string/tf_3m"
+        android:textSize="@dimen/text_caption"
+        android:textStyle="bold"
+        android:clickable="true"
+        android:focusable="true" />
+
+    <TextView
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:layout_weight="1"
+        android:tag="6"
+        android:gravity="center"
+        android:text="@string/tf_6m"
+        android:textSize="@dimen/text_caption"
+        android:textStyle="bold"
+        android:clickable="true"
+        android:focusable="true" />
+
+    <TextView
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:layout_weight="1"
+        android:tag="12"
+        android:gravity="center"
+        android:text="@string/tf_1y"
+        android:textSize="@dimen/text_caption"
+        android:textStyle="bold"
+        android:clickable="true"
+        android:focusable="true" />
+
+    <TextView
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:layout_weight="1"
+        android:tag="60"
+        android:gravity="center"
+        android:text="@string/tf_5y"
+        android:textSize="@dimen/text_caption"
+        android:textStyle="bold"
+        android:clickable="true"
+        android:focusable="true" />
+
+</LinearLayout>

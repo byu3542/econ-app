@@ -76,6 +76,23 @@
                     android:textColor="@color/gold_muted"
                     android:fontFamily="sans-serif" />
 
+                <!-- Shown only when the Fed Funds series fails to refresh; the
+                     cached rate above stays visible. Tapping re-fetches it. -->
+                <TextView
+                    android:id="@+id/tvFedFundsRetry"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_sm"
+                    android:paddingHorizontal="@dimen/space_sm"
+                    android:paddingVertical="@dimen/space_xs"
+                    android:background="@drawable/bg_retry_pill"
+                    android:text="@string/couldnt_refresh"
+                    android:textColor="@color/signal_watch"
+                    android:textSize="@dimen/text_caption"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:visibility="gone" />
+
             </LinearLayout>
 
             <!-- Right: change chip · cycle note · FOMC date (all data-driven) -->

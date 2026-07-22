@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- TICKET-18 — reusable per-screen retry chip for leaf fragments. Mirrors the
+     tvRetry chip inside card_kpi_badge: hidden until this screen's series fails
+     to refresh; tapping re-fetches just that series while every sibling card
+     stays on its last-loaded value. Included once per leaf layout. -->
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/tvRetry"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center_horizontal"
+    android:layout_marginBottom="@dimen/space_md"
+    android:paddingHorizontal="@dimen/space_sm"
+    android:paddingVertical="@dimen/space_xs"
+    android:background="@drawable/bg_retry_pill"
+    android:text="@string/couldnt_refresh"
+    android:textColor="@color/signal_watch"
+    android:textSize="@dimen/text_caption"
+    android:clickable="true"
+    android:focusable="true"
+    android:visibility="gone" />

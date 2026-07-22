@@ -29,6 +29,7 @@ import com.economic.dashboard.ui.fragments.MarketsFragment;
 import com.economic.dashboard.utils.AppExecutors;
 import com.economic.dashboard.utils.SettingsManager;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.badge.BadgeDrawable;
 import android.widget.ProgressBar;
 
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
@@ -117,6 +118,7 @@ public class MainActivity extends AppCompatActivity {
         setupBottomNav();
 
         binding.fabAiAnalyst.setOnClickListener(v -> {
+            markAnalystSeen(); clearAnalystBadge(); // TICKET-26: opening Analyst clears its badge
             if (getSupportFragmentManager().findFragmentByTag(AiAnalystBottomSheet.TAG) == null)
                 new AiAnalystBottomSheet().show(getSupportFragmentManager(), AiAnalystBottomSheet.TAG);
         });
@@ -127,7 +129,12 @@ public class MainActivity extends AppCompatActivity {
         if (freshLaunch && SettingsManager.getBool(this, SettingsManager.KEY_REFRESH_ON_OPEN, false)) {
             CacheManager.forceRefreshAll(this, success -> runOnUiThread(this::updateHeader));
         }
+        // TICKET-17: recompute the News unread badge whenever a fetch lands.
+        NewsRepository.getInstance().setOnFetchCompleteListener(
+                () -> runOnUiThread(this::refreshNewsBadge));
         NewsRepository.getInstance().fetchAllFeedsIfStale();
+        binding.bottomNav.post(this::refreshNewsBadge); // in case the cache is already warm
+        binding.bottomNav.post(this::refreshAnalystBadge); // TICKET-26
 
         // Daily AI brief scheduling (no-op unless the setting is on; KEEP policy)
         com.economic.dashboard.workers.DailyBriefWorker.scheduleDaily(this);
@@ -303,7 +310,10 @@ public class MainActivity extends AppCompatActivity {
                 String title = "Overview";
                 if (id == R.id.nav_markets) { index = 1; title = "Markets"; loadFragment(new MarketsFragment(), "markets"); }
                 else if (id == R.id.nav_economy) { index = 3; title = "Economy"; loadFragment(new EconomyFragment(), "economy"); }
-                else if (id == R.id.navigation_news) { index = 4; title = "News"; loadFragment(new NewsFragment(), "news"); }
+                else if (id == R.id.navigation_news) {
+                    index = 4; title = "News"; loadFragment(new NewsFragment(), "news");
+                    markNewsSeen(); clearNewsBadge(); // opening News clears the unread badge
+                }
                 else { loadFragment(new DashboardFragment(), "overview"); }
                 binding.tvHeaderLine1.setText(title);
                 currentScreenLabel = title;
@@ -329,6 +339,78 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    // ── News unread badge (TICKET-17) ─────────────────────────────────────────
+
+    /**
+     * Shows a small gold count badge on the News tab for items published since
+     * the user last viewed News. The first successful fetch adopts the current
+     * newest item as the baseline, so we never badge the whole backlog — only
+     * genuinely new content nudges a return visit.
+     */
+    private void refreshNewsBadge() {
+        if (binding == null) return;
+        NewsRepository repo = NewsRepository.getInstance();
+        long newest = repo.getNewestPubDate();
+        if (newest == 0L) return;                       // cache still cold
+        long lastSeen = SettingsManager.getNewsLastSeen(this);
+        if (lastSeen == 0L || "News".equals(currentScreenLabel)) {
+            markNewsSeen();                             // baseline / already reading News
+            clearNewsBadge();
+            return;
+        }
+        int unread = repo.getUnreadCount(lastSeen);
+        if (unread <= 0) { clearNewsBadge(); return; }
+        BadgeDrawable badge = binding.bottomNav.getOrCreateBadge(R.id.navigation_news);
+        badge.setBackgroundColor(androidx.core.content.ContextCompat.getColor(this, R.color.accent_gold));
+        badge.setBadgeTextColor(androidx.core.content.ContextCompat.getColor(this, R.color.header_navy));
+        badge.setMaxCharacterCount(2);                  // "9+" style past 99
+        badge.setNumber(unread);
+        badge.setVisible(true);
+    }
+
+    private void markNewsSeen() {
+        SettingsManager.setNewsLastSeen(this, NewsRepository.getInstance().getNewestPubDate());
+    }
+
+    private void clearNewsBadge() {
+        if (binding != null) binding.bottomNav.removeBadge(R.id.navigation_news);
+    }
+
+    // ── Analyst unread badge (TICKET-26) ──────────────────────────────────────
+
+    /**
+     * Mirrors the News badge on the center AI-Analyst slot. Badges when the
+     * daily-brief worker has produced an insight newer than the user's last
+     * Analyst visit; clears when the Analyst opens. On first run it baselines to
+     * "now" so a pre-existing brief never shows as a backlog badge — identical
+     * spirit to the News baseline.
+     */
+    private void refreshAnalystBadge() {
+        if (binding == null) return;
+        long lastSeen = SettingsManager.getAnalystLastSeen(this);
+        if (lastSeen == 0L) {                       // first run — baseline, no backlog badge
+            SettingsManager.setAnalystLastSeen(this, System.currentTimeMillis());
+            clearAnalystBadge();
+            return;
+        }
+        long newest = SettingsManager.getAnalystLastInsight(this);
+        if (newest > lastSeen) {
+            BadgeDrawable badge = binding.bottomNav.getOrCreateBadge(R.id.nav_ai_placeholder);
+            badge.setBackgroundColor(androidx.core.content.ContextCompat.getColor(this, R.color.accent_gold));
+            badge.setVisible(true);                 // dot — a single "new insight" nudge
+        } else {
+            clearAnalystBadge();
+        }
+    }
+
+    private void markAnalystSeen() {
+        SettingsManager.setAnalystLastSeen(this, System.currentTimeMillis());
+    }
+
+    private void clearAnalystBadge() {
+        if (binding != null) binding.bottomNav.removeBadge(R.id.nav_ai_placeholder);
+    }
+
     private void loadFragment(Fragment fragment, String tag) {
         Fragment existing = getSupportFragmentManager().findFragmentByTag(tag);
         if (existing != null && existing.isAdded()) return;
@@ -343,7 +425,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void showFedFundsHistory() {
-        View dialogView = MetricBottomSheet.show(this, R.layout.dialog_fed_funds_history);
+        // TICKET-24: metric-aware sheet — offers "Add alert" for Fed Funds.
+        View dialogView = MetricBottomSheet.show(this, R.layout.dialog_fed_funds_history,
+                EconomicViewModel.CACHE_FED_FUNDS, "Fed Funds");
         RecyclerView rv = dialogView.findViewById(R.id.rvFedFundsHistory);
         if (rv != null) {
             rv.setLayoutManager(new LinearLayoutManager(this));
@@ -373,7 +457,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onResume() { super.onResume(); updateHeader(); }
+    protected void onResume() { super.onResume(); updateHeader(); refreshNewsBadge(); refreshAnalystBadge(); }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) { getMenuInflater().inflate(R.menu.main_menu, menu); return true; }
@@ -381,12 +465,19 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == R.id.action_refresh) {
-            // Refresh live dashboard data AND force-refresh the local cache
+            // Refresh live dashboard data AND force-refresh the local cache.
+            // TICKET-15: report the outcome, not just the start, so the user
+            // always knows whether the refresh actually landed.
             android.widget.Toast.makeText(this, R.string.refreshing_data,
                     android.widget.Toast.LENGTH_SHORT).show();
             viewModel.fetchAllData();
             CacheManager.forceRefreshAll(this, success ->
-                    runOnUiThread(this::updateHeader));
+                    runOnUiThread(() -> {
+                        updateHeader();
+                        android.widget.Toast.makeText(this,
+                                success ? R.string.refresh_done : R.string.refresh_failed,
+                                android.widget.Toast.LENGTH_SHORT).show();
+                    }));
             return true;
         }
         if (item.getItemId() == R.id.action_clear_cache) {

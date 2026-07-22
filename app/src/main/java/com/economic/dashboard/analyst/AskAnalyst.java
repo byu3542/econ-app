@@ -74,7 +74,10 @@ public class AskAnalyst {
                 menu.show();
             }
             @Override public void onChartGestureStart(MotionEvent me, ChartTouchListener.ChartGesture g) {}
-            @Override public void onChartGestureEnd(MotionEvent me, ChartTouchListener.ChartGesture g) {}
+            @Override public void onChartGestureEnd(MotionEvent me, ChartTouchListener.ChartGesture g) {
+                // TICKET-23: clear the crosshair marker when a scrub gesture ends.
+                chart.highlightValue(null);
+            }
             @Override public void onChartDoubleTapped(MotionEvent me) {}
             @Override public void onChartSingleTapped(MotionEvent me) {}
             @Override public void onChartFling(MotionEvent me1, MotionEvent me2, float vX, float vY) {}

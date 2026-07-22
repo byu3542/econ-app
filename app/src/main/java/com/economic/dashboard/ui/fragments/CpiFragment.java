@@ -22,6 +22,8 @@ import com.economic.dashboard.ui.MetricBottomSheet;
 import com.economic.dashboard.models.EconomicDataPoint;
 import com.economic.dashboard.ui.EconomicViewModel;
 import com.economic.dashboard.utils.ChartHelper;
+import com.economic.dashboard.utils.NumberFormatUtil;
+import com.economic.dashboard.utils.TimeframeSelector;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
@@ -56,6 +58,22 @@ public class CpiFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         viewModel = new ViewModelProvider(requireActivity()).get(EconomicViewModel.class);
 
+        // TICKET-18: per-screen retry chip for this screen's series
+        android.widget.TextView retryChip = view.findViewById(R.id.tvRetry);
+        final String[] retryKeys = { EconomicViewModel.CACHE_CPI };
+        viewModel.getFailedSeries().observe(getViewLifecycleOwner(), failed -> {
+            if (retryChip == null) return;
+            String hit = null;
+            if (failed != null) for (String k : retryKeys) if (failed.contains(k)) { hit = k; break; }
+            if (hit != null) {
+                final String key = hit;
+                retryChip.setOnClickListener(x -> viewModel.retrySeries(key));
+                retryChip.setVisibility(View.VISIBLE);
+            } else {
+                retryChip.setVisibility(View.GONE);
+            }
+        });
+
         cpiChart  = binding.cpiUChart;
         com.economic.dashboard.analyst.AskAnalyst.attachChartExplain(
                 cpiChart, requireActivity(), "the CPI-U consumer price index trend");
@@ -83,6 +101,18 @@ public class CpiFragment extends Fragment {
         };
         cpiChart.getAxisLeft().setValueFormatter(indexFormatter);
         cpiWChart.getAxisLeft().setValueFormatter(indexFormatter);
+        ChartHelper.attachCrosshair(cpiChart);  // TICKET-23
+        ChartHelper.attachCrosshair(cpiWChart);
+
+        // TICKET-20: inline range switcher — one control drives both CPI charts.
+        android.widget.LinearLayout tfSel = view.findViewById(R.id.timeframeSelector);
+        TimeframeSelector.attach(tfSel, "cpi", months -> {
+            List<EconomicDataPoint> d = viewModel.getCpiData().getValue();
+            if (d != null) {
+                buildChart(d, "CPI-U All Items", cpiChart,  "#fbbc04");
+                buildChart(d, "CPI-W All Items", cpiWChart, "#ff6d00");
+            }
+        });
 
         viewModel.getCpiData().observe(getViewLifecycleOwner(), data -> {
             if (data != null) {
@@ -98,7 +128,9 @@ public class CpiFragment extends Fragment {
 
     private void showCpiBenchmarks() {
         if (getContext() == null) return;
-        MetricBottomSheet.show(getContext(), R.layout.dialog_cpi_status);
+        // TICKET-24: metric-aware sheet — offers "Add alert" for CPI YoY.
+        MetricBottomSheet.show(getContext(), R.layout.dialog_cpi_status,
+                EconomicViewModel.CACHE_CPI, "CPI YoY");
     }
 
     private void calculateYoYInflation(List<EconomicDataPoint> data) {
@@ -110,7 +142,7 @@ public class CpiFragment extends Fragment {
 
         double yoyChange = ((latest.getValue() - yearAgo.getValue()) / yearAgo.getValue()) * 100.0;
         
-        tvCpiYoYValue.setText(String.format(Locale.US, "%.2f%%", yoyChange));
+        tvCpiYoYValue.setText(NumberFormatUtil.percent(yoyChange)); // TICKET-19
         
         // Threshold Logic
         String status;
@@ -151,7 +183,7 @@ public class CpiFragment extends Fragment {
     private void buildChart(List<EconomicDataPoint> data, String series, LineChart chart, String hexColor) {
         List<EconomicDataPoint> rows = EconomicViewModel.filterBySeries(data, series);
         if (rows.isEmpty()) return;
-        rows = EconomicViewModel.filterByTimeframe(requireContext(), rows);
+        rows = EconomicViewModel.filterByTimeframe(requireContext(), rows, "cpi");
 
         List<Entry> entries = new ArrayList<>();
         final List<String> dates = new ArrayList<>();

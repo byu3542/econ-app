@@ -24,31 +24,93 @@
                 android:padding="@dimen/space_lg"
                 android:visibility="invisible">
 
-                <include layout="@layout/card_fed_funds_hero" />
+                <!-- Cache-first: shown while stale/cached values are on screen,
+                     hidden the moment fresh data lands. -->
+                <TextView
+                    android:id="@+id/tvCacheAsOf"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/space_sm"
+                    android:text=""
+                    android:textColor="@color/text_secondary"
+                    android:textSize="@dimen/text_caption"
+                    android:visibility="gone" />
 
-                <!-- ROW 1: GDP Growth | CPI-U YOY -->
+                <!-- TICKET-22: "Since you last opened" delta strip. Shown only on
+                     warm launches (prior snapshot exists), built from cached-vs-
+                     fresh values; dismissible for the session. -->
                 <LinearLayout
+                    android:id="@+id/stripSinceLastOpen"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:layout_marginBottom="@dimen/space_lg"
-                    android:baselineAligned="false">
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="@dimen/space_sm"
+                    android:paddingStart="@dimen/space_md"
+                    android:paddingEnd="@dimen/space_xs"
+                    android:paddingVertical="@dimen/space_sm"
+                    android:background="@drawable/bg_metric_group"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:id="@+id/tvSinceLastOpen"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text=""
+                        android:textColor="@color/text_secondary"
+                        android:textSize="@dimen/text_secondary" />
+
+                    <TextView
+                        android:id="@+id/btnSinceLastOpenClose"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:minWidth="32dp"
+                        android:minHeight="32dp"
+                        android:gravity="center"
+                        android:text="✕"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="@dimen/text_body"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:contentDescription="@string/dismiss_since_last_open" />
+                </LinearLayout>
+
+                <include layout="@layout/card_fed_funds_hero" />
+
+                <!-- TICKET-05/06: KPI cards grouped into labelled common regions
+                     under the Fed Funds hero. Each cluster holds ≤2 related
+                     metrics so the Overview reads as a few scannable groups. -->
+
+                <!-- GROUP: Growth & Rates -->
+                <!-- TICKET-25: group header/region ids let the fragment reorder
+                     clusters to match the user's watchlist (most-cared-for first). -->
+                <TextView
+                    android:id="@+id/headerGroupGrowth"
+                    style="@style/MetricGroupHeader"
+                    android:text="GROWTH &amp; RATES" />
+                <LinearLayout
+                    android:id="@+id/regionGroupGrowth"
+                    style="@style/MetricGroupRegion"
+                    android:layout_marginBottom="@dimen/space_lg">
                     <include layout="@layout/card_kpi_badge" android:id="@+id/cardGdp"
                         android:layout_width="0dp" android:layout_height="wrap_content"
                         android:layout_weight="1" android:layout_marginEnd="@dimen/space_sm" />
-                    <include layout="@layout/card_kpi_badge" android:id="@+id/cardCpiYoy"
+                    <include layout="@layout/card_kpi_badge" android:id="@+id/cardSpread"
                         android:layout_width="0dp" android:layout_height="wrap_content"
                         android:layout_weight="1" android:layout_marginStart="@dimen/space_sm" />
                 </LinearLayout>
 
-                <!-- ROW 2: 10Y-3M Spread | Unemployment -->
+                <!-- GROUP: Inflation & Labor -->
+                <TextView
+                    android:id="@+id/headerGroupInflation"
+                    style="@style/MetricGroupHeader"
+                    android:text="INFLATION &amp; LABOR" />
                 <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginBottom="@dimen/space_lg"
-                    android:baselineAligned="false">
-                    <include layout="@layout/card_kpi_badge" android:id="@+id/cardSpread"
+                    android:id="@+id/regionGroupInflation"
+                    style="@style/MetricGroupRegion"
+                    android:layout_marginBottom="@dimen/space_lg">
+                    <include layout="@layout/card_kpi_badge" android:id="@+id/cardCpiYoy"
                         android:layout_width="0dp" android:layout_height="wrap_content"
                         android:layout_weight="1" android:layout_marginEnd="@dimen/space_sm" />
                     <include layout="@layout/card_kpi_badge" android:id="@+id/cardUnemployment"
@@ -56,13 +118,15 @@
                         android:layout_weight="1" android:layout_marginStart="@dimen/space_sm" />
                 </LinearLayout>
 
-                <!-- ROW 3: 30Y Mortgage | VIX -->
+                <!-- GROUP: Housing & Markets -->
+                <TextView
+                    android:id="@+id/headerGroupMarkets"
+                    style="@style/MetricGroupHeader"
+                    android:text="HOUSING &amp; MARKETS" />
                 <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginBottom="@dimen/space_lg"
-                    android:baselineAligned="false">
+                    android:id="@+id/regionGroupMarkets"
+                    style="@style/MetricGroupRegion"
+                    android:layout_marginBottom="@dimen/space_lg">
                     <include layout="@layout/card_kpi_badge" android:id="@+id/cardMortgage"
                         android:layout_width="0dp" android:layout_height="wrap_content"
                         android:layout_weight="1" android:layout_marginEnd="@dimen/space_sm" />

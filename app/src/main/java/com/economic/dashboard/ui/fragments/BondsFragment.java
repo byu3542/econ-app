@@ -19,6 +19,8 @@ import androidx.lifecycle.ViewModelProvider;
 import com.economic.dashboard.databinding.FragmentBondsBinding;
 import com.economic.dashboard.models.EconomicDataPoint;
 import com.economic.dashboard.ui.EconomicViewModel;
+import com.economic.dashboard.utils.ChartHelper;
+import com.economic.dashboard.utils.NumberFormatUtil;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.LimitLine;
 import com.github.mikephil.charting.components.XAxis;
@@ -36,6 +38,7 @@ public class BondsFragment extends Fragment {
 
     private EconomicViewModel viewModel;
     private FragmentBondsBinding binding;
+    private com.economic.dashboard.ui.views.SkeletonController skeleton;
     private CardView cardBaa, cardHy;
     private TextView tvBaaValue, tvBaaStatus, tvHyValue, tvHyStatus;
     private View viewBaaDot, viewHyDot;
@@ -49,13 +52,30 @@ public class BondsFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = FragmentBondsBinding.inflate(inflater, container, false);
-        return binding.getRoot();
+        skeleton = com.economic.dashboard.ui.views.SkeletonController.wrap(binding.getRoot());
+        return skeleton.getRoot();
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         viewModel = new ViewModelProvider(requireActivity()).get(EconomicViewModel.class);
+
+        // TICKET-18: per-screen retry chip for this screen's series
+        android.widget.TextView retryChip = view.findViewById(com.economic.dashboard.R.id.tvRetry);
+        final String[] retryKeys = { EconomicViewModel.KEY_BAA, EconomicViewModel.KEY_HY };
+        viewModel.getFailedSeries().observe(getViewLifecycleOwner(), failed -> {
+            if (retryChip == null) return;
+            String hit = null;
+            if (failed != null) for (String k : retryKeys) if (failed.contains(k)) { hit = k; break; }
+            if (hit != null) {
+                final String key = hit;
+                retryChip.setOnClickListener(x -> viewModel.retrySeries(key));
+                retryChip.setVisibility(View.VISIBLE);
+            } else {
+                retryChip.setVisibility(View.GONE);
+            }
+        });
 
         cardBaa = binding.cardBaa; cardHy = binding.cardHy;
         com.economic.dashboard.analyst.AskAnalyst.wireCardLongPress(
@@ -69,17 +89,21 @@ public class BondsFragment extends Fragment {
         com.economic.dashboard.analyst.AskAnalyst.attachChartExplain(
                 swappableChart, requireActivity(), "corporate bond spreads (BAA and high-yield) over time");
 
-        styleChart(swappableChart); addAllBenchmarks(swappableChart);
+        styleChart(swappableChart); com.economic.dashboard.utils.ChartHelper.declutterDark(swappableChart); ChartHelper.attachCrosshair(swappableChart); addAllBenchmarks(swappableChart); // TICKET-23
+
+        // TICKET-11: inline range switcher redraws the active bond-spread series.
+        android.widget.LinearLayout tfSel = view.findViewById(com.economic.dashboard.R.id.timeframeSelector);
+        com.economic.dashboard.utils.TimeframeSelector.attach(tfSel, "bonds", months -> buildSwappableChart());
 
         cardBaa.setOnClickListener(v -> { activeCard = "baa"; setActiveCard("baa"); buildSwappableChart(); });
         cardHy.setOnClickListener(v -> { activeCard = "hy"; setActiveCard("hy"); buildSwappableChart(); });
         setActiveCard("baa");
 
         viewModel.getBaaSpreadData().observe(getViewLifecycleOwner(), data -> {
-            if (data != null) { currentBaaData = data; updateBaaCard(data); buildSwappableChart(); }
+            if (data != null) { currentBaaData = data; updateBaaCard(data); buildSwappableChart(); if (skeleton != null) skeleton.reveal(); }
         });
         viewModel.getHySpreadData().observe(getViewLifecycleOwner(), data -> {
-            if (data != null) { currentHyData = data; updateHyCard(data); buildSwappableChart(); }
+            if (data != null) { currentHyData = data; updateHyCard(data); buildSwappableChart(); if (skeleton != null) skeleton.reveal(); }
         });
     }
 
@@ -87,7 +111,7 @@ public class BondsFragment extends Fragment {
         List<EconomicDataPoint> rows = EconomicViewModel.filterBySeries(data, "BAA Corporate Spread");
         if (rows.isEmpty()) return;
         double latest = rows.get(rows.size()-1).getValue();
-        tvBaaValue.setText(String.format(Locale.US, "%.2f%%", latest));
+        tvBaaValue.setText(NumberFormatUtil.percent(latest)); // TICKET-19
         String status; int color;
         if (latest < 1.5) { status = "TIGHT"; color = Color.parseColor("#6FA97A"); }
         else if (latest < 2.5) { status = "NORMAL"; color = Color.parseColor("#5B8DB8"); }
@@ -100,7 +124,7 @@ public class BondsFragment extends Fragment {
         List<EconomicDataPoint> rows = EconomicViewModel.filterBySeries(data, "High Yield Spread");
         if (rows.isEmpty()) return;
         double latest = rows.get(rows.size()-1).getValue();
-        tvHyValue.setText(String.format(Locale.US, "%.2f%%", latest));
+        tvHyValue.setText(NumberFormatUtil.percent(latest)); // TICKET-19
         String status; int color;
         if (latest < 3) { status = "TIGHT"; color = Color.parseColor("#6FA97A"); }
         else if (latest < 5) { status = "NORMAL"; color = Color.parseColor("#5B8DB8"); }
@@ -137,7 +161,7 @@ public class BondsFragment extends Fragment {
         if (data == null) return;
         List<EconomicDataPoint> rows = EconomicViewModel.filterBySeries(data, seriesName);
         if (rows.isEmpty()) return;
-        rows = EconomicViewModel.filterByTimeframe(requireContext(), rows);
+        rows = EconomicViewModel.filterByTimeframe(requireContext(), rows, "bonds");
         List<Entry> entries = new ArrayList<>();
         final List<String> dateLabels = new ArrayList<>();
         for (int i = 0; i < rows.size(); i++) {

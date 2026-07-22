@@ -20,6 +20,7 @@ import com.economic.dashboard.R;
 import com.economic.dashboard.ui.MetricBottomSheet;
 import com.economic.dashboard.models.EconomicDataPoint;
 import com.economic.dashboard.ui.EconomicViewModel;
+import com.economic.dashboard.utils.NumberFormatUtil;
 import com.economic.dashboard.utils.SettingsManager;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.LimitLine;
@@ -38,6 +39,7 @@ import java.util.Locale;
 public class InflationFragment extends Fragment {
 
     private FragmentInflationBinding binding;
+    private com.economic.dashboard.ui.views.SkeletonController skeleton;
 
     private EconomicViewModel viewModel;
 
@@ -62,13 +64,30 @@ public class InflationFragment extends Fragment {
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
         binding = FragmentInflationBinding.inflate(inflater, container, false);
-        return binding.getRoot();
+        skeleton = com.economic.dashboard.ui.views.SkeletonController.wrap(binding.getRoot());
+        return skeleton.getRoot();
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         viewModel = new ViewModelProvider(requireActivity()).get(EconomicViewModel.class);
+
+        // TICKET-18: per-screen retry chip for this screen's series
+        android.widget.TextView retryChip = view.findViewById(R.id.tvRetry);
+        final String[] retryKeys = { EconomicViewModel.CACHE_CPI, EconomicViewModel.KEY_PCE };
+        viewModel.getFailedSeries().observe(getViewLifecycleOwner(), failed -> {
+            if (retryChip == null) return;
+            String hit = null;
+            if (failed != null) for (String k : retryKeys) if (failed.contains(k)) { hit = k; break; }
+            if (hit != null) {
+                final String key = hit;
+                retryChip.setOnClickListener(x -> viewModel.retrySeries(key));
+                retryChip.setVisibility(View.VISIBLE);
+            } else {
+                retryChip.setVisibility(View.GONE);
+            }
+        });
 
         cardPceStatus   = binding.cardPceStatus;
         com.economic.dashboard.analyst.AskAnalyst.wireCardLongPress(
@@ -102,6 +121,21 @@ public class InflationFragment extends Fragment {
 
         styleChart(chartPceCpi);
         styleChart(chartComparison);
+        // TICKET-07/08: thin gridlines + label each line at its right end
+        // instead of a detached legend.
+        com.economic.dashboard.utils.ChartHelper.declutterDark(chartPceCpi);
+        com.economic.dashboard.utils.ChartHelper.declutterDark(chartComparison);
+        com.economic.dashboard.utils.ChartHelper.useDirectLabels(chartPceCpi);
+        com.economic.dashboard.utils.ChartHelper.useDirectLabels(chartComparison);
+        com.economic.dashboard.utils.ChartHelper.attachCrosshair(chartPceCpi);     // TICKET-23
+        com.economic.dashboard.utils.ChartHelper.attachCrosshair(chartComparison);
+
+        // TICKET-11: one inline range switcher drives both Inflation charts.
+        android.widget.LinearLayout tfSel = view.findViewById(R.id.timeframeSelector);
+        com.economic.dashboard.utils.TimeframeSelector.attach(tfSel, "inflation", months -> {
+            buildPceCpiChart(viewModel.getPceData().getValue(), viewModel.getCpiData().getValue());
+            tryBuildComparisonChart();
+        });
 
         chartPceCpi.getAxisLeft().setValueFormatter(new ValueFormatter() {
             @Override public String getFormattedValue(float v) { return String.format(Locale.US, "%.1f%%", v); }
@@ -113,15 +147,18 @@ public class InflationFragment extends Fragment {
         addYoYLimitLines(chartPceCpi);
 
         if (cardCpiYoY != null)
-            cardCpiYoY.setOnClickListener(v2 -> showBenchmarkDialog(R.layout.dialog_cpi_status));
+            cardCpiYoY.setOnClickListener(v2 -> showBenchmarkDialog(R.layout.dialog_cpi_status,
+                    EconomicViewModel.CACHE_CPI, "CPI YoY"));
         if (cardWageYoY != null)
-            cardWageYoY.setOnClickListener(v2 -> showBenchmarkDialog(R.layout.dialog_wages_status));
+            cardWageYoY.setOnClickListener(v2 -> showBenchmarkDialog(R.layout.dialog_wages_status,
+                    EconomicViewModel.KEY_WAGES, "Wage growth"));
 
         viewModel.getPceData().observe(getViewLifecycleOwner(), pce -> {
             if (pce != null) {
                 updatePceCard(pce);
                 buildPceCpiChart(pce, viewModel.getCpiData().getValue());
                 tryBuildComparisonChart();
+                if (skeleton != null) skeleton.reveal();
             }
         });
         viewModel.getCpiData().observe(getViewLifecycleOwner(), cpi -> {
@@ -130,6 +167,7 @@ public class InflationFragment extends Fragment {
                 buildPceCpiChart(viewModel.getPceData().getValue(), cpi);
                 tryBuildComparisonChart();
                 tryUpdateWageCard();
+                if (skeleton != null) skeleton.reveal();
             }
         });
         viewModel.getWageData().observe(getViewLifecycleOwner(), wages -> {
@@ -143,14 +181,14 @@ public class InflationFragment extends Fragment {
         double latest  = rows.get(rows.size()-1).getValue();
         double yearAgo = rows.get(rows.size()-13).getValue();
         double yoy = ((latest - yearAgo) / yearAgo) * 100.0;
-        if (tvPceValue != null) tvPceValue.setText(String.format(Locale.US, "%.2f%%", yoy));
+        if (tvPceValue != null) tvPceValue.setText(NumberFormatUtil.percent(yoy)); // TICKET-19
 
         List<EconomicDataPoint> coreRows = EconomicViewModel.filterBySeries(pceData, "Core PCE Price Index");
         String coreLabel = "";
         if (coreRows.size() >= 13) {
             double coreYoy = ((coreRows.get(coreRows.size()-1).getValue() - coreRows.get(coreRows.size()-13).getValue())
                     / coreRows.get(coreRows.size()-13).getValue()) * 100.0;
-            coreLabel = String.format(Locale.US, "Core: %.2f%%", coreYoy);
+            coreLabel = "Core: " + NumberFormatUtil.percent(coreYoy); // TICKET-19
         }
         if (tvPcePercentile != null) tvPcePercentile.setText(coreLabel);
 
@@ -171,7 +209,7 @@ public class InflationFragment extends Fragment {
         double latest  = rows.get(rows.size()-1).getValue();
         double yearAgo = rows.get(rows.size()-13).getValue();
         double yoy = ((latest - yearAgo) / yearAgo) * 100.0;
-        if (tvCpiYoYValue != null) tvCpiYoYValue.setText(String.format(Locale.US, "%.2f%%", yoy));
+        if (tvCpiYoYValue != null) tvCpiYoYValue.setText(NumberFormatUtil.percent(yoy)); // TICKET-19
 
         String status; int color;
         if (yoy < 1.5)       { status = "DEFLATION RISK"; color = Color.parseColor("#5B8DB8"); }
@@ -205,7 +243,7 @@ public class InflationFragment extends Fragment {
                 / cRows.get(cRows.size()-13).getValue()) * 100.0;
         double spread = wYoy - cYoy;
 
-        if (tvWageYoYValue != null) tvWageYoYValue.setText(String.format(Locale.US, "%.2f%%", spread));
+        if (tvWageYoYValue != null) tvWageYoYValue.setText(NumberFormatUtil.percent(spread)); // TICKET-19
 
         String status; int color;
         if (spread < -2.0)      { status = "FALLING BEHIND FAST"; color = Color.parseColor("#C75B4E"); }
@@ -232,7 +270,7 @@ public class InflationFragment extends Fragment {
         final List<String> dates = new ArrayList<>();
 
         // Number of YoY months shown follows the standardized chart time range.
-        int months = SettingsManager.getChartTimeframeMonths(requireContext());
+        int months = SettingsManager.getChartTimeframeMonths(requireContext(), "inflation");
         int pcStart = Math.max(12, pceRows.size()-months);
         for (int i = pcStart; i < pceRows.size(); i++) {
             double yoy = ((pceRows.get(i).getValue() - pceRows.get(i-12).getValue()) / pceRows.get(i-12).getValue()) * 100.0;
@@ -275,7 +313,7 @@ public class InflationFragment extends Fragment {
 
         // Window the driving CPI series to the standardized chart time range;
         // wage/PCE are matched by date, so trimming CPI drives the x-axis.
-        cpiRows = EconomicViewModel.filterByTimeframe(requireContext(), cpiRows);
+        cpiRows = EconomicViewModel.filterByTimeframe(requireContext(), cpiRows, "inflation");
         if (cpiRows.isEmpty()) return;
         double cpiBase  = cpiRows.get(0).getValue();
         double wageBase = -1.0; // set at the first wage point in the window
@@ -321,6 +359,8 @@ public class InflationFragment extends Fragment {
         LineDataSet ds = new LineDataSet(entries, label);
         ds.setColor(Color.parseColor(hexColor)); ds.setLineWidth(1.5f);
         ds.setDrawCircles(false); ds.setDrawValues(false); ds.setMode(LineDataSet.Mode.CUBIC_BEZIER);
+        // TICKET-08: draw the series name at the line's right end in its colour.
+        com.economic.dashboard.utils.ChartHelper.labelLineEnd(ds, label);
         return ds;
     }
 
@@ -342,8 +382,13 @@ public class InflationFragment extends Fragment {
     }
 
     private void showBenchmarkDialog(int layoutRes) {
+        showBenchmarkDialog(layoutRes, null, null);
+    }
+
+    /** TICKET-24: metric-aware overload — the sheet gains an "Add alert" row. */
+    private void showBenchmarkDialog(int layoutRes, String seriesKey, String seriesLabel) {
         if (getContext() == null) return;
-        MetricBottomSheet.show(getContext(), layoutRes);
+        MetricBottomSheet.show(getContext(), layoutRes, seriesKey, seriesLabel);
     }
 
     private void styleChart(LineChart chart) {

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- TICKET-23 — crosshair read-out bubble. Shows the date and unit-formatted
+     value at the touched point on a trend chart. Inflated by
+     ChartHelper.ChartMarker; ids are referenced there. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_chart_marker"
+    android:paddingHorizontal="8dp"
+    android:paddingVertical="4dp"
+    android:gravity="center">
+
+    <TextView
+        android:id="@+id/tvMarkerValue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="—"
+        android:textColor="@color/card_white"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tvMarkerDate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="@color/accent_gold"
+        android:textSize="10sp" />
+</LinearLayout>

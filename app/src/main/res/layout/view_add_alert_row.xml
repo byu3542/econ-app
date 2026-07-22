@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- TICKET-24: "Add alert" affordance appended to a metric's bottom sheet.
+     Tapping opens the threshold-rule dialog for that metric. -->
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/tvAddAlert"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="@dimen/space_lg"
+    android:minHeight="48dp"
+    android:gravity="center"
+    android:paddingHorizontal="@dimen/space_lg"
+    android:paddingVertical="@dimen/space_md"
+    android:background="@drawable/bg_pill_navy"
+    android:text="@string/add_alert"
+    android:textColor="@color/accent_gold"
+    android:textSize="@dimen/text_secondary"
+    android:textStyle="bold"
+    android:clickable="true"
+    android:focusable="true" />

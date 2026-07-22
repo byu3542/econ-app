@@ -20,6 +20,7 @@ import com.economic.dashboard.R;
 import com.economic.dashboard.ui.MetricBottomSheet;
 import com.economic.dashboard.models.EconomicDataPoint;
 import com.economic.dashboard.ui.EconomicViewModel;
+import com.economic.dashboard.utils.NumberFormatUtil;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
@@ -35,6 +36,7 @@ import java.util.Locale;
 public class GdpFragment extends Fragment {
 
     private FragmentGdpBinding binding;
+    private com.economic.dashboard.ui.views.SkeletonController skeleton;
 
     private EconomicViewModel viewModel;
     private LineChart gdpChart;
@@ -44,18 +46,36 @@ public class GdpFragment extends Fragment {
     private TextView tvGdpLatestQuarterValue, tvGdpLatestQuarterLabel, tvGdpLatestQuarterStatus;
     private View viewGdpLatestQuarterDot;
     private CardView cardGdpLatestQuarter;
+    private List<EconomicDataPoint> lastGdpData; // last observed data, for range re-draws
 
     @Nullable @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = FragmentGdpBinding.inflate(inflater, container, false);
-        return binding.getRoot();
+        skeleton = com.economic.dashboard.ui.views.SkeletonController.wrap(binding.getRoot());
+        return skeleton.getRoot();
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         viewModel = new ViewModelProvider(requireActivity()).get(EconomicViewModel.class);
+
+        // TICKET-18: per-screen retry chip for this screen's series
+        android.widget.TextView retryChip = view.findViewById(R.id.tvRetry);
+        final String[] retryKeys = { EconomicViewModel.CACHE_GDP };
+        viewModel.getFailedSeries().observe(getViewLifecycleOwner(), failed -> {
+            if (retryChip == null) return;
+            String hit = null;
+            if (failed != null) for (String k : retryKeys) if (failed.contains(k)) { hit = k; break; }
+            if (hit != null) {
+                final String key = hit;
+                retryChip.setOnClickListener(x -> viewModel.retrySeries(key));
+                retryChip.setVisibility(View.VISIBLE);
+            } else {
+                retryChip.setVisibility(View.GONE);
+            }
+        });
 
         gdpChart = binding.gdpChart;
         com.economic.dashboard.analyst.AskAnalyst.attachChartExplain(
@@ -76,14 +96,22 @@ public class GdpFragment extends Fragment {
         viewGdpLatestQuarterDot = binding.viewGdpLatestQuarterDot;
 
         styleChart(gdpChart);
+        com.economic.dashboard.utils.ChartHelper.declutterDark(gdpChart);
+        com.economic.dashboard.utils.ChartHelper.attachCrosshair(gdpChart); // TICKET-23
         gdpChart.getAxisLeft().setValueFormatter(new ValueFormatter() {
             @Override public String getFormattedValue(float value) {
                 return String.format(Locale.US, "%.1f%%", value);
             }
         });
 
+        // TICKET-11: inline range switcher — redraw the chart for the new window.
+        android.widget.LinearLayout tfSelector = view.findViewById(R.id.timeframeSelector);
+        com.economic.dashboard.utils.TimeframeSelector.attach(tfSelector, "gdp", months -> {
+            if (lastGdpData != null) buildGdpChart(lastGdpData);
+        });
+
         viewModel.getGdpData().observe(getViewLifecycleOwner(), data -> {
-            if (data != null) { buildGdpChart(data); updateGdpIndicator(data); updateLatestQuarterStatus(data); }
+            if (data != null) { lastGdpData = data; buildGdpChart(data); updateGdpIndicator(data); updateLatestQuarterStatus(data); if (skeleton != null) skeleton.reveal(); }
         });
         viewModel.getLatestQuarterGdp().observe(getViewLifecycleOwner(), value -> {
             if (value != null && tvGdpLatestQuarterValue != null) tvGdpLatestQuarterValue.setText(value);
@@ -97,7 +125,9 @@ public class GdpFragment extends Fragment {
 
     private void showGdpBenchmarks() {
         if (getContext() == null) return;
-        MetricBottomSheet.show(getContext(), R.layout.dialog_gdp_status);
+        // TICKET-24: metric-aware sheet — offers "Add alert" for GDP growth.
+        MetricBottomSheet.show(getContext(), R.layout.dialog_gdp_status,
+                EconomicViewModel.CACHE_GDP, "GDP growth");
     }
 
     private void updateGdpIndicator(List<EconomicDataPoint> data) {
@@ -109,7 +139,7 @@ public class GdpFragment extends Fragment {
         for (int i = startIndex; i < gdpRows.size(); i++) { sum += gdpRows.get(i).getValue(); count++; }
         double rollingAvg = (count > 0) ? sum/count : 0;
 
-        tvGdpLatest.setText(String.format(Locale.US, "%.2f%%", rollingAvg));
+        tvGdpLatest.setText(NumberFormatUtil.percent(rollingAvg)); // TICKET-19
         tvGdpDesc.setText("4-Quarter Rolling Average");
 
         String status; int dotColor;
@@ -154,7 +184,7 @@ public class GdpFragment extends Fragment {
             gdpRows = EconomicViewModel.filterBySeries(data, data.get(0).getSeries());
         if (gdpRows.isEmpty()) return;
 
-        List<EconomicDataPoint> chartRows = EconomicViewModel.filterByTimeframe(requireContext(), gdpRows);
+        List<EconomicDataPoint> chartRows = EconomicViewModel.filterByTimeframe(requireContext(), gdpRows, "gdp");
         if (chartRows.isEmpty()) chartRows = gdpRows;
 
         List<Entry> entries = new ArrayList<>();

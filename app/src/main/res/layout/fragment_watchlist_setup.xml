@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- TICKET-25: first-run watchlist setup (Goal-Gradient). A short "pick the
+     metrics you care about" sheet with a visible progress indicator. The order
+     the user taps in becomes the Overview cluster order. Skippable. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@color/header_navy"
+    android:padding="@dimen/space_2xl">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/watchlist_title"
+        android:textColor="@color/card_white"
+        android:textSize="@dimen/text_title"
+        android:fontFamily="serif"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_xs"
+        android:text="@string/watchlist_subtitle"
+        android:textColor="@color/text_on_navy_muted"
+        android:textSize="@dimen/text_secondary" />
+
+    <!-- Goal-Gradient: progress fills as metrics are picked -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginTop="@dimen/space_lg">
+
+        <ProgressBar
+            android:id="@+id/pbWatchlist"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:max="6"
+            android:progress="0" />
+
+        <TextView
+            android:id="@+id/tvWatchlistProgress"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/space_md"
+            android:text="@string/watchlist_progress_zero"
+            android:textColor="@color/accent_gold"
+            android:textSize="@dimen/text_secondary"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Metric checkboxes (selection order = Overview order) -->
+    <CheckBox android:id="@+id/cbGdp"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:minHeight="48dp" android:layout_marginTop="@dimen/space_md"
+        android:text="@string/watchlist_gdp"
+        android:textColor="@color/card_white" android:textSize="@dimen/text_body"
+        android:buttonTint="@color/accent_gold" />
+
+    <CheckBox android:id="@+id/cbSpread"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:minHeight="48dp"
+        android:text="@string/watchlist_spread"
+        android:textColor="@color/card_white" android:textSize="@dimen/text_body"
+        android:buttonTint="@color/accent_gold" />
+
+    <CheckBox android:id="@+id/cbCpi"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:minHeight="48dp"
+        android:text="@string/watchlist_cpi"
+        android:textColor="@color/card_white" android:textSize="@dimen/text_body"
+        android:buttonTint="@color/accent_gold" />
+
+    <CheckBox android:id="@+id/cbUnemployment"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:minHeight="48dp"
+        android:text="@string/watchlist_unemployment"
+        android:textColor="@color/card_white" android:textSize="@dimen/text_body"
+        android:buttonTint="@color/accent_gold" />
+
+    <CheckBox android:id="@+id/cbMortgage"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:minHeight="48dp"
+        android:text="@string/watchlist_mortgage"
+        android:textColor="@color/card_white" android:textSize="@dimen/text_body"
+        android:buttonTint="@color/accent_gold" />
+
+    <CheckBox android:id="@+id/cbVix"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:minHeight="48dp"
+        android:text="@string/watchlist_vix"
+        android:textColor="@color/card_white" android:textSize="@dimen/text_body"
+        android:buttonTint="@color/accent_gold" />
+
+    <!-- Actions -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end|center_vertical"
+        android:layout_marginTop="@dimen/space_lg">
+
+        <TextView
+            android:id="@+id/btnWatchlistSkip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:gravity="center"
+            android:paddingHorizontal="@dimen/space_lg"
+            android:text="@string/watchlist_skip"
+            android:textColor="@color/text_on_navy_muted"
+            android:textSize="@dimen/text_body"
+            android:clickable="true"
+            android:focusable="true" />
+
+        <TextView
+            android:id="@+id/btnWatchlistDone"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:gravity="center"
+            android:layout_marginStart="@dimen/space_md"
+            android:paddingHorizontal="@dimen/space_xl"
+            android:paddingVertical="@dimen/space_sm"
+            android:background="@drawable/bg_pill_navy"
+            android:text="@string/watchlist_done"
+            android:textColor="@color/accent_gold"
+            android:textSize="@dimen/text_body"
+            android:textStyle="bold"
+            android:clickable="true"
+            android:focusable="true" />
+    </LinearLayout>
+</LinearLayout>

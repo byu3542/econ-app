@@ -187,6 +187,8 @@
 
                 <com.github.mikephil.charting.charts.LineChart
                     android:id="@+id/spreadChart"
+                    android:importantForAccessibility="yes"
+                    android:contentDescription="10-year minus 2-year Treasury spread chart"
                     android:layout_width="match_parent"
                     android:layout_height="220dp"
                     android:padding="@dimen/space_md"/>
@@ -232,6 +234,8 @@
 
                 <com.github.mikephil.charting.charts.LineChart
                     android:id="@+id/spread3MChart"
+                    android:importantForAccessibility="yes"
+                    android:contentDescription="10-year minus 3-month Treasury spread chart"
                     android:layout_width="match_parent"
                     android:layout_height="220dp"
                     android:padding="@dimen/space_md"/>
@@ -277,6 +281,8 @@
 
                 <com.github.mikephil.charting.charts.LineChart
                     android:id="@+id/yieldCurveChart"
+                    android:importantForAccessibility="yes"
+                    android:contentDescription="Treasury yield curve chart"
                     android:layout_width="match_parent"
                     android:layout_height="250dp"
                     android:padding="@dimen/space_md"/>
@@ -322,6 +328,8 @@
 
                 <com.github.mikephil.charting.charts.LineChart
                     android:id="@+id/tenYearTrendChart"
+                    android:importantForAccessibility="yes"
+                    android:contentDescription="10-year Treasury yield trend chart"
                     android:layout_width="match_parent"
                     android:layout_height="220dp"
                     android:padding="@dimen/space_md"/>

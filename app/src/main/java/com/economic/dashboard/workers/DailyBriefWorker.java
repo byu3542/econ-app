@@ -75,11 +75,15 @@ public class DailyBriefWorker extends Worker {
             try { news = NewsRepository.getInstance().fetchAllFeeds(false); }
             catch (Exception e) { news = NewsRepository.getInstance().getCachedItems(); }
 
+            // TICKET-12 (End): a crisp brief that reads as headline + movers.
             String systemPrompt = "You are an AI Economic Analyst writing a short morning brief "
                     + "for the U.S. Economic Monitor app. Using the historical data, upcoming "
-                    + "releases, and headlines below, write a 3-5 sentence morning brief: what "
-                    + "changed recently, what matters most today, and what to watch. Plain text "
-                    + "only — no markdown, no headers, no lists.\n\n"
+                    + "releases, and headlines below, write the brief in this shape:\n"
+                    + "- First line: a punchy headline of at most 8 words, no period.\n"
+                    + "- Then 2 to 3 short lines, each naming one key mover and its latest "
+                    + "number (e.g. '10Y Treasury 4.33%, +6bp today').\n"
+                    + "- Then one closing sentence on what to watch.\n"
+                    + "Plain text only — no markdown, no bullet characters, no headers.\n\n"
                     + HistoricalContextBuilder.build(ctx)
                     + ReleaseCalendar.build()
                     + NewsContextBuilder.build(news);
@@ -123,12 +127,28 @@ public class DailyBriefWorker extends Worker {
             }
 
             SettingsManager.setString(ctx, SettingsManager.KEY_LAST_BRIEF_DATE, today);
-            NotificationHelper.notify(ctx, NOTIFICATION_ID_BRIEF, "Morning economic brief", brief);
+
+            // Use the model's first line as the notification headline and the
+            // remaining movers as the expanded body — a polished "end" to the
+            // day's loop rather than a wall of text under a generic title.
+            String headline = brief;
+            String detail   = brief;
+            int nl = brief.indexOf('\n');
+            if (nl > 0) {
+                headline = brief.substring(0, nl).trim();
+                detail   = brief.substring(nl + 1).trim();
+            }
+            if (detail.isEmpty()) detail = brief;
+            NotificationHelper.notify(ctx, NOTIFICATION_ID_BRIEF, headline, detail);
 
             // Drop the brief into the persisted chat so it's there on open.
             ChatMessageEntity entity = ChatMessageEntity.from(
                     new ChatMessage("☀️ Morning brief\n\n" + brief, false));
             YieldDatabase.getInstance(ctx).chatMessageDao().insert(entity);
+
+            // TICKET-26: mark that a genuinely new analyst insight exists so the
+            // Analyst tab can badge until the user opens it.
+            SettingsManager.setAnalystLastInsight(ctx, System.currentTimeMillis());
 
             return Result.success();
         } catch (Exception e) {

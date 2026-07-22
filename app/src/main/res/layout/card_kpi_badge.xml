@@ -114,5 +114,23 @@
             android:textColor="@color/text_slate"
             android:textSize="@dimen/text_caption" />
 
+        <!-- Partial-failure affordance: shown only when this series failed to
+             refresh. The cached value above stays visible; tapping re-fetches
+             just this metric. -->
+        <TextView
+            android:id="@+id/tvRetry"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_sm"
+            android:paddingHorizontal="@dimen/space_sm"
+            android:paddingVertical="@dimen/space_xs"
+            android:background="@drawable/bg_retry_pill"
+            android:text="@string/couldnt_refresh"
+            android:textColor="@color/signal_watch"
+            android:textSize="@dimen/text_caption"
+            android:clickable="true"
+            android:focusable="true"
+            android:visibility="gone" />
+
     </LinearLayout>
 </androidx.cardview.widget.CardView>

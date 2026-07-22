@@ -1,4 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- TICKET-29: KPI card-variant semantic mapping (Law of Similarity / Common Region)
+     ═══════════════════════════════════════════════════════════════════════════
+     card_kpi_navy  = NEUTRAL metric (light card, navy left border) — currently UNUSED
+     card_kpi_gold  = HIGHLIGHTED / HERO metric (gold left border)  — currently UNUSED
+     card_kpi_badge = standard dark-navy KPI grid card; used for ALL six Overview
+                      metrics (uniform = neutral). Its tvRetry pill is the only
+                      alert-state affordance and appears only on fetch failure.
+     Audit result (2026-07-22): the only variant in active use (badge) is applied
+     uniformly to neutral metrics, so no variant is used against its meaning.
+     If a variant is added to a leaf screen or the Overview hero, pick by meaning,
+     not layout convenience: neutral→navy/badge, hero→gold, alert→badge+tvRetry. -->
 <androidx.cardview.widget.CardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
