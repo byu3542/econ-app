@@ -30,8 +30,10 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.economic.dashboard.R;
+import com.economic.dashboard.analyst.AnalystToolExecutor;
 import com.economic.dashboard.database.YieldDatabase;
 import com.economic.dashboard.models.ChatMessage;
+import com.economic.dashboard.models.EconomicDataPoint;
 import com.economic.dashboard.models.EconomicHistoryEntry;
 import com.economic.dashboard.utils.AppExecutors;
 import com.economic.dashboard.views.SparklineView;
@@ -64,7 +66,15 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
         void onMetricTapped(String tabKey);
         /** "Ask AI" chosen from the text-selection menu. */
         void onAskAi(String query);
+        /** TICKET-5 (AI Law 12): "Ask AI" on a selection that exactly matches a
+         *  known metric name — the host injects that metric's snapshot value +
+         *  screen context and asks concisely, mirroring a card long-press. */
+        void onAskAiMetric(String metricName);
     }
+
+    /** Display-only status the analyst bubble shows while a tool round runs
+     *  (AI Law 11). Rendered italic + subdued (TICKET-6); never committed. */
+    public static final String TOOL_STATUS = "Checking the data…";
 
     /** Partial-bind payload: only the message text changed (SSE streaming). */
     private static final Object PAYLOAD_TEXT = new Object();
@@ -85,6 +95,19 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
         SERIES_LABELS.put("MORTGAGE30US", "30-Year Mortgage Rate");
         SERIES_LABELS.put("LNS14000000", "Unemployment Rate");
         SERIES_LABELS.put("GDP_BEA_T10101", "GDP Growth (QoQ annualized)");
+        // TICKET-2 (AI Law 13): the 11 live ViewModel-backed series get_series
+        // already serves — charted through the same LiveSeriesProvider.
+        SERIES_LABELS.put("CPI",            "CPI-U Index (All Items)");
+        SERIES_LABELS.put("PCE",            "PCE Price Index");
+        SERIES_LABELS.put("CORE_PCE",       "Core PCE Price Index");
+        SERIES_LABELS.put("SP500",          "S&P 500");
+        SERIES_LABELS.put("NASDAQ",         "Nasdaq Composite");
+        SERIES_LABELS.put("VIX",            "VIX Volatility Index");
+        SERIES_LABELS.put("WAGES",          "Avg Hourly Earnings");
+        SERIES_LABELS.put("HOUSING_STARTS", "Housing Starts");
+        SERIES_LABELS.put("HOME_SALES",     "Existing Home Sales");
+        SERIES_LABELS.put("BAA_SPREAD",     "BAA Corporate Spread");
+        SERIES_LABELS.put("HY_SPREAD",      "High Yield Spread");
     }
 
     /**
@@ -196,18 +219,58 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
 
     private void renderText(ViewHolder holder, ChatMessage m) {
         if (!m.isUser() && !m.isError()) {
-            String display = stripChartTags(m.getText());
+            String display = stripStrayMarkdown(stripChartTags(m.getText()));
             markwon.setMarkdown(holder.tvMessage, display);
             addMetricCitations(holder.tvMessage);
+            styleToolRoundStatus(holder.tvMessage);
         } else {
             holder.tvMessage.setText(m.getText());
         }
+    }
+
+    /**
+     * TICKET-6 (AI Law 11): while a tool round runs, the bubble ends with the
+     * display-only TOOL_STATUS line. Render that trailing line italic and
+     * subdued so "fetching" reads visibly differently from "answering". The
+     * status is never committed to the answer, so finished replies never
+     * carry the style.
+     */
+    private static void styleToolRoundStatus(TextView tv) {
+        CharSequence cs = tv.getText();
+        if (!(cs instanceof Spannable)) return;
+        String s = cs.toString();
+        if (!s.endsWith(TOOL_STATUS)) return;
+        int start = s.length() - TOOL_STATUS.length();
+        Spannable sp = (Spannable) cs;
+        sp.setSpan(new android.text.style.StyleSpan(android.graphics.Typeface.ITALIC),
+                start, s.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        int muted = androidx.core.graphics.ColorUtils.setAlphaComponent(
+                tv.getCurrentTextColor(), 0x99);
+        sp.setSpan(new ForegroundColorSpan(muted),
+                start, s.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
     }
 
     /** Removes [CHART:...] tags from the visible text (rendered separately). */
     private static String stripChartTags(String text) {
         if (text == null) return "";
         return CHART_TAG.matcher(text).replaceAll("").replace("\n\n\n", "\n\n").trim();
+    }
+
+    /**
+     * AI Law 10 (one formatting language, enforced): the system prompt bans
+     * markdown headers and bullet lists, but a small model drifts. Defensively
+     * convert any slip so it never renders as raw markdown structure —
+     * "## Title" becomes a bold line, "- item"/"* item" becomes a "• " line.
+     */
+    private static String stripStrayMarkdown(String text) {
+        if (text == null || text.isEmpty()) return text;
+        if (text.indexOf('#') < 0 && !text.contains("\n- ") && !text.contains("\n* ")
+                && !text.startsWith("- ") && !text.startsWith("* ")) return text;
+        String t = text.replaceAll("(?m)^\\s{0,3}#{1,6}\\s+(.*)$", "**$1**");
+        t = t.replaceAll("(?m)^\\s{0,3}[-*]\\s+", "• ");
+        // Keep each bullet on its own line (markdown collapses single newlines).
+        t = t.replace("\n• ", "\n\n• ");
+        return t;
     }
 
     /**
@@ -280,12 +343,32 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
             java.util.Calendar cal = java.util.Calendar.getInstance();
             cal.add(java.util.Calendar.MONTH, -m2);
             String cutoff = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(cal.getTime());
-            List<EconomicHistoryEntry> rows =
-                    YieldDatabase.getInstance(appCtx).economicHistoryDao().getSeriesSync(seriesId);
             final List<Double> values = new ArrayList<>();
-            if (rows != null)
-                for (EconomicHistoryEntry row : rows)
-                    if (row.date.compareTo(cutoff) >= 0) values.add(row.value);
+            if (AnalystToolExecutor.LIVE_SERIES.containsKey(seriesId)) {
+                // TICKET-2 (AI Law 13): live ViewModel-backed series chart from
+                // the same provider the get_series tool reads, so analysis and
+                // visualization cover the same metrics. LiveData.getValue() is
+                // safe off the main thread. The Room path below is untouched.
+                List<EconomicDataPoint> pts =
+                        AnalystToolExecutor.getLiveSeriesPoints(seriesId);
+                if (pts != null)
+                    for (EconomicDataPoint dp : pts) {
+                        String d = dp.getDate();
+                        // "yyyy-MM" dates pad to a late day so the month survives
+                        // a lexicographic compare against the cutoff; unparseable
+                        // dates pass (matches AnalystToolExecutor.getLiveSeries).
+                        String norm = (d != null && d.length() == 7) ? d + "-28" : d;
+                        if (norm == null || norm.length() < 10
+                                || norm.compareTo(cutoff) >= 0)
+                            values.add(dp.getValue());
+                    }
+            } else {
+                List<EconomicHistoryEntry> rows =
+                        YieldDatabase.getInstance(appCtx).economicHistoryDao().getSeriesSync(seriesId);
+                if (rows != null)
+                    for (EconomicHistoryEntry row : rows)
+                        if (row.date.compareTo(cutoff) >= 0) values.add(row.value);
+            }
             synchronized (seriesCache) { seriesCache.put(cacheKey, values); }
             holder.sparkline.post(() -> {
                 // Guard against recycling: only draw if this row still wants this series
@@ -458,8 +541,18 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
                 if (start > end) { int t = start; start = end; end = t; }
                 if (start >= 0 && end <= tv.getText().length() && start < end) {
                     String selected = tv.getText().subSequence(start, end).toString().trim();
-                    if (!selected.isEmpty())
-                        actionListener.onAskAi("Tell me more about this: \"" + selected + "\"");
+                    if (!selected.isEmpty()) {
+                        // TICKET-5 (AI Law 12): a selection that IS a known metric
+                        // name behaves like the long-press it resembles — the host
+                        // injects the snapshot value + context and asks concisely.
+                        // Free-text selections keep the plain full-length path.
+                        String key = selected.toLowerCase(Locale.US)
+                                .replaceAll("[\\s.,:;!?]+$", "").trim();
+                        if (METRIC_TABS.containsKey(key))
+                            actionListener.onAskAiMetric(selected);
+                        else
+                            actionListener.onAskAi("Tell me more about this: \"" + selected + "\"");
+                    }
                 }
                 mode.finish();
                 return true;

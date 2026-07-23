@@ -175,7 +175,15 @@ public class NewsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             } else {
                 int idx = mi.getItemId() - 2;
                 if (idx < 0 || idx >= finalPrompts.size()) return false;
-                query = "Regarding the headline \"" + item.title + "\": " + finalPrompts.get(idx);
+                StringBuilder sb = new StringBuilder("Regarding this news story:\n\n");
+                sb.append("\"").append(item.title).append("\"");
+                if (item.source != null) sb.append(" — ").append(item.source);
+                if (item.summary != null && !item.summary.isEmpty()) {
+                    String sum = item.summary.length() > 300 ? item.summary.substring(0, 300) + "…" : item.summary;
+                    sb.append("\n\n").append(sum);
+                }
+                sb.append("\n\n").append(finalPrompts.get(idx));
+                query = sb.toString();
             }
             com.economic.dashboard.analyst.AskAnalyst.openWithQuery(activity, query);
             return true;

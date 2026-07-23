@@ -21,6 +21,7 @@ import com.economic.dashboard.database.YieldDatabase;
 import com.economic.dashboard.databinding.ActivityMainBinding;
 import com.economic.dashboard.models.ChatMessage;
 import com.economic.dashboard.models.ChatMessageEntity;
+import com.economic.dashboard.models.EconomicDataPoint;
 import com.economic.dashboard.news.NewsFragment;
 import com.economic.dashboard.news.NewsRepository;
 import com.economic.dashboard.ui.fragments.DashboardFragment;
@@ -111,6 +112,20 @@ public class MainActivity extends AppCompatActivity {
                     @Override public void onMetricTapped(String tabKey) { navigateToTab(tabKey); }
                     @Override public void onAskAi(String query) {
                         com.economic.dashboard.analyst.AskAnalyst.openWithQuery(MainActivity.this, query);
+                    }
+                    @Override public void onAskAiMetric(String metricName) {
+                        // TICKET-5 (AI Law 12): selecting a metric name behaves
+                        // like a card long-press — inject the snapshot value +
+                        // screen context and use the concise gesture tier.
+                        String snapshot = describeMetricSnapshot(metricName);
+                        String query = "Tell me more about " + metricName + " right now.";
+                        String context = snapshot.isEmpty() ? "" :
+                                "\nSCREEN CONTEXT: The user selected \"" + metricName
+                                + "\" inside an analyst reply. Current dashboard reading: "
+                                + snapshot + ". Use these values directly and do not "
+                                + "fetch them again.\n";
+                        com.economic.dashboard.analyst.AskAnalyst.openWithQuery(
+                                MainActivity.this, query, context, true);
                     }
                 });
         loadPersistedChat();
@@ -273,6 +288,104 @@ public class MainActivity extends AppCompatActivity {
             com.economic.dashboard.analyst.AskAnalyst.openWithQuery(this,
                     "Analyze this in the context of the current U.S. economic data. If it's a "
                     + "link or headline, explain what it means for the economy:\n\n" + shared.trim());
+        }
+    }
+
+    /**
+     * TICKET-5 (AI Law 12): current dashboard reading for a metric name the
+     * user selected inside an analyst reply, so selection "Ask AI" can inject
+     * context like a card long-press does. Returns "" when the series hasn't
+     * loaded yet — callers fall back to a plain query.
+     */
+    private String describeMetricSnapshot(String metricName) {
+        try {
+            String key = metricName.toLowerCase(Locale.US)
+                    .replaceAll("[\\s.,:;!?]+$", "").trim();
+            switch (key) {
+                case "cpi":
+                case "inflation": {
+                    List<EconomicDataPoint> l = viewModel.getCpiData().getValue();
+                    List<EconomicDataPoint> rows = l != null
+                            ? EconomicViewModel.filterBySeries(l, "CPI-U All Items") : null;
+                    if (rows != null && rows.size() >= 13) {
+                        double base = rows.get(rows.size() - 13).getValue();
+                        if (Math.abs(base) > 1e-9) {
+                            double yoy = ((rows.get(rows.size() - 1).getValue() - base) / base) * 100.0;
+                            return String.format(Locale.US, "CPI inflation %.2f%% YoY (%s)",
+                                    yoy, rows.get(rows.size() - 1).getDate());
+                        }
+                    }
+                    return "";
+                }
+                case "unemployment":
+                case "unemployment rate": {
+                    EconomicDataPoint p = EconomicViewModel.getLatest(
+                            viewModel.getEmploymentData().getValue(), "Unemployment Rate");
+                    return p == null ? "" : String.format(Locale.US,
+                            "unemployment %.1f%% (%s)", p.getValue(), p.getDate());
+                }
+                case "fed funds rate":
+                case "federal funds rate": {
+                    EconomicDataPoint p = EconomicViewModel.getLatest(
+                            viewModel.getFedFundsData().getValue(), "Federal Funds Effective Rate");
+                    return p == null ? "" : String.format(Locale.US,
+                            "fed funds rate %.2f%% (%s)", p.getValue(), p.getDate());
+                }
+                case "gdp": {
+                    List<EconomicDataPoint> l = viewModel.getGdpData().getValue();
+                    List<EconomicDataPoint> rows = l != null
+                            ? EconomicViewModel.filterBySeries(l, "Gross domestic product") : null;
+                    if (rows == null || rows.isEmpty()) return "";
+                    EconomicDataPoint p = rows.get(rows.size() - 1);
+                    return String.format(Locale.US, "GDP growth %.2f%% (latest quarter, %s)",
+                            p.getValue(), p.getDate());
+                }
+                case "mortgage rate": {
+                    EconomicDataPoint p = EconomicViewModel.getLatest(
+                            viewModel.getMbsMortgageData().getValue(), "30-Yr Mortgage Rate");
+                    return p == null ? "" : String.format(Locale.US,
+                            "30-year mortgage rate %.2f%% (%s)", p.getValue(), p.getDate());
+                }
+                case "housing starts": {
+                    EconomicDataPoint p = EconomicViewModel.getLatest(
+                            viewModel.getHousingData().getValue(), "Housing Starts");
+                    return p == null ? "" : String.format(Locale.US,
+                            "housing starts %.0fK units annualized (%s)", p.getValue(), p.getDate());
+                }
+                case "s&p 500": {
+                    List<EconomicDataPoint> l = viewModel.getSp500Data().getValue();
+                    if (l == null || l.isEmpty()) return "";
+                    EconomicDataPoint p = l.get(l.size() - 1);
+                    return String.format(Locale.US, "S&P 500 at %.0f (%s)", p.getValue(), p.getDate());
+                }
+                case "nasdaq": {
+                    List<EconomicDataPoint> l = viewModel.getNasdaqData().getValue();
+                    if (l == null || l.isEmpty()) return "";
+                    EconomicDataPoint p = l.get(l.size() - 1);
+                    return String.format(Locale.US, "Nasdaq at %.0f (%s)", p.getValue(), p.getDate());
+                }
+                case "vix": {
+                    List<EconomicDataPoint> l = viewModel.getVixData().getValue();
+                    if (l == null || l.isEmpty()) return "";
+                    EconomicDataPoint p = l.get(l.size() - 1);
+                    return String.format(Locale.US, "VIX at %.2f (%s)", p.getValue(), p.getDate());
+                }
+                case "yield curve":
+                case "treasury": {
+                    List<EconomicDataPoint> t = viewModel.getTreasuryData().getValue();
+                    EconomicDataPoint tenY   = EconomicViewModel.getLatest(t, "10 Year");
+                    EconomicDataPoint threeM = EconomicViewModel.getLatest(t, "3 Month");
+                    if (tenY == null || threeM == null) return "";
+                    return String.format(Locale.US,
+                            "10Y %.2f%%, 3M %.2f%%, 10Y-3M spread %+.2f%%",
+                            tenY.getValue(), threeM.getValue(),
+                            tenY.getValue() - threeM.getValue());
+                }
+                default:
+                    return "";
+            }
+        } catch (Exception e) {
+            return "";
         }
     }
 

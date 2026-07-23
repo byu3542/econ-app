@@ -66,10 +66,17 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
     private static final String ARG_PREFILL        = "prefill_query";
     private static final String ARG_SCREEN_CONTEXT = "screen_context";
     private static final String ARG_IMAGE_URI      = "image_uri";
+    private static final String ARG_CONCISE        = "concise_gesture";
     /** Cap request context at the last N history entries (N/2 turns). */
     private static final int HISTORY_CAP = 20;
     /** Max tool-call round-trips per user question. */
     private static final int MAX_TOOL_DEPTH = 3;
+
+    /** AI Law 6: fast default model for plain typed, prompt-answered questions. */
+    private static final String MODEL_FAST = "claude-haiku-4-5-20251001";
+    /** AI Law 6: stronger model for gesture turns and tool-loop rounds — holds
+     *  multi-round tool discipline and length rules far better than Haiku. */
+    private static final String MODEL_STRONG = "claude-sonnet-5";
 
     private DialogAiChatBinding binding;
 
@@ -91,6 +98,10 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
 
     /** Extra "the user is looking at X" block injected by entry points. */
     private String screenContext = "";
+
+    /** AI Law 7: the NEXT turn came from a one-tap gesture → concise answer.
+     *  Consumed (reset) by queryClaude so typed follow-ups get full length. */
+    private volatile boolean conciseNextTurn = false;
 
     /** Image attached to the next message (vision analysis), or null. */
     private volatile ImageUtils.EncodedImage pendingImage;
@@ -122,6 +133,23 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
         AiAnalystBottomSheet sheet = newInstance(prefillQuery);
         if (sheet.getArguments() != null)
             sheet.getArguments().putString(ARG_SCREEN_CONTEXT, screenContext);
+        return sheet;
+    }
+
+    /**
+     * Opens the sheet from a one-tap gesture (card/chart long-press): screen
+     * context is injected and the next reply uses the concise length tier
+     * (AI Laws 7, 8).
+     */
+    public static AiAnalystBottomSheet newInstanceForGesture(String prefillQuery,
+                                                             String screenContext,
+                                                             boolean concise) {
+        AiAnalystBottomSheet sheet = newInstance(prefillQuery);
+        if (sheet.getArguments() != null) {
+            if (screenContext != null && !screenContext.isEmpty())
+                sheet.getArguments().putString(ARG_SCREEN_CONTEXT, screenContext);
+            sheet.getArguments().putBoolean(ARG_CONCISE, concise);
+        }
         return sheet;
     }
 
@@ -209,6 +237,44 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
         final android.content.Context appCtx = requireContext().getApplicationContext();
         appContext = appCtx;
         AppExecutors.getInstance().diskIO().execute(() -> historicalContext = HistoricalContextBuilder.build(appCtx));
+
+        // AI Law 3: back get_series with the live ViewModel series the app
+        // already charts, so a long-press on ANY fragment has data behind it.
+        // WeakReference so the static provider can't leak a finished activity's
+        // ViewModel; LiveData.getValue() is safe from the OkHttp tool thread.
+        final java.lang.ref.WeakReference<EconomicViewModel> vmRef =
+                new java.lang.ref.WeakReference<>(host().getViewModel());
+        AnalystToolExecutor.setLiveSeriesProvider(seriesId -> {
+            EconomicViewModel lv = vmRef.get();
+            if (lv == null) return null;
+            List<EconomicDataPoint> l;
+            switch (seriesId) {
+                case "CPI":
+                    l = lv.getCpiData().getValue();
+                    return l == null ? null : EconomicViewModel.filterBySeries(l, "CPI-U All Items");
+                case "PCE":
+                    l = lv.getPceData().getValue();
+                    return l == null ? null : EconomicViewModel.filterBySeries(l, "PCE Price Index");
+                case "CORE_PCE":
+                    l = lv.getPceData().getValue();
+                    return l == null ? null : EconomicViewModel.filterBySeries(l, "Core PCE Price Index");
+                case "SP500":          return lv.getSp500Data().getValue();
+                case "NASDAQ":         return lv.getNasdaqData().getValue();
+                case "VIX":            return lv.getVixData().getValue();
+                case "WAGES":
+                    l = lv.getWageData().getValue();
+                    return l == null ? null : EconomicViewModel.filterBySeries(l, "Average Hourly Earnings - Private");
+                case "HOUSING_STARTS":
+                    l = lv.getHousingData().getValue();
+                    return l == null ? null : EconomicViewModel.filterBySeries(l, "Housing Starts");
+                case "HOME_SALES":
+                    l = lv.getHousingData().getValue();
+                    return l == null ? null : EconomicViewModel.filterBySeries(l, "Existing Home Sales");
+                case "BAA_SPREAD":     return lv.getBaaSpreadData().getValue();
+                case "HY_SPREAD":      return lv.getHySpreadData().getValue();
+                default:               return null;
+            }
+        });
 
         if (chatAdapter().getItemCount() > 0)
             rvChat.scrollToPosition(chatAdapter().getItemCount() - 1);
@@ -322,6 +388,8 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
         // ── Prefill / shared-image entry points ────────────────────────────────
         if (savedInstanceState == null && getArguments() != null) {
             screenContext = getArguments().getString(ARG_SCREEN_CONTEXT, "");
+            conciseNextTurn = getArguments().getBoolean(ARG_CONCISE, false);
+            getArguments().remove(ARG_CONCISE);
             String imageUriStr = getArguments().getString(ARG_IMAGE_URI);
             String prefill = getArguments().getString(ARG_PREFILL);
             getArguments().remove(ARG_PREFILL);
@@ -383,10 +451,25 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
 
     /** Entry point for external callers (share sheet, selection Ask AI, news). */
     public void submitExternalQuery(String query) {
+        submitExternalQuery(query, "", false);
+    }
+
+    /**
+     * Entry point for gesture callers (AI Law 12: every door behaves the same):
+     * carries a screen-context block and the concise flag into an already-open
+     * sheet, matching what newInstanceForGesture does for a fresh one.
+     */
+    public void submitExternalQuery(String query, String screenContextBlock, boolean concise) {
+        if (screenContextBlock != null && !screenContextBlock.isEmpty())
+            screenContext = screenContextBlock;
+        conciseNextTurn = concise;
         if (binding == null) {
             // View not created yet — stash as prefill
             Bundle args = getArguments() != null ? getArguments() : new Bundle();
             args.putString(ARG_PREFILL, query);
+            if (screenContextBlock != null && !screenContextBlock.isEmpty())
+                args.putString(ARG_SCREEN_CONTEXT, screenContextBlock);
+            args.putBoolean(ARG_CONCISE, concise);
             setArguments(args);
             return;
         }
@@ -537,6 +620,37 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
     private static class StreamState {
         final StringBuilder acc = new StringBuilder();
         int streamIdx = -1;
+        /** AI Law 6: true when every round of this turn should use the stronger
+         *  model (gesture-initiated, or the question looks tool-likely). */
+        boolean routeStrong = false;
+    }
+
+    /**
+     * AI Law 6 (match the model to the job): the single place that decides
+     * which model a round uses. Haiku stays the default for plain typed,
+     * prompt-answered questions; gesture turns, tool-likely questions, and
+     * every round of an active tool loop (depth > 0) get the stronger model.
+     */
+    private static String chooseModel(StreamState st, int depth) {
+        return (st.routeStrong || depth > 0) ? MODEL_STRONG : MODEL_FAST;
+    }
+
+    /** Phrases that make a first round very likely to call get_series. */
+    private static final String[] TOOL_LIKELY_HINTS = {
+            "history", "historical", "trend", "over the last", "over the past",
+            "past year", "past month", "past few", "last 12", "last 24",
+            "last year", "last month", "since ", "compare", "compared",
+            "versus", " vs ", "chart", "graph", "turning point",
+            "when did", "how has", "how have"
+    };
+
+    /** AI Law 6: heuristic for questions that will almost certainly need a tool. */
+    private static boolean looksToolLikely(String q) {
+        if (q == null) return false;
+        String s = " " + q.toLowerCase(Locale.US) + " ";
+        for (String hint : TOOL_LIKELY_HINTS)
+            if (s.contains(hint)) return true;
+        return false;
     }
 
     private void queryClaude(String userQuery, RecyclerView rv) {
@@ -591,8 +705,15 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
             }
             messages.put(userMsg);
 
-            String systemPrompt = buildSystemPrompt(cachedNews);
-            sendTurn(messages, systemPrompt, userQuery, new StreamState(), 0);
+            // Consume the gesture flag so typed follow-ups get full length.
+            final boolean conciseTurn = conciseNextTurn;
+            conciseNextTurn = false;
+            String systemPrompt = buildSystemPrompt(cachedNews, conciseTurn);
+            // AI Law 6: gesture turns and tool-likely questions route to the
+            // stronger model for the whole turn; plain questions stay on Haiku.
+            StreamState st = new StreamState();
+            st.routeStrong = conciseTurn || looksToolLikely(userQuery);
+            sendTurn(messages, systemPrompt, userQuery, st, 0);
         } catch (Exception e) {
             requestFinished();
             chatAdapter().removeTypingIndicator();
@@ -600,11 +721,16 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
         }
     }
 
-    private String buildSystemPrompt(List<NewsItem> cachedNews) {
+    private String buildSystemPrompt(List<NewsItem> cachedNews, boolean conciseGesture) {
         String dataSnapshot = constructEconomicContext();
 
-        // Settings: response length preference
-        String lengthRule = com.economic.dashboard.utils.SettingsManager.getBool(
+        // Settings: response length preference. AI Law 7: a one-tap gesture is
+        // a glance, not a research request — it gets the tightest tier.
+        String lengthRule = conciseGesture
+                ? "This question came from a one-tap gesture on a card or chart. Keep the "
+                  + "reply to 60-90 words. Lead with the answer in the first sentence. Skip "
+                  + "news, upcoming releases, and chart tags unless directly relevant. "
+                : com.economic.dashboard.utils.SettingsManager.getBool(
                 requireContext(), com.economic.dashboard.utils.SettingsManager.KEY_DETAILED_AI, false)
                 ? "Detailed analysis is welcome — up to roughly 500 words when the question warrants it. "
                 : "Keep responses under 200 words unless the user explicitly asks for detail. ";
@@ -627,24 +753,36 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
                 + "questions — never substitute general knowledge for values that appear in "
                 + "the data below. Use the historical series to discuss trends, compare current "
                 + "values to past readings, and answer questions about specific past months. "
-                + "If a value is listed as 'Unavailable' it has not yet been fetched.\n\n"
-                + "TOOLS: You can call get_series for full point-by-point history of any cached "
-                + "series, and get_headlines for more news than the prompt includes. Use them "
-                + "when the summaries below lack the detail a question needs; otherwise answer "
-                + "directly from the data provided. If you decide to use a tool, call it "
-                + "immediately in the same turn — NEVER end a reply by announcing that you are "
-                + "about to look something up. get_series only covers the six series listed "
-                + "below; for anything else (e.g. S&P 500, Nasdaq, VIX, CPI history) use the "
-                + "data already in this prompt and say so rather than attempting a lookup.\n\n"
+                + "If a value is listed as 'Unavailable' it has not yet been fetched. Any value "
+                + "tagged [STALE...] may be out of date — if you cite it, say it may not be "
+                + "current.\n\n"
+                + "TOOLS: You can call get_series for point-by-point history of any series in "
+                + "the tool's options — this covers the cached series (treasury yields, "
+                + "mortgage rate, unemployment, GDP) and the live dashboard series (CPI, PCE, "
+                + "Core PCE, S&P 500, Nasdaq, VIX, wages, housing, credit spreads) — and "
+                + "get_headlines for more news than the prompt includes. Use them when the "
+                + "summaries below lack the detail a question needs; otherwise answer directly "
+                + "from the data provided. If you decide to use a tool, call it immediately in "
+                + "the same turn — NEVER end a reply by announcing that you are about to look "
+                + "something up. If a tool returns 'Invalid series_id', 'No cached data', or "
+                + "'No data loaded', do not retry the same call — say plainly what isn't "
+                + "available and answer from the snapshot instead.\n\n"
                 + "INLINE CHARTS: When a visual trend would genuinely help, you may include AT "
                 + "MOST ONE chart tag on its own line, formatted exactly [CHART:SERIES_ID:<N>M] "
                 + "where SERIES_ID is one of DGS10, DGS2, DGS3MO, MORTGAGE30US, LNS14000000, "
-                + "GDP_BEA_T10101 and N is months of history (1-24). Example: [CHART:DGS10:24M]. "
+                + "GDP_BEA_T10101, CPI, PCE, CORE_PCE, SP500, NASDAQ, VIX, WAGES, "
+                + "HOUSING_STARTS, HOME_SALES, BAA_SPREAD, HY_SPREAD "
+                + "and N is months of history (1-24). Example: [CHART:DGS10:24M]. "
                 + "The app renders it as a small chart in your reply.\n\n"
                 + "FORMATTING RULES: Do NOT use markdown headers (##, ###, or # prefix). "
                 + "Do NOT use bullet lists with dashes or asterisks. "
                 + "Use short paragraphs and bold text (**word**) only for key figures or labels. "
+                + "Lead with the conclusion: your first sentence should answer the question; "
+                + "context and caveats follow. "
                 + lengthRule
+                + "When the user quotes or references a specific news headline, treat that headline as a real, "
+                + "current article and analyze it directly. NEVER reply that a headline is not in your cached feed — "
+                + "the news list below is only a partial sample, not the full set of articles the user can tap. "
                 + "When news headlines are provided, weave relevant recent developments into your analysis where appropriate. "
                 + "When an upcoming data release is relevant, mention it so the user knows what to watch.\n"
                 + screenBlock + "\n"
@@ -660,7 +798,8 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
                           StreamState st, int depth) {
         try {
             JSONObject body = new JSONObject();
-            body.put("model", "claude-haiku-4-5-20251001");
+            // AI Law 6: model picked per round by the routing method, not a literal.
+            body.put("model", chooseModel(st, depth));
             // 1024 truncated longer answers (and could cut tool-call JSON
             // mid-stream, yielding empty tool inputs). Each round gets its own
             // budget, so a bigger cap only costs tokens actually generated.
@@ -743,6 +882,7 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
                         // retry of this round. Rewind the accumulated text so the
                         // re-streamed round doesn't duplicate what already showed.
                         if (e instanceof IOException && !call.isCanceled()
+                                && isTransientFailure(e)
                                 && retried.compareAndSet(false, true)) {
                             st.acc.setLength(accLenAtSend);
                             new Handler(Looper.getMainLooper()).postDelayed(
@@ -844,7 +984,12 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
             } else if ("error".equals(type)) {
                 JSONObject err = evt.optJSONObject("error");
                 String msg = err != null ? err.optString("message", "") : "";
-                throw new IOException("Analyst service error" + (msg.isEmpty() ? "." : ": " + msg));
+                String errType = err != null ? err.optString("type", "") : "";
+                // Include the error type so the retry guard can tell a
+                // transient overload from a permanent bad request (AI Law 5).
+                throw new IOException("Analyst service error"
+                        + (errType.isEmpty() ? "" : " (" + errType + ")")
+                        + (msg.isEmpty() ? "." : ": " + msg));
             }
         }
 
@@ -883,8 +1028,24 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
                 }
                 messages.put(new JSONObject().put("role", "assistant").put("content", assistantContent));
                 messages.put(new JSONObject().put("role", "user").put("content", toolResults));
+                // AI Law 2: if this round's visible text was nothing but a lookup
+                // announcement ("Let me pull the history…"), drop it from the
+                // displayed reply — the real answer follows. Genuinely analytical
+                // lead-ins are kept. (The API still sees the original text above.)
+                if (isLookupAnnouncementOnly(roundText))
+                    st.acc.setLength(roundStart);
                 // Paragraph break so the next round's text doesn't run into this one.
                 if (st.acc.length() > 0) st.acc.append("\n\n");
+                // AI Law 11: a tool round can take a few seconds — show an honest
+                // status instead of what looks like a hang. The next round's
+                // streamed text overwrites it. ChatAdapter renders the trailing
+                // status italic + subdued so "fetching" reads differently from
+                // "answering" (TICKET-6).
+                final String statusText = st.acc.toString() + ChatAdapter.TOOL_STATUS;
+                runOnUi(() -> {
+                    if (binding != null && st.streamIdx >= 0)
+                        chatAdapter().updateMessageText(st.streamIdx, statusText);
+                });
                 sendTurn(messages, systemPrompt, committedQuery, st, depth + 1);
                 return;
             }
@@ -895,12 +1056,40 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
         if ("tool_use".equals(stopReason) && st.acc.length() == 0)
             st.acc.append("I ran out of data-lookup rounds for that question — try asking it a bit more specifically.");
 
+        // AI Law 1 code guard: the model announced a lookup, emitted NO tool_use,
+        // and ended cleanly with end_turn — the exact "says it'll fetch then ends"
+        // glitch. Auto-continue one round so the promised call (or a direct
+        // answer) actually happens instead of committing the dangling text.
+        if ("end_turn".equals(stopReason) && toolBlocks.isEmpty()
+                && depth < MAX_TOOL_DEPTH - 1 && !call.isCanceled()) {
+            String roundText = st.acc.substring(roundStart);
+            if (isLookupAnnouncementOnly(roundText)) {
+                messages.put(new JSONObject().put("role", "assistant").put("content", roundText));
+                messages.put(new JSONObject().put("role", "user").put("content",
+                        "You said you would look that up but did not call a tool. Call the "
+                        + "tool now if the series is available; otherwise answer directly "
+                        + "from the data in the system prompt. Do not announce lookups — "
+                        + "just answer."));
+                st.acc.setLength(roundStart);
+                final String statusText = st.acc.toString() + ChatAdapter.TOOL_STATUS;
+                runOnUi(() -> {
+                    if (binding != null && st.streamIdx >= 0)
+                        chatAdapter().updateMessageText(st.streamIdx, statusText);
+                });
+                sendTurn(messages, systemPrompt, committedQuery, st, depth + 1);
+                return;
+            }
+        }
+
         finalizeTurn(committedQuery, call, st);
     }
 
     /** Commits the finished answer to history + persistence. */
     private void finalizeTurn(String committedQuery, Call call, StreamState st) throws Exception {
-        final String finalText = st.acc.toString();
+        // AI Law 1 fallback for rounds the auto-continue guard can't reach
+        // (e.g. the forced-text final round): drop a trailing lookup
+        // announcement when real content precedes it.
+        final String finalText = stripDanglingAnnouncement(st.acc.toString());
         if (finalText.isEmpty()) {
             if (call != null && call.isCanceled()) {
                 runOnUi(() -> {
@@ -920,10 +1109,55 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
             if (st.streamIdx < 0) {
                 chatAdapter().removeTypingIndicator();
                 chatAdapter().addMessage(persisted);
+            } else {
+                // Sync the bubble in case a dangling announcement was stripped.
+                chatAdapter().updateMessageText(st.streamIdx, finalText);
             }
             host().persistChatMessage(persisted);
             maybeScrollToBottom(false);
         });
+    }
+
+    /**
+     * AI Law 1: true when a round's text is nothing but a "let me look that up"
+     * announcement — short, and promising a fetch/check/lookup. Longer text with
+     * real analysis in front of the announcement does NOT match.
+     */
+    private static boolean isLookupAnnouncementOnly(String t) {
+        if (t == null) return false;
+        String s = t.trim();
+        if (s.isEmpty() || s.length() > 240) return false;
+        return s.matches("(?is).*\\b(let me|i'?ll|i will|i'?m going to|going to|one (moment|sec)|"
+                + "give me a (moment|second)|hold on)\\b[^.!?]{0,80}"
+                + "\\b(fetch|pull|look\\s*up|looking|check|grab|retriev\\w*|get|dig|query|load)\\b.*");
+    }
+
+    /**
+     * AI Law 1 fallback: if the reply ends with a dangling lookup-announcement
+     * sentence but has real content before it, drop the dangling sentence.
+     * Never leaves the reply empty.
+     */
+    private static String stripDanglingAnnouncement(String text) {
+        if (text == null) return "";
+        String t = text.trim();
+        int cut = -1;
+        for (int i = t.length() - 2; i >= 0; i--) {
+            char c = t.charAt(i);
+            if (c == '.' || c == '!' || c == '?' || c == '\n') { cut = i + 1; break; }
+        }
+        if (cut <= 0) return text;
+        String tail = t.substring(cut).trim();
+        if (!tail.isEmpty() && isLookupAnnouncementOnly(tail))
+            return t.substring(0, cut).trim();
+        return text;
+    }
+
+    /** AI Law 5: only retry failures a retry can fix — never bad requests/auth. */
+    private static boolean isTransientFailure(Exception e) {
+        String m = e.getMessage();
+        if (m == null) return true;
+        return !(m.contains("invalid_request") || m.contains("authentication")
+                || m.contains("permission") || m.contains("not_found"));
     }
 
     /** Maps low-level failures to a message that says what actually happened. */
@@ -1069,6 +1303,28 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
         }
     }
 
+    /**
+     * AI Law 15: tag snapshot values whose date is older than expected for
+     * their release cadence, so the model presents them as possibly outdated
+     * instead of as current fact (a prior session saw an Aug-2016 Nasdaq date
+     * flow straight into a confident answer).
+     */
+    private static String freshnessTag(String dateStr, int maxAgeDays) {
+        if (dateStr == null || dateStr.isEmpty()) return "";
+        String[] formats = {"yyyy-MM-dd", "yyyy-MM", "MMM yyyy", "MMMM yyyy", "MM/dd/yyyy"};
+        for (String f : formats) {
+            try {
+                SimpleDateFormat sdf = new SimpleDateFormat(f, Locale.US);
+                sdf.setLenient(false);
+                Date d = sdf.parse(dateStr);
+                if (d == null) continue;
+                long ageDays = (System.currentTimeMillis() - d.getTime()) / 86_400_000L;
+                return ageDays > maxAgeDays ? " [STALE — this reading may be outdated]" : "";
+            } catch (Exception ignored) { }
+        }
+        return "";
+    }
+
     private String constructEconomicContext() {
         EconomicViewModel vm = host().getViewModel();
         StringBuilder sb = new StringBuilder();
@@ -1077,7 +1333,7 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
 
         sb.append("CORE INDICATORS\n");
         EconomicDataPoint fedFunds = EconomicViewModel.getLatest(vm.getFedFundsData().getValue(), "Federal Funds Effective Rate");
-        sb.append("Fed Funds Rate: ").append(fedFunds != null ? String.format(Locale.US, "%.2f%% (%s)", fedFunds.getValue(), fedFunds.getDate()) : "Unavailable").append("\n");
+        sb.append("Fed Funds Rate: ").append(fedFunds != null ? String.format(Locale.US, "%.2f%% (%s)", fedFunds.getValue(), fedFunds.getDate()) + freshnessTag(fedFunds.getDate(), 75) : "Unavailable").append("\n");
 
         List<EconomicDataPoint> gdpList = vm.getGdpData().getValue();
         List<EconomicDataPoint> gdpRows = gdpList != null ? EconomicViewModel.filterBySeries(gdpList, "Gross domestic product") : null;
@@ -1094,33 +1350,33 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
         List<EconomicDataPoint> cpiRows = cpiList != null ? EconomicViewModel.filterBySeries(cpiList, "CPI-U All Items") : null;
         if (cpiRows != null && cpiRows.size() >= 13) {
             double yoy = ((cpiRows.get(cpiRows.size()-1).getValue() - cpiRows.get(cpiRows.size()-13).getValue()) / cpiRows.get(cpiRows.size()-13).getValue()) * 100.0;
-            sb.append(String.format(Locale.US, "CPI-U YoY: %.2f%% (%s)\n", yoy, cpiRows.get(cpiRows.size()-1).getDate()));
+            sb.append(String.format(Locale.US, "CPI-U YoY: %.2f%% (%s)%s\n", yoy, cpiRows.get(cpiRows.size()-1).getDate(), freshnessTag(cpiRows.get(cpiRows.size()-1).getDate(), 75)));
         } else { sb.append("CPI-U YoY: Unavailable\n"); }
 
         EconomicDataPoint unemp = EconomicViewModel.getLatest(vm.getEmploymentData().getValue(), "Unemployment Rate");
-        sb.append("Unemployment Rate: ").append(unemp != null ? String.format(Locale.US, "%.1f%% (%s)", unemp.getValue(), unemp.getDate()) : "Unavailable").append("\n");
+        sb.append("Unemployment Rate: ").append(unemp != null ? String.format(Locale.US, "%.1f%% (%s)", unemp.getValue(), unemp.getDate()) + freshnessTag(unemp.getDate(), 75) : "Unavailable").append("\n");
 
         EconomicDataPoint lfpr = EconomicViewModel.getLatest(vm.getEmploymentData().getValue(), "Labor Force Participation Rate");
-        sb.append("Labor Force Participation: ").append(lfpr != null ? String.format(Locale.US, "%.1f%% (%s)", lfpr.getValue(), lfpr.getDate()) : "Unavailable").append("\n");
+        sb.append("Labor Force Participation: ").append(lfpr != null ? String.format(Locale.US, "%.1f%% (%s)", lfpr.getValue(), lfpr.getDate()) + freshnessTag(lfpr.getDate(), 75) : "Unavailable").append("\n");
 
         List<EconomicDataPoint> pceList = vm.getPceData().getValue();
         List<EconomicDataPoint> pceRows = pceList != null ? EconomicViewModel.filterBySeries(pceList, "PCE Price Index") : null;
         if (pceRows != null && pceRows.size() >= 13) {
             double yoy = ((pceRows.get(pceRows.size()-1).getValue() - pceRows.get(pceRows.size()-13).getValue()) / pceRows.get(pceRows.size()-13).getValue()) * 100.0;
-            sb.append(String.format(Locale.US, "PCE Inflation (YoY): %.2f%% (%s)\n", yoy, pceRows.get(pceRows.size()-1).getDate()));
+            sb.append(String.format(Locale.US, "PCE Inflation (YoY): %.2f%% (%s)%s\n", yoy, pceRows.get(pceRows.size()-1).getDate(), freshnessTag(pceRows.get(pceRows.size()-1).getDate(), 75)));
         } else { sb.append("PCE Inflation (YoY): Unavailable\n"); }
 
         List<EconomicDataPoint> corePceRows = pceList != null ? EconomicViewModel.filterBySeries(pceList, "Core PCE Price Index") : null;
         if (corePceRows != null && corePceRows.size() >= 13) {
             double yoy = ((corePceRows.get(corePceRows.size()-1).getValue() - corePceRows.get(corePceRows.size()-13).getValue()) / corePceRows.get(corePceRows.size()-13).getValue()) * 100.0;
-            sb.append(String.format(Locale.US, "Core PCE (YoY): %.2f%% (%s)\n", yoy, corePceRows.get(corePceRows.size()-1).getDate()));
+            sb.append(String.format(Locale.US, "Core PCE (YoY): %.2f%% (%s)%s\n", yoy, corePceRows.get(corePceRows.size()-1).getDate(), freshnessTag(corePceRows.get(corePceRows.size()-1).getDate(), 75)));
         } else { sb.append("Core PCE (YoY): Unavailable\n"); }
 
         EconomicDataPoint pmi = EconomicViewModel.getLatest(vm.getIsmPmiData().getValue(), "NAPM");
-        sb.append("ISM Manufacturing PMI: ").append(pmi != null ? String.format(Locale.US, "%.1f (%s)", pmi.getValue(), pmi.getDate()) : "Unavailable").append("\n");
+        sb.append("ISM Manufacturing PMI: ").append(pmi != null ? String.format(Locale.US, "%.1f (%s)", pmi.getValue(), pmi.getDate()) + freshnessTag(pmi.getDate(), 75) : "Unavailable").append("\n");
 
         EconomicDataPoint hourly = EconomicViewModel.getLatest(vm.getWageData().getValue(), "Average Hourly Earnings - Private");
-        sb.append("Avg Hourly Earnings: ").append(hourly != null ? String.format(Locale.US, "$%.2f (%s)", hourly.getValue(), hourly.getDate()) : "Unavailable").append("\n");
+        sb.append("Avg Hourly Earnings: ").append(hourly != null ? String.format(Locale.US, "$%.2f (%s)", hourly.getValue(), hourly.getDate()) + freshnessTag(hourly.getDate(), 75) : "Unavailable").append("\n");
 
         List<EconomicDataPoint> wageList = vm.getWageData().getValue();
         List<EconomicDataPoint> wageRows = wageList != null ? EconomicViewModel.filterBySeries(wageList, "Average Hourly Earnings - Private") : null;
@@ -1157,35 +1413,35 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
         sb.append("\nHOUSING\n");
         List<EconomicDataPoint> housingList = vm.getHousingData().getValue();
         EconomicDataPoint starts = housingList != null ? EconomicViewModel.getLatest(housingList, "Housing Starts") : null;
-        sb.append("Housing Starts: ").append(starts != null ? String.format(Locale.US, "%.0f K units annualized (%s)", starts.getValue(), starts.getDate()) : "Unavailable").append("\n");
+        sb.append("Housing Starts: ").append(starts != null ? String.format(Locale.US, "%.0f K units annualized (%s)", starts.getValue(), starts.getDate()) + freshnessTag(starts.getDate(), 75) : "Unavailable").append("\n");
         EconomicDataPoint sales = housingList != null ? EconomicViewModel.getLatest(housingList, "Existing Home Sales") : null;
-        sb.append("Existing Home Sales: ").append(sales != null ? String.format(Locale.US, "%.0f K units (%s)", sales.getValue(), sales.getDate()) : "Unavailable").append("\n");
+        sb.append("Existing Home Sales: ").append(sales != null ? String.format(Locale.US, "%.0f K units (%s)", sales.getValue(), sales.getDate()) + freshnessTag(sales.getDate(), 75) : "Unavailable").append("\n");
 
         List<EconomicDataPoint> mbsList = vm.getMbsMortgageData().getValue();
         EconomicDataPoint mortgage = mbsList != null ? EconomicViewModel.getLatest(mbsList, "30-Yr Mortgage Rate") : null;
-        sb.append("30-Yr Mortgage Rate: ").append(mortgage != null ? String.format(Locale.US, "%.2f%% (%s)", mortgage.getValue(), mortgage.getDate()) : "Unavailable").append("\n");
+        sb.append("30-Yr Mortgage Rate: ").append(mortgage != null ? String.format(Locale.US, "%.2f%% (%s)", mortgage.getValue(), mortgage.getDate()) + freshnessTag(mortgage.getDate(), 21) : "Unavailable").append("\n");
 
         sb.append("\nSTOCK MARKET INDICES\n");
         List<EconomicDataPoint> sp500List = vm.getSp500Data().getValue();
         EconomicDataPoint sp500 = sp500List != null && !sp500List.isEmpty() ? sp500List.get(sp500List.size()-1) : null;
-        sb.append("S&P 500: ").append(sp500 != null ? String.format(Locale.US, "%.0f (%s)", sp500.getValue(), sp500.getDate()) : "Unavailable").append("\n");
+        sb.append("S&P 500: ").append(sp500 != null ? String.format(Locale.US, "%.0f (%s)", sp500.getValue(), sp500.getDate()) + freshnessTag(sp500.getDate(), 10) : "Unavailable").append("\n");
 
         List<EconomicDataPoint> nasdaqList = vm.getNasdaqData().getValue();
         EconomicDataPoint nasdaq = nasdaqList != null && !nasdaqList.isEmpty() ? nasdaqList.get(nasdaqList.size()-1) : null;
-        sb.append("Nasdaq: ").append(nasdaq != null ? String.format(Locale.US, "%.0f (%s)", nasdaq.getValue(), nasdaq.getDate()) : "Unavailable").append("\n");
+        sb.append("Nasdaq: ").append(nasdaq != null ? String.format(Locale.US, "%.0f (%s)", nasdaq.getValue(), nasdaq.getDate()) + freshnessTag(nasdaq.getDate(), 10) : "Unavailable").append("\n");
 
         List<EconomicDataPoint> vixList = vm.getVixData().getValue();
         EconomicDataPoint vix = vixList != null && !vixList.isEmpty() ? vixList.get(vixList.size()-1) : null;
-        sb.append("VIX: ").append(vix != null ? String.format(Locale.US, "%.2f (%s)", vix.getValue(), vix.getDate()) : "Unavailable").append("\n");
+        sb.append("VIX: ").append(vix != null ? String.format(Locale.US, "%.2f (%s)", vix.getValue(), vix.getDate()) + freshnessTag(vix.getDate(), 10) : "Unavailable").append("\n");
 
         sb.append("\nBOND MARKET SPREADS\n");
         List<EconomicDataPoint> baaList = vm.getBaaSpreadData().getValue();
         EconomicDataPoint baaSp = baaList != null && !baaList.isEmpty() ? baaList.get(baaList.size()-1) : null;
-        sb.append("BAA Corporate Spread: ").append(baaSp != null ? String.format(Locale.US, "%.2f%% (%s)", baaSp.getValue(), baaSp.getDate()) : "Unavailable").append("\n");
+        sb.append("BAA Corporate Spread: ").append(baaSp != null ? String.format(Locale.US, "%.2f%% (%s)", baaSp.getValue(), baaSp.getDate()) + freshnessTag(baaSp.getDate(), 10) : "Unavailable").append("\n");
 
         List<EconomicDataPoint> hyList = vm.getHySpreadData().getValue();
         EconomicDataPoint hySpread = hyList != null && !hyList.isEmpty() ? hyList.get(hyList.size()-1) : null;
-        sb.append("High Yield Spread: ").append(hySpread != null ? String.format(Locale.US, "%.2f%% (%s)", hySpread.getValue(), hySpread.getDate()) : "Unavailable").append("\n");
+        sb.append("High Yield Spread: ").append(hySpread != null ? String.format(Locale.US, "%.2f%% (%s)", hySpread.getValue(), hySpread.getDate()) + freshnessTag(hySpread.getDate(), 10) : "Unavailable").append("\n");
 
         sb.append("\n");
         return sb.toString();
