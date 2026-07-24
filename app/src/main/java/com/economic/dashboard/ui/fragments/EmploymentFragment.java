@@ -186,7 +186,7 @@ public class EmploymentFragment extends Fragment {
         // Shared with Overview so the same rate can't grade differently by screen (TICKET-03)
         Benchmarks.Result result = Benchmarks.unemployment(currentRate, riseFromLow);
         tvUnempStatus.setText(result.word);
-        tvUnempStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_slate));
+        tvUnempStatus.setTextColor(ContextCompat.getColor(requireContext(), com.economic.dashboard.R.color.text_slate));
         BenchmarkStyle.tintDot(viewUnempIndicatorDot, requireContext(), result.tier);
     }
 
@@ -197,7 +197,7 @@ public class EmploymentFragment extends Fragment {
         tvLaborValue.setText(NumberFormatUtil.percent(currentRate, 1)); // TICKET-19
         Benchmarks.Result result = Benchmarks.laborForce(currentRate);
         tvLaborStatus.setText(result.word);
-        tvLaborStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_slate));
+        tvLaborStatus.setTextColor(ContextCompat.getColor(requireContext(), com.economic.dashboard.R.color.text_slate));
         BenchmarkStyle.tintDot(viewLaborIndicatorDot, requireContext(), result.tier);
     }
 
