@@ -86,8 +86,8 @@
 
                 <View
                     android:id="@+id/viewTierDot"
-                    android:layout_width="7dp"
-                    android:layout_height="7dp"
+                    android:layout_width="@dimen/dot_status"
+                    android:layout_height="@dimen/dot_status"
                     android:background="@drawable/dot_neutral"
                     android:layout_marginEnd="@dimen/space_xs" />
 
@@ -97,7 +97,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text=""
-                    android:textColor="@color/text_muted"
+                    android:textColor="@color/text_slate"
                     android:textSize="@dimen/text_caption"
                     android:textStyle="bold"
                     android:textAllCaps="true"

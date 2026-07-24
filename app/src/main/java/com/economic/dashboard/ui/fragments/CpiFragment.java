@@ -1,5 +1,7 @@
 package com.economic.dashboard.ui.fragments;
 
+import com.economic.dashboard.ui.Benchmarks;
+import com.economic.dashboard.ui.BenchmarkStyle;
 import android.graphics.Color;
 import androidx.core.content.ContextCompat;
 import android.graphics.drawable.GradientDrawable;
@@ -144,37 +146,14 @@ public class CpiFragment extends Fragment {
         
         tvCpiYoYValue.setText(NumberFormatUtil.percent(yoyChange)); // TICKET-19
         
-        // Threshold Logic
-        String status;
-        int color;
-        
-        if (yoyChange < 1.5) {
-            status = "DEFLATION RISK";
-            color = Color.parseColor("#5B8DB8"); // Blue
-        } else if (yoyChange <= 2.5) {
-            status = "HEALTHY";
-            color = Color.parseColor("#6FA97A"); // Green
-        } else if (yoyChange <= 3.5) {
-            status = "CAUTION";
-            color = Color.parseColor("#DCC873"); // Yellow
-        } else if (yoyChange <= 6.0) {
-            status = "ELEVATED";
-            color = Color.parseColor("#D98E4F"); // Orange
-        } else {
-            status = "CRITICAL";
-            color = Color.parseColor("#C75B4E"); // Red
-        }
+        // Shared grading + semantic palette (TICKET-01/03/04)
+        Benchmarks.Result result = Benchmarks.cpiYoY(yoyChange);
 
-        // Revert badge background to Header Navy
-        cardCpiYoY.setCardBackgroundColor(Color.parseColor("#1A1F2B")); 
-        
-        tvCpiYoYStatus.setText(status);
-        tvCpiYoYStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_on_navy_secondary));
-        
-        GradientDrawable dot = new GradientDrawable();
-        dot.setShape(GradientDrawable.OVAL);
-        dot.setColor(color);
-        viewCpiIndicatorDot.setBackground(dot);
+        // Standardized badge navy + status-text grey (TICKET-05)
+        cardCpiYoY.setCardBackgroundColor(ContextCompat.getColor(requireContext(), R.color.card_navy_badge));
+        tvCpiYoYStatus.setText(result.word);
+        tvCpiYoYStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_slate));
+        BenchmarkStyle.tintDot(viewCpiIndicatorDot, requireContext(), result.tier);
 
         // Hide date range as requested
         tvCpiYoYDate.setVisibility(View.GONE);

@@ -1,5 +1,7 @@
 package com.economic.dashboard.ui.fragments;
 
+import com.economic.dashboard.ui.Benchmarks;
+import com.economic.dashboard.ui.BenchmarkStyle;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
@@ -112,12 +114,9 @@ public class BondsFragment extends Fragment {
         if (rows.isEmpty()) return;
         double latest = rows.get(rows.size()-1).getValue();
         tvBaaValue.setText(NumberFormatUtil.percent(latest)); // TICKET-19
-        String status; int color;
-        if (latest < 1.5) { status = "TIGHT"; color = Color.parseColor("#6FA97A"); }
-        else if (latest < 2.5) { status = "NORMAL"; color = Color.parseColor("#5B8DB8"); }
-        else if (latest < 3.5) { status = "ELEVATED"; color = Color.parseColor("#D98E4F"); }
-        else { status = "DISTRESS"; color = Color.parseColor("#C75B4E"); }
-        tvBaaStatus.setText(status); setDot(viewBaaDot, color);
+        Benchmarks.Result result = Benchmarks.bondSpread(latest, 2.5, 3.5);
+        tvBaaStatus.setText(result.word);
+        BenchmarkStyle.tintDot(viewBaaDot, requireContext(), result.tier);
     }
 
     private void updateHyCard(List<EconomicDataPoint> data) {
@@ -125,12 +124,9 @@ public class BondsFragment extends Fragment {
         if (rows.isEmpty()) return;
         double latest = rows.get(rows.size()-1).getValue();
         tvHyValue.setText(NumberFormatUtil.percent(latest)); // TICKET-19
-        String status; int color;
-        if (latest < 3) { status = "TIGHT"; color = Color.parseColor("#6FA97A"); }
-        else if (latest < 5) { status = "NORMAL"; color = Color.parseColor("#5B8DB8"); }
-        else if (latest < 8) { status = "ELEVATED"; color = Color.parseColor("#D98E4F"); }
-        else { status = "DISTRESS"; color = Color.parseColor("#C75B4E"); }
-        tvHyStatus.setText(status); setDot(viewHyDot, color);
+        Benchmarks.Result result = Benchmarks.bondSpread(latest, 5, 8);
+        tvHyStatus.setText(result.word);
+        BenchmarkStyle.tintDot(viewHyDot, requireContext(), result.tier);
     }
 
     private void setActiveCard(String which) {

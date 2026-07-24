@@ -1,5 +1,8 @@
 package com.economic.dashboard.ui.fragments;
 
+import androidx.core.content.ContextCompat;
+import com.economic.dashboard.ui.Benchmarks;
+import com.economic.dashboard.ui.BenchmarkStyle;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
@@ -180,19 +183,11 @@ public class EmploymentFragment extends Fragment {
         tvUnempLowInfo.setText("12-month low: " + NumberFormatUtil.percent(low, 1)
                 + " (Rise: " + NumberFormatUtil.signedPercent(riseFromLow, 1) + ")");
 
-        String status; int dotColor;
-        if (currentRate > 7.0) { status = "RECESSION TERRITORY"; dotColor = Color.parseColor("#C75B4E"); }
-        else if (currentRate > 5.5) { status = "ELEVATED"; dotColor = Color.parseColor("#D98E4F"); }
-        else if (riseFromLow >= 0.5) { status = "RECESSION SIGNAL (SAHM RULE)"; dotColor = Color.parseColor("#C75B4E"); }
-        else if (currentRate >= 3.5 && currentRate <= 4.5) {
-            if (riseFromLow >= 0.3) { status = "WATCH CLOSELY"; dotColor = Color.parseColor("#DCC873"); }
-            else { status = "HEALTHY"; dotColor = Color.parseColor("#6FA97A"); }
-        } else { status = "STABLE"; dotColor = Color.parseColor("#6FA97A"); }
-
-        tvUnempStatus.setText(status);
-        tvUnempStatus.setTextColor(Color.parseColor("#BBBBBB"));
-        GradientDrawable dot = new GradientDrawable(); dot.setShape(GradientDrawable.OVAL); dot.setColor(dotColor);
-        viewUnempIndicatorDot.setBackground(dot);
+        // Shared with Overview so the same rate can't grade differently by screen (TICKET-03)
+        Benchmarks.Result result = Benchmarks.unemployment(currentRate, riseFromLow);
+        tvUnempStatus.setText(result.word);
+        tvUnempStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_slate));
+        BenchmarkStyle.tintDot(viewUnempIndicatorDot, requireContext(), result.tier);
     }
 
     private void calculateLaborParticipationStatus(List<EconomicDataPoint> data) {
@@ -200,14 +195,10 @@ public class EmploymentFragment extends Fragment {
         if (rows.isEmpty()) return;
         double currentRate = rows.get(rows.size()-1).getValue();
         tvLaborValue.setText(NumberFormatUtil.percent(currentRate, 1)); // TICKET-19
-        String status; int dotColor;
-        if (currentRate >= 63.3) { status = "HEALTHY"; dotColor = Color.parseColor("#6FA97A"); }
-        else if (currentRate >= 62.0) { status = "DECLINING"; dotColor = Color.parseColor("#D98E4F"); }
-        else { status = "CRITICAL"; dotColor = Color.parseColor("#C75B4E"); }
-        tvLaborStatus.setText(status);
-        tvLaborStatus.setTextColor(Color.parseColor("#BBBBBB"));
-        GradientDrawable dot = new GradientDrawable(); dot.setShape(GradientDrawable.OVAL); dot.setColor(dotColor);
-        viewLaborIndicatorDot.setBackground(dot);
+        Benchmarks.Result result = Benchmarks.laborForce(currentRate);
+        tvLaborStatus.setText(result.word);
+        tvLaborStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_slate));
+        BenchmarkStyle.tintDot(viewLaborIndicatorDot, requireContext(), result.tier);
     }
 
     private void addEmploymentLimitLines(LineChart chart) {

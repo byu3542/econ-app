@@ -1,5 +1,7 @@
 package com.economic.dashboard.ui.fragments;
 
+import com.economic.dashboard.ui.Benchmarks;
+import com.economic.dashboard.ui.BenchmarkStyle;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
@@ -128,23 +130,10 @@ public class SpreadsFragment extends Fragment {
         if (longRate != null && shortRate != null) {
             double spread = longRate.getValue() - shortRate.getValue();
             valTv.setText(NumberFormatUtil.percent(spread)); // TICKET-19
-            int dotColor; String status;
-            if (is3M) {
-                if (spread >= 3.50) { dotColor = Color.parseColor("#8A6E9E"); status = "STEEP"; }
-                else if (spread >= 2.00) { dotColor = Color.parseColor("#5B8DB8"); status = "STRONG"; }
-                else if (spread >= 1.00) { dotColor = Color.parseColor("#6FA97A"); status = "HEALTHY"; }
-                else if (spread >= 0.00) { dotColor = Color.parseColor("#DCC873"); status = "RECOVERING"; }
-                else if (spread > -0.50) { dotColor = Color.parseColor("#DCC873"); status = "FLATTENING"; }
-                else if (spread > -1.50) { dotColor = Color.parseColor("#D98E4F"); status = "INVERTED"; }
-                else { dotColor = Color.parseColor("#C75B4E"); status = "DEEP INVERSION"; }
-            } else {
-                if (spread >= 0.50) { dotColor = Color.parseColor("#6FA97A"); status = "HEALTHY"; }
-                else if (spread >= 0.00) { dotColor = Color.parseColor("#DCC873"); status = "CAUTION"; }
-                else if (spread > -0.50) { dotColor = Color.parseColor("#D98E4F"); status = "WARNING"; }
-                else { dotColor = Color.parseColor("#C75B4E"); status = "DANGER"; }
-            }
-            GradientDrawable dot = new GradientDrawable(); dot.setShape(GradientDrawable.OVAL); dot.setColor(dotColor);
-            dotView.setBackground(dot); statusTv.setText(status);
+            // Shared 3M/10Y grader (same as Overview) + distinct RECOVERING/FLATTENING tiers (TICKET-03/06)
+            Benchmarks.Result result = is3M ? Benchmarks.spread3m10y(spread) : Benchmarks.spread10y2y(spread);
+            BenchmarkStyle.tintDot(dotView, requireContext(), result.tier);
+            statusTv.setText(result.word);
         }
     }
 

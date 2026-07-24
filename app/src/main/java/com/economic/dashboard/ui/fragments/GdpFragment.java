@@ -1,5 +1,8 @@
 package com.economic.dashboard.ui.fragments;
 
+import androidx.core.content.ContextCompat;
+import com.economic.dashboard.ui.Benchmarks;
+import com.economic.dashboard.ui.BenchmarkStyle;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
@@ -142,19 +145,12 @@ public class GdpFragment extends Fragment {
         tvGdpLatest.setText(NumberFormatUtil.percent(rollingAvg)); // TICKET-19
         tvGdpDesc.setText("4-Quarter Rolling Average");
 
-        String status; int dotColor;
-        if (rollingAvg < 0)         { status = "RECESSION";        dotColor = Color.parseColor("#C75B4E"); }
-        else if (rollingAvg <= 1.0) { status = "STAGNATION";       dotColor = Color.parseColor("#D98E4F"); }
-        else if (rollingAvg <= 2.0) { status = "BELOW POTENTIAL";  dotColor = Color.parseColor("#DCC873"); }
-        else if (rollingAvg <= 3.0) { status = "AT POTENTIAL";     dotColor = Color.parseColor("#6FA97A"); }
-        else if (rollingAvg <= 4.0) { status = "ABOVE POTENTIAL";  dotColor = Color.parseColor("#5B8DB8"); }
-        else                        { status = "OVERHEATING RISK"; dotColor = Color.parseColor("#8A6E9E"); }
-
-        tvGdpStatusText.setText(status);
-        tvGdpStatusText.setTextColor(Color.parseColor("#BBBBBB"));
-        GradientDrawable dot = new GradientDrawable(); dot.setShape(GradientDrawable.OVAL); dot.setColor(dotColor);
-        viewGdpIndicatorDot.setBackground(dot);
-        cardGdpStatus.setCardBackgroundColor(Color.parseColor("#1A1F2B"));
+        // Shared grading + semantic palette (TICKET-01/02/04)
+        Benchmarks.Result result = Benchmarks.gdpGrowth(rollingAvg);
+        tvGdpStatusText.setText(result.word);
+        tvGdpStatusText.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_slate));
+        BenchmarkStyle.tintDot(viewGdpIndicatorDot, requireContext(), result.tier);
+        cardGdpStatus.setCardBackgroundColor(ContextCompat.getColor(requireContext(), R.color.card_navy_badge));
     }
 
     private void updateLatestQuarterStatus(List<EconomicDataPoint> data) {
@@ -162,20 +158,15 @@ public class GdpFragment extends Fragment {
         if (gdpRows.isEmpty()) return;
         double latestValue = gdpRows.get(gdpRows.size()-1).getValue();
 
-        String status; int dotColor;
-        if (latestValue < 0) { status = "CONTRACTION"; dotColor = Color.parseColor("#C75B4E"); }
-        else if (latestValue < 2.0) { status = "SLOWING"; dotColor = Color.parseColor("#DCC873"); }
-        else { status = "EXPANSION"; dotColor = Color.parseColor("#6FA97A"); }
-
+        Benchmarks.Result result = Benchmarks.gdpQuarter(latestValue);
         if (tvGdpLatestQuarterStatus != null) {
-            tvGdpLatestQuarterStatus.setText(status);
-            tvGdpLatestQuarterStatus.setTextColor(Color.parseColor("#BBBBBB"));
+            tvGdpLatestQuarterStatus.setText(result.word);
+            tvGdpLatestQuarterStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_slate));
         }
         if (viewGdpLatestQuarterDot != null) {
-            GradientDrawable dot = new GradientDrawable(); dot.setShape(GradientDrawable.OVAL); dot.setColor(dotColor);
-            viewGdpLatestQuarterDot.setBackground(dot);
+            BenchmarkStyle.tintDot(viewGdpLatestQuarterDot, requireContext(), result.tier);
         }
-        if (cardGdpLatestQuarter != null) cardGdpLatestQuarter.setCardBackgroundColor(Color.parseColor("#1A1F2B"));
+        if (cardGdpLatestQuarter != null) cardGdpLatestQuarter.setCardBackgroundColor(ContextCompat.getColor(requireContext(), R.color.card_navy_badge));
     }
 
     private void buildGdpChart(List<EconomicDataPoint> data) {

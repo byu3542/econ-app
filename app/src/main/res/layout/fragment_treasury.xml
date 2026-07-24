@@ -67,8 +67,8 @@
 
                         <View
                             android:id="@+id/viewSpreadIndicatorDot"
-                            android:layout_width="8dp"
-                            android:layout_height="8dp"
+                            android:layout_width="@dimen/dot_status"
+                            android:layout_height="@dimen/dot_status"
                             android:background="@drawable/dot_neutral"
                             android:layout_marginEnd="@dimen/space_sm" />
 
@@ -131,8 +131,8 @@
 
                         <View
                             android:id="@+id/viewSpread3MIndicatorDot"
-                            android:layout_width="8dp"
-                            android:layout_height="8dp"
+                            android:layout_width="@dimen/dot_status"
+                            android:layout_height="@dimen/dot_status"
                             android:background="@drawable/dot_neutral"
                             android:layout_marginEnd="@dimen/space_sm" />
 

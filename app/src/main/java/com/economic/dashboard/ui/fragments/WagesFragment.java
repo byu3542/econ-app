@@ -1,5 +1,7 @@
 package com.economic.dashboard.ui.fragments;
 
+import com.economic.dashboard.ui.Benchmarks;
+import com.economic.dashboard.ui.BenchmarkStyle;
 import android.graphics.Color;
 import androidx.core.content.ContextCompat;
 import android.graphics.drawable.GradientDrawable;
@@ -172,36 +174,15 @@ public class WagesFragment extends Fragment {
         // Display the calculated difference as the main value (TICKET-19)
         tvWageYoYValue.setText(NumberFormatUtil.percent(spread));
 
-        String reading;
-        int dotColor;
+        // Shared grading + semantic palette (TICKET-01/03/04)
+        Benchmarks.Result result = Benchmarks.realWageGrowth(spread);
 
-        if (spread < -2.0) {
-            dotColor = Color.parseColor("#C75B4E"); // Red
-            reading = "FALLING BEHIND FAST";
-        } else if (spread < 0.0) {
-            dotColor = Color.parseColor("#D98E4F"); // Orange
-            reading = "LOSING GROUND";
-        } else if (spread <= 1.0) {
-            dotColor = Color.parseColor("#DCC873"); // Yellow
-            reading = "BARELY AHEAD";
-        } else if (spread <= 2.5) {
-            dotColor = Color.parseColor("#6FA97A"); // Green
-            reading = "HEALTHY";
-        } else {
-            dotColor = Color.parseColor("#5B8DB8"); // Blue
-            reading = "STRONG";
-        }
+        tvWageYoYStatus.setText(result.word);
+        tvWageYoYStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_slate));
+        BenchmarkStyle.tintDot(viewWageIndicatorDot, requireContext(), result.tier);
 
-        tvWageYoYStatus.setText(reading);
-        tvWageYoYStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_on_navy_secondary));
-        
-        GradientDrawable dot = new GradientDrawable();
-        dot.setShape(GradientDrawable.OVAL);
-        dot.setColor(dotColor);
-        viewWageIndicatorDot.setBackground(dot);
-
-        // Keep Badge Navy
-        cardWageYoY.setCardBackgroundColor(Color.parseColor("#1A1F2B"));
+        // Standardized badge navy (TICKET-05)
+        cardWageYoY.setCardBackgroundColor(ContextCompat.getColor(requireContext(), R.color.card_navy_badge));
     }
 
     private void buildHourlyChart(List<EconomicDataPoint> data) {

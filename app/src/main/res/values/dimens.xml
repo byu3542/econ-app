@@ -22,4 +22,12 @@
     <dimen name="space_2xl">24dp</dimen>
     <dimen name="space_3xl">28dp</dimen>
     <dimen name="space_4xl">32dp</dimen>
+
+    <!-- Badge chrome (TICKET-05): one status-dot diameter everywhere -->
+    <dimen name="dot_status">8dp</dimen>
+
+    <!-- Corner-radius tokens for pills/chips (TICKET-08): collapse to a small set -->
+    <dimen name="radius_chip">6dp</dimen>     <!-- fed-change chip, quarter pill -->
+    <dimen name="radius_badge">12dp</dimen>   <!-- neutral badge, retry pill -->
+    <dimen name="radius_pill">20dp</dimen>    <!-- fully-rounded chips/pills -->
 </resources>

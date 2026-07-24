@@ -1,5 +1,7 @@
 package com.economic.dashboard.ui.fragments;
 
+import com.economic.dashboard.ui.Benchmarks;
+import com.economic.dashboard.ui.BenchmarkStyle;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
@@ -287,16 +289,9 @@ public class HousingFragment extends Fragment {
         if (tvStartsValue != null)
             tvStartsValue.setText(NumberFormatUtil.number(latest, 0) + "K"); // TICKET-19
 
-        // Thresholds in thousands of units (annualized monthly rate)
-        String status; int color;
-        if (latest < 900)        { status = "DEPRESSED";      color = Color.parseColor("#C75B4E"); }
-        else if (latest < 1200)  { status = "BELOW AVERAGE";  color = Color.parseColor("#D98E4F"); }
-        else if (latest < 1500)  { status = "NORMAL";         color = Color.parseColor("#6FA97A"); }
-        else if (latest < 1800)  { status = "STRONG";         color = Color.parseColor("#5B8DB8"); }
-        else                     { status = "VERY STRONG";    color = Color.parseColor("#8A6E9E"); }
-
-        if (tvStartsStatus != null) tvStartsStatus.setText(status);
-        setDot(viewStartsDot, color);
+        Benchmarks.Result result = Benchmarks.housingStarts(latest);
+        if (tvStartsStatus != null) tvStartsStatus.setText(result.word);
+        BenchmarkStyle.tintDot(viewStartsDot, requireContext(), result.tier);
     }
 
     // ── Existing Home Sales Badge ─────────────────────────────────────────────
@@ -310,16 +305,9 @@ public class HousingFragment extends Fragment {
         if (tvSalesValue != null)
             tvSalesValue.setText(NumberFormatUtil.number(latest / 1_000.0, 2) + "M"); // TICKET-19
 
-        // Thresholds in thousands of units (matching FRED units)
-        String status; int color;
-        if (latest < 3_000)  { status = "VERY WEAK";   color = Color.parseColor("#C75B4E"); }
-        else if (latest < 4_000) { status = "WEAK";    color = Color.parseColor("#D98E4F"); }
-        else if (latest < 5_000) { status = "NORMAL";  color = Color.parseColor("#6FA97A"); }
-        else if (latest < 6_000) { status = "STRONG";  color = Color.parseColor("#5B8DB8"); }
-        else                 { status = "VERY STRONG"; color = Color.parseColor("#8A6E9E"); }
-
-        if (tvSalesStatus != null) tvSalesStatus.setText(status);
-        setDot(viewSalesDot, color);
+        Benchmarks.Result result = Benchmarks.existingHomeSales(latest);
+        if (tvSalesStatus != null) tvSalesStatus.setText(result.word);
+        BenchmarkStyle.tintDot(viewSalesDot, requireContext(), result.tier);
     }
 
     // ── Rate Badges ── (10Y T-Rate + Spread pull from the Yields-tab treasury data)
@@ -332,13 +320,9 @@ public class HousingFragment extends Fragment {
                 double val = mortgageRows.get(mortgageRows.size() - 1).getValue();
                 if (tvBadgeMortgageValue != null)
                     tvBadgeMortgageValue.setText(NumberFormatUtil.percent(val)); // TICKET-19
-                String status; int color;
-                if (val < 4.0)       { status = "LOW";       color = Color.parseColor("#6FA97A"); }
-                else if (val < 5.5)  { status = "MODERATE";  color = Color.parseColor("#D98E4F"); }
-                else if (val < 7.0)  { status = "HIGH";      color = Color.parseColor("#C75B4E"); }
-                else                 { status = "VERY HIGH"; color = Color.parseColor("#8E3B32"); }
-                if (tvBadgeMortgageStatus != null) tvBadgeMortgageStatus.setText(status);
-                setDot(viewBadgeMortgageDot, color);
+                Benchmarks.Result result = Benchmarks.rateBadge(val, 4.0, 5.5, 7.0);
+                if (tvBadgeMortgageStatus != null) tvBadgeMortgageStatus.setText(result.word);
+                BenchmarkStyle.tintDot(viewBadgeMortgageDot, requireContext(), result.tier);
             }
         }
 
@@ -349,13 +333,9 @@ public class HousingFragment extends Fragment {
                 double val = tenYearRows.get(tenYearRows.size() - 1).getValue();
                 if (tvBadge10YValue != null)
                     tvBadge10YValue.setText(NumberFormatUtil.percent(val)); // TICKET-19
-                String status; int color;
-                if (val < 3.0)       { status = "LOW";       color = Color.parseColor("#6FA97A"); }
-                else if (val < 4.0)  { status = "MODERATE";  color = Color.parseColor("#D98E4F"); }
-                else if (val < 5.0)  { status = "HIGH";      color = Color.parseColor("#C75B4E"); }
-                else                 { status = "VERY HIGH"; color = Color.parseColor("#8E3B32"); }
-                if (tvBadge10YStatus != null) tvBadge10YStatus.setText(status);
-                setDot(viewBadge10YDot, color);
+                Benchmarks.Result result = Benchmarks.rateBadge(val, 3.0, 4.0, 5.0);
+                if (tvBadge10YStatus != null) tvBadge10YStatus.setText(result.word);
+                BenchmarkStyle.tintDot(viewBadge10YDot, requireContext(), result.tier);
             }
         }
 
@@ -365,13 +345,9 @@ public class HousingFragment extends Fragment {
             double val = spreadRows.get(spreadRows.size() - 1).getValue();
             if (tvBadgeSpreadValue != null)
                 tvBadgeSpreadValue.setText(NumberFormatUtil.percent(val)); // TICKET-19
-            String status; int color;
-            if (val < 1.5)       { status = "NARROW";    color = Color.parseColor("#5B8DB8"); }
-            else if (val < 2.2)  { status = "NORMAL";    color = Color.parseColor("#6FA97A"); }
-            else if (val < 2.8)  { status = "WIDE";      color = Color.parseColor("#D98E4F"); }
-            else                 { status = "VERY WIDE"; color = Color.parseColor("#C75B4E"); }
-            if (tvBadgeSpreadStatus != null) tvBadgeSpreadStatus.setText(status);
-            setDot(viewBadgeSpreadDot, color);
+            Benchmarks.Result result = Benchmarks.mortgageSpread(val);
+            if (tvBadgeSpreadStatus != null) tvBadgeSpreadStatus.setText(result.word);
+            BenchmarkStyle.tintDot(viewBadgeSpreadDot, requireContext(), result.tier);
         }
     }
 

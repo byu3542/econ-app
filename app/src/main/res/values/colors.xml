@@ -92,6 +92,15 @@
     <color name="signal_alert_soft">#D9A099</color>
     <color name="signal_alert_tint">#EFD3D0</color>
     <color name="signal_alert_deep">#8E3B32</color>
+    <!-- Purple = "too much of a good thing" (imbalance): GDP overheating, extreme curve steepness. Never reused for "very strong/best". -->
+    <color name="signal_imbalance">#8A6E9E</color>
+    <!-- Colorblind-safe status set (Okabe-Ito), swapped in when colorblind mode is on. Distinct luminance for grayscale. -->
+    <color name="signal_good_cb">#009E73</color>
+    <color name="signal_watch_cb">#F0E442</color>
+    <color name="signal_elevated_cb">#E69F00</color>
+    <color name="signal_alert_cb">#D55E00</color>
+    <color name="signal_alert_deep_cb">#8C3D00</color>
+    <color name="signal_imbalance_cb">#CC79A7</color>
     <!-- Informational accents -->
     <color name="info_blue">#5B8DB8</color>
     <color name="info_blue_soft">#B3C9DD</color>

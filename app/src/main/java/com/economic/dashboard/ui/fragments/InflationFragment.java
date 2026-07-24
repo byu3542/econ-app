@@ -1,5 +1,8 @@
 package com.economic.dashboard.ui.fragments;
 
+import androidx.core.content.ContextCompat;
+import com.economic.dashboard.ui.Benchmarks;
+import com.economic.dashboard.ui.BenchmarkStyle;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
@@ -192,15 +195,10 @@ public class InflationFragment extends Fragment {
         }
         if (tvPcePercentile != null) tvPcePercentile.setText(coreLabel);
 
-        String status; int color;
-        if (yoy < 1.5)       { status = "DEFLATION RISK"; color = Color.parseColor("#5B8DB8"); }
-        else if (yoy <= 2.0) { status = "AT FED TARGET";  color = Color.parseColor("#6FA97A"); }
-        else if (yoy <= 3.0) { status = "ABOVE TARGET";   color = Color.parseColor("#DCC873"); }
-        else if (yoy <= 5.0) { status = "ELEVATED";       color = Color.parseColor("#D98E4F"); }
-        else                 { status = "CRITICAL";        color = Color.parseColor("#C75B4E"); }
-
-        if (tvPceStatus != null) tvPceStatus.setText(status);
-        setDot(viewPceDot, color);
+        // PCE aligned to CPI wording + bands so the two inflation gauges match (TICKET-04)
+        Benchmarks.Result result = Benchmarks.pceYoY(yoy);
+        if (tvPceStatus != null) tvPceStatus.setText(result.word);
+        BenchmarkStyle.tintDot(viewPceDot, requireContext(), result.tier);
     }
 
     private void updateCpiCard(List<EconomicDataPoint> cpiData) {
@@ -211,18 +209,12 @@ public class InflationFragment extends Fragment {
         double yoy = ((latest - yearAgo) / yearAgo) * 100.0;
         if (tvCpiYoYValue != null) tvCpiYoYValue.setText(NumberFormatUtil.percent(yoy)); // TICKET-19
 
-        String status; int color;
-        if (yoy < 1.5)       { status = "DEFLATION RISK"; color = Color.parseColor("#5B8DB8"); }
-        else if (yoy <= 2.5) { status = "HEALTHY";        color = Color.parseColor("#6FA97A"); }
-        else if (yoy <= 3.5) { status = "CAUTION";        color = Color.parseColor("#DCC873"); }
-        else if (yoy <= 6.0) { status = "ELEVATED";       color = Color.parseColor("#D98E4F"); }
-        else                 { status = "CRITICAL";        color = Color.parseColor("#C75B4E"); }
-
+        Benchmarks.Result result = Benchmarks.cpiYoY(yoy);
         if (tvCpiYoYStatus != null) {
-            tvCpiYoYStatus.setText(status);
-            tvCpiYoYStatus.setTextColor(Color.parseColor("#BBBBBB"));
+            tvCpiYoYStatus.setText(result.word);
+            tvCpiYoYStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_slate));
         }
-        setDot(viewCpiDot, color);
+        BenchmarkStyle.tintDot(viewCpiDot, requireContext(), result.tier);
 
         int pct = EconomicViewModel.calculatePercentile(cpiData, "CPI-U All Items", latest);
         if (tvCpiPercentile != null) tvCpiPercentile.setText(EconomicViewModel.formatPercentile(pct));
@@ -245,18 +237,12 @@ public class InflationFragment extends Fragment {
 
         if (tvWageYoYValue != null) tvWageYoYValue.setText(NumberFormatUtil.percent(spread)); // TICKET-19
 
-        String status; int color;
-        if (spread < -2.0)      { status = "FALLING BEHIND FAST"; color = Color.parseColor("#C75B4E"); }
-        else if (spread < 0.0)  { status = "LOSING GROUND";       color = Color.parseColor("#D98E4F"); }
-        else if (spread <= 1.0) { status = "BARELY AHEAD";        color = Color.parseColor("#DCC873"); }
-        else if (spread <= 2.5) { status = "HEALTHY";             color = Color.parseColor("#6FA97A"); }
-        else                    { status = "STRONG";               color = Color.parseColor("#5B8DB8"); }
-
+        Benchmarks.Result result = Benchmarks.realWageGrowth(spread);
         if (tvWageYoYStatus != null) {
-            tvWageYoYStatus.setText(status);
-            tvWageYoYStatus.setTextColor(Color.parseColor("#BBBBBB"));
+            tvWageYoYStatus.setText(result.word);
+            tvWageYoYStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_slate));
         }
-        setDot(viewWageDot, color);
+        BenchmarkStyle.tintDot(viewWageDot, requireContext(), result.tier);
     }
 
     private void buildPceCpiChart(List<EconomicDataPoint> pceData, List<EconomicDataPoint> cpiData) {

@@ -1,5 +1,7 @@
 package com.economic.dashboard.ui.fragments;
 
+import com.economic.dashboard.ui.Benchmarks;
+import com.economic.dashboard.ui.BenchmarkStyle;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
@@ -132,12 +134,9 @@ public class StocksFragment extends Fragment {
         if (rows.isEmpty()) return;
         double latest = rows.get(rows.size() - 1).getValue();
         tvSp500Value.setText(formatValueWithK(latest));
-        String status; int color;
-        if (latest < 3500) { status = "WEAK"; color = Color.parseColor("#C75B4E"); }
-        else if (latest < 4000) { status = "FAIR"; color = Color.parseColor("#D98E4F"); }
-        else if (latest < 4500) { status = "STRONG"; color = Color.parseColor("#6FA97A"); }
-        else { status = "VERY STRONG"; color = Color.parseColor("#5B8DB8"); }
-        tvSp500Status.setText(status); setDot(viewSp500Dot, color);
+        Benchmarks.Result result = Benchmarks.stockLevel(latest, 3500, 4000);
+        tvSp500Status.setText(result.word);
+        BenchmarkStyle.tintDot(viewSp500Dot, requireContext(), result.tier);
     }
 
     private void updateNasdaqCard(List<EconomicDataPoint> data) {
@@ -145,12 +144,9 @@ public class StocksFragment extends Fragment {
         if (rows.isEmpty()) return;
         double latest = rows.get(rows.size() - 1).getValue();
         tvNasdaqValue.setText(formatValueWithK(latest));
-        String status; int color;
-        if (latest < 10000) { status = "WEAK"; color = Color.parseColor("#C75B4E"); }
-        else if (latest < 12000) { status = "FAIR"; color = Color.parseColor("#D98E4F"); }
-        else if (latest < 14000) { status = "STRONG"; color = Color.parseColor("#6FA97A"); }
-        else { status = "VERY STRONG"; color = Color.parseColor("#5B8DB8"); }
-        tvNasdaqStatus.setText(status); setDot(viewNasdaqDot, color);
+        Benchmarks.Result result = Benchmarks.stockLevel(latest, 10000, 12000);
+        tvNasdaqStatus.setText(result.word);
+        BenchmarkStyle.tintDot(viewNasdaqDot, requireContext(), result.tier);
     }
 
     private void updateVixCard(List<EconomicDataPoint> data) {
@@ -158,12 +154,9 @@ public class StocksFragment extends Fragment {
         if (rows.isEmpty()) return;
         double latest = rows.get(rows.size() - 1).getValue();
         tvVixValue.setText(NumberFormatUtil.indexPoints(latest, 1)); // TICKET-19
-        String status; int color;
-        if (latest < 12) { status = "LOW"; color = Color.parseColor("#6FA97A"); }
-        else if (latest < 20) { status = "NORMAL"; color = Color.parseColor("#5B8DB8"); }
-        else if (latest < 30) { status = "ELEVATED"; color = Color.parseColor("#D98E4F"); }
-        else { status = "EXTREME"; color = Color.parseColor("#C75B4E"); }
-        tvVixStatus.setText(status); setDot(viewVixDot, color);
+        Benchmarks.Result result = Benchmarks.vix(latest);
+        tvVixStatus.setText(result.word);
+        BenchmarkStyle.tintDot(viewVixDot, requireContext(), result.tier);
     }
 
     private void setActiveCard(String which) {
