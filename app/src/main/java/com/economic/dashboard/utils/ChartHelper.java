@@ -58,12 +58,11 @@ public class ChartHelper {
         chart.setPinchZoom(true);
         chart.setDoubleTapToZoomEnabled(true);
 
-        // X Axis — de-cluttered: thin gridlines, fewer labels (TICKET-07)
+        // X Axis — IOS-07: no vertical gridlines at all (Swift Charts doesn't
+        // draw them); fewer labels (TICKET-07)
         XAxis xAxis = chart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
-        xAxis.setDrawGridLines(showGrid);
-        xAxis.setGridColor(gridColor);
-        xAxis.setGridLineWidth(0.4f);
+        xAxis.setDrawGridLines(false);
         xAxis.setTextColor(axisText);
         xAxis.setTextSize(10f);
         xAxis.setGranularity(1f);
@@ -73,11 +72,13 @@ public class ChartHelper {
         xAxis.setAxisLineColor(axisLine);
         xAxis.setDrawAxisLine(false);
 
-        // Y Axis (Left) — thin gridlines, no redundant axis line (TICKET-07)
+        // Y Axis (Left) — IOS-07: dashed hairlines instead of solid thin
+        // lines, no redundant axis line (TICKET-07)
         YAxis leftAxis = chart.getAxisLeft();
         leftAxis.setDrawGridLines(showGrid);
         leftAxis.setGridColor(gridColor);
         leftAxis.setGridLineWidth(0.4f);
+        leftAxis.enableGridDashedLine(6f, 4f, 0f);
         leftAxis.setTextColor(axisText);
         leftAxis.setTextSize(10f);
         leftAxis.setDrawZeroLine(true);
@@ -124,18 +125,19 @@ public class ChartHelper {
         int faintGrid = Color.argb(0x0D, 0xFF, 0xFF, 0xFF); // ~5% white
         chart.getDescription().setEnabled(false);
 
+        // IOS-07: no vertical gridlines — Swift Charts doesn't draw them.
         XAxis x = chart.getXAxis();
-        x.setDrawGridLines(true);
-        x.setGridColor(faintGrid);
-        x.setGridLineWidth(0.4f);
+        x.setDrawGridLines(false);
         x.setDrawAxisLine(false);
         x.setLabelCount(5, false);
         x.setAvoidFirstLastClipping(true);
 
+        // IOS-07: horizontal gridlines become dashed hairlines only.
         YAxis y = chart.getAxisLeft();
         y.setDrawGridLines(true);
         y.setGridColor(faintGrid);
         y.setGridLineWidth(0.4f);
+        y.enableGridDashedLine(6f, 4f, 0f);
         y.setDrawAxisLine(false);
         y.setLabelCount(5, false);
 
@@ -173,6 +175,32 @@ public class ChartHelper {
         });
     }
 
+    // ── IOS-07: Swift-Charts-style primary series ───────────────────────────
+
+    /**
+     * The real-data line look: 2dp, no cubic smoothing (smoothing a real
+     * series misrepresents it), no per-point circles/values, gradient fill
+     * from ~18% of the line's own color fading to transparent. Intended for
+     * a chart's PRIMARY series only — benchmark/reference lines (LimitLine)
+     * are a separate, deliberately thinner/plain style and untouched by this.
+     * MPAndroidChart v3.1.0 has no public API for round line caps, so that
+     * part of the look isn't applied here.
+     */
+    public static void styleLineSeries(LineDataSet ds, int color) {
+        if (ds == null) return;
+        ds.setColor(color);
+        ds.setLineWidth(2f);
+        ds.setMode(LineDataSet.Mode.LINEAR);
+        ds.setDrawCircles(false);
+        ds.setDrawValues(false);
+        ds.setDrawFilled(true);
+        int top = (color & 0x00FFFFFF) | 0x2E000000;    // ~18% alpha
+        int bottom = color & 0x00FFFFFF;                 // fully transparent
+        ds.setFillDrawable(new android.graphics.drawable.GradientDrawable(
+                android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[]{top, bottom}));
+    }
+
     // ── TICKET-23: chart crosshair / value scrubbing ────────────────────────
 
     /**
@@ -194,6 +222,20 @@ public class ChartHelper {
         chart.setDrawMarkers(true);
         chart.setHighlightPerDragEnabled(true);
         chart.setHighlightPerTapEnabled(true);
+
+        // IOS-07: a light haptic tick each time the scrub crosses onto a new
+        // data point, not on every pixel of drag.
+        final float[] lastTickedX = {Float.NaN};
+        chart.setOnChartValueSelectedListener(new com.github.mikephil.charting.listener.OnChartValueSelectedListener() {
+            @Override public void onValueSelected(Entry e, Highlight h) {
+                if (e == null) return;
+                if (Float.isNaN(lastTickedX[0]) || e.getX() != lastTickedX[0]) {
+                    lastTickedX[0] = e.getX();
+                    HapticUtil.scrubTick(chart); // IOS-09
+                }
+            }
+            @Override public void onNothingSelected() { lastTickedX[0] = Float.NaN; }
+        });
     }
 
     /**

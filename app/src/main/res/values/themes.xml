@@ -9,10 +9,15 @@
         <!-- Customize your theme here. -->
         <item name="android:windowBackground">@color/background</item>
 
-        <!-- Status bar: solid navy, non-translucent, light icons -->
-        <item name="android:windowTranslucentStatus">false</item>
-        <item name="android:statusBarColor">#0f1729</item>
+        <!-- IOS-04: status/nav bars are transparent — the header/bottom-nav
+             views themselves are the translucent "material" (see
+             header_navy_translucent, bg_bottom_nav_border.xml), drawn behind
+             the system bars via setDecorFitsSystemWindows(false). Light icons
+             since the header tint underneath is still dark. -->
+        <item name="android:windowTranslucentStatus">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">false</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
 
         <!-- Alabaster specific styling -->
         <item name="toolbarStyle">@style/AlabasterToolbar</item>
@@ -21,6 +26,20 @@
         <!-- Rounded long-press context menus (Ask AI Analyst / Explain chart / news) -->
         <item name="android:popupMenuStyle">@style/RoundedPopupMenu</item>
         <item name="popupMenuStyle">@style/RoundedPopupMenu</item>
+
+        <!-- IOS-03: tabular digits on every default TextView (see Widget.Econ.TextView
+             below). Only affects numeral glyph widths — no visual change to
+             non-numeric text — so this is safe app-wide rather than hand-picking
+             every value/delta TextView and risking missing one. -->
+        <item name="android:textViewStyle">@style/Widget.Econ.TextView</item>
+    </style>
+
+    <!-- IOS-03: default TextView style carrying tabular figures app-wide. Only
+         plain <TextView>/AppCompatTextView elements resolve android:textViewStyle
+         as their default style — Buttons, Chips, EditTexts etc. use their own
+         Material default-style attrs and are untouched by this. -->
+    <style name="Widget.Econ.TextView" parent="android:Widget.TextView">
+        <item name="android:fontFeatureSettings">tnum</item>
     </style>
 
     <style name="RoundedPopupMenu" parent="Widget.MaterialComponents.PopupMenu">
@@ -158,13 +177,16 @@
     </style>
 
     <!-- ── Settings sheet ─────────────────────────────────────────────────── -->
+    <!-- IOS-08: inset-grouped section header — 13sp uppercase text_secondary,
+         above each group (was 11sp Title Case text_muted). -->
     <style name="SettingsSectionHeader">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
-        <item name="android:textSize">@dimen/text_caption</item>
+        <item name="android:textSize">@dimen/text_secondary</item>
         <item name="android:textStyle">bold</item>
+        <item name="android:textAllCaps">true</item>
         <item name="android:letterSpacing">0.2</item>
-        <item name="android:textColor">@color/text_muted</item>
+        <item name="android:textColor">@color/text_secondary</item>
         <item name="android:drawablePadding">6dp</item>
         <item name="android:gravity">center_vertical</item>
         <item name="android:layout_marginBottom">@dimen/space_sm</item>

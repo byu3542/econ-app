@@ -15,6 +15,11 @@
         <!-- TICKET-18: per-screen retry chip (hidden until this screen's fetch fails) -->
         <include layout="@layout/view_retry_chip" />
 
+        <!-- R2-TICKET-06: Stocks used to run its own flatter ramp (22sp hero /
+             18sp siblings) while the rest of the app used 34sp. All three values
+             are now @dimen/text_display_lg like everywhere else; because three
+             34sp values don't fit a 360dp row, they auto-shrink uniformly to
+             @dimen/text_kpi_autosize_min rather than being hardcoded smaller. -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -29,24 +34,27 @@
                 android:layout_weight="1"
                 android:layout_marginEnd="@dimen/space_hairline"
                 android:minHeight="140dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="6dp"
-                app:cardBackgroundColor="@color/header_navy">
+                app:cardCornerRadius="@dimen/radius_card_kpi"
+                app:cardElevation="@dimen/elevation_card_kpi"
+                app:cardBackgroundColor="@color/card_navy_badge">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:orientation="vertical" android:padding="@dimen/space_lg" android:gravity="center">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="S&amp;P 500" android:textColor="@color/accent_gold"
-                        android:textSize="@dimen/text_caption" android:textStyle="bold" android:textAllCaps="true" />
-                    <!-- TICKET-21: screen hero — largest type -->
-                    <TextView android:id="@+id/tvSp500Value" android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" android:text="—" android:textSize="@dimen/text_headline"
+                    android:orientation="vertical" android:padding="@dimen/space_md" android:gravity="center">
+                    <TextView style="@style/Card.Overline" android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" android:text="S&amp;P 500" />
+                    <TextView android:id="@+id/tvSp500Value" android:layout_width="match_parent"
+                        android:layout_height="@dimen/kpi_value_height" android:text="—" android:gravity="center"
+                        android:maxLines="1"
+                        android:autoSizeTextType="uniform"
+                        android:autoSizeMinTextSize="@dimen/text_kpi_autosize_min"
+                        android:autoSizeMaxTextSize="@dimen/text_display_lg"
+                        android:autoSizeStepGranularity="1sp"
                         android:textColor="@color/card_white" android:textStyle="bold" android:layout_marginTop="@dimen/space_xs" />
-                    <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="@dimen/space_xs">
-                        <View android:id="@+id/viewSp500Dot" android:layout_width="@dimen/dot_status" android:layout_height="@dimen/dot_status" android:layout_marginEnd="@dimen/space_sm" />
-                        <TextView android:id="@+id/tvSp500Status" android:layout_width="wrap_content"
-                            android:layout_height="wrap_content" android:text="—" android:textColor="@color/text_on_navy_muted" android:textSize="@dimen/text_caption" />
-                    </LinearLayout>
+                    <include
+                        android:id="@+id/statusSp500"
+                        layout="@layout/view_status_badge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_xs" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
@@ -58,24 +66,27 @@
                 android:layout_marginStart="@dimen/space_hairline"
                 android:layout_marginEnd="@dimen/space_hairline"
                 android:minHeight="140dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="6dp"
-                app:cardBackgroundColor="@color/header_navy">
+                app:cardCornerRadius="@dimen/radius_card_kpi"
+                app:cardElevation="@dimen/elevation_card_kpi"
+                app:cardBackgroundColor="@color/card_navy_badge">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:orientation="vertical" android:padding="@dimen/space_lg" android:gravity="center">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="Nasdaq" android:textColor="@color/accent_gold"
-                        android:textSize="@dimen/text_caption" android:textStyle="bold" android:textAllCaps="true" />
-                    <!-- TICKET-21: demoted sibling — muted -->
-                    <TextView android:id="@+id/tvNasdaqValue" android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" android:text="—" android:textSize="@dimen/text_title"
-                        android:textColor="@color/text_on_navy_muted" android:textStyle="bold" android:layout_marginTop="@dimen/space_xs" />
-                    <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="@dimen/space_xs">
-                        <View android:id="@+id/viewNasdaqDot" android:layout_width="@dimen/dot_status" android:layout_height="@dimen/dot_status" android:layout_marginEnd="@dimen/space_sm" />
-                        <TextView android:id="@+id/tvNasdaqStatus" android:layout_width="wrap_content"
-                            android:layout_height="wrap_content" android:text="—" android:textColor="@color/text_on_navy_muted" android:textSize="@dimen/text_caption" />
-                    </LinearLayout>
+                    android:orientation="vertical" android:padding="@dimen/space_md" android:gravity="center">
+                    <TextView style="@style/Card.Overline" android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" android:text="Nasdaq" />
+                    <TextView android:id="@+id/tvNasdaqValue" android:layout_width="match_parent"
+                        android:layout_height="@dimen/kpi_value_height" android:text="—" android:gravity="center"
+                        android:maxLines="1"
+                        android:autoSizeTextType="uniform"
+                        android:autoSizeMinTextSize="@dimen/text_kpi_autosize_min"
+                        android:autoSizeMaxTextSize="@dimen/text_display_lg"
+                        android:autoSizeStepGranularity="1sp"
+                        android:textColor="@color/card_white" android:textStyle="bold" android:layout_marginTop="@dimen/space_xs" />
+                    <include
+                        android:id="@+id/statusNasdaq"
+                        layout="@layout/view_status_badge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_xs" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
@@ -86,24 +97,27 @@
                 android:layout_weight="1"
                 android:layout_marginStart="@dimen/space_hairline"
                 android:minHeight="140dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="6dp"
-                app:cardBackgroundColor="@color/header_navy">
+                app:cardCornerRadius="@dimen/radius_card_kpi"
+                app:cardElevation="@dimen/elevation_card_kpi"
+                app:cardBackgroundColor="@color/card_navy_badge">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:orientation="vertical" android:padding="@dimen/space_lg" android:gravity="center">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="VIX" android:textColor="@color/accent_gold"
-                        android:textSize="@dimen/text_caption" android:textStyle="bold" android:textAllCaps="true" />
-                    <!-- TICKET-21: demoted sibling — muted -->
-                    <TextView android:id="@+id/tvVixValue" android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" android:text="—" android:textSize="@dimen/text_title"
-                        android:textColor="@color/text_on_navy_muted" android:textStyle="bold" android:layout_marginTop="@dimen/space_xs" />
-                    <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="@dimen/space_xs">
-                        <View android:id="@+id/viewVixDot" android:layout_width="@dimen/dot_status" android:layout_height="@dimen/dot_status" android:layout_marginEnd="@dimen/space_sm" />
-                        <TextView android:id="@+id/tvVixStatus" android:layout_width="wrap_content"
-                            android:layout_height="wrap_content" android:text="—" android:textColor="@color/text_on_navy_muted" android:textSize="@dimen/text_caption" />
-                    </LinearLayout>
+                    android:orientation="vertical" android:padding="@dimen/space_md" android:gravity="center">
+                    <TextView style="@style/Card.Overline" android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" android:text="VIX" />
+                    <TextView android:id="@+id/tvVixValue" android:layout_width="match_parent"
+                        android:layout_height="@dimen/kpi_value_height" android:text="—" android:gravity="center"
+                        android:maxLines="1"
+                        android:autoSizeTextType="uniform"
+                        android:autoSizeMinTextSize="@dimen/text_kpi_autosize_min"
+                        android:autoSizeMaxTextSize="@dimen/text_display_lg"
+                        android:autoSizeStepGranularity="1sp"
+                        android:textColor="@color/card_white" android:textStyle="bold" android:layout_marginTop="@dimen/space_xs" />
+                    <include
+                        android:id="@+id/statusVix"
+                        layout="@layout/view_status_badge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_xs" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
@@ -112,12 +126,13 @@
         <!-- TICKET-11: inline range switcher -->
         <include layout="@layout/view_timeframe_selector" />
 
+        <!-- Chart/panel card — R2-TICKET-04 family B (16dp / 6dp) -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="@dimen/space_2xl"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="6dp"
+            app:cardCornerRadius="@dimen/radius_card_panel"
+            app:cardElevation="@dimen/elevation_card_panel"
             app:cardBackgroundColor="@color/header_navy">
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"

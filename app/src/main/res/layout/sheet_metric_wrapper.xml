@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Shared chrome for metric-detail bottom sheets: drag handle + content slot. -->
+<!-- Shared chrome for metric-detail bottom sheets: drag handle + scrolling content slot.
+     Root must be match_parent: BottomSheetBehavior#setFitToContents(false) positions this
+     view's top edge by offset and expects it to span the parent; a wrap_content root leaves
+     the sheet's bottom floating mid-screen or clips content off the bottom edge. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@drawable/bg_sheet_navy_rounded">
 
@@ -12,9 +15,19 @@
         android:layout_gravity="center_horizontal"
         android:tint="@color/gold_muted" />
 
-    <FrameLayout
-        android:id="@+id/sheetContent"
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/sheetScroll"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true"
+        android:clipToPadding="false">
+
+        <FrameLayout
+            android:id="@+id/sheetContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+    </androidx.core.widget.NestedScrollView>
 
 </LinearLayout>

@@ -29,6 +29,8 @@ public class SettingsManager {
     // AI Analyst
     public static final String KEY_SMART_CHIPS      = "smart_chips";
     public static final String KEY_DETAILED_AI      = "detailed_ai";
+    // IOS-09: haptics, default on
+    public static final String KEY_HAPTICS          = "haptics_enabled";
     // Charts
     public static final String KEY_CHART_GRIDLINES  = "chart_gridlines";
     public static final String KEY_CHART_DECIMALS   = "chart_decimals";   // 1..3

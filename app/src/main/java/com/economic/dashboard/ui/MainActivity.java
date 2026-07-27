@@ -50,7 +50,7 @@ import okhttp3.OkHttpClient;
 public class MainActivity extends AppCompatActivity {
 
     private static final String WELCOME_TEXT =
-            "Hello! I am your AI Economic Analyst, powered by Claude. "
+            "Hello! I am your Econ Analyst, powered by Claude. "
             + "I can see all of the dashboard's live data — ask me anything about it. "
             + "Tip: long-press any card on the Overview screen to ask about that metric.";
     /** Newest rows kept in the persisted chat table. */
@@ -100,8 +100,43 @@ public class MainActivity extends AppCompatActivity {
                     insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars());
             binding.headerContainer.setPadding(0, bars.top, 0, 0);
             binding.bottomNavWrapper.setPadding(0, 0, 0, bars.bottom);
+            // IOS-04: every screen pads its own topmost/bottommost view off
+            // this (see EdgeToEdgeInsets) so content clears both translucent
+            // bars and can still scroll underneath them.
+            com.economic.dashboard.utils.EdgeToEdgeInsets.update(bars.top, bars.bottom);
             return androidx.core.view.WindowInsetsCompat.CONSUMED;
         });
+
+        // IOS-04 (2026-07-27 nav fix): publish the bars' REAL measured heights
+        // instead of leaving screens to guess with the header_chrome_height
+        // dimen. Both views already carry their own system-bar padding by the
+        // time they lay out, so the measured height is the full clearance a
+        // screen needs. OnLayoutChangeListener (not a one-shot post()) so this
+        // stays correct across rotation, font-scale changes, and the header
+        // ever growing a second line.
+        // The setters re-pad every registered screen, which calls setPadding →
+        // requestLayout; posting keeps that out of the layout pass that just
+        // fired this callback (both setters no-op when the value is unchanged,
+        // so the posts don't loop).
+        binding.headerContainer.addOnLayoutChangeListener(
+                (barView, nl, nt, nr, nb, pl, pt, pr, pb) -> barView.post(() ->
+                        com.economic.dashboard.utils.EdgeToEdgeInsets.setHeaderHeight(nb - nt)));
+        binding.bottomNavWrapper.addOnLayoutChangeListener(
+                (barView, nl, nt, nr, nb, pl, pt, pr, pb) -> barView.post(() ->
+                        com.economic.dashboard.utils.EdgeToEdgeInsets.setNavHeight(nb - nt)));
+
+        // IOS-04 — API 31+ frosted glass was evaluated and deliberately NOT
+        // added here: View#setRenderEffect blurs that view's OWN rendered
+        // subtree, not the sibling content already drawn behind it, and both
+        // header_container and bottomNavWrapper hold real foreground content
+        // (the masthead title, the settings icon, nav icons/labels). Applying
+        // a blur effect to either would blur that content into mush, not
+        // "blur the KPI cards scrolling underneath" — Android has no per-view
+        // backdrop-sampling API to do the latter in a single opaque window
+        // (Window#setBackgroundBlurRadius blurs behind the *window*, e.g. the
+        // home screen, which doesn't apply here). The translucent fill
+        // (header_navy_translucent / bg_bottom_nav_border's ~85% alpha) is
+        // the real, working "material" signal on every API level instead.
 
         if (getSupportActionBar() != null) getSupportActionBar().hide();
 
@@ -400,6 +435,23 @@ public class MainActivity extends AppCompatActivity {
         else                                 binding.bottomNav.setSelectedItemId(R.id.nav_overview);
     }
 
+    // ── IOS-02: collapsing large title ──────────────────────────────────────
+
+    /** The persistent header's compact centered title, for LargeTitleController. */
+    public TextView getHeaderCompactTitle() { return binding.tvHeaderCompactTitle; }
+
+    /** The persistent header's bottom hairline, for LargeTitleController. */
+    public View getHeaderSeparator() { return binding.headerSeparator; }
+
+    /**
+     * Tabs that don't (yet) drive the collapsing title behave exactly as
+     * before IOS-02: the compact title and separator are always visible.
+     */
+    private void resetHeaderCompactAlwaysVisible() {
+        binding.tvHeaderCompactTitle.setAlpha(1f);
+        binding.headerSeparator.setAlpha(1f);
+    }
+
     // ── Navigation ───────────────────────────────────────────────────────────
 
     private void setupBottomNav() {
@@ -416,19 +468,28 @@ public class MainActivity extends AppCompatActivity {
 
             binding.bottomNav.setOnItemSelectedListener(item -> {
                 int id = item.getItemId();
+                com.economic.dashboard.utils.HapticUtil.selection(binding.bottomNav); // IOS-09
 
                 // Center slot (nav_ai_placeholder) is disabled — the floating
                 // fabAiAnalyst button handles the AI Analyst instead.
                 int index = 0;
                 String title = "Overview";
-                if (id == R.id.nav_markets) { index = 1; title = "Markets"; loadFragment(new MarketsFragment(), "markets"); }
-                else if (id == R.id.nav_economy) { index = 3; title = "Economy"; loadFragment(new EconomyFragment(), "economy"); }
-                else if (id == R.id.navigation_news) {
+                if (id == R.id.nav_markets) {
+                    index = 1; title = "Markets"; loadFragment(new MarketsFragment(), "markets");
+                    resetHeaderCompactAlwaysVisible(); // IOS-02: no collapsing title on this tab (yet)
+                } else if (id == R.id.nav_economy) {
+                    index = 3; title = "Economy"; loadFragment(new EconomyFragment(), "economy");
+                    resetHeaderCompactAlwaysVisible();
+                } else if (id == R.id.navigation_news) {
                     index = 4; title = "News"; loadFragment(new NewsFragment(), "news");
                     markNewsSeen(); clearNewsBadge(); // opening News clears the unread badge
+                    resetHeaderCompactAlwaysVisible();
+                } else {
+                    loadFragment(new DashboardFragment(), "overview");
+                    // DashboardFragment's LargeTitleController takes over
+                    // tvHeaderCompactTitle/headerSeparator alpha from here.
                 }
-                else { loadFragment(new DashboardFragment(), "overview"); }
-                binding.tvHeaderLine1.setText(title);
+                binding.tvHeaderCompactTitle.setText(title);
                 currentScreenLabel = title;
 
                 binding.navActiveIndicator.animate()
@@ -557,16 +618,23 @@ public class MainActivity extends AppCompatActivity {
         viewModel.getErrorMsg().observe(this, error -> {
             if (error != null && !error.isEmpty()) {
                 android.util.Log.w("MainActivity", "Data fetch error: " + error);
+                com.economic.dashboard.utils.HapticUtil.reject(binding.getRoot()); // IOS-09
             }
         });
     }
 
     private void updateHeader() {
+        // IOS-02: the quarter pill moved from the persistent header into
+        // Overview's own large-title block (DashboardFragment); nothing left
+        // here to update in the header itself.
+    }
+
+    /** "Q3 2026" — used by DashboardFragment's large-title quarter pill (IOS-02). */
+    public static String currentQuarterLabel() {
         java.util.Calendar cal = java.util.Calendar.getInstance();
         int month = cal.get(java.util.Calendar.MONTH), year = cal.get(java.util.Calendar.YEAR);
         int quarter = month <= 2 ? 1 : month <= 5 ? 2 : month <= 8 ? 3 : 4;
-        TextView tvQuarter = binding.tvHeaderQuarter;
-        if (tvQuarter != null) tvQuarter.setText("Q" + quarter + " " + year);
+        return "Q" + quarter + " " + year;
     }
 
     @Override

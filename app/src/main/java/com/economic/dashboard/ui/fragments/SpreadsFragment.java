@@ -3,9 +3,6 @@ package com.economic.dashboard.ui.fragments;
 import com.economic.dashboard.ui.Benchmarks;
 import com.economic.dashboard.ui.BenchmarkStyle;
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.GradientDrawable;
-import android.graphics.drawable.InsetDrawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -45,8 +42,9 @@ public class SpreadsFragment extends Fragment {
     private LineChart swappableChart;
     private TextView tvChartTitle;
     private CardView cardSpreadYoY, cardSpread3M;
-    private TextView tvSpreadValue, tvIndicatorText, tvSpread3MValue, tvIndicator3MText;
-    private View viewSpreadIndicatorDot, viewSpread3MIndicatorDot;
+    private TextView tvSpreadValue, tvSpread3MValue;
+    /** Roots of the included view_status_badge rows (R2-TICKET-03). */
+    private View statusSpread2Y, statusSpread3M;
     private String activeCard = "yoy";
     private List<EconomicDataPoint> currentYoyData;
     private List<EconomicDataPoint> current3MData;
@@ -55,6 +53,9 @@ public class SpreadsFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = FragmentSpreadsBinding.inflate(inflater, container, false);
+        // IOS-04: bottom inset ONLY — this fragment lives inside MarketsFragment's
+        // ViewPager2, below the host's tab strip, so the host owns the top inset.
+        com.economic.dashboard.utils.EdgeToEdgeInsets.applyBottomInset(binding.getRoot());
         skeleton = com.economic.dashboard.ui.views.SkeletonController.wrap(binding.getRoot());
         return skeleton.getRoot();
     }
@@ -100,17 +101,17 @@ public class SpreadsFragment extends Fragment {
         com.economic.dashboard.analyst.AskAnalyst.wireCardLongPress(
                 cardSpreadYoY, requireActivity(), "the 10Y-2Y Treasury spread");
         tvSpreadValue = binding.tvSpreadValue;
-        tvIndicatorText = binding.tvIndicatorText;
-        viewSpreadIndicatorDot = binding.viewSpreadIndicatorDot;
+        statusSpread2Y = binding.statusSpread2Y.getRoot();
         cardSpread3M = binding.cardSpread3M;
         com.economic.dashboard.analyst.AskAnalyst.wireCardLongPress(
                 cardSpread3M, requireActivity(), "the 10Y-3M Treasury spread");
         tvSpread3MValue = binding.tvSpread3MValue;
-        tvIndicator3MText = binding.tvIndicator3MText;
-        viewSpread3MIndicatorDot = binding.viewSpread3MIndicatorDot;
+        statusSpread3M = binding.statusSpread3M.getRoot();
 
         cardSpreadYoY.setOnClickListener(v -> { activeCard = "yoy"; setActiveCard("yoy"); buildSwappableChart(); });
         cardSpread3M.setOnClickListener(v -> { activeCard = "3m"; setActiveCard("3m"); buildSwappableChart(); });
+        com.economic.dashboard.ui.views.PressFeedback.attach(cardSpreadYoY);
+        com.economic.dashboard.ui.views.PressFeedback.attach(cardSpread3M);
         setActiveCard("yoy");
 
         viewModel.getTreasuryData().observe(getViewLifecycleOwner(), data -> { if (data != null) { updateSpreadIndicators(data); if (skeleton != null) skeleton.reveal(); } });
@@ -119,12 +120,13 @@ public class SpreadsFragment extends Fragment {
     }
 
     private void updateSpreadIndicators(List<EconomicDataPoint> data) {
-        updateSingleIndicator(data, "10 Year", "2 Year", tvSpreadValue, tvIndicatorText, viewSpreadIndicatorDot, false);
-        updateSingleIndicator(data, "10 Year", "3 Month", tvSpread3MValue, tvIndicator3MText, viewSpread3MIndicatorDot, true);
+        updateSingleIndicator(data, "10 Year", "2 Year", tvSpreadValue, statusSpread2Y, false);
+        updateSingleIndicator(data, "10 Year", "3 Month", tvSpread3MValue, statusSpread3M, true);
     }
 
+    /** @param badgeRow root of an included view_status_badge (R2-TICKET-03). */
     private void updateSingleIndicator(List<EconomicDataPoint> data, String longKey, String shortKey,
-                                        TextView valTv, TextView statusTv, View dotView, boolean is3M) {
+                                        TextView valTv, View badgeRow, boolean is3M) {
         EconomicDataPoint longRate = EconomicViewModel.getLatest(data, longKey);
         EconomicDataPoint shortRate = EconomicViewModel.getLatest(data, shortKey);
         if (longRate != null && shortRate != null) {
@@ -132,29 +134,17 @@ public class SpreadsFragment extends Fragment {
             valTv.setText(NumberFormatUtil.percent(spread)); // TICKET-19
             // Shared 3M/10Y grader (same as Overview) + distinct RECOVERING/FLATTENING tiers (TICKET-03/06)
             Benchmarks.Result result = is3M ? Benchmarks.spread3m10y(spread) : Benchmarks.spread10y2y(spread);
-            BenchmarkStyle.tintDot(dotView, requireContext(), result.tier);
-            statusTv.setText(result.word);
+            BenchmarkStyle.applyBadge(badgeRow, requireContext(), result);
         }
     }
 
     private void setActiveCard(String which) {
-        cardSpreadYoY.setForeground("yoy".equals(which) ? makeActiveBorder() : null);
-        cardSpread3M.setForeground("3m".equals(which) ? makeActiveBorder() : null);
+        // R3-TICKET-01: border geometry lives in BenchmarkStyle so it tracks the card radius token.
+        cardSpreadYoY.setForeground("yoy".equals(which) ? BenchmarkStyle.activeCardBorder(
+                requireContext(), com.economic.dashboard.R.dimen.radius_card_kpi) : null);
+        cardSpread3M.setForeground("3m".equals(which) ? BenchmarkStyle.activeCardBorder(
+                requireContext(), com.economic.dashboard.R.dimen.radius_card_kpi) : null);
         tvChartTitle.setText("3m".equals(which) ? "10Y-3M Spread" : "10Y-2Y Spread");
-    }
-
-    private Drawable makeActiveBorder() {
-        // Stroke is drawn centered on the shape edge; inset it so the full
-        // width renders inside the CardView's rounded clip, and match the
-        // card's 16dp corner radius (minus the inset) so corners align.
-        float density = getResources().getDisplayMetrics().density;
-        int strokePx = Math.max(2, Math.round(1.5f * density));
-        int insetPx = (int) Math.ceil(strokePx / 2f);
-        GradientDrawable gd = new GradientDrawable();
-        gd.setColor(Color.TRANSPARENT);
-        gd.setCornerRadius(16f * density - insetPx);
-        gd.setStroke(strokePx, Color.parseColor("#C9A84C"));
-        return new InsetDrawable(gd, insetPx);
     }
 
     private void buildSwappableChart() {
@@ -178,8 +168,7 @@ public class SpreadsFragment extends Fragment {
             }
         });
         LineDataSet ds = new LineDataSet(entries, label);
-        ds.setColor(Color.parseColor(lineColor)); ds.setLineWidth(1.5f);
-        ds.setDrawCircles(false); ds.setDrawValues(false); ds.setMode(LineDataSet.Mode.CUBIC_BEZIER);
+        ChartHelper.styleLineSeries(ds, Color.parseColor(lineColor)); // IOS-07
         swappableChart.setData(new LineData(ds)); swappableChart.animateX(500); swappableChart.invalidate();
     }
 

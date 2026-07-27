@@ -55,9 +55,20 @@ public class NewsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     public void submitList(List<NewsItem> items) {
         rows.clear();
         if (items != null && !items.isEmpty()) {
-            rows.add(new Row(VIEW_TYPE_HERO, items.get(0), null));
+            // MarketWatch publishes a broad mix of syndicated and non-economic
+            // content. Keep those stories in the feed, but never promote one to
+            // the featured/top-story position.
+            int heroIndex = -1;
+            for (int i = 0; i < items.size(); i++) {
+                if (!isMarketWatch(items.get(i))) {
+                    heroIndex = i;
+                    break;
+                }
+            }
+            if (heroIndex >= 0) rows.add(new Row(VIEW_TYPE_HERO, items.get(heroIndex), null));
             String lastBucket = null;
-            for (int i = 1; i < items.size(); i++) {
+            for (int i = 0; i < items.size(); i++) {
+                if (i == heroIndex) continue;
                 NewsItem item = items.get(i);
                 String bucket = bucketFor(item.pubDateMillis);
                 if (!bucket.equals(lastBucket)) {
@@ -68,6 +79,11 @@ public class NewsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             }
         }
         notifyDataSetChanged();
+    }
+
+    private static boolean isMarketWatch(NewsItem item) {
+        return item != null && item.source != null
+                && item.source.trim().equalsIgnoreCase("MarketWatch");
     }
 
     private static String bucketFor(long millis) {
@@ -152,7 +168,8 @@ public class NewsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         if (activity == null || item.title == null) return;
 
         android.widget.PopupMenu menu = new android.widget.PopupMenu(ctx, anchor);
-        menu.getMenu().add(0, 1, 0, "✨ Analyze with AI Analyst");
+        menu.getMenu().add(0, 1, 0, "✨ Analyze with Econ Analyst");
+        menu.getMenu().add(0, 10, 0, ctx.getString(R.string.news_open_original));
         java.util.List<String> prompts =
                 com.economic.dashboard.analyst.SmartPromptGenerator.generatePromptsForHeadline(item.title);
         int shown = Math.min(2, prompts.size());
@@ -172,6 +189,9 @@ public class NewsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 }
                 sb.append("\n\nWhat does this mean for the economic outlook?");
                 query = sb.toString();
+            } else if (mi.getItemId() == 10) {
+                openUrl(ctx, item.url);
+                return true;
             } else {
                 int idx = mi.getItemId() - 2;
                 if (idx < 0 || idx >= finalPrompts.size()) return false;
@@ -212,6 +232,8 @@ public class NewsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     static class HeroViewHolder extends RecyclerView.ViewHolder {
         TextView tvSource, tvTimeAgo, tvHeadline, tvSummary;
+        ImageView ivThumb;
+        View more;
 
         HeroViewHolder(View v) {
             super(v);
@@ -219,6 +241,8 @@ public class NewsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             tvTimeAgo  = v.findViewById(R.id.tv_hero_time);
             tvHeadline = v.findViewById(R.id.tv_hero_headline);
             tvSummary  = v.findViewById(R.id.tv_hero_summary);
+            ivThumb    = v.findViewById(R.id.iv_hero_thumb);
+            more       = v.findViewById(R.id.btn_hero_more);
         }
 
         void bind(NewsItem item, NewsAdapter adapter) {
@@ -229,9 +253,11 @@ public class NewsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             tvSummary.setVisibility(item.summary != null && !item.summary.isEmpty()
                     ? View.VISIBLE : View.GONE);
             applyReadDim(tvHeadline, itemView.getContext(), item.url);
+            ThumbLoader.load(ivThumb, item.imageUrl);
 
             itemView.setOnClickListener(v -> adapter.openAndMarkRead(this, item));
             itemView.setOnLongClickListener(v -> { adapter.showAnalyzeMenu(v, item); return true; });
+            more.setOnClickListener(v -> adapter.showAnalyzeMenu(v, item));
         }
     }
 
@@ -239,8 +265,9 @@ public class NewsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     static class RowViewHolder extends RecyclerView.ViewHolder {
         View      impactBar;
-        TextView  tvSource, tvTimeAgo, tvHeadline, tvTag;
+        TextView  tvSource, tvTimeAgo, tvHeadline, tvTag, tvImpact;
         ImageView ivThumb;
+        View more;
 
         RowViewHolder(View v) {
             super(v);
@@ -249,7 +276,9 @@ public class NewsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             tvTimeAgo  = v.findViewById(R.id.tv_row_time);
             tvHeadline = v.findViewById(R.id.tv_row_headline);
             tvTag      = v.findViewById(R.id.tv_row_tag);
+            tvImpact   = v.findViewById(R.id.tv_row_impact);
             ivThumb    = v.findViewById(R.id.iv_row_thumb);
+            more       = v.findViewById(R.id.btn_row_more);
         }
 
         void bind(NewsItem item, NewsAdapter adapter) {
@@ -259,11 +288,21 @@ public class NewsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             tvTag.setText(item.tag != null ? item.tag : "GENERAL");
             setTagColor(tvTag, item.tag != null ? item.tag : "GENERAL");
             setImpactBarColor(impactBar, item.impactLevel);
+            if (item.impactLevel >= 2) {
+                tvImpact.setText(itemView.getContext().getString(R.string.news_high_impact));
+                tvImpact.setVisibility(View.VISIBLE);
+            } else if (item.impactLevel == 1) {
+                tvImpact.setText(itemView.getContext().getString(R.string.news_medium_impact));
+                tvImpact.setVisibility(View.VISIBLE);
+            } else {
+                tvImpact.setVisibility(View.GONE);
+            }
             applyReadDim(tvHeadline, itemView.getContext(), item.url);
             ThumbLoader.load(ivThumb, item.imageUrl);
 
             itemView.setOnClickListener(v -> adapter.openAndMarkRead(this, item));
             itemView.setOnLongClickListener(v -> { adapter.showAnalyzeMenu(v, item); return true; });
+            more.setOnClickListener(v -> adapter.showAnalyzeMenu(v, item));
         }
     }
 

@@ -1,10 +1,14 @@
 package com.economic.dashboard.ui;
 
 import android.content.Context;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.InsetDrawable;
 import android.view.View;
 import android.widget.TextView;
 
+import androidx.annotation.DimenRes;
 import androidx.core.content.ContextCompat;
 
 import com.economic.dashboard.R;
@@ -74,5 +78,58 @@ public final class BenchmarkStyle {
         tintDot(card.findViewById(dotId), context, r.tier);
         TextView tv = card.findViewById(statusTextId);
         if (tv != null) tv.setText(r.word);
+    }
+
+    /**
+     * Apply a benchmark result to an included {@code layout/view_status_badge} row
+     * (R2-TICKET-03). This is the only call a screen needs to fill a badge:
+     *
+     * <pre>
+     *   BenchmarkStyle.applyBadge(binding.statusUnemp.getRoot(), requireContext(), result);
+     * </pre>
+     *
+     * <p>The word's colour, size, weight, caps and tracking come from
+     * {@code @style/Badge.Status} in the layout — never set them here. Five screens
+     * used to call {@code setTextColor(R.color.text_slate)} right after setting the
+     * word, which is how the layout and the shipped pixel ended up disagreeing.
+     *
+     * @param badgeRow the root of an included {@code view_status_badge}, or any
+     *                 ancestor of one — {@code findViewById} searches descendants.
+     */
+    public static void applyBadge(View badgeRow, Context context, Benchmarks.Result r) {
+        apply(badgeRow, context, r, R.id.viewTierDot, R.id.tvTierStatus);
+    }
+
+    /**
+     * Gold "this card drives the chart" outline (R3-TICKET-01), sized to the card's own
+     * corner radius so the arc stays concentric with the CardView clip.
+     *
+     * <p>Hang it on a selected card with
+     * {@code card.setForeground(BenchmarkStyle.activeCardBorder(ctx, R.dimen.radius_card_kpi))}
+     * and clear it with {@code setForeground(null)}.
+     *
+     * <p><b>Pass the card's radius dimen; never hardcode it.</b> This method replaces five
+     * copy-pasted {@code makeActiveBorder()} privates that each baked in {@code 16f * density}.
+     * When the KPI cards moved to {@code @dimen/radius_card_kpi} (12dp) only one copy was
+     * updated, so the other four drew a 16dp arc inside a 12dp clip and leaked navy card fill
+     * at the corners — see {@code TICKET_2026-07-24_selector_border_radius.md}.
+     *
+     * <p>The {@link InsetDrawable} compensates for {@link GradientDrawable} centering its
+     * stroke on the shape edge, which is what keeps the straight edges flush. That inset is
+     * correct — only the radius term was ever wrong.
+     *
+     * @param ctx         any context able to resolve app resources
+     * @param radiusDimen the {@code cardCornerRadius} dimen the target card uses
+     */
+    public static Drawable activeCardBorder(Context ctx, @DimenRes int radiusDimen) {
+        float density  = ctx.getResources().getDisplayMetrics().density;
+        int   strokePx = Math.max(2, Math.round(1.5f * density));
+        int   insetPx  = (int) Math.ceil(strokePx / 2f);
+        float radiusPx = ctx.getResources().getDimension(radiusDimen);
+        GradientDrawable gd = new GradientDrawable();
+        gd.setColor(Color.TRANSPARENT);
+        gd.setCornerRadius(radiusPx - insetPx);
+        gd.setStroke(strokePx, ContextCompat.getColor(ctx, R.color.accent_gold));
+        return new InsetDrawable(gd, insetPx);
     }
 }

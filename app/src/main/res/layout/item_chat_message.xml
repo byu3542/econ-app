@@ -8,7 +8,7 @@
     android:clipChildren="false"
     android:clipToPadding="false">
 
-    <!-- Sender Label (YOU / ANALYST) — shown only on the first message of a run -->
+    <!-- Sender Label (YOU / ECON ANALYST) — shown only on the first message of a run -->
     <TextView
         android:id="@+id/tvSenderLabel"
         android:layout_width="wrap_content"

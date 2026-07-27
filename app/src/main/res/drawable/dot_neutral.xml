@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Neutral placeholder for a status dot, shown until BenchmarkStyle.tintDot()
+     replaces it with the tier colour. R2-TICKET-08: the colour is a resource
+     (light + night) instead of a hex literal, and the <size> is gone — every
+     caller sizes the dot with @dimen/dot_status, which silently overrode it. -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="oval">
-    <solid android:color="#9e9e9e" />
-    <size android:width="10dp" android:height="10dp" />
+    <solid android:color="@color/dot_neutral" />
 </shape>

@@ -11,6 +11,17 @@
     <dimen name="text_display">28sp</dimen>      <!-- KPI values, masthead -->
     <dimen name="text_display_lg">34sp</dimen>   <!-- large metric values -->
     <dimen name="text_display_xl">48sp</dimen>   <!-- hero metric value -->
+    <!-- R2-TICKET-06: floor for auto-sizing KPI values. Three 34sp values in one
+         row overflow at 360dp width, so those rows auto-shrink to this instead of
+         hardcoding a smaller size and re-introducing a fourth step in the ramp. -->
+    <dimen name="text_kpi_autosize_min">24sp</dimen>
+    <!-- FIX-2026-07-24: auto-sizing TextViews must NOT use wrap_content for height.
+         Android measures an auto-sized TextView against its *minimum* size, so a
+         34sp value rendered in a wrap_content box gets its descenders (and more)
+         clipped. Every autoSizeTextType="uniform" value uses this fixed height.
+         44sp = 34sp x ~1.17 Roboto line height + headroom; declared in sp so it
+         still fits when the user raises the system font scale. -->
+    <dimen name="kpi_value_height">44sp</dimen>
 
     <!-- Spacing (4dp grid) -->
     <dimen name="space_hairline">2dp</dimen>
@@ -26,8 +37,36 @@
     <!-- Badge chrome (TICKET-05): one status-dot diameter everywhere -->
     <dimen name="dot_status">8dp</dimen>
 
+    <!-- IOS-08: inset-grouped-list row separator -->
+    <dimen name="divider_hairline_height">0.5dp</dimen>
+
+    <!-- IOS-04: content-clearance estimate for the translucent header/bottom
+         nav "materials" — combined with the live system-bar inset
+         (EdgeToEdgeInsets) to pad each screen's scrolling root so nothing
+         sits underneath a bar on first paint, while clipToPadding=false lets
+         it scroll up underneath as you'd expect from a real material.
+         header_chrome_height is an estimate of the header's own content
+         height (excluding the status bar inset, which is added separately) —
+         eyeball against the real header in Android Studio and adjust if
+         there's a visible gap or overlap. bottom_nav_height matches
+         bottomNav's own fixed layout_height exactly. -->
+    <!-- IOS-02 shrank the persistent header to a single compact title row
+         (the large masthead now lives in each screen's own scroll content),
+         so this dropped from ~124dp to ~64dp. -->
+    <dimen name="header_chrome_height">64dp</dimen>
+    <dimen name="bottom_nav_height">76dp</dimen>
+
     <!-- Corner-radius tokens for pills/chips (TICKET-08): collapse to a small set -->
     <dimen name="radius_chip">6dp</dimen>     <!-- fed-change chip, quarter pill -->
     <dimen name="radius_badge">12dp</dimen>   <!-- neutral badge, retry pill -->
     <dimen name="radius_pill">20dp</dimen>    <!-- fully-rounded chips/pills -->
+
+    <!-- Card chrome (R2-TICKET-04): exactly two card families, told apart by role.
+         KPI = a card that carries a status badge (Overview grid + every leaf tab's
+         reading cards). PANEL = a chart/section card. Never mix the two sets:
+         a badge card is 12dp/4dp, a chart card is 16dp/6dp. -->
+    <dimen name="radius_card_kpi">12dp</dimen>
+    <dimen name="elevation_card_kpi">4dp</dimen>
+    <dimen name="radius_card_panel">16dp</dimen>
+    <dimen name="elevation_card_panel">6dp</dimen>
 </resources>

@@ -3,9 +3,6 @@ package com.economic.dashboard.ui.fragments;
 import com.economic.dashboard.ui.Benchmarks;
 import com.economic.dashboard.ui.BenchmarkStyle;
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.GradientDrawable;
-import android.graphics.drawable.InsetDrawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -42,8 +39,9 @@ public class BondsFragment extends Fragment {
     private FragmentBondsBinding binding;
     private com.economic.dashboard.ui.views.SkeletonController skeleton;
     private CardView cardBaa, cardHy;
-    private TextView tvBaaValue, tvBaaStatus, tvHyValue, tvHyStatus;
-    private View viewBaaDot, viewHyDot;
+    private TextView tvBaaValue, tvHyValue;
+    /** Roots of the included view_status_badge rows (R2-TICKET-03). */
+    private View statusBaa, statusHy;
     private LineChart swappableChart;
     private TextView tvChartTitle;
     private String activeCard = "baa";
@@ -54,6 +52,9 @@ public class BondsFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = FragmentBondsBinding.inflate(inflater, container, false);
+        // IOS-04: bottom inset ONLY — this fragment lives inside MarketsFragment's
+        // ViewPager2, below the host's tab strip, so the host owns the top inset.
+        com.economic.dashboard.utils.EdgeToEdgeInsets.applyBottomInset(binding.getRoot());
         skeleton = com.economic.dashboard.ui.views.SkeletonController.wrap(binding.getRoot());
         return skeleton.getRoot();
     }
@@ -84,9 +85,8 @@ public class BondsFragment extends Fragment {
                 cardBaa, requireActivity(), "the BAA corporate bond spread");
         com.economic.dashboard.analyst.AskAnalyst.wireCardLongPress(
                 cardHy, requireActivity(), "the high-yield bond spread");
-        tvBaaValue = binding.tvBaaValue; tvBaaStatus = binding.tvBaaStatus;
-        tvHyValue = binding.tvHyValue; tvHyStatus = binding.tvHyStatus;
-        viewBaaDot = binding.viewBaaDot; viewHyDot = binding.viewHyDot;
+        tvBaaValue = binding.tvBaaValue; tvHyValue = binding.tvHyValue;
+        statusBaa = binding.statusBaa.getRoot(); statusHy = binding.statusHy.getRoot();
         swappableChart = binding.swappableChart; tvChartTitle = binding.tvChartTitle;
         com.economic.dashboard.analyst.AskAnalyst.attachChartExplain(
                 swappableChart, requireActivity(), "corporate bond spreads (BAA and high-yield) over time");
@@ -99,6 +99,8 @@ public class BondsFragment extends Fragment {
 
         cardBaa.setOnClickListener(v -> { activeCard = "baa"; setActiveCard("baa"); buildSwappableChart(); });
         cardHy.setOnClickListener(v -> { activeCard = "hy"; setActiveCard("hy"); buildSwappableChart(); });
+        com.economic.dashboard.ui.views.PressFeedback.attach(cardBaa);
+        com.economic.dashboard.ui.views.PressFeedback.attach(cardHy);
         setActiveCard("baa");
 
         viewModel.getBaaSpreadData().observe(getViewLifecycleOwner(), data -> {
@@ -115,8 +117,7 @@ public class BondsFragment extends Fragment {
         double latest = rows.get(rows.size()-1).getValue();
         tvBaaValue.setText(NumberFormatUtil.percent(latest)); // TICKET-19
         Benchmarks.Result result = Benchmarks.bondSpread(latest, 2.5, 3.5);
-        tvBaaStatus.setText(result.word);
-        BenchmarkStyle.tintDot(viewBaaDot, requireContext(), result.tier);
+        BenchmarkStyle.applyBadge(statusBaa, requireContext(), result);
     }
 
     private void updateHyCard(List<EconomicDataPoint> data) {
@@ -125,28 +126,16 @@ public class BondsFragment extends Fragment {
         double latest = rows.get(rows.size()-1).getValue();
         tvHyValue.setText(NumberFormatUtil.percent(latest)); // TICKET-19
         Benchmarks.Result result = Benchmarks.bondSpread(latest, 5, 8);
-        tvHyStatus.setText(result.word);
-        BenchmarkStyle.tintDot(viewHyDot, requireContext(), result.tier);
+        BenchmarkStyle.applyBadge(statusHy, requireContext(), result);
     }
 
     private void setActiveCard(String which) {
-        cardBaa.setForeground("baa".equals(which) ? makeActiveBorder() : null);
-        cardHy.setForeground("hy".equals(which) ? makeActiveBorder() : null);
+        // R3-TICKET-01: border geometry lives in BenchmarkStyle so it tracks the card radius token.
+        cardBaa.setForeground("baa".equals(which) ? BenchmarkStyle.activeCardBorder(
+                requireContext(), com.economic.dashboard.R.dimen.radius_card_kpi) : null);
+        cardHy.setForeground("hy".equals(which) ? BenchmarkStyle.activeCardBorder(
+                requireContext(), com.economic.dashboard.R.dimen.radius_card_kpi) : null);
         tvChartTitle.setText("hy".equals(which) ? "High Yield Spread" : "BAA Corporate Spread");
-    }
-
-    private Drawable makeActiveBorder() {
-        // Stroke is drawn centered on the shape edge; inset it so the full
-        // width renders inside the CardView's rounded clip, and match the
-        // card's 16dp corner radius (minus the inset) so corners align.
-        float density = getResources().getDisplayMetrics().density;
-        int strokePx = Math.max(2, Math.round(1.5f * density));
-        int insetPx = (int) Math.ceil(strokePx / 2f);
-        GradientDrawable gd = new GradientDrawable();
-        gd.setColor(Color.TRANSPARENT);
-        gd.setCornerRadius(16f * density - insetPx);
-        gd.setStroke(strokePx, Color.parseColor("#C9A84C"));
-        return new InsetDrawable(gd, insetPx);
     }
 
     private void buildSwappableChart() {
@@ -175,8 +164,7 @@ public class BondsFragment extends Fragment {
             @Override public String getFormattedValue(float value) { return String.format(Locale.US, "%.2f%%", value); }
         });
         LineDataSet ds = new LineDataSet(entries, seriesName);
-        ds.setColor(Color.parseColor(lineColor)); ds.setLineWidth(1.5f);
-        ds.setDrawCircles(false); ds.setDrawValues(false); ds.setMode(LineDataSet.Mode.CUBIC_BEZIER);
+        ChartHelper.styleLineSeries(ds, Color.parseColor(lineColor)); // IOS-07
         swappableChart.setData(new LineData(ds)); swappableChart.animateX(500); swappableChart.invalidate();
     }
 
@@ -207,12 +195,6 @@ public class BondsFragment extends Fragment {
         l.setLineColor(Color.parseColor(color)); l.setLineWidth(1f);
         l.setTextColor(Color.parseColor(color)); l.setTextSize(9f); l.enableDashedLine(8f, 4f, 0f);
         chart.getAxisLeft().addLimitLine(l);
-    }
-
-    private void setDot(View dot, int color) {
-        if (dot == null) return;
-        GradientDrawable gd = new GradientDrawable(); gd.setShape(GradientDrawable.OVAL); gd.setColor(color);
-        dot.setBackground(gd);
     }
 
     @Override

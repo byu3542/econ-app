@@ -22,6 +22,14 @@
             android:layout_height="3dp"
             android:background="@color/accent_gold" />
 
+        <ImageView
+            android:id="@+id/iv_hero_thumb"
+            android:layout_width="match_parent"
+            android:layout_height="150dp"
+            android:scaleType="centerCrop"
+            android:contentDescription="@string/news_featured_image"
+            android:visibility="gone" />
+
         <!-- Source row -->
         <LinearLayout
             android:layout_width="match_parent"
@@ -42,11 +50,29 @@
                 android:textColor="@color/accent_gold" />
 
             <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/space_sm"
+                android:text="@string/news_top_story"
+                android:textColor="@color/gold_ink"
+                android:textSize="@dimen/text_caption"
+                android:textStyle="bold" />
+
+            <TextView
                 android:id="@+id/tv_hero_time"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="@dimen/text_caption"
                 android:textColor="@color/text_muted" />
+
+            <ImageButton
+                android:id="@+id/btn_hero_more"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="@dimen/space_xs"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/news_more_actions"
+                android:src="@android:drawable/ic_menu_more" />
 
         </LinearLayout>
 
@@ -59,6 +85,7 @@
             android:layout_marginTop="@dimen/space_sm"
             android:textSize="@dimen/text_body"
             android:fontFamily="serif"
+            android:textStyle="bold"
             android:textColor="@color/text_navy"
             android:lineHeight="22sp"
             android:maxLines="3"

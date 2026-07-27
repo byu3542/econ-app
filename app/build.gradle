@@ -47,6 +47,36 @@ android {
     }
 }
 
+// ── Badge regression guard (R2-TICKET-10) ────────────────────────────────────
+// Fails `gradlew check` if a status badge is styled anywhere other than
+// @style/Badge.Status + layout/view_status_badge.xml. See scripts/check_badges.sh
+// for what it catches and why. Skipped automatically if bash isn't on PATH, so a
+// plain Windows box without Git Bash still builds.
+tasks.register('checkBadges', Exec) {
+    group = 'verification'
+    description = 'Fails if a status badge is styled outside @style/Badge.Status.'
+    workingDir rootProject.projectDir
+    commandLine 'bash', 'scripts/check_badges.sh'
+    // Don't break the build on machines with no bash; the CI/dev box that has it
+    // still enforces the rule.
+    ignoreExitValue = false
+    onlyIf {
+        try {
+            def probe = new ProcessBuilder('bash', '-c', 'exit 0').start()
+            probe.waitFor() == 0
+        } catch (Exception ignored) {
+            logger.lifecycle('checkBadges: bash not found, skipping badge guard.')
+            false
+        }
+    }
+}
+
+// Hook `preBuild` as well as `check` — a normal Studio Run/assembleDebug should
+// catch a violation, not just an explicit `gradlew check`. The script is a few
+// greps, so the cost per build is negligible.
+tasks.named('check') { dependsOn 'checkBadges' }
+tasks.named('preBuild') { dependsOn 'checkBadges' }
+
 dependencies {
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.11.0'
@@ -55,6 +85,7 @@ dependencies {
     implementation 'androidx.cardview:cardview:1.0.0'
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
     implementation 'com.facebook.shimmer:shimmer:0.5.0'  // skeleton loading
+    implementation 'androidx.dynamicanimation:dynamicanimation:1.0.0'  // IOS-01 press springs
 
     // Networking
     implementation 'com.squareup.retrofit2:retrofit:2.9.0'

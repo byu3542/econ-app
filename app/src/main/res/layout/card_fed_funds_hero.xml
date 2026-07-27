@@ -7,7 +7,7 @@
     android:layout_height="wrap_content"
     android:layout_marginBottom="@dimen/space_lg"
     android:backgroundTint="@null"
-    android:foreground="?attr/selectableItemBackground"
+    android:foreground="@null"
     android:clickable="true"
     android:focusable="true">
 

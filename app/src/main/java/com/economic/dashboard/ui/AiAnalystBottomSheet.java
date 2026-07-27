@@ -27,10 +27,12 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.economic.dashboard.R;
 import com.economic.dashboard.analyst.AnalystToolExecutor;
 import com.economic.dashboard.analyst.DerivedMetricsBuilder;
+import com.economic.dashboard.analyst.EconomicSeriesRegistry;
 import com.economic.dashboard.analyst.HistoricalContextBuilder;
 import com.economic.dashboard.analyst.NewsContextBuilder;
 import com.economic.dashboard.analyst.ReleaseCalendar;
 import com.economic.dashboard.api.ApiConfig;
+import com.economic.dashboard.cache.DashboardDataCache;
 import com.economic.dashboard.databinding.DialogAiChatBinding;
 import com.economic.dashboard.models.ChatMessage;
 import com.economic.dashboard.models.EconomicDataPoint;
@@ -51,6 +53,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -71,12 +75,16 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
     private static final int HISTORY_CAP = 20;
     /** Max tool-call round-trips per user question. */
     private static final int MAX_TOOL_DEPTH = 3;
+    /** Total automatic retries allowed for one user question, across every
+     *  sendTurn() invocation and tool-loop round — not per-invocation. Without
+     *  this a persistently "transient-looking" failure (e.g. repeated
+     *  overloaded_error) can retry indefinitely. */
+    private static final int MAX_RETRIES_PER_TURN = 3;
 
-    /** AI Law 6: fast default model for plain typed, prompt-answered questions. */
-    private static final String MODEL_FAST = "claude-haiku-4-5-20251001";
-    /** AI Law 6: stronger model for gesture turns and tool-loop rounds — holds
-     *  multi-round tool discipline and length rules far better than Haiku. */
-    private static final String MODEL_STRONG = "claude-sonnet-5";
+    /** AI Law 6: model ids, shared with DailyBriefWorker via ModelConfig so a
+     *  model rotation only needs one edit (TICKET-F / review F9). */
+    private static final String MODEL_FAST = com.economic.dashboard.analyst.ModelConfig.MODEL_FAST;
+    private static final String MODEL_STRONG = com.economic.dashboard.analyst.ModelConfig.MODEL_STRONG;
 
     private DialogAiChatBinding binding;
 
@@ -108,6 +116,11 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
 
     /** In-flight API call — cancellable via the Stop button. */
     private volatile Call currentCall;
+
+    /** Owns every scheduled auto-retry so onDestroyView/cancelCurrentCall can
+     *  cancel a retry that's queued but hasn't fired yet — a bare {@code new
+     *  Handler(...).postDelayed(...)} can't be cancelled from outside itself. */
+    private final Handler retryHandler = new Handler(Looper.getMainLooper());
 
     /** Photo picker for the attach-image button. */
     private ActivityResultLauncher<String> pickImageLauncher;
@@ -300,6 +313,25 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
             behavior.setSkipCollapsed(false);
             behavior.setPeekHeight(sheetHeight);
             behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+
+            // IOS-06: the presenting screen recedes while the sheet is up.
+            // This chat sheet stays full-height-on-open (keyboard-aware resize
+            // below depends on that), so only the backdrop recede is added
+            // here — not the half-height detent applied to MetricBottomSheet.
+            View presenting = requireActivity().findViewById(android.R.id.content);
+            behavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+                @Override public void onSlide(@NonNull View sheetView, float slideOffset) {
+                    float scale = 1f - (Math.max(0f, slideOffset) * 0.06f);
+                    presenting.setScaleX(scale);
+                    presenting.setScaleY(scale);
+                }
+                @Override public void onStateChanged(@NonNull View sheetView, int newState) {
+                    if (newState == BottomSheetBehavior.STATE_HIDDEN) {
+                        presenting.setScaleX(1f);
+                        presenting.setScaleY(1f);
+                    }
+                }
+            });
 
             View decorView = dlg.getWindow().getDecorView();
             decorView.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
@@ -539,6 +571,10 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
     }
 
     private void cancelCurrentCall() {
+        // Cancels a queued-but-not-yet-fired auto-retry, not just an in-flight
+        // call — currentCall during the retry delay window still points at the
+        // already-failed call, so cancelling only that would be a no-op.
+        retryHandler.removeCallbacksAndMessages(null);
         Call c = currentCall;
         if (c != null) c.cancel();
     }
@@ -617,12 +653,18 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
     }
 
     /** Carries streamed text across tool-use round-trips into one bubble. */
-    private static class StreamState {
+    // Package-visible (not private) so AiAnalystBottomSheetTest can construct
+    // one to exercise chooseModel() (TICKET-I).
+    static class StreamState {
         final StringBuilder acc = new StringBuilder();
         int streamIdx = -1;
         /** AI Law 6: true when every round of this turn should use the stronger
          *  model (gesture-initiated, or the question looks tool-likely). */
         boolean routeStrong = false;
+        /** Total retries scheduled for this turn so far, across every
+         *  sendTurn() invocation and tool-loop round. Capped at
+         *  MAX_RETRIES_PER_TURN. */
+        int retryAttempts = 0;
     }
 
     /**
@@ -631,7 +673,9 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
      * prompt-answered questions; gesture turns, tool-likely questions, and
      * every round of an active tool loop (depth > 0) get the stronger model.
      */
-    private static String chooseModel(StreamState st, int depth) {
+    // Package-visible (not private) so AiAnalystBottomSheetTest can exercise
+    // these pure functions directly (TICKET-I / review Q7) — no logic change.
+    static String chooseModel(StreamState st, int depth) {
         return (st.routeStrong || depth > 0) ? MODEL_STRONG : MODEL_FAST;
     }
 
@@ -645,7 +689,7 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
     };
 
     /** AI Law 6: heuristic for questions that will almost certainly need a tool. */
-    private static boolean looksToolLikely(String q) {
+    static boolean looksToolLikely(String q) {
         if (q == null) return false;
         String s = " " + q.toLowerCase(Locale.US) + " ";
         for (String hint : TOOL_LIKELY_HINTS)
@@ -656,7 +700,7 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
     private void queryClaude(String userQuery, RecyclerView rv) {
         if (ApiConfig.PROXY_BASE_URL.isEmpty()) {
             chatAdapter().addMessage(new ChatMessage(
-                    "AI Analyst is not configured. Deploy the proxy in the proxy/ folder, "
+                    "Econ Analyst is not configured. Deploy the proxy in the proxy/ folder, "
                     + "then set PROXY_BASE_URL in local.properties (see proxy/README.md).", false));
             return;
         }
@@ -708,7 +752,7 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
             // Consume the gesture flag so typed follow-ups get full length.
             final boolean conciseTurn = conciseNextTurn;
             conciseNextTurn = false;
-            String systemPrompt = buildSystemPrompt(cachedNews, conciseTurn);
+            SystemPromptParts systemPrompt = buildSystemPrompt(cachedNews, conciseTurn);
             // AI Law 6: gesture turns and tool-likely questions route to the
             // stronger model for the whole turn; plain questions stay on Haiku.
             StreamState st = new StreamState();
@@ -721,11 +765,29 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
         }
     }
 
-    private String buildSystemPrompt(List<NewsItem> cachedNews, boolean conciseGesture) {
+    /**
+     * The system prompt split at the prompt-caching breakpoint (TICKET-E /
+     * review F5/Q14). {@code fixed} is the instructional rules text — byte-
+     * identical for every user, turn, and session until the developer edits
+     * the prompt — and is marked ephemeral-cacheable in sendTurn()'s request
+     * body. {@code rest} carries everything that varies per turn or per round
+     * (length tier, screen context, live data snapshot, derived metrics,
+     * release calendar, historical context, news).
+     */
+    private static class SystemPromptParts {
+        final String fixed;
+        final String rest;
+        SystemPromptParts(String fixed, String rest) { this.fixed = fixed; this.rest = rest; }
+    }
+
+    private SystemPromptParts buildSystemPrompt(List<NewsItem> cachedNews, boolean conciseGesture) {
         String dataSnapshot = constructEconomicContext();
 
         // Settings: response length preference. AI Law 7: a one-tap gesture is
         // a glance, not a research request — it gets the tightest tier.
+        // Lives with the other turn-volatile blocks below (not spliced into
+        // the fixed rules text) so that text stays one contiguous, cacheable
+        // block — see `fixed` below.
         String lengthRule = conciseGesture
                 ? "This question came from a one-tap gesture on a card or chart. Keep the "
                   + "reply to 60-90 words. Lead with the answer in the first sentence. Skip "
@@ -746,7 +808,8 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
         if (screenContext != null && !screenContext.isEmpty())
             screenBlock += screenContext + "\n";
 
-        return "You are an AI Economic Analyst embedded in the U.S. Economic Monitor app. "
+        String fixed = "You are the Econ Analyst, an economic analyst embedded in the U.S. Economic "
+                + "Monitor app. "
                 + "You have access to the following live data pulled directly from the app, "
                 + "plus 24 months of locally cached historical data (treasury yields, mortgage "
                 + "rates, unemployment, GDP). Always use these exact figures when answering "
@@ -764,14 +827,15 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
                 + "summaries below lack the detail a question needs; otherwise answer directly "
                 + "from the data provided. If you decide to use a tool, call it immediately in "
                 + "the same turn — NEVER end a reply by announcing that you are about to look "
-                + "something up. If a tool returns 'Invalid series_id', 'No cached data', or "
+                + "something up. Also never phrase a real, complete answer as if it were still "
+                + "pending — if a sentence already states the actual number or conclusion, say "
+                + "it plainly instead of wrapping it in lookup language like 'I'll check...' or "
+                + "'let me pull...'. If a tool returns 'Invalid series_id', 'No cached data', or "
                 + "'No data loaded', do not retry the same call — say plainly what isn't "
                 + "available and answer from the snapshot instead.\n\n"
                 + "INLINE CHARTS: When a visual trend would genuinely help, you may include AT "
                 + "MOST ONE chart tag on its own line, formatted exactly [CHART:SERIES_ID:<N>M] "
-                + "where SERIES_ID is one of DGS10, DGS2, DGS3MO, MORTGAGE30US, LNS14000000, "
-                + "GDP_BEA_T10101, CPI, PCE, CORE_PCE, SP500, NASDAQ, VIX, WAGES, "
-                + "HOUSING_STARTS, HOME_SALES, BAA_SPREAD, HY_SPREAD "
+                + "where SERIES_ID is one of " + String.join(", ", EconomicSeriesRegistry.allIds()) + " "
                 + "and N is months of history (1-24). Example: [CHART:DGS10:24M]. "
                 + "The app renders it as a small chart in your reply.\n\n"
                 + "FORMATTING RULES: Do NOT use markdown headers (##, ###, or # prefix). "
@@ -779,14 +843,17 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
                 + "Use short paragraphs and bold text (**word**) only for key figures or labels. "
                 + "Lead with the conclusion: your first sentence should answer the question; "
                 + "context and caveats follow. "
-                + lengthRule
                 + "When the user quotes or references a specific news headline, treat that headline as a real, "
                 + "current article and analyze it directly. NEVER reply that a headline is not in your cached feed — "
                 + "the news list below is only a partial sample, not the full set of articles the user can tap. "
                 + "When news headlines are provided, weave relevant recent developments into your analysis where appropriate. "
-                + "When an upcoming data release is relevant, mention it so the user knows what to watch.\n"
+                + "When an upcoming data release is relevant, mention it so the user knows what to watch.\n";
+
+        String rest = lengthRule
                 + screenBlock + "\n"
                 + dataSnapshot + derived + releases + historicalContext + newsContext;
+
+        return new SystemPromptParts(fixed, rest);
     }
 
     /**
@@ -794,7 +861,7 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
      * executed on-device and the loop continues (up to MAX_TOOL_DEPTH rounds),
      * streaming all text into a single analyst bubble.
      */
-    private void sendTurn(JSONArray messages, String systemPrompt, String committedQuery,
+    private void sendTurn(JSONArray messages, SystemPromptParts systemPrompt, String committedQuery,
                           StreamState st, int depth) {
         try {
             JSONObject body = new JSONObject();
@@ -805,7 +872,21 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
             // budget, so a bigger cap only costs tokens actually generated.
             body.put("max_tokens", 4096);
             body.put("stream", true);
-            body.put("system", systemPrompt);
+            // Sent as a 2-block array (not a bare string) so the fixed rules
+            // prefix can carry an ephemeral cache_control breakpoint — it's
+            // byte-identical on every round of this loop (up to MAX_TOOL_DEPTH
+            // rounds) and across turns in the same session, so the Anthropic
+            // API can serve it from cache after the first round instead of
+            // re-billing it every time (TICKET-E / review F5/Q14).
+            JSONArray systemBlocks = new JSONArray();
+            systemBlocks.put(new JSONObject()
+                    .put("type", "text")
+                    .put("text", systemPrompt.fixed)
+                    .put("cache_control", new JSONObject().put("type", "ephemeral")));
+            systemBlocks.put(new JSONObject()
+                    .put("type", "text")
+                    .put("text", systemPrompt.rest));
+            body.put("system", systemBlocks);
             body.put("messages", messages);
             // Always send tools: the API rejects a request whose message history
             // contains tool_use/tool_result blocks but has no tools parameter,
@@ -841,10 +922,17 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
                         });
                         return;
                     }
-                    // Mobile networks flake — retry once automatically before surfacing.
-                    if (retried.compareAndSet(false, true)) {
+                    // Mobile networks flake — retry once automatically before surfacing,
+                    // bounded by MAX_RETRIES_PER_TURN across the whole turn (not just
+                    // this invocation) so a persistent failure can't loop forever.
+                    if (st.retryAttempts < MAX_RETRIES_PER_TURN && retried.compareAndSet(false, true)) {
+                        st.retryAttempts++;
                         final Callback self = this;
-                        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                        retryHandler.postDelayed(() -> {
+                            // The sheet may have been dismissed during the delay —
+                            // httpClient()/host() calls requireActivity(), which throws
+                            // if the fragment is detached.
+                            if (!isAdded()) return;
                             Call retryCall = httpClient().newCall(request);
                             currentCall = retryCall;
                             retryCall.enqueue(self);
@@ -883,10 +971,13 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
                         // re-streamed round doesn't duplicate what already showed.
                         if (e instanceof IOException && !call.isCanceled()
                                 && isTransientFailure(e)
+                                && st.retryAttempts < MAX_RETRIES_PER_TURN
                                 && retried.compareAndSet(false, true)) {
+                            st.retryAttempts++;
                             st.acc.setLength(accLenAtSend);
-                            new Handler(Looper.getMainLooper()).postDelayed(
-                                    () -> sendTurn(messages, systemPrompt, committedQuery, st, depth), 1200);
+                            retryHandler.postDelayed(
+                                    () -> { if (isAdded()) sendTurn(messages, systemPrompt, committedQuery, st, depth); },
+                                    1200);
                             return;
                         }
                         final String friendly = friendlyError(e);
@@ -921,7 +1012,7 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
      * runs the tools locally and continues the conversation.
      */
     private void handleStreamedResponse(Response r, String committedQuery, Call call,
-                                        JSONArray messages, String systemPrompt,
+                                        JSONArray messages, SystemPromptParts systemPrompt,
                                         StreamState st, int depth) throws Exception {
         if (r.body() == null) throw new IOException("empty body");
         okio.BufferedSource source = r.body().source();
@@ -987,7 +1078,7 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
                 String errType = err != null ? err.optString("type", "") : "";
                 // Include the error type so the retry guard can tell a
                 // transient overload from a permanent bad request (AI Law 5).
-                throw new IOException("Analyst service error"
+                throw new IOException("Econ Analyst service error"
                         + (errType.isEmpty() ? "" : " (" + errType + ")")
                         + (msg.isEmpty() ? "." : ": " + msg));
             }
@@ -1118,18 +1209,31 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
         });
     }
 
+    /** Lead-in phrase followed (within 80 non-terminal chars) by a tool-verb. */
+    private static final Pattern LOOKUP_ANNOUNCEMENT = Pattern.compile(
+            "(?is)\\b(let me|i'?ll|i will|i'?m going to|going to|one (moment|sec)|"
+            + "give me a (moment|second)|hold on)\\b[^.!?]{0,80}"
+            + "\\b(fetch|pull|look\\s*up|looking|check|grab|retriev\\w*|get|dig|query|load)\\w*");
+    /** Max characters allowed after the matched verb for the round to still
+     *  count as "nothing but an announcement" (TICKET-D / review F4). */
+    private static final int ANNOUNCEMENT_TAIL_SLACK = 60;
+
     /**
      * AI Law 1: true when a round's text is nothing but a "let me look that up"
-     * announcement — short, and promising a fetch/check/lookup. Longer text with
-     * real analysis in front of the announcement does NOT match.
+     * announcement — short, and promising a fetch/check/lookup, with little or
+     * nothing following it. A reply that opens with a first-person verb but then
+     * states a real, complete answer in the same breath (e.g. "I'll check the
+     * housing data: starts are up 3%...") does NOT match, even though it
+     * contains the same lead-in phrase — the announcement has to BE the reply,
+     * not just open it.
      */
-    private static boolean isLookupAnnouncementOnly(String t) {
+    static boolean isLookupAnnouncementOnly(String t) {
         if (t == null) return false;
         String s = t.trim();
         if (s.isEmpty() || s.length() > 240) return false;
-        return s.matches("(?is).*\\b(let me|i'?ll|i will|i'?m going to|going to|one (moment|sec)|"
-                + "give me a (moment|second)|hold on)\\b[^.!?]{0,80}"
-                + "\\b(fetch|pull|look\\s*up|looking|check|grab|retriev\\w*|get|dig|query|load)\\b.*");
+        Matcher m = LOOKUP_ANNOUNCEMENT.matcher(s);
+        if (!m.find()) return false;
+        return s.length() - m.end() <= ANNOUNCEMENT_TAIL_SLACK;
     }
 
     /**
@@ -1137,7 +1241,7 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
      * sentence but has real content before it, drop the dangling sentence.
      * Never leaves the reply empty.
      */
-    private static String stripDanglingAnnouncement(String text) {
+    static String stripDanglingAnnouncement(String text) {
         if (text == null) return "";
         String t = text.trim();
         int cut = -1;
@@ -1153,7 +1257,7 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
     }
 
     /** AI Law 5: only retry failures a retry can fix — never bad requests/auth. */
-    private static boolean isTransientFailure(Exception e) {
+    static boolean isTransientFailure(Exception e) {
         String m = e.getMessage();
         if (m == null) return true;
         return !(m.contains("invalid_request") || m.contains("authentication")
@@ -1161,11 +1265,11 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
     }
 
     /** Maps low-level failures to a message that says what actually happened. */
-    private static String friendlyError(Exception e) {
+    static String friendlyError(Exception e) {
         if (e instanceof java.net.SocketTimeoutException)
             return "The response timed out — please try again.";
         String m = e.getMessage();
-        if (m != null && m.startsWith("Analyst service error")) return m;
+        if (m != null && m.startsWith("Econ Analyst service error")) return m;
         if (e instanceof IOException)
             return "The connection dropped while receiving the response — please try again.";
         return "Couldn't read the response — please try again.";
@@ -1199,7 +1303,7 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
      * SSE lines → accumulate the text deltas from the raw string.
      */
     private void handleJsonResponse(Response r, String committedQuery,
-                                    JSONArray messages, String systemPrompt,
+                                    JSONArray messages, SystemPromptParts systemPrompt,
                                     StreamState st, int depth) throws Exception {
         String responseBody = r.body() != null ? r.body().string() : "";
         String trimmed = responseBody.trim();
@@ -1208,7 +1312,7 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
             JSONObject json = new JSONObject(trimmed);
             JSONObject apiErr = json.optJSONObject("error");
             if (apiErr != null)
-                throw new IOException("Analyst service error: " + apiErr.optString("message", "unknown error"));
+                throw new IOException("Econ Analyst service error: " + apiErr.optString("message", "unknown error"));
             JSONArray content = json.optJSONArray("content");
             if (content == null) throw new IOException("unrecognized response body");
 
@@ -1310,6 +1414,13 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
      * flow straight into a confident answer).
      */
     private static String freshnessTag(String dateStr, int maxAgeDays) {
+        return freshnessTag(dateStr, maxAgeDays, System.currentTimeMillis());
+    }
+
+    /** Clock-injectable overload (matches CacheManager.isStale's pattern) so
+     *  AiAnalystBottomSheetTest can test staleness without a wall-clock race
+     *  (TICKET-I / review Q7). */
+    static String freshnessTag(String dateStr, int maxAgeDays, long now) {
         if (dateStr == null || dateStr.isEmpty()) return "";
         String[] formats = {"yyyy-MM-dd", "yyyy-MM", "MMM yyyy", "MMMM yyyy", "MM/dd/yyyy"};
         for (String f : formats) {
@@ -1318,7 +1429,7 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
                 sdf.setLenient(false);
                 Date d = sdf.parse(dateStr);
                 if (d == null) continue;
-                long ageDays = (System.currentTimeMillis() - d.getTime()) / 86_400_000L;
+                long ageDays = (now - d.getTime()) / 86_400_000L;
                 return ageDays > maxAgeDays ? " [STALE — this reading may be outdated]" : "";
             } catch (Exception ignored) { }
         }
@@ -1423,10 +1534,14 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
 
         sb.append("\nSTOCK MARKET INDICES\n");
         List<EconomicDataPoint> sp500List = vm.getSp500Data().getValue();
+        if (sp500List == null || sp500List.isEmpty())
+            sp500List = DashboardDataCache.load(requireContext(), EconomicViewModel.KEY_SP500);
         EconomicDataPoint sp500 = sp500List != null && !sp500List.isEmpty() ? sp500List.get(sp500List.size()-1) : null;
         sb.append("S&P 500: ").append(sp500 != null ? String.format(Locale.US, "%.0f (%s)", sp500.getValue(), sp500.getDate()) + freshnessTag(sp500.getDate(), 10) : "Unavailable").append("\n");
 
         List<EconomicDataPoint> nasdaqList = vm.getNasdaqData().getValue();
+        if (nasdaqList == null || nasdaqList.isEmpty())
+            nasdaqList = DashboardDataCache.load(requireContext(), EconomicViewModel.KEY_NASDAQ);
         EconomicDataPoint nasdaq = nasdaqList != null && !nasdaqList.isEmpty() ? nasdaqList.get(nasdaqList.size()-1) : null;
         sb.append("Nasdaq: ").append(nasdaq != null ? String.format(Locale.US, "%.0f (%s)", nasdaq.getValue(), nasdaq.getDate()) + freshnessTag(nasdaq.getDate(), 10) : "Unavailable").append("\n");
 
@@ -1489,8 +1604,20 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
 
     @Override
     public void onDestroyView() {
+        // Stop any in-flight request and any auto-retry queued to fire after
+        // the sheet is gone — otherwise a scheduled retry can still run to
+        // completion (or crash on requireActivity()) for a result nobody sees.
+        cancelCurrentCall();
         try {
             chatAdapter().unregisterAdapterDataObserver(conversationObserver);
+        } catch (Exception ignored) {}
+        // IOS-06: belt-and-suspenders reset for the backdrop recede — the
+        // sheet's own STATE_HIDDEN callback usually already restores this,
+        // but a fragment can be torn down without passing through it.
+        try {
+            android.view.View presenting = requireActivity().findViewById(android.R.id.content);
+            presenting.setScaleX(1f);
+            presenting.setScaleY(1f);
         } catch (Exception ignored) {}
         super.onDestroyView();
         binding = null;

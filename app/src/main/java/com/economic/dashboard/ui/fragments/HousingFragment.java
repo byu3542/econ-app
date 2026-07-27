@@ -3,9 +3,6 @@ package com.economic.dashboard.ui.fragments;
 import com.economic.dashboard.ui.Benchmarks;
 import com.economic.dashboard.ui.BenchmarkStyle;
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.GradientDrawable;
-import android.graphics.drawable.InsetDrawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -50,18 +47,17 @@ public class HousingFragment extends Fragment {
     private EconomicViewModel viewModel;
 
     // Housing Starts badge
-    private TextView tvStartsValue, tvStartsStatus;
-    private View viewStartsDot;
+    private TextView tvStartsValue;
 
     // Existing Home Sales badge
-    private TextView tvSalesValue, tvSalesStatus;
-    private View viewSalesDot;
+    private TextView tvSalesValue;
 
     // Rate badge cards
     private CardView badgeMortgage, badge10Y, badgeSpread;
     private TextView tvBadgeMortgageValue, tvBadge10YValue, tvBadgeSpreadValue;
-    private TextView tvBadgeMortgageStatus, tvBadge10YStatus, tvBadgeSpreadStatus;
-    private View viewBadgeMortgageDot, viewBadge10YDot, viewBadgeSpreadDot;
+
+    /** Roots of the five included view_status_badge rows (R2-TICKET-03). */
+    private View statusStarts, statusSales, statusMortgage, status10Y, statusHousingSpread;
 
     // Swappable chart
     private LineChart chartSwappable;
@@ -81,6 +77,9 @@ public class HousingFragment extends Fragment {
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
         binding = FragmentHousingBinding.inflate(inflater, container, false);
+        // IOS-04: bottom inset ONLY — this fragment lives inside EconomyFragment's
+        // ViewPager2, below the host's tab strip, so the host owns the top inset.
+        com.economic.dashboard.utils.EdgeToEdgeInsets.applyBottomInset(binding.getRoot());
         skeleton = com.economic.dashboard.ui.views.SkeletonController.wrap(binding.getRoot());
         return skeleton.getRoot();
     }
@@ -108,13 +107,11 @@ public class HousingFragment extends Fragment {
 
         // Housing Starts badge
         tvStartsValue       = binding.tvStartsValue;
-        tvStartsStatus      = binding.tvStartsStatus;
-        viewStartsDot       = binding.viewStartsDot;
+        statusStarts        = binding.statusStarts.getRoot();
 
         // Existing Home Sales badge
         tvSalesValue        = binding.tvSalesValue;
-        tvSalesStatus       = binding.tvSalesStatus;
-        viewSalesDot        = binding.viewSalesDot;
+        statusSales         = binding.statusSales.getRoot();
 
         // Rate badge cards
         badgeMortgage         = binding.badgeMortgage;
@@ -123,12 +120,9 @@ public class HousingFragment extends Fragment {
         tvBadgeMortgageValue  = binding.tvBadgeMortgageValue;
         tvBadge10YValue       = binding.tvBadge10YValue;
         tvBadgeSpreadValue    = binding.tvBadgeSpreadValue;
-        tvBadgeMortgageStatus = binding.tvBadgeMortgageStatus;
-        tvBadge10YStatus      = binding.tvBadge10YStatus;
-        tvBadgeSpreadStatus   = binding.tvBadgeSpreadStatus;
-        viewBadgeMortgageDot  = binding.viewBadgeMortgageDot;
-        viewBadge10YDot       = binding.viewBadge10YDot;
-        viewBadgeSpreadDot    = binding.viewBadgeSpreadDot;
+        statusMortgage        = binding.statusMortgage.getRoot();
+        status10Y             = binding.status10Y.getRoot();
+        statusHousingSpread   = binding.statusHousingSpread.getRoot();
 
         // Swappable chart + title
         chartSwappable   = binding.chartSwappable;
@@ -290,8 +284,7 @@ public class HousingFragment extends Fragment {
             tvStartsValue.setText(NumberFormatUtil.number(latest, 0) + "K"); // TICKET-19
 
         Benchmarks.Result result = Benchmarks.housingStarts(latest);
-        if (tvStartsStatus != null) tvStartsStatus.setText(result.word);
-        BenchmarkStyle.tintDot(viewStartsDot, requireContext(), result.tier);
+        BenchmarkStyle.applyBadge(statusStarts, requireContext(), result);
     }
 
     // ── Existing Home Sales Badge ─────────────────────────────────────────────
@@ -301,13 +294,18 @@ public class HousingFragment extends Fragment {
         if (rows.isEmpty()) return;
 
         double latest = rows.get(rows.size() - 1).getValue();
-        // EXHOSLUSM495S returns values in THOUSANDS of units (SAAR), e.g. 3900 = 3.9M
-        if (tvSalesValue != null)
-            tvSalesValue.setText(NumberFormatUtil.number(latest / 1_000.0, 2) + "M"); // TICKET-19
 
-        Benchmarks.Result result = Benchmarks.existingHomeSales(latest);
-        if (tvSalesStatus != null) tvSalesStatus.setText(result.word);
-        BenchmarkStyle.tintDot(viewSalesDot, requireContext(), result.tier);
+        // FIX-2026-07-24: EXHOSLUSM495S is published in "Number of Units" (SAAR) --
+        // RAW units, e.g. 4090000, not thousands as the old comment claimed. The
+        // single /1_000 therefore rendered "4,090.00M" instead of "4.09M", and fed
+        // 4,090,000 to a benchmark whose thresholds are 3000/4000, pinning the badge
+        // to HEALTHY for any reading at all. Normalise once, then use it twice.
+        double thousands = latest / 1_000.0;          // 4090 -- Benchmarks' unit
+        if (tvSalesValue != null)
+            tvSalesValue.setText(NumberFormatUtil.number(thousands / 1_000.0, 2) + "M"); // TICKET-19
+
+        Benchmarks.Result result = Benchmarks.existingHomeSales(thousands);
+        BenchmarkStyle.applyBadge(statusSales, requireContext(), result);
     }
 
     // ── Rate Badges ── (10Y T-Rate + Spread pull from the Yields-tab treasury data)
@@ -321,8 +319,7 @@ public class HousingFragment extends Fragment {
                 if (tvBadgeMortgageValue != null)
                     tvBadgeMortgageValue.setText(NumberFormatUtil.percent(val)); // TICKET-19
                 Benchmarks.Result result = Benchmarks.rateBadge(val, 4.0, 5.5, 7.0);
-                if (tvBadgeMortgageStatus != null) tvBadgeMortgageStatus.setText(result.word);
-                BenchmarkStyle.tintDot(viewBadgeMortgageDot, requireContext(), result.tier);
+                BenchmarkStyle.applyBadge(statusMortgage, requireContext(), result);
             }
         }
 
@@ -334,8 +331,7 @@ public class HousingFragment extends Fragment {
                 if (tvBadge10YValue != null)
                     tvBadge10YValue.setText(NumberFormatUtil.percent(val)); // TICKET-19
                 Benchmarks.Result result = Benchmarks.rateBadge(val, 3.0, 4.0, 5.0);
-                if (tvBadge10YStatus != null) tvBadge10YStatus.setText(result.word);
-                BenchmarkStyle.tintDot(viewBadge10YDot, requireContext(), result.tier);
+                BenchmarkStyle.applyBadge(status10Y, requireContext(), result);
             }
         }
 
@@ -346,8 +342,7 @@ public class HousingFragment extends Fragment {
             if (tvBadgeSpreadValue != null)
                 tvBadgeSpreadValue.setText(NumberFormatUtil.percent(val)); // TICKET-19
             Benchmarks.Result result = Benchmarks.mortgageSpread(val);
-            if (tvBadgeSpreadStatus != null) tvBadgeSpreadStatus.setText(result.word);
-            BenchmarkStyle.tintDot(viewBadgeSpreadDot, requireContext(), result.tier);
+            BenchmarkStyle.applyBadge(statusHousingSpread, requireContext(), result);
         }
     }
 
@@ -380,12 +375,16 @@ public class HousingFragment extends Fragment {
     }
 
     private void setActiveBadge(String which) {
+        // R3-TICKET-01: border geometry lives in BenchmarkStyle so it tracks the card radius token.
         if (badgeMortgage != null)
-            badgeMortgage.setForeground("mortgage".equals(which) ? makeActiveBorder() : null);
+            badgeMortgage.setForeground("mortgage".equals(which) ? BenchmarkStyle.activeCardBorder(
+                    requireContext(), com.economic.dashboard.R.dimen.radius_card_kpi) : null);
         if (badge10Y != null)
-            badge10Y.setForeground("tenYear".equals(which) ? makeActiveBorder() : null);
+            badge10Y.setForeground("tenYear".equals(which) ? BenchmarkStyle.activeCardBorder(
+                    requireContext(), com.economic.dashboard.R.dimen.radius_card_kpi) : null);
         if (badgeSpread != null)
-            badgeSpread.setForeground("spread".equals(which) ? makeActiveBorder() : null);
+            badgeSpread.setForeground("spread".equals(which) ? BenchmarkStyle.activeCardBorder(
+                    requireContext(), com.economic.dashboard.R.dimen.radius_card_kpi) : null);
 
         // Update swappable chart title
         if (tvSwappableTitle != null) {
@@ -395,20 +394,6 @@ public class HousingFragment extends Fragment {
                 case "spread":   tvSwappableTitle.setText("Mortgage - 10Y Treasury Spread (%)"); break;
             }
         }
-    }
-
-    private Drawable makeActiveBorder() {
-        // Stroke is drawn centered on the shape edge; inset it so the full
-        // width renders inside the CardView's rounded clip, and match the
-        // card's 12dp corner radius (minus the inset) so corners align.
-        float density = getResources().getDisplayMetrics().density;
-        int strokePx = Math.max(2, Math.round(1.5f * density));
-        int insetPx = (int) Math.ceil(strokePx / 2f);
-        GradientDrawable gd = new GradientDrawable();
-        gd.setColor(Color.TRANSPARENT);
-        gd.setCornerRadius(12f * density - insetPx);
-        gd.setStroke(strokePx, Color.parseColor("#C9A84C"));
-        return new InsetDrawable(gd, insetPx);
     }
 
     // ── Swappable Chart ────────────────────────────────────────────────────────
@@ -650,14 +635,6 @@ public class HousingFragment extends Fragment {
         ds.setMode(LineDataSet.Mode.CUBIC_BEZIER);
         if (filled) ds.setDrawCircles(false);
         return ds;
-    }
-
-    private void setDot(View dot, int color) {
-        if (dot == null) return;
-        GradientDrawable gd = new GradientDrawable();
-        gd.setShape(GradientDrawable.OVAL);
-        gd.setColor(color);
-        dot.setBackground(gd);
     }
 
     @Override

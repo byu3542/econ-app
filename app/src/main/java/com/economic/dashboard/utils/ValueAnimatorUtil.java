@@ -38,6 +38,7 @@ public final class ValueAnimatorUtil {
      */
     public static void animateOrSet(TextView tv, String oldText, String newText) {
         if (tv == null || newText == null) return;
+        NumberFormatUtil.applyTabularFigures(tv); // IOS-03: no horizontal jitter mid-roll
         Context ctx = tv.getContext();
 
         Matcher mNew = NUMBER.matcher(newText);

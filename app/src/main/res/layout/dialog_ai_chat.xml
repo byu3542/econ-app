@@ -55,7 +55,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="AI ANALYST"
+                    android:text="ECON ANALYST"
                     android:textColor="@color/accent_gold"
                     android:textSize="@dimen/text_body"
                     android:textStyle="bold"
@@ -237,7 +237,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/space_md"
-                android:text="Your AI Economic Analyst"
+                android:text="Your Econ Analyst"
                 android:textColor="@color/text_navy"
                 android:textSize="@dimen/text_body"
                 android:textStyle="bold" />

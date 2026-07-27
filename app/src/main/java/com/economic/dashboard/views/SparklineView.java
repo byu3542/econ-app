@@ -24,6 +24,9 @@ public class SparklineView extends View {
     private final Path fillPath = new Path();
     private float[] values;
     private int lineColor = 0xFFB8860B; // gold ink default; overridable
+    /** TICKET-H: the KPI-card call site wants the original plain-stroke look
+     *  (no gradient fill underneath); the chat bubble call site keeps it. */
+    private boolean fillEnabled = true;
 
     public SparklineView(Context c) { super(c); init(); }
     public SparklineView(Context c, AttributeSet a) { super(c, a); init(); }
@@ -36,6 +39,8 @@ public class SparklineView extends View {
     }
 
     public void setLineColor(int color) { lineColor = color; invalidate(); }
+
+    public void setFillEnabled(boolean enabled) { fillEnabled = enabled; invalidate(); }
 
     public void setData(List<Double> data) {
         if (data == null || data.size() < 2) { values = null; invalidate(); return; }
@@ -57,8 +62,9 @@ public class SparklineView extends View {
         if (range < 1e-6f) range = 1f;
 
         linePaint.setColor(lineColor);
-        fillPaint.setShader(new LinearGradient(0, 0, 0, h,
-                (lineColor & 0x00FFFFFF) | 0x33000000, 0x00000000, Shader.TileMode.CLAMP));
+        if (fillEnabled)
+            fillPaint.setShader(new LinearGradient(0, 0, 0, h,
+                    (lineColor & 0x00FFFFFF) | 0x33000000, 0x00000000, Shader.TileMode.CLAMP));
 
         linePath.reset(); fillPath.reset();
         for (int i = 0; i < values.length; i++) {
@@ -70,7 +76,7 @@ public class SparklineView extends View {
         fillPath.lineTo(w, h);
         fillPath.close();
 
-        canvas.drawPath(fillPath, fillPaint);
+        if (fillEnabled) canvas.drawPath(fillPath, fillPaint);
         canvas.drawPath(linePath, linePaint);
     }
 }

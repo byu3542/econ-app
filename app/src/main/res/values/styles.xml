@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     SHARED TEXT APPEARANCES — the single source of truth for repeated elements.
+     Added by BADGE_TICKETS_R2 (R2-TICKET-01 / R2-TICKET-07).
+
+     Before this file existed there was nowhere for a shared text appearance to
+     live, so every screen re-declared the badge word's colour/size/weight/caps/
+     tracking in its own layout — three greys, two sizes, two weights. If you are
+     adding a status badge or a gold card overline to a NEW screen, apply one of
+     these styles; do NOT re-declare android:textColor / android:textSize inline.
+     scripts/check_badges.sh fails the build if you do.
+     ═══════════════════════════════════════════════════════════════════════════ -->
+<resources>
+
+    <!-- R2-TICKET-01: the canonical status badge word.
+         11 sp, bold, all-caps, 0.08 tracking, slate. Used by
+         layout/view_status_badge.xml, which is the only place a badge row is
+         declared. Nothing else should set these five attributes on a status
+         TextView. -->
+    <style name="Badge.Status" parent="">
+        <item name="android:textSize">@dimen/text_caption</item>
+        <item name="android:textColor">@color/text_slate</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:letterSpacing">0.08</item>
+    </style>
+
+    <!-- R2-TICKET-07: the gold overline label above a KPI value.
+         Was six different variants (11/13/15 sp, tracking 0 / 0.08 / 0.1, two of
+         them not even all-caps). Overlines must stay short enough to fit one
+         line at 360 dp — put any qualifier on the description line under the
+         badge instead. -->
+    <style name="Card.Overline" parent="">
+        <item name="android:textSize">@dimen/text_caption</item>
+        <item name="android:textColor">@color/accent_gold</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:letterSpacing">0.08</item>
+    </style>
+
+    <!-- IOS-03: tabular (fixed-width) digits, so a count-up value or a column
+         of numbers never shifts horizontally. The app theme's default
+         TextView style (Widget.Econ.TextView, themes.xml) already carries
+         this attribute for every plain TextView; apply this style explicitly
+         to a value/delta TextView that uses some other style/TextAppearance
+         and would otherwise not inherit it. -->
+    <style name="TextAppearance.Econ.Value" parent="android:TextAppearance">
+        <item name="android:fontFeatureSettings">tnum</item>
+    </style>
+
+</resources>

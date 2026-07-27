@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- IOS-08: inset-grouped-list row separator. A plain flat color rather than
+     a shape/stroke — used as the background of a thin View placed between
+     rows, which is what gives it its "inset" alignment: the row already sits
+     inside the card's own contentPadding, so a match_parent-width divider
+     naturally starts flush with the row text, not the card edge. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/divider_sand"/>
+</shape>

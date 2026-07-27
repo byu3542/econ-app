@@ -9,6 +9,15 @@
 
   The FAB and old TabLayout+ViewPager2 have been removed.
 -->
+<!--
+  IOS-04: header/bottomNavWrapper are translucent "materials" that float on
+  top of an edge-to-edge fragmentContainer (declared first == bottom of
+  z-order in a CoordinatorLayout), instead of being opaque siblings that
+  reserve their own fixed space in a vertical LinearLayout. Each screen's own
+  scrolling root pads itself to clear both bars (see EdgeToEdgeInsets /
+  MainActivity's insets listener) and disables clipToPadding so it can still
+  scroll up underneath them.
+-->
 <androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -16,102 +25,81 @@
     android:layout_height="match_parent"
     android:background="@color/bg_warm_off_white">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
+        <!-- ══ 2. FRAGMENT CONTAINER — hosts Overview / Markets / Economy ══
+             Declared first so it sits behind the header and bottom nav.
+             Edge-to-edge: no padding of its own — each fragment's own
+             scrolling root pads itself (see EdgeToEdgeInsets). -->
+        <FrameLayout
+            android:id="@+id/fragmentContainer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
 
         <!-- ══ 1. SLIM HEADER — single row ════════════════ -->
         <LinearLayout
             android:id="@+id/header_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/header_navy"
+            android:layout_gravity="top"
+            android:background="@color/header_navy_translucent"
             android:orientation="vertical">
 
-            <LinearLayout
+            <!-- IOS-02: the persistent bar now only holds a compact, centered
+                 title — the large serif masthead (+ quarter pill) moved into
+                 each screen's own scroll content and collapses into this on
+                 scroll (see LargeTitleController). tvHeaderCompactTitle
+                 defaults to alpha=1 (today's always-visible behavior) for
+                 tabs that don't yet drive it; Overview's DashboardFragment
+                 sets it to 0 on attach and fades it in with scroll. -->
+            <FrameLayout
                 android:id="@+id/header_inner_layout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_marginTop="0dp"
                 android:paddingTop="@dimen/space_md"
                 android:paddingBottom="@dimen/space_sm"
                 android:paddingStart="@dimen/space_lg"
                 android:paddingEnd="@dimen/space_lg">
 
-
-                <!-- Title row: page title + settings gear -->
-                <LinearLayout
-                    android:layout_width="match_parent"
+                <TextView
+                    android:id="@+id/tvHeaderCompactTitle"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginBottom="@dimen/space_sm">
+                    android:layout_gravity="center"
+                    android:text="Overview"
+                    android:textSize="17sp"
+                    android:textColor="@color/card_white"
+                    android:fontFamily="sans-serif-medium"
+                    android:textStyle="bold"
+                    android:singleLine="true"
+                    android:includeFontPadding="false"/>
 
-                    <TextView
-                        android:id="@+id/tvHeaderLine1"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Overview"
-                        android:textSize="@dimen/text_display"
-                        android:textColor="@color/card_white"
-                        android:fontFamily="serif"
-                        android:textStyle="bold"
-                        android:textAllCaps="true"
-                        android:letterSpacing="0.08"
-                        android:singleLine="true"
-                        android:includeFontPadding="false"/>
+                <ImageView
+                    android:id="@+id/btnSettings"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_gravity="end|center_vertical"
+                    android:padding="@dimen/space_md"
+                    android:src="@drawable/ic_settings"
+                    android:contentDescription="@string/settings"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    app:tint="@color/white_70"/>
 
-                    <ImageView
-                        android:id="@+id/btnSettings"
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:padding="@dimen/space_md"
-                        android:src="@drawable/ic_settings"
-                        android:contentDescription="@string/settings"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        app:tint="@color/white_70"/>
+            </FrameLayout>
 
-                </LinearLayout>
-
-                <!-- Line 3: Quarter pill + date row -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
-
-                    <TextView
-                        android:id="@+id/tvHeaderQuarter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textSize="@dimen/text_caption"
-                        android:textColor="@color/accent_gold"
-                        android:fontFamily="sans-serif-medium"
-                        android:textAllCaps="true"
-                        android:letterSpacing="0.14"
-                        android:background="@drawable/bg_quarter_pill"
-                        android:paddingStart="@dimen/space_sm"
-                        android:paddingEnd="@dimen/space_sm"
-                        android:paddingTop="@dimen/space_xs"
-                        android:paddingBottom="@dimen/space_xs"/>
-
-
-                </LinearLayout>
-
-            </LinearLayout>
-
-            <!-- 1dp gold border at ~18% alpha -->
+            <!-- 1dp gold hairline — doubles as the IOS-02 collapse separator.
+                 Always visible (alpha=1) for tabs without a collapsing large
+                 title; Overview fades it in from 0 as the large masthead
+                 collapses, so it only appears once content is under the bar. -->
             <View
+                android:id="@+id/headerSeparator"
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:background="@color/gold_hairline" />
 
         </LinearLayout>
 
-        <!-- ══ Progress bar — unchanged ════════════════ -->
+        <!-- ══ Progress bar — anchored to the header's bottom edge instead of
+             taking its own row in a vertical stack, now that the header
+             floats over the edge-to-edge fragmentContainer. ════════════════ -->
         <ProgressBar
             android:id="@+id/progressBar"
             android:layout_width="match_parent"
@@ -119,17 +107,12 @@
             style="@style/Widget.AppCompat.ProgressBar.Horizontal"
             android:indeterminate="true"
             android:visibility="gone"
-            android:progressTint="@color/accent_gold" />
+            android:progressTint="@color/accent_gold"
+            app:layout_anchor="@id/header_container"
+            app:layout_anchorGravity="bottom" />
 
-        <!-- ══ 2. FRAGMENT CONTAINER — hosts Overview / Markets / Economy ══ -->
-        <FrameLayout
-            android:id="@+id/fragmentContainer"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:paddingBottom="@dimen/space_4xl" />
-
-        <!-- ══ 3. BOTTOM NAV WRAPPER ════════════════
+        <!-- ══ 3. BOTTOM NAV WRAPPER — translucent material, floats over the
+             edge-to-edge fragmentContainer.
              The FrameLayout lets the navActiveIndicator View float at the
              very top edge of the nav bar so it appears as a 2dp top-line
              indicator above the active destination icon.
@@ -137,7 +120,8 @@
         <FrameLayout
             android:id="@+id/bottomNavWrapper"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom">
 
             <!-- BottomNav declared FIRST so it is drawn beneath the indicator -->
             <com.google.android.material.bottomnavigation.BottomNavigationView
@@ -179,8 +163,6 @@
 
         </FrameLayout>
 
-    </LinearLayout>
-
     <!-- ══ 4. CENTER AI ANALYST BUTTON ═════════════
          Circular launcher-icon artwork with a gold ring, anchored so it
          straddles the top edge of the bottom nav (pantrii-style FAB).
@@ -194,7 +176,7 @@
         android:translationY="10dp"
         android:clickable="true"
         android:focusable="true"
-        android:contentDescription="AI Analyst"
+        android:contentDescription="Econ Analyst"
         app:cardCornerRadius="31dp"
         app:cardElevation="8dp"
         app:cardBackgroundColor="@color/fab_ring"

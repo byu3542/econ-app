@@ -1,11 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Light KPI card variant, gold left border = HERO metric (see the TICKET-29
+     note in card_kpi_navy.xml). Currently unused.
+     R2-TICKET-04: carries a status badge, so it takes the KPI-family geometry
+     (12dp / 4dp). Its background stays @color/surface_card — the light variants
+     are a deliberate semantic pair with card_kpi_navy, not badge-navy cards. -->
 <androidx.cardview.widget.CardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    app:cardCornerRadius="16dp"
-    app:cardElevation="6dp"
+    app:cardCornerRadius="@dimen/radius_card_kpi"
+    app:cardElevation="@dimen/elevation_card_kpi"
     app:cardBackgroundColor="@color/surface_card">
 
     <LinearLayout
@@ -60,7 +65,7 @@
                 android:textSize="@dimen/text_caption"
                 android:letterSpacing="0.05" />
 
-            <!-- Inline tier badge: dot + status + historical percentile -->
+            <!-- Inline tier badge: dot + status (R2-TICKET-03) + historical percentile -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -68,24 +73,16 @@
                 android:gravity="center_vertical"
                 android:layout_marginTop="@dimen/space_sm">
 
-                <View
-                    android:id="@+id/viewTierDot"
-                    android:layout_width="@dimen/dot_status"
-                    android:layout_height="@dimen/dot_status"
-                    android:background="@drawable/dot_neutral"
-                    android:layout_marginEnd="@dimen/space_xs" />
+                <include
+                    android:id="@+id/statusBadge"
+                    layout="@layout/view_status_badge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
 
-                <TextView
-                    android:id="@+id/tvTierStatus"
+                <View
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text=""
-                    android:textColor="@color/text_slate"
-                    android:textSize="@dimen/text_caption"
-                    android:textStyle="bold"
-                    android:textAllCaps="true"
-                    android:letterSpacing="0.08" />
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
 
                 <TextView
                     android:id="@+id/tvPercentile"

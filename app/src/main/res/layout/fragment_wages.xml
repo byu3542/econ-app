@@ -15,15 +15,18 @@
         <!-- TICKET-18: per-screen retry chip (hidden until this screen's fetch fails) -->
         <include layout="@layout/view_retry_chip" />
 
-        <!-- REAL WAGE GROWTH CARD (GDP Style) -->
+        <!-- REAL WAGE GROWTH CARD — R2-TICKET-04 family A (12dp / 4dp / card_navy_badge).
+             R2-TICKET-07: the overline was "Real Wage Growth v. Inflation (YOY %)"
+             at 15sp and not actually all-caps; it is now a short 11sp overline with
+             the qualifier moved to the description line under the badge. -->
         <androidx.cardview.widget.CardView
             android:id="@+id/cardWageYoY"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="@dimen/space_2xl"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="6dp"
-            app:cardBackgroundColor="@color/header_navy">
+            app:cardCornerRadius="@dimen/radius_card_kpi"
+            app:cardElevation="@dimen/elevation_card_kpi"
+            app:cardBackgroundColor="@color/card_navy_badge">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -34,14 +37,10 @@
 
                 <TextView
                     android:id="@+id/tvWageYoYLabel"
+                    style="@style/Card.Overline"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Real Wage Growth v. Inflation (YOY %)"
-                    android:textColor="@color/accent_gold"
-                    android:textSize="@dimen/text_body"
-                    android:textStyle="bold"
-                    android:textAllCaps="true"
-                    android:letterSpacing="0.1"
+                    android:text="REAL WAGE GROWTH"
                     android:textAlignment="center"
                     android:gravity="center"/>
 
@@ -57,38 +56,33 @@
                     android:layout_marginTop="@dimen/space_sm"
                     android:textAlignment="center"/>
 
-                <LinearLayout
+                <include
+                    android:id="@+id/statusWageYoY"
+                    layout="@layout/view_status_badge"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginTop="@dimen/space_xs">
+                    android:layout_marginTop="@dimen/space_xs" />
 
-                    <View
-                        android:id="@+id/viewWageIndicatorDot"
-                        android:layout_width="@dimen/dot_status"
-                        android:layout_height="@dimen/dot_status"
-                        android:background="@drawable/dot_neutral"
-                        android:layout_marginEnd="@dimen/space_sm" />
-
-                    <TextView
-                        android:id="@+id/tvWageYoYStatus"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Comparing Wages vs Inflation"
-                        android:textColor="@color/text_muted"
-                        android:textSize="@dimen/text_secondary"
-                        android:textAlignment="center"/>
-                </LinearLayout>
+                <!-- R2-TICKET-07: the qualifier that used to live inside the overline.
+                     tvWageYoYDate below stays hidden, so this needs its own line. -->
+                <TextView
+                    android:id="@+id/tvWageYoYDesc"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Wages vs. inflation, annualized % difference"
+                    android:textColor="@color/slate_dim"
+                    android:textSize="@dimen/text_caption"
+                    android:layout_marginTop="@dimen/space_hairline"
+                    android:textAlignment="center"
+                    android:gravity="center"/>
 
                 <TextView
                     android:id="@+id/tvWageYoYDate"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Annualized % difference"
-                    android:textColor="@color/text_muted"
+                    android:text=""
+                    android:textColor="@color/slate_dim"
                     android:textSize="@dimen/text_caption"
-                    android:layout_marginTop="@dimen/space_hairline"
                     android:visibility="gone"
                     android:textAlignment="center"/>
             </LinearLayout>
@@ -102,8 +96,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="@dimen/space_2xl"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="6dp"
+            app:cardCornerRadius="@dimen/radius_card_panel"
+            app:cardElevation="@dimen/elevation_card_panel"
             app:cardBackgroundColor="@color/surface_card">
 
             <LinearLayout
@@ -150,8 +144,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="@dimen/space_2xl"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="6dp"
+            app:cardCornerRadius="@dimen/radius_card_panel"
+            app:cardElevation="@dimen/elevation_card_panel"
             app:cardBackgroundColor="@color/surface_card">
 
             <LinearLayout

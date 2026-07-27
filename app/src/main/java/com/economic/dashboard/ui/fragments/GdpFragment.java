@@ -1,10 +1,8 @@
 package com.economic.dashboard.ui.fragments;
 
-import androidx.core.content.ContextCompat;
 import com.economic.dashboard.ui.Benchmarks;
 import com.economic.dashboard.ui.BenchmarkStyle;
 import android.graphics.Color;
-import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -43,11 +41,11 @@ public class GdpFragment extends Fragment {
 
     private EconomicViewModel viewModel;
     private LineChart gdpChart;
-    private TextView tvGdpLatest, tvGdpDesc, tvGdpStatusText;
-    private View viewGdpIndicatorDot;
+    private TextView tvGdpLatest, tvGdpDesc;
     private CardView cardGdpStatus;
-    private TextView tvGdpLatestQuarterValue, tvGdpLatestQuarterLabel, tvGdpLatestQuarterStatus;
-    private View viewGdpLatestQuarterDot;
+    private TextView tvGdpLatestQuarterValue, tvGdpLatestQuarterLabel;
+    /** Roots of the included view_status_badge rows (R2-TICKET-03). */
+    private View statusGdp, statusGdpLatestQuarter;
     private CardView cardGdpLatestQuarter;
     private List<EconomicDataPoint> lastGdpData; // last observed data, for range re-draws
 
@@ -55,6 +53,9 @@ public class GdpFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = FragmentGdpBinding.inflate(inflater, container, false);
+        // IOS-04: bottom inset ONLY — this fragment lives inside EconomyFragment's
+        // ViewPager2, below the host's tab strip, so the host owns the top inset.
+        com.economic.dashboard.utils.EdgeToEdgeInsets.applyBottomInset(binding.getRoot());
         skeleton = com.economic.dashboard.ui.views.SkeletonController.wrap(binding.getRoot());
         return skeleton.getRoot();
     }
@@ -85,8 +86,7 @@ public class GdpFragment extends Fragment {
                 gdpChart, requireActivity(), "quarterly U.S. GDP growth");
         tvGdpLatest = binding.tvGdpLatest;
         tvGdpDesc = binding.tvGdpDesc;
-        tvGdpStatusText = binding.tvGdpStatusText;
-        viewGdpIndicatorDot = binding.viewGdpIndicatorDot;
+        statusGdp = binding.statusGdp.getRoot();
         cardGdpStatus = binding.cardGdpStatus;
         com.economic.dashboard.analyst.AskAnalyst.wireCardLongPress(
                 cardGdpStatus, requireActivity(), "GDP growth");
@@ -95,8 +95,7 @@ public class GdpFragment extends Fragment {
                 cardGdpLatestQuarter, requireActivity(), "the latest quarter GDP reading");
         tvGdpLatestQuarterValue = binding.tvGdpLatestQuarterValue;
         tvGdpLatestQuarterLabel = binding.tvGdpLatestQuarterLabel;
-        tvGdpLatestQuarterStatus = binding.tvGdpLatestQuarterStatus;
-        viewGdpLatestQuarterDot = binding.viewGdpLatestQuarterDot;
+        statusGdpLatestQuarter = binding.statusGdpLatestQuarter.getRoot();
 
         styleChart(gdpChart);
         com.economic.dashboard.utils.ChartHelper.declutterDark(gdpChart);
@@ -147,10 +146,9 @@ public class GdpFragment extends Fragment {
 
         // Shared grading + semantic palette (TICKET-01/02/04)
         Benchmarks.Result result = Benchmarks.gdpGrowth(rollingAvg);
-        tvGdpStatusText.setText(result.word);
-        tvGdpStatusText.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_slate));
-        BenchmarkStyle.tintDot(viewGdpIndicatorDot, requireContext(), result.tier);
-        cardGdpStatus.setCardBackgroundColor(ContextCompat.getColor(requireContext(), R.color.card_navy_badge));
+        // R2-TICKET-01/02: the badge word's colour is owned by @style/Badge.Status.
+        // The card background is @color/card_navy_badge in the layout (R2-TICKET-04).
+        BenchmarkStyle.applyBadge(statusGdp, requireContext(), result);
     }
 
     private void updateLatestQuarterStatus(List<EconomicDataPoint> data) {
@@ -159,14 +157,7 @@ public class GdpFragment extends Fragment {
         double latestValue = gdpRows.get(gdpRows.size()-1).getValue();
 
         Benchmarks.Result result = Benchmarks.gdpQuarter(latestValue);
-        if (tvGdpLatestQuarterStatus != null) {
-            tvGdpLatestQuarterStatus.setText(result.word);
-            tvGdpLatestQuarterStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_slate));
-        }
-        if (viewGdpLatestQuarterDot != null) {
-            BenchmarkStyle.tintDot(viewGdpLatestQuarterDot, requireContext(), result.tier);
-        }
-        if (cardGdpLatestQuarter != null) cardGdpLatestQuarter.setCardBackgroundColor(ContextCompat.getColor(requireContext(), R.color.card_navy_badge));
+        BenchmarkStyle.applyBadge(statusGdpLatestQuarter, requireContext(), result);
     }
 
     private void buildGdpChart(List<EconomicDataPoint> data) {
@@ -193,8 +184,7 @@ public class GdpFragment extends Fragment {
         });
 
         LineDataSet ds = new LineDataSet(entries, "GDP Growth (%)");
-        ds.setColor(Color.parseColor("#1a73e8")); ds.setLineWidth(1.5f);
-        ds.setDrawCircles(false); ds.setDrawValues(false); ds.setMode(LineDataSet.Mode.LINEAR);
+        com.economic.dashboard.utils.ChartHelper.styleLineSeries(ds, Color.parseColor("#1a73e8")); // IOS-07
         gdpChart.setData(new LineData(ds)); gdpChart.invalidate();
     }
 

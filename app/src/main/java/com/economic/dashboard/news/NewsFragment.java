@@ -36,6 +36,14 @@ public class NewsFragment extends Fragment {
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
         binding = FragmentNewsBinding.inflate(inflater, container, false);
+        // IOS-04 (2026-07-27 nav fix): News was skipped by the original IOS-04
+        // pass (its root is a CoordinatorLayout, a different shape from the
+        // NestedScrollView-rooted leaf tabs), so its subtitle and filter chip
+        // row rendered underneath the translucent header. Split the insets:
+        // the header block clears the top bar, the list clears the bottom nav
+        // (and keeps clipToPadding=false so rows still scroll under it).
+        com.economic.dashboard.utils.EdgeToEdgeInsets.applyTopInset(binding.newsHeaderBlock);
+        com.economic.dashboard.utils.EdgeToEdgeInsets.applyBottomInset(binding.recyclerNews);
         return binding.getRoot();
     }
 
@@ -58,6 +66,7 @@ public class NewsFragment extends Fragment {
             binding.errorContainer.setVisibility(View.GONE);
             viewModel.loadNews(true);
         });
+        binding.btnNewsClearFilter.setOnClickListener(v -> binding.chipAll.setChecked(true));
 
         // ─── Swipe-to-refresh ────────────────────────────────────────────────────
         swipeRefresh = binding.swipeRefreshNews;
@@ -87,12 +96,18 @@ public class NewsFragment extends Fragment {
             adapter.submitList(items);
             boolean empty = items == null || items.isEmpty();
             recycler.setVisibility(empty ? View.GONE : View.VISIBLE);
+            binding.emptyContainer.setVisibility(empty ? View.VISIBLE : View.GONE);
+            if (!empty) {
+                binding.textNewsMeta.setText(getString(R.string.news_meta, items.size(), "just now"));
+            }
         });
 
         viewModel.getIsLoading().observe(getViewLifecycleOwner(), loading -> {
             boolean hasData = adapter.getItemCount() > 0;
             // Show ProgressBar only on initial load (no data yet)
             progressBar.setVisibility(loading && !hasData ? View.VISIBLE : View.GONE);
+            binding.textNewsLoading.setVisibility(loading && !hasData ? View.VISIBLE : View.GONE);
+            if (loading && !hasData) binding.emptyContainer.setVisibility(View.GONE);
             // Stop swipe refresh indicator when done
             if (!loading) swipeRefresh.setRefreshing(false);
         });
@@ -103,6 +118,10 @@ public class NewsFragment extends Fragment {
             // stale-but-present content beats an error banner.
             binding.errorContainer.setVisibility(
                     hasError && adapter.getItemCount() == 0 ? View.VISIBLE : View.GONE);
+            if (hasError && adapter.getItemCount() == 0) {
+                binding.emptyContainer.setVisibility(View.GONE);
+                binding.textNewsLoading.setVisibility(View.GONE);
+            }
             if (hasError) tvError.setText(error);
         });
 

@@ -5,3 +5,13 @@ compatibility_date = "2026-07-01"
 # Secrets are NOT set here. After deploying, run:
 #   wrangler secret put ANTHROPIC_API_KEY
 #   wrangler secret put APP_TOKEN        # optional but recommended
+
+# Optional (TICKET-G): a crude per-minute throttle on this route, in case the
+# shared APP_TOKEN ever leaks out of a decompiled APK. Uncomment to enable —
+# worker.js already no-ops if this binding isn't present. `namespace_id` is
+# just a locally-unique label for this binding, not a resource you create
+# separately. See https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limiting/
+# [[ratelimits]]
+# binding = "RATE_LIMITER"
+# namespace_id = "1001"
+# simple = { limit = 60, period = 60 }

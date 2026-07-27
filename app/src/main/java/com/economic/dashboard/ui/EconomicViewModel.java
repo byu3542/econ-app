@@ -197,6 +197,11 @@ public class EconomicViewModel extends AndroidViewModel {
         postCached(cpiData,         CACHE_CPI);
         postCached(gdpData,         CACHE_GDP);
         postCached(mbsMortgageData, CACHE_MBS);
+        // Stocks is a Markets child tab, but its data is also consumed by the
+        // Econ Analyst. Prime these series here so opening the analyst after a
+        // lifecycle change does not lose the values that Stocks already showed.
+        postCached(sp500Data,        KEY_SP500);
+        postCached(nasdaqData,       KEY_NASDAQ);
         postCached(vixData,         CACHE_VIX);
         long ts = DashboardDataCache.lastUpdated(ctx);
         if (ts > 0) {
@@ -486,7 +491,7 @@ public class EconomicViewModel extends AndroidViewModel {
         // SP500 on FRED is a weekly series — "w" is the correct frequency
         repository.fetchFredData(ApiConfig.FRED_SP500, "S&P 500 Index", ApiConfig.STOCK_INDICES_LIMIT, "w", "Stocks",
                 new EconomicRepository.DataCallback<List<EconomicDataPoint>>() {
-                    @Override public void onSuccess(List<EconomicDataPoint> d) { sp500Data.postValue(d); markRecovered(KEY_SP500); checkAllDone(); }
+                    @Override public void onSuccess(List<EconomicDataPoint> d) { deliver(sp500Data, KEY_SP500, d); checkAllDone(); }
                     @Override public void onError(String e) { errorMsg.postValue("S&P 500: "+e); markFailed(KEY_SP500); checkAllDone(); }
                 });
     }
@@ -495,7 +500,7 @@ public class EconomicViewModel extends AndroidViewModel {
         // NASDAQCOM on FRED is a monthly series — "m" is the correct frequency
         repository.fetchFredData(ApiConfig.FRED_NASDAQ, "Nasdaq Composite Index", ApiConfig.STOCK_INDICES_LIMIT, "m", "Stocks",
                 new EconomicRepository.DataCallback<List<EconomicDataPoint>>() {
-                    @Override public void onSuccess(List<EconomicDataPoint> d) { nasdaqData.postValue(d); markRecovered(KEY_NASDAQ); checkAllDone(); }
+                    @Override public void onSuccess(List<EconomicDataPoint> d) { deliver(nasdaqData, KEY_NASDAQ, d); checkAllDone(); }
                     @Override public void onError(String e) { errorMsg.postValue("Nasdaq: "+e); markFailed(KEY_NASDAQ); checkAllDone(); }
                 });
     }

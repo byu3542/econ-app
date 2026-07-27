@@ -22,29 +22,28 @@
             android:layout_marginBottom="@dimen/space_lg"
             android:baselineAligned="false">
 
+            <!-- R2-TICKET-05: 4Q rolling average and latest quarter are two readings
+                 of the same series, so they share one value size and colour. The
+                 rolling average leads by position, not by type size. -->
             <androidx.cardview.widget.CardView
                 android:id="@+id/cardGdpStatus"
                 android:layout_width="0dp" android:layout_height="wrap_content"
                 android:layout_weight="1" android:layout_marginEnd="@dimen/space_xs"
-                app:cardCornerRadius="12dp" app:cardElevation="4dp"
+                app:cardCornerRadius="@dimen/radius_card_kpi" app:cardElevation="@dimen/elevation_card_kpi"
                 app:cardBackgroundColor="@color/card_navy_badge">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:orientation="vertical" android:padding="@dimen/space_lg" android:gravity="center">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="4Q ROLLING AVG" android:textColor="@color/accent_gold"
-                        android:textSize="@dimen/text_caption" android:textStyle="bold" android:textAllCaps="true" android:letterSpacing="0.08" />
-                    <!-- TICKET-21: screen hero — largest type -->
+                    <TextView style="@style/Card.Overline" android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" android:text="4Q ROLLING AVG" />
                     <TextView android:id="@+id/tvGdpLatest" android:layout_width="wrap_content"
                         android:layout_height="wrap_content" android:text="&#8212;"
                         android:textColor="@color/card_white" android:textSize="@dimen/text_display_lg" android:textStyle="bold" android:layout_marginTop="@dimen/space_xs" />
-                    <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="@dimen/space_xs">
-                        <View android:id="@+id/viewGdpIndicatorDot" android:layout_width="@dimen/dot_status" android:layout_height="@dimen/dot_status"
-                            android:background="@drawable/dot_neutral" android:layout_marginEnd="@dimen/space_xs" />
-                        <TextView android:id="@+id/tvGdpStatusText" android:layout_width="wrap_content"
-                            android:layout_height="wrap_content" android:text="&#8212;"
-                            android:textColor="@color/text_on_navy_muted" android:textSize="@dimen/text_caption" />
-                    </LinearLayout>
+                    <include
+                        android:id="@+id/statusGdp"
+                        layout="@layout/view_status_badge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_xs" />
                     <TextView android:id="@+id/tvGdpDesc" android:layout_width="wrap_content"
                         android:layout_height="wrap_content" android:text="Annualized % change"
                         android:textColor="@color/slate_dim" android:textSize="@dimen/text_caption" android:layout_marginTop="@dimen/space_hairline" />
@@ -55,25 +54,21 @@
                 android:id="@+id/cardGdpLatestQuarter"
                 android:layout_width="0dp" android:layout_height="wrap_content"
                 android:layout_weight="1" android:layout_marginStart="@dimen/space_xs"
-                app:cardCornerRadius="12dp" app:cardElevation="4dp"
+                app:cardCornerRadius="@dimen/radius_card_kpi" app:cardElevation="@dimen/elevation_card_kpi"
                 app:cardBackgroundColor="@color/card_navy_badge">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:orientation="vertical" android:padding="@dimen/space_lg" android:gravity="center">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="LATEST QUARTER" android:textColor="@color/accent_gold"
-                        android:textSize="@dimen/text_caption" android:textStyle="bold" android:textAllCaps="true" android:letterSpacing="0.08" />
-                    <!-- TICKET-21: demoted sibling — smaller, muted -->
+                    <TextView style="@style/Card.Overline" android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" android:text="LATEST QUARTER" />
                     <TextView android:id="@+id/tvGdpLatestQuarterValue" android:layout_width="wrap_content"
                         android:layout_height="wrap_content" android:text="&#8212;"
-                        android:textColor="@color/text_on_navy_muted" android:textSize="@dimen/text_headline" android:textStyle="bold" android:layout_marginTop="@dimen/space_xs" />
-                    <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="@dimen/space_xs">
-                        <View android:id="@+id/viewGdpLatestQuarterDot" android:layout_width="@dimen/dot_status" android:layout_height="@dimen/dot_status"
-                            android:background="@drawable/dot_neutral" android:layout_marginEnd="@dimen/space_xs" />
-                        <TextView android:id="@+id/tvGdpLatestQuarterStatus" android:layout_width="wrap_content"
-                            android:layout_height="wrap_content" android:text="&#8212;"
-                            android:textColor="@color/text_on_navy_muted" android:textSize="@dimen/text_caption" />
-                    </LinearLayout>
+                        android:textColor="@color/card_white" android:textSize="@dimen/text_display_lg" android:textStyle="bold" android:layout_marginTop="@dimen/space_xs" />
+                    <include
+                        android:id="@+id/statusGdpLatestQuarter"
+                        layout="@layout/view_status_badge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_xs" />
                     <TextView android:id="@+id/tvGdpLatestQuarterLabel" android:layout_width="wrap_content"
                         android:layout_height="wrap_content" android:text=""
                         android:textColor="@color/slate_dim" android:textSize="@dimen/text_caption" android:layout_marginTop="@dimen/space_hairline" />
@@ -84,10 +79,11 @@
         <!-- TICKET-11: inline range switcher for the GDP chart -->
         <include layout="@layout/view_timeframe_selector" />
 
+        <!-- Chart/panel card — R2-TICKET-04 family B (16dp / 6dp) -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/space_2xl" app:cardCornerRadius="16dp"
-            app:cardElevation="6dp" app:cardBackgroundColor="@color/header_navy">
+            android:layout_marginBottom="@dimen/space_2xl" app:cardCornerRadius="@dimen/radius_card_panel"
+            app:cardElevation="@dimen/elevation_card_panel" app:cardBackgroundColor="@color/header_navy">
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:orientation="vertical" android:paddingHorizontal="@dimen/space_xl" android:paddingTop="@dimen/space_lg">

@@ -3,8 +3,6 @@ package com.economic.dashboard.ui.fragments;
 import com.economic.dashboard.ui.Benchmarks;
 import com.economic.dashboard.ui.BenchmarkStyle;
 import android.graphics.Color;
-import androidx.core.content.ContextCompat;
-import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -45,13 +43,17 @@ public class WagesFragment extends Fragment {
     private LineChart comparisonChart;
     
     private CardView cardWageYoY;
-    private TextView tvWageYoYValue, tvWageYoYStatus;
-    private View viewWageIndicatorDot;
+    private TextView tvWageYoYValue;
+    /** Root of the included view_status_badge row (R2-TICKET-03). */
+    private View statusWageYoY;
 
     @Nullable @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = FragmentWagesBinding.inflate(inflater, container, false);
+        // IOS-04: bottom inset ONLY — this fragment lives inside EconomyFragment's
+        // ViewPager2, below the host's tab strip, so the host owns the top inset.
+        com.economic.dashboard.utils.EdgeToEdgeInsets.applyBottomInset(binding.getRoot());
         return binding.getRoot();
     }
 
@@ -87,8 +89,7 @@ public class WagesFragment extends Fragment {
         com.economic.dashboard.analyst.AskAnalyst.wireCardLongPress(
                 cardWageYoY, requireActivity(), "real wage growth");
         tvWageYoYValue  = binding.tvWageYoYValue;
-        tvWageYoYStatus = binding.tvWageYoYStatus;
-        viewWageIndicatorDot = binding.viewWageIndicatorDot;
+        statusWageYoY = binding.statusWageYoY.getRoot();
 
         ChartHelper.styleLineChart(hourlyWageChart, "Average Hourly Earnings (Private Sector)", "Month", "Wage ($)");
         ChartHelper.styleLineChart(comparisonChart,  "Inflation vs Wage Growth (Indexed to 100)", "Month", "Index");
@@ -177,12 +178,9 @@ public class WagesFragment extends Fragment {
         // Shared grading + semantic palette (TICKET-01/03/04)
         Benchmarks.Result result = Benchmarks.realWageGrowth(spread);
 
-        tvWageYoYStatus.setText(result.word);
-        tvWageYoYStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_slate));
-        BenchmarkStyle.tintDot(viewWageIndicatorDot, requireContext(), result.tier);
-
-        // Standardized badge navy (TICKET-05)
-        cardWageYoY.setCardBackgroundColor(ContextCompat.getColor(requireContext(), R.color.card_navy_badge));
+        // R2-TICKET-01/02: the badge word's colour is owned by @style/Badge.Status.
+        // The card background is @color/card_navy_badge in the layout (R2-TICKET-04).
+        BenchmarkStyle.applyBadge(statusWageYoY, requireContext(), result);
     }
 
     private void buildHourlyChart(List<EconomicDataPoint> data) {

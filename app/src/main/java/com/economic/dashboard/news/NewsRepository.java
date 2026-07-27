@@ -103,18 +103,29 @@ public class NewsRepository {
         }
 
         List<NewsItem> all = new ArrayList<>();
+        // Bound the whole feed refresh, not each future independently. With
+        // more feeds than worker threads, per-future timeouts can otherwise
+        // stack up across several batches and make the News screen appear to
+        // hang during launch.
+        final long fetchDeadline = System.currentTimeMillis() + 12000L;
         for (Future<List<NewsItem>> future : futures) {
             try {
-                List<NewsItem> result = future.get(12000, TimeUnit.MILLISECONDS);
+                long remaining = fetchDeadline - System.currentTimeMillis();
+                if (remaining <= 0L) {
+                    future.cancel(true);
+                    continue;
+                }
+                List<NewsItem> result = future.get(remaining, TimeUnit.MILLISECONDS);
                 if (result != null) all.addAll(result);
             } catch (TimeoutException e) {
                 Log.w(TAG, "Feed timed out, skipping");
+                future.cancel(true);
             } catch (Exception e) {
                 Log.w(TAG, "Feed future failed, skipping: " + e.getMessage());
             }
         }
 
-        executor.shutdown();
+        executor.shutdownNow();
 
         // Sort newest first before dedup so we always keep the freshest copy
         Collections.sort(all, (a, b) -> Long.compare(b.pubDateMillis, a.pubDateMillis));

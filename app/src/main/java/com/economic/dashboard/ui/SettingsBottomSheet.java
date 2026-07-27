@@ -116,6 +116,7 @@ public class SettingsBottomSheet extends BottomSheetDialogFragment {
         // with the new palette immediately.
         bindSwitch(v, R.id.switchColorblind, SettingsManager.KEY_COLORBLIND, false,
                 () -> host().getViewModel().fetchAllData());
+        bindSwitch(v, R.id.switchHaptics, SettingsManager.KEY_HAPTICS, true, null); // IOS-09
     }
 
     // -- Data -----------------------------------------------------------------
@@ -229,6 +230,8 @@ public class SettingsBottomSheet extends BottomSheetDialogFragment {
             sw.setEnabled(!locked);
             ((View) sw.getParent()).setAlpha(locked ? 0.55f : 1f);
         }
+        TextView summary = v.findViewById(R.id.tvNewsSourcesSummary);
+        summary.setText(getString(R.string.news_sources_summary, enabledCount));
     }
 
     // -- AI Analyst ---------------------------------------------------------------
@@ -289,10 +292,12 @@ public class SettingsBottomSheet extends BottomSheetDialogFragment {
         bindNotifySwitch(v, R.id.switchNotifyReleases, SettingsManager.KEY_NOTIFY_RELEASES);
         bindNotifySwitch(v, R.id.switchDailyBrief,     SettingsManager.KEY_DAILY_BRIEF);
 
-        v.findViewById(R.id.tvNotifBlocked).setOnClickListener(x ->
+        View.OnClickListener openNotificationSettings = x ->
                 startActivity(new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
                         .putExtra(Settings.EXTRA_APP_PACKAGE,
-                                requireContext().getPackageName())));
+                                requireContext().getPackageName()));
+        v.findViewById(R.id.tvNotifBlocked).setOnClickListener(openNotificationSettings);
+        v.findViewById(R.id.tvNotifBlockedHint).setOnClickListener(openNotificationSettings);
         updateNotifBlockedBanner();
     }
 
@@ -312,8 +317,14 @@ public class SettingsBottomSheet extends BottomSheetDialogFragment {
     private void updateNotifBlockedBanner() {
         View v = getView();
         if (v == null) return;
+        boolean allowed = notificationsAllowed();
         v.findViewById(R.id.tvNotifBlocked)
-                .setVisibility(notificationsAllowed() ? View.GONE : View.VISIBLE);
+                .setVisibility(allowed ? View.GONE : View.VISIBLE);
+        v.findViewById(R.id.tvNotifBlockedHint)
+                .setVisibility(allowed ? View.GONE : View.VISIBLE);
+        ((TextView) v.findViewById(R.id.tvNotifStatus)).setText(
+                getString(allowed ? R.string.notifications_enabled_summary
+                                  : R.string.notifications_blocked_summary));
     }
 
     private boolean notificationsAllowed() {
@@ -342,7 +353,7 @@ public class SettingsBottomSheet extends BottomSheetDialogFragment {
         try {
             String name = requireContext().getPackageManager()
                     .getPackageInfo(requireContext().getPackageName(), 0).versionName;
-            tvVersion.setText("Econ Monitor v" + name);
+            tvVersion.setText(getString(R.string.about_version_label, name));
         } catch (Exception e) {
             tvVersion.setText("Econ Monitor");
         }

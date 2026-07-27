@@ -75,6 +75,21 @@
                         style="@style/SettingsSwitch"
                         android:contentDescription="@string/colorblind_title"/>
                 </LinearLayout>
+
+                <View android:layout_width="match_parent" android:layout_height="@dimen/divider_hairline_height"
+                    android:background="@drawable/divider_hairline_inset"/>
+
+                <!-- IOS-09 -->
+                <LinearLayout style="@style/SettingsRow">
+                    <LinearLayout style="@style/SettingsRowText">
+                        <TextView style="@style/SettingsRowTitle" android:text="@string/haptics_title"/>
+                        <TextView style="@style/SettingsRowSub" android:text="@string/haptics_sub"/>
+                    </LinearLayout>
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchHaptics"
+                        style="@style/SettingsSwitch"
+                        android:contentDescription="@string/haptics_title"/>
+                </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -94,6 +109,11 @@
                     style="@style/SettingsRowSub"
                     android:layout_marginBottom="@dimen/space_sm"
                     android:text="@string/checking_freshness"/>
+
+                <TextView
+                    style="@style/SettingsRowSub"
+                    android:layout_marginBottom="@dimen/space_sm"
+                    android:text="@string/data_cache_sub"/>
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -198,6 +218,11 @@
                     android:drawableStart="@drawable/ic_set_news"
                     android:text="@string/section_news_sources"/>
 
+                <TextView
+                    android:id="@+id/tvNewsSourcesSummary"
+                    style="@style/SettingsRowSub"
+                    android:layout_marginBottom="@dimen/space_xs"/>
+
                 <LinearLayout style="@style/SettingsRow">
                     <LinearLayout style="@style/SettingsRowText">
                         <TextView style="@style/SettingsRowTitle" android:text="@string/news_gov"/>
@@ -208,6 +233,10 @@
                         style="@style/SettingsSwitch"
                         android:contentDescription="@string/news_gov"/>
                 </LinearLayout>
+
+                <!-- IOS-08: inset-grouped separators — absent after the last row -->
+                <View android:layout_width="match_parent" android:layout_height="@dimen/divider_hairline_height"
+                    android:background="@drawable/divider_hairline_inset"/>
 
                 <LinearLayout style="@style/SettingsRow">
                     <LinearLayout style="@style/SettingsRowText">
@@ -220,6 +249,9 @@
                         android:contentDescription="@string/news_media"/>
                 </LinearLayout>
 
+                <View android:layout_width="match_parent" android:layout_height="@dimen/divider_hairline_height"
+                    android:background="@drawable/divider_hairline_inset"/>
+
                 <LinearLayout style="@style/SettingsRow">
                     <LinearLayout style="@style/SettingsRowText">
                         <TextView style="@style/SettingsRowTitle" android:text="@string/news_intl"/>
@@ -230,6 +262,9 @@
                         style="@style/SettingsSwitch"
                         android:contentDescription="@string/news_intl"/>
                 </LinearLayout>
+
+                <View android:layout_width="match_parent" android:layout_height="@dimen/divider_hairline_height"
+                    android:background="@drawable/divider_hairline_inset"/>
 
                 <LinearLayout style="@style/SettingsRow">
                     <LinearLayout style="@style/SettingsRowText">
@@ -265,6 +300,9 @@
                         style="@style/SettingsSwitch"
                         android:contentDescription="@string/smart_chips"/>
                 </LinearLayout>
+
+                <View android:layout_width="match_parent" android:layout_height="@dimen/divider_hairline_height"
+                    android:background="@drawable/divider_hairline_inset"/>
 
                 <LinearLayout style="@style/SettingsRow">
                     <LinearLayout style="@style/SettingsRowText">
@@ -394,11 +432,27 @@
                     android:text="@string/section_notifications"/>
 
                 <TextView
-                    android:id="@+id/tvNotifBlocked"
+                    android:id="@+id/tvNotifStatus"
                     style="@style/SettingsRowSub"
+                    android:layout_marginBottom="@dimen/space_xs"/>
+
+                <TextView
+                    android:id="@+id/tvNotifBlocked"
+                    style="@style/SettingsRowTitle"
                     android:textColor="@color/info_blue"
                     android:background="?attr/selectableItemBackground"
+                    android:paddingStart="@dimen/space_sm"
+                    android:paddingEnd="@dimen/space_sm"
                     android:paddingTop="@dimen/space_xs"
+                    android:paddingBottom="@dimen/space_xs"
+                    android:visibility="gone"
+                    android:text="@string/notif_blocked_title"/>
+
+                <TextView
+                    android:id="@+id/tvNotifBlockedHint"
+                    style="@style/SettingsRowSub"
+                    android:paddingStart="@dimen/space_sm"
+                    android:paddingEnd="@dimen/space_sm"
                     android:paddingBottom="@dimen/space_xs"
                     android:visibility="gone"
                     android:text="@string/notif_blocked_tap"/>
@@ -414,6 +468,9 @@
                         android:contentDescription="@string/notify_moves"/>
                 </LinearLayout>
 
+                <View android:layout_width="match_parent" android:layout_height="@dimen/divider_hairline_height"
+                    android:background="@drawable/divider_hairline_inset"/>
+
                 <LinearLayout style="@style/SettingsRow">
                     <LinearLayout style="@style/SettingsRowText">
                         <TextView style="@style/SettingsRowTitle" android:text="@string/notify_releases"/>
@@ -424,6 +481,9 @@
                         style="@style/SettingsSwitch"
                         android:contentDescription="@string/notify_releases"/>
                 </LinearLayout>
+
+                <View android:layout_width="match_parent" android:layout_height="@dimen/divider_hairline_height"
+                    android:background="@drawable/divider_hairline_inset"/>
 
                 <LinearLayout style="@style/SettingsRow">
                     <LinearLayout style="@style/SettingsRowText">
@@ -438,21 +498,32 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- ~~ ABOUT (footer) ~~ -->
-        <TextView
-            android:id="@+id/tvVersion"
-            style="@style/SettingsRowSub"
-            android:layout_marginTop="@dimen/space_xl"
-            android:gravity="center"
-            android:drawableTint="@color/text_muted"
-            android:text="Econ Monitor"/>
+        <!-- ~~ ABOUT ~~ -->
+        <com.google.android.material.card.MaterialCardView style="@style/SettingsCard">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
 
-        <TextView
-            style="@style/SettingsRowSub"
-            android:layout_marginTop="@dimen/space_hairline"
-            android:gravity="center"
-            android:textSize="@dimen/text_caption"
-            android:text="@string/about_data_note"/>
+                <TextView style="@style/SettingsSectionHeader"
+                    android:text="@string/section_about"/>
+
+                <TextView
+                    android:id="@+id/tvVersion"
+                    style="@style/SettingsRowSub"
+                    android:text="Econ Monitor"/>
+
+                <TextView
+                    style="@style/SettingsRowSub"
+                    android:layout_marginTop="@dimen/space_xs"
+                    android:text="@string/about_data_note"/>
+
+                <TextView
+                    style="@style/SettingsRowSub"
+                    android:layout_marginTop="@dimen/space_sm"
+                    android:text="@string/about_privacy"/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
     </LinearLayout>
 

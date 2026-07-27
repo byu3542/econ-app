@@ -10,6 +10,36 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
+        <!-- IOS-04 (2026-07-27 nav fix): this block owns News' topmost pixel,
+             so it takes the header inset (NewsFragment.onCreateView). Before
+             this, News was skipped by IOS-04 entirely — the subtitle and the
+             filter chip row sat underneath the translucent header, with the
+             chips half-occluded and their top half untappable. -->
+        <LinearLayout
+            android:id="@+id/newsHeaderBlock"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="@dimen/space_lg"
+            android:paddingTop="@dimen/space_md"
+            android:paddingBottom="@dimen/space_xs">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/news_subtitle"
+                android:textColor="@color/text_secondary"
+                android:textSize="@dimen/text_secondary" />
+
+            <TextView
+                android:id="@+id/text_news_meta"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_xs"
+                android:textColor="@color/text_muted"
+                android:textSize="@dimen/text_caption" />
+        </LinearLayout>
+
         <!-- Filter Chips Row -->
         <HorizontalScrollView
             android:layout_width="match_parent"
@@ -176,6 +206,65 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/text_news_loading"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="56dp"
+                android:text="@string/news_loading"
+                android:textColor="@color/text_secondary"
+                android:textSize="@dimen/text_secondary"
+                android:visibility="gone" />
+
+            <LinearLayout
+                android:id="@+id/empty_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:padding="@dimen/space_2xl"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="—"
+                    android:textColor="@color/accent_gold"
+                    android:textSize="@dimen/text_display"
+                    android:importantForAccessibility="no" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_sm"
+                    android:text="@string/news_empty_title"
+                    android:textColor="@color/text_navy"
+                    android:textSize="@dimen/text_body"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_xs"
+                    android:text="@string/news_empty_subtitle"
+                    android:textAlignment="center"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="@dimen/text_secondary" />
+
+                <Button
+                    android:id="@+id/btn_news_clear_filter"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_md"
+                    android:minHeight="48dp"
+                    android:text="@string/news_clear_filter"
+                    android:textColor="@color/text_navy"
+                    app:strokeColor="@color/accent_gold" />
+            </LinearLayout>
 
             <!-- Error state: icon + message + retry -->
             <LinearLayout

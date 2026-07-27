@@ -3,9 +3,6 @@ package com.economic.dashboard.ui.fragments;
 import com.economic.dashboard.ui.Benchmarks;
 import com.economic.dashboard.ui.BenchmarkStyle;
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.GradientDrawable;
-import android.graphics.drawable.InsetDrawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -42,8 +39,9 @@ public class StocksFragment extends Fragment {
     private FragmentStocksBinding binding;
     private com.economic.dashboard.ui.views.SkeletonController skeleton;
     private CardView cardSp500, cardNasdaq, cardVix;
-    private TextView tvSp500Value, tvSp500Status, tvNasdaqValue, tvNasdaqStatus, tvVixValue, tvVixStatus;
-    private View viewSp500Dot, viewNasdaqDot, viewVixDot;
+    private TextView tvSp500Value, tvNasdaqValue, tvVixValue;
+    /** Roots of the included view_status_badge rows (R2-TICKET-03). */
+    private View statusSp500, statusNasdaq, statusVix;
     private LineChart swappableChart;
     private TextView tvChartTitle;
     private String activeCard = "sp500";
@@ -55,6 +53,9 @@ public class StocksFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = FragmentStocksBinding.inflate(inflater, container, false);
+        // IOS-04: bottom inset ONLY — this fragment lives inside MarketsFragment's
+        // ViewPager2, below the host's tab strip, so the host owns the top inset.
+        com.economic.dashboard.utils.EdgeToEdgeInsets.applyBottomInset(binding.getRoot());
         skeleton = com.economic.dashboard.ui.views.SkeletonController.wrap(binding.getRoot());
         return skeleton.getRoot();
     }
@@ -90,14 +91,11 @@ public class StocksFragment extends Fragment {
         com.economic.dashboard.analyst.AskAnalyst.wireCardLongPress(
                 cardVix, requireActivity(), "the VIX volatility index");
         tvSp500Value = binding.tvSp500Value;
-        tvSp500Status = binding.tvSp500Status;
         tvNasdaqValue = binding.tvNasdaqValue;
-        tvNasdaqStatus = binding.tvNasdaqStatus;
         tvVixValue = binding.tvVixValue;
-        tvVixStatus = binding.tvVixStatus;
-        viewSp500Dot = binding.viewSp500Dot;
-        viewNasdaqDot = binding.viewNasdaqDot;
-        viewVixDot = binding.viewVixDot;
+        statusSp500 = binding.statusSp500.getRoot();
+        statusNasdaq = binding.statusNasdaq.getRoot();
+        statusVix = binding.statusVix.getRoot();
         swappableChart = binding.swappableChart;
         com.economic.dashboard.analyst.AskAnalyst.attachChartExplain(
                 swappableChart, requireActivity(), "stock market indices (S&P 500, Nasdaq, VIX)");
@@ -115,6 +113,9 @@ public class StocksFragment extends Fragment {
         cardSp500.setOnClickListener(v -> { activeCard = "sp500"; setActiveCard("sp500"); buildSwappableChart(); });
         cardNasdaq.setOnClickListener(v -> { activeCard = "nasdaq"; setActiveCard("nasdaq"); buildSwappableChart(); });
         cardVix.setOnClickListener(v -> { activeCard = "vix"; setActiveCard("vix"); buildSwappableChart(); });
+        com.economic.dashboard.ui.views.PressFeedback.attach(cardSp500);
+        com.economic.dashboard.ui.views.PressFeedback.attach(cardNasdaq);
+        com.economic.dashboard.ui.views.PressFeedback.attach(cardVix);
 
         setActiveCard("sp500");
 
@@ -135,8 +136,7 @@ public class StocksFragment extends Fragment {
         double latest = rows.get(rows.size() - 1).getValue();
         tvSp500Value.setText(formatValueWithK(latest));
         Benchmarks.Result result = Benchmarks.stockLevel(latest, 3500, 4000);
-        tvSp500Status.setText(result.word);
-        BenchmarkStyle.tintDot(viewSp500Dot, requireContext(), result.tier);
+        BenchmarkStyle.applyBadge(statusSp500, requireContext(), result);
     }
 
     private void updateNasdaqCard(List<EconomicDataPoint> data) {
@@ -145,8 +145,7 @@ public class StocksFragment extends Fragment {
         double latest = rows.get(rows.size() - 1).getValue();
         tvNasdaqValue.setText(formatValueWithK(latest));
         Benchmarks.Result result = Benchmarks.stockLevel(latest, 10000, 12000);
-        tvNasdaqStatus.setText(result.word);
-        BenchmarkStyle.tintDot(viewNasdaqDot, requireContext(), result.tier);
+        BenchmarkStyle.applyBadge(statusNasdaq, requireContext(), result);
     }
 
     private void updateVixCard(List<EconomicDataPoint> data) {
@@ -155,33 +154,22 @@ public class StocksFragment extends Fragment {
         double latest = rows.get(rows.size() - 1).getValue();
         tvVixValue.setText(NumberFormatUtil.indexPoints(latest, 1)); // TICKET-19
         Benchmarks.Result result = Benchmarks.vix(latest);
-        tvVixStatus.setText(result.word);
-        BenchmarkStyle.tintDot(viewVixDot, requireContext(), result.tier);
+        BenchmarkStyle.applyBadge(statusVix, requireContext(), result);
     }
 
     private void setActiveCard(String which) {
-        cardSp500.setForeground("sp500".equals(which) ? makeActiveBorder() : null);
-        cardNasdaq.setForeground("nasdaq".equals(which) ? makeActiveBorder() : null);
-        cardVix.setForeground("vix".equals(which) ? makeActiveBorder() : null);
+        // R3-TICKET-01: border geometry lives in BenchmarkStyle so it tracks the card radius token.
+        cardSp500.setForeground("sp500".equals(which) ? BenchmarkStyle.activeCardBorder(
+                requireContext(), com.economic.dashboard.R.dimen.radius_card_kpi) : null);
+        cardNasdaq.setForeground("nasdaq".equals(which) ? BenchmarkStyle.activeCardBorder(
+                requireContext(), com.economic.dashboard.R.dimen.radius_card_kpi) : null);
+        cardVix.setForeground("vix".equals(which) ? BenchmarkStyle.activeCardBorder(
+                requireContext(), com.economic.dashboard.R.dimen.radius_card_kpi) : null);
         switch (which) {
             case "nasdaq": tvChartTitle.setText("Nasdaq Composite Index"); break;
             case "vix": tvChartTitle.setText("VIX Volatility Index"); break;
             default: tvChartTitle.setText("S&P 500 Index"); break;
         }
-    }
-
-    private Drawable makeActiveBorder() {
-        // Stroke is drawn centered on the shape edge; inset it so the full
-        // width renders inside the CardView's rounded clip, and match the
-        // card's 16dp corner radius (minus the inset) so corners align.
-        float density = getResources().getDisplayMetrics().density;
-        int strokePx = Math.max(2, Math.round(1.5f * density));
-        int insetPx = (int) Math.ceil(strokePx / 2f);
-        GradientDrawable gd = new GradientDrawable();
-        gd.setColor(Color.TRANSPARENT);
-        gd.setCornerRadius(16f * density - insetPx);
-        gd.setStroke(strokePx, Color.parseColor("#C9A84C"));
-        return new InsetDrawable(gd, insetPx);
     }
 
     private void buildSwappableChart() {
@@ -215,8 +203,7 @@ public class StocksFragment extends Fragment {
         });
         swappableChart.getAxisLeft().setValueFormatter(formatter);
         LineDataSet ds = new LineDataSet(entries, seriesName);
-        ds.setColor(Color.parseColor(lineColor)); ds.setLineWidth(1.5f);
-        ds.setDrawCircles(false); ds.setDrawValues(false); ds.setMode(LineDataSet.Mode.CUBIC_BEZIER);
+        ChartHelper.styleLineSeries(ds, Color.parseColor(lineColor)); // IOS-07
         swappableChart.setData(new LineData(ds)); swappableChart.animateX(500); swappableChart.invalidate();
     }
 
@@ -246,12 +233,6 @@ public class StocksFragment extends Fragment {
         l.setLineColor(Color.parseColor(color)); l.setLineWidth(1f);
         l.setTextColor(Color.parseColor(color)); l.setTextSize(9f); l.enableDashedLine(8f, 4f, 0f);
         chart.getAxisLeft().addLimitLine(l);
-    }
-
-    private void setDot(View dot, int color) {
-        if (dot == null) return;
-        GradientDrawable gd = new GradientDrawable(); gd.setShape(GradientDrawable.OVAL); gd.setColor(color);
-        dot.setBackground(gd);
     }
 
     private String formatValueWithK(double value) {

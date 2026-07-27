@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Draws a 1dp gold-tinted border along the top edge of the BottomNavigationView.
+  Draws a 1dp gold-tinted hairline along the top edge of the BottomNavigationView.
   The bottom/left/right are pushed out so only the top stroke is visible.
+  IOS-04: fill is alpha'd (was a solid #0f1729) so it reads as a translucent
+  material with content passing underneath, not an opaque block.
+  2026-07-27 nav fix: ~85% (#D9) → ~95% (#F2). At 85%, with no backdrop blur
+  available, KPI cards scrolling under the bar stayed fully legible and fought
+  with the nav labels. Keep in sync with @color/header_navy_translucent.
 -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Top border: 1dp solid rgba(201,168,76,0.2) -->
@@ -13,7 +18,7 @@
             <stroke
                 android:width="1dp"
                 android:color="#33C9A84C" />
-            <solid android:color="#0f1729" />
+            <solid android:color="#F20F1729" />
         </shape>
     </item>
 </layer-list>

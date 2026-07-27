@@ -1,8 +1,6 @@
 package com.economic.dashboard.utils;
 
 import android.content.Context;
-import android.graphics.Color;
-import android.graphics.drawable.GradientDrawable;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -10,15 +8,16 @@ import android.widget.TextView;
 import androidx.core.content.ContextCompat;
 
 import com.economic.dashboard.R;
+import com.economic.dashboard.ui.views.SegmentedControl;
 
 /**
- * Controller for {@code view_timeframe_selector.xml} (TICKET-11).
+ * Controller for {@code view_timeframe_selector.xml} (TICKET-11 / IOS-05).
  *
- * Wires the segmented control's buttons, highlights the active range, persists
- * the choice per chart, and notifies the caller so it can rebuild that chart.
- * Works purely off each segment's {@code android:tag} (the month window), so
- * the same control can be included above several charts on one screen without
- * id collisions.
+ * Wires the segmented control's buttons, springs a sliding thumb to the
+ * active range (SegmentedControl), persists the choice per chart, and
+ * notifies the caller so it can rebuild that chart. Works purely off each
+ * segment's {@code android:tag} (the month window), so the same control can
+ * be included above several charts on one screen without id collisions.
  */
 public final class TimeframeSelector {
 
@@ -39,6 +38,10 @@ public final class TimeframeSelector {
         if (selector == null) return;
         Context ctx = selector.getContext();
         int active = SettingsManager.getChartTimeframeMonths(ctx, chartId);
+        // IOS-05: the sliding thumb is a sibling in view_timeframe_selector.xml's
+        // wrapping FrameLayout, not a child of the segment row itself.
+        View thumb = (selector.getParent() instanceof View)
+                ? ((View) selector.getParent()).findViewById(R.id.timeframeThumb) : null;
 
         for (int i = 0; i < selector.getChildCount(); i++) {
             View child = selector.getChildAt(i);
@@ -48,38 +51,41 @@ public final class TimeframeSelector {
             if (months <= 0) continue;
             seg.setOnClickListener(v -> {
                 SettingsManager.setChartTimeframeMonths(ctx, chartId, months);
-                restyle(selector, months);
-                v.performHapticFeedback(android.view.HapticFeedbackConstants.CONTEXT_CLICK);
+                restyle(selector, thumb, months, true);
+                HapticUtil.selection(v); // IOS-09
                 if (cb != null) cb.onMonths(months);
             });
         }
-        restyle(selector, active);
+        restyle(selector, thumb, active, false);
         if (cb != null) cb.onMonths(active);
     }
 
-    /** Paints the selected segment as a gold pill; others stay quiet. */
-    private static void restyle(LinearLayout selector, int activeMonths) {
+    /**
+     * Text-colors the active segment and springs the thumb under it.
+     * {@code animate=false} (first attach) snaps instead — segment widths
+     * aren't known until layout, so the snap runs in a post().
+     */
+    private static void restyle(LinearLayout selector, View thumb, int activeMonths, boolean animate) {
         Context ctx = selector.getContext();
-        int gold      = ContextCompat.getColor(ctx, R.color.accent_gold);
         int navy      = ContextCompat.getColor(ctx, R.color.header_navy);
         int inactive  = ContextCompat.getColor(ctx, R.color.text_secondary);
-        float density = ctx.getResources().getDisplayMetrics().density;
+        TextView activeSeg = null;
 
         for (int i = 0; i < selector.getChildCount(); i++) {
             View child = selector.getChildAt(i);
             if (!(child instanceof TextView)) continue;
             TextView seg = (TextView) child;
             boolean on = parseTag(seg.getTag()) == activeMonths;
-            if (on) {
-                GradientDrawable pill = new GradientDrawable();
-                pill.setColor(gold);
-                pill.setCornerRadius(8f * density);
-                seg.setBackground(pill);
-                seg.setTextColor(navy);
-            } else {
-                seg.setBackground(null);
-                seg.setTextColor(inactive);
-            }
+            seg.setTextColor(on ? navy : inactive);
+            if (on) activeSeg = seg;
+        }
+
+        if (thumb == null || activeSeg == null) return;
+        final TextView target = activeSeg;
+        if (animate) {
+            SegmentedControl.slideTo(thumb, target);
+        } else {
+            selector.post(() -> SegmentedControl.snapTo(thumb, target));
         }
     }
 

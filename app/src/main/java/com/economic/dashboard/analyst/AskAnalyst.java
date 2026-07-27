@@ -59,7 +59,7 @@ public class AskAnalyst {
         if (card == null || activity == null) return;
         card.setOnLongClickListener(v -> {
             PopupMenu menu = new PopupMenu(v.getContext(), v);
-            menu.getMenu().add(0, 1, 0, "Ask AI Analyst");
+            menu.getMenu().add(0, 1, 0, "Ask Econ Analyst");
             menu.setOnMenuItemClickListener(item -> {
                 if (item.getItemId() == 1) {
                     // Harvest at press time, not wire time — values load async.

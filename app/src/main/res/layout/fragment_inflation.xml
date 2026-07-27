@@ -15,7 +15,10 @@
         <!-- TICKET-18: per-screen retry chip (hidden until this screen's fetch fails) -->
         <include layout="@layout/view_retry_chip" />
 
-        <!-- BADGE ROW 1: CPI-U (hero, TICKET-21) | PCE -->
+        <!-- BADGE ROW 1: CPI-U | PCE.
+             R2-TICKET-05: both are year-over-year inflation readings and carry the
+             same badge, so they share one value size and colour. CPI-U still leads
+             by being first in the row. -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -27,24 +30,21 @@
                 android:id="@+id/cardCpiYoY"
                 android:layout_width="0dp" android:layout_height="wrap_content"
                 android:layout_weight="1" android:layout_marginEnd="@dimen/space_xs"
-                app:cardCornerRadius="12dp" app:cardElevation="4dp" app:cardBackgroundColor="@color/card_navy_badge">
+                app:cardCornerRadius="@dimen/radius_card_kpi" app:cardElevation="@dimen/elevation_card_kpi"
+                app:cardBackgroundColor="@color/card_navy_badge">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:orientation="vertical" android:padding="@dimen/space_lg" android:gravity="center">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="CPI-U YOY" android:textColor="@color/accent_gold"
-                        android:textSize="@dimen/text_caption" android:textStyle="bold" android:textAllCaps="true" android:letterSpacing="0.08" />
-                    <!-- TICKET-21: screen hero — largest type -->
+                    <TextView style="@style/Card.Overline" android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" android:text="CPI-U YOY" />
                     <TextView android:id="@+id/tvCpiYoYValue" android:layout_width="wrap_content"
                         android:layout_height="wrap_content" android:text="&#8212;"
                         android:textColor="@color/card_white" android:textSize="@dimen/text_display_lg" android:textStyle="bold" android:layout_marginTop="@dimen/space_xs" />
-                    <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="@dimen/space_xs">
-                        <View android:id="@+id/viewCpiIndicatorDot" android:layout_width="@dimen/dot_status" android:layout_height="@dimen/dot_status"
-                            android:background="@drawable/dot_neutral" android:layout_marginEnd="@dimen/space_xs" />
-                        <TextView android:id="@+id/tvCpiYoYStatus" android:layout_width="wrap_content"
-                            android:layout_height="wrap_content" android:text="&#8212;"
-                            android:textColor="@color/text_on_navy_muted" android:textSize="@dimen/text_caption" />
-                    </LinearLayout>
+                    <include
+                        android:id="@+id/statusCpi"
+                        layout="@layout/view_status_badge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_xs" />
                     <TextView android:id="@+id/tvCpiPercentile" android:layout_width="wrap_content"
                         android:layout_height="wrap_content" android:text=""
                         android:textColor="@color/slate_dim" android:textSize="@dimen/text_caption" android:layout_marginTop="@dimen/space_hairline" />
@@ -55,24 +55,21 @@
                 android:id="@+id/cardPceStatus"
                 android:layout_width="0dp" android:layout_height="wrap_content"
                 android:layout_weight="1" android:layout_marginStart="@dimen/space_xs"
-                app:cardCornerRadius="12dp" app:cardElevation="4dp" app:cardBackgroundColor="@color/card_navy_badge">
+                app:cardCornerRadius="@dimen/radius_card_kpi" app:cardElevation="@dimen/elevation_card_kpi"
+                app:cardBackgroundColor="@color/card_navy_badge">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:orientation="vertical" android:padding="@dimen/space_lg" android:gravity="center">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="PCE INFLATION" android:textColor="@color/accent_gold"
-                        android:textSize="@dimen/text_caption" android:textStyle="bold" android:textAllCaps="true" android:letterSpacing="0.08" />
-                    <!-- TICKET-21: demoted sibling — smaller, muted -->
+                    <TextView style="@style/Card.Overline" android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" android:text="PCE INFLATION" />
                     <TextView android:id="@+id/tvPceValue" android:layout_width="wrap_content"
                         android:layout_height="wrap_content" android:text="&#8212;"
-                        android:textColor="@color/text_on_navy_muted" android:textSize="@dimen/text_headline" android:textStyle="bold" android:layout_marginTop="@dimen/space_xs" />
-                    <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="@dimen/space_xs">
-                        <View android:id="@+id/viewPceDot" android:layout_width="@dimen/dot_status" android:layout_height="@dimen/dot_status"
-                            android:background="@drawable/dot_neutral" android:layout_marginEnd="@dimen/space_xs" />
-                        <TextView android:id="@+id/tvPceStatus" android:layout_width="wrap_content"
-                            android:layout_height="wrap_content" android:text="&#8212;"
-                            android:textColor="@color/text_on_navy_muted" android:textSize="@dimen/text_caption" />
-                    </LinearLayout>
+                        android:textColor="@color/card_white" android:textSize="@dimen/text_display_lg" android:textStyle="bold" android:layout_marginTop="@dimen/space_xs" />
+                    <include
+                        android:id="@+id/statusPce"
+                        layout="@layout/view_status_badge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_xs" />
                     <TextView android:id="@+id/tvPcePercentile" android:layout_width="wrap_content"
                         android:layout_height="wrap_content" android:text=""
                         android:textColor="@color/slate_dim" android:textSize="@dimen/text_caption" android:layout_marginTop="@dimen/space_hairline" />
@@ -85,24 +82,21 @@
             android:id="@+id/cardWageYoY"
             android:layout_width="match_parent" android:layout_height="wrap_content"
             android:layout_marginBottom="@dimen/space_lg"
-            app:cardCornerRadius="12dp" app:cardElevation="4dp" app:cardBackgroundColor="@color/card_navy_badge">
+            app:cardCornerRadius="@dimen/radius_card_kpi" app:cardElevation="@dimen/elevation_card_kpi"
+            app:cardBackgroundColor="@color/card_navy_badge">
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:orientation="vertical" android:padding="@dimen/space_lg" android:gravity="center">
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="REAL WAGE GROWTH" android:textColor="@color/accent_gold"
-                    android:textSize="@dimen/text_caption" android:textStyle="bold" android:textAllCaps="true" android:letterSpacing="0.08" />
-                <!-- TICKET-21: demoted sibling — smaller, muted -->
+                <TextView style="@style/Card.Overline" android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" android:text="REAL WAGE GROWTH" />
                 <TextView android:id="@+id/tvWageYoYValue" android:layout_width="wrap_content"
                     android:layout_height="wrap_content" android:text="&#8212;"
-                    android:textColor="@color/text_on_navy_muted" android:textSize="@dimen/text_headline" android:textStyle="bold" android:layout_marginTop="@dimen/space_xs" />
-                <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="@dimen/space_xs">
-                    <View android:id="@+id/viewWageIndicatorDot" android:layout_width="@dimen/dot_status" android:layout_height="@dimen/dot_status"
-                        android:background="@drawable/dot_neutral" android:layout_marginEnd="@dimen/space_xs" />
-                    <TextView android:id="@+id/tvWageYoYStatus" android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" android:text="&#8212;"
-                        android:textColor="@color/text_on_navy_muted" android:textSize="@dimen/text_caption" />
-                </LinearLayout>
+                    android:textColor="@color/card_white" android:textSize="@dimen/text_display_lg" android:textStyle="bold" android:layout_marginTop="@dimen/space_xs" />
+                <include
+                    android:id="@+id/statusWage"
+                    layout="@layout/view_status_badge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_xs" />
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                     android:text="Wages vs CPI spread" android:textColor="@color/slate_dim" android:textSize="@dimen/text_caption" android:layout_marginTop="@dimen/space_hairline" />
             </LinearLayout>
@@ -111,11 +105,11 @@
         <!-- TICKET-11: inline range switcher (drives both Inflation charts) -->
         <include layout="@layout/view_timeframe_selector" />
 
-        <!-- PCE vs CPI-U CHART -->
+        <!-- PCE vs CPI-U CHART — R2-TICKET-04 family B (16dp / 6dp) -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/space_2xl" app:cardCornerRadius="16dp"
-            app:cardElevation="6dp" app:cardBackgroundColor="@color/header_navy">
+            android:layout_marginBottom="@dimen/space_2xl" app:cardCornerRadius="@dimen/radius_card_panel"
+            app:cardElevation="@dimen/elevation_card_panel" app:cardBackgroundColor="@color/header_navy">
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:orientation="vertical" android:paddingHorizontal="@dimen/space_xl" android:paddingTop="@dimen/space_lg">
@@ -148,11 +142,11 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- INFLATION vs WAGE GROWTH CHART -->
+        <!-- INFLATION vs WAGE GROWTH CHART — R2-TICKET-04 family B (16dp / 6dp) -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/space_2xl" app:cardCornerRadius="16dp"
-            app:cardElevation="6dp" app:cardBackgroundColor="@color/header_navy">
+            android:layout_marginBottom="@dimen/space_2xl" app:cardCornerRadius="@dimen/radius_card_panel"
+            app:cardElevation="@dimen/elevation_card_panel" app:cardBackgroundColor="@color/header_navy">
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:orientation="vertical" android:paddingHorizontal="@dimen/space_xl" android:paddingTop="@dimen/space_lg">

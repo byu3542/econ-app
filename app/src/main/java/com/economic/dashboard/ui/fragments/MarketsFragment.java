@@ -28,6 +28,12 @@ public class MarketsFragment extends Fragment {
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
         binding = FragmentMarketsBinding.inflate(inflater, container, false);
+        // IOS-04 (2026-07-27 nav fix): this host owns the screen's topmost
+        // pixel — its TabLayout was previously sitting at y=0 underneath the
+        // translucent header, invisible and untappable, because the top inset
+        // had been applied to the leaf fragments inside the ViewPager2 instead.
+        // The host takes the top inset; the leaves take bottom only.
+        com.economic.dashboard.utils.EdgeToEdgeInsets.applyTopInset(binding.getRoot());
         return binding.getRoot();
     }
 

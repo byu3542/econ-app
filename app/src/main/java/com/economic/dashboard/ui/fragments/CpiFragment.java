@@ -3,8 +3,6 @@ package com.economic.dashboard.ui.fragments;
 import com.economic.dashboard.ui.Benchmarks;
 import com.economic.dashboard.ui.BenchmarkStyle;
 import android.graphics.Color;
-import androidx.core.content.ContextCompat;
-import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -45,13 +43,17 @@ public class CpiFragment extends Fragment {
     private LineChart cpiWChart;
     
     private CardView cardCpiYoY;
-    private TextView tvCpiYoYValue, tvCpiYoYDate, tvCpiYoYStatus;
-    private View viewCpiIndicatorDot;
+    private TextView tvCpiYoYValue, tvCpiYoYDate;
+    /** Root of the included view_status_badge row (R2-TICKET-03). */
+    private View statusCpiYoY;
 
     @Nullable @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = FragmentCpiBinding.inflate(inflater, container, false);
+        // IOS-04: bottom inset ONLY — this fragment lives inside EconomyFragment's
+        // ViewPager2, below the host's tab strip, so the host owns the top inset.
+        com.economic.dashboard.utils.EdgeToEdgeInsets.applyBottomInset(binding.getRoot());
         return binding.getRoot();
     }
 
@@ -88,8 +90,7 @@ public class CpiFragment extends Fragment {
                 cardCpiYoY, requireActivity(), "CPI inflation (YoY)");
         tvCpiYoYValue  = binding.tvCpiYoYValue;
         tvCpiYoYDate   = binding.tvCpiYoYDate;
-        tvCpiYoYStatus = binding.tvCpiYoYStatus;
-        viewCpiIndicatorDot = binding.viewCpiIndicatorDot;
+        statusCpiYoY   = binding.statusCpiYoY.getRoot();
 
         ChartHelper.styleLineChart(cpiChart,  "Consumer Price Index (CPI-U All Items)", "Month", "Index Value");
         ChartHelper.styleLineChart(cpiWChart, "CPI-W All Items",                         "Month", "Index Value");
@@ -149,11 +150,10 @@ public class CpiFragment extends Fragment {
         // Shared grading + semantic palette (TICKET-01/03/04)
         Benchmarks.Result result = Benchmarks.cpiYoY(yoyChange);
 
-        // Standardized badge navy + status-text grey (TICKET-05)
-        cardCpiYoY.setCardBackgroundColor(ContextCompat.getColor(requireContext(), R.color.card_navy_badge));
-        tvCpiYoYStatus.setText(result.word);
-        tvCpiYoYStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_slate));
-        BenchmarkStyle.tintDot(viewCpiIndicatorDot, requireContext(), result.tier);
+        // R2-TICKET-01/02: the badge word's colour is owned by @style/Badge.Status
+        // in view_status_badge.xml — no setTextColor here. The card background is
+        // already @color/card_navy_badge in the layout (R2-TICKET-04).
+        BenchmarkStyle.applyBadge(statusCpiYoY, requireContext(), result);
 
         // Hide date range as requested
         tvCpiYoYDate.setVisibility(View.GONE);

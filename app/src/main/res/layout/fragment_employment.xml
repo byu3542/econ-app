@@ -22,30 +22,30 @@
             android:baselineAligned="false"
             android:layout_marginBottom="@dimen/space_lg">
 
+            <!-- R2-TICKET-05: unemployment and participation are two readings of the
+                 labour market, so they share one value size and colour. -->
             <androidx.cardview.widget.CardView
                 android:id="@+id/cardUnemploymentStatus"
                 android:layout_width="0dp" android:layout_height="wrap_content"
                 android:layout_weight="1" android:layout_marginEnd="@dimen/space_sm"
-                app:cardCornerRadius="16dp" app:cardElevation="6dp"
-                app:cardBackgroundColor="@color/header_navy">
+                app:cardCornerRadius="@dimen/radius_card_kpi" app:cardElevation="@dimen/elevation_card_kpi"
+                app:cardBackgroundColor="@color/card_navy_badge">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:orientation="vertical" android:padding="@dimen/space_lg" android:gravity="center">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="UNEMPLOYMENT RATE" android:textColor="@color/accent_gold"
-                        android:textSize="@dimen/text_secondary" android:textStyle="bold" android:textAllCaps="true" android:letterSpacing="0.1" />
-                    <!-- TICKET-21: screen hero — largest type -->
+                    <TextView style="@style/Card.Overline" android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" android:text="UNEMPLOYMENT RATE" />
                     <TextView android:id="@+id/tvUnempValue" android:layout_width="wrap_content"
                         android:layout_height="wrap_content" android:text="&#8212;"
                         android:textColor="@color/card_white" android:textSize="@dimen/text_display_lg"
                         android:fontFamily="serif" android:textStyle="bold" android:layout_marginTop="@dimen/space_xs" />
-                    <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="@dimen/space_xs">
-                        <View android:id="@+id/viewUnempIndicatorDot" android:layout_width="@dimen/dot_status"
-                            android:layout_height="@dimen/dot_status" android:layout_marginEnd="@dimen/space_sm" />
-                        <TextView android:id="@+id/tvUnempStatus" android:layout_width="wrap_content"
-                            android:layout_height="wrap_content" android:text="&#8212;"
-                            android:textColor="@color/text_on_navy_muted" android:textSize="@dimen/text_caption" />
-                    </LinearLayout>
+                    <include
+                        android:id="@+id/statusUnemp"
+                        layout="@layout/view_status_badge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_xs" />
+                    <!-- Overwritten at runtime by EmploymentFragment — do NOT park a
+                         label qualifier here, it won't survive first data. -->
                     <TextView android:id="@+id/tvUnempLowInfo" android:layout_width="wrap_content"
                         android:layout_height="wrap_content" android:text="Vs 12-month low"
                         android:textColor="@color/slate_dim" android:textSize="@dimen/text_caption" android:layout_marginTop="@dimen/space_hairline" />
@@ -56,28 +56,24 @@
                 android:id="@+id/cardLaborParticipation"
                 android:layout_width="0dp" android:layout_height="wrap_content"
                 android:layout_weight="1" android:layout_marginStart="@dimen/space_sm"
-                app:cardCornerRadius="16dp" app:cardElevation="6dp"
-                app:cardBackgroundColor="@color/header_navy">
+                app:cardCornerRadius="@dimen/radius_card_kpi" app:cardElevation="@dimen/elevation_card_kpi"
+                app:cardBackgroundColor="@color/card_navy_badge">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:orientation="vertical" android:padding="@dimen/space_lg" android:gravity="center">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="LABOR PARTICIPATION" android:textColor="@color/accent_gold"
-                        android:textSize="@dimen/text_secondary" android:textStyle="bold" android:textAllCaps="true" android:letterSpacing="0.1" />
-                    <!-- TICKET-21: demoted sibling — smaller, muted -->
+                    <TextView style="@style/Card.Overline" android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" android:text="PARTICIPATION" />
                     <TextView android:id="@+id/tvLaborValue" android:layout_width="wrap_content"
                         android:layout_height="wrap_content" android:text="&#8212;"
-                        android:textColor="@color/text_on_navy_muted" android:textSize="@dimen/text_headline"
+                        android:textColor="@color/card_white" android:textSize="@dimen/text_display_lg"
                         android:fontFamily="serif" android:textStyle="bold" android:layout_marginTop="@dimen/space_xs" />
-                    <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="@dimen/space_xs">
-                        <View android:id="@+id/viewLaborIndicatorDot" android:layout_width="@dimen/dot_status"
-                            android:layout_height="@dimen/dot_status" android:layout_marginEnd="@dimen/space_sm" />
-                        <TextView android:id="@+id/tvLaborStatus" android:layout_width="wrap_content"
-                            android:layout_height="wrap_content" android:text="&#8212;"
-                            android:textColor="@color/text_on_navy_muted" android:textSize="@dimen/text_caption" />
-                    </LinearLayout>
+                    <include
+                        android:id="@+id/statusLabor"
+                        layout="@layout/view_status_badge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_xs" />
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="% of population" android:textColor="@color/slate_dim" android:textSize="@dimen/text_caption" android:layout_marginTop="@dimen/space_hairline" />
+                        android:text="Labor force, % of population" android:textColor="@color/slate_dim" android:textSize="@dimen/text_caption" android:layout_marginTop="@dimen/space_hairline" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
         </LinearLayout>
@@ -85,10 +81,11 @@
         <!-- TICKET-11: inline range switcher -->
         <include layout="@layout/view_timeframe_selector" />
 
+        <!-- Chart/panel card — R2-TICKET-04 family B (16dp / 6dp) -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/space_2xl" app:cardCornerRadius="16dp"
-            app:cardElevation="6dp" app:cardBackgroundColor="@color/header_navy">
+            android:layout_marginBottom="@dimen/space_2xl" app:cardCornerRadius="@dimen/radius_card_panel"
+            app:cardElevation="@dimen/elevation_card_panel" app:cardBackgroundColor="@color/header_navy">
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:orientation="vertical" android:paddingHorizontal="@dimen/space_xl" android:paddingTop="@dimen/space_lg">

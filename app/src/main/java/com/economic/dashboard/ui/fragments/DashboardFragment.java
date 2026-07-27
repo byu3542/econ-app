@@ -24,12 +24,13 @@ import com.economic.dashboard.R;
 import com.economic.dashboard.ui.MetricBottomSheet;
 import com.economic.dashboard.databinding.FragmentDashboardBinding;
 import com.economic.dashboard.models.EconomicDataPoint;
-import com.economic.dashboard.ui.AiAnalystBottomSheet;
+import com.economic.dashboard.analyst.AskAnalyst;
 import com.economic.dashboard.ui.Benchmarks;
 import com.economic.dashboard.ui.BenchmarkStyle;
 import com.economic.dashboard.ui.EconomicViewModel;
 import com.economic.dashboard.ui.MainActivity;
-import com.economic.dashboard.ui.views.SparklineView;
+import com.economic.dashboard.ui.views.PressFeedback;
+import com.economic.dashboard.views.SparklineView;
 import com.economic.dashboard.utils.DeltaFormatter;
 import com.economic.dashboard.utils.MotionUtil;
 import com.economic.dashboard.utils.NumberFormatUtil;
@@ -74,6 +75,11 @@ public class DashboardFragment extends Fragment {
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
         binding = FragmentDashboardBinding.inflate(inflater, container, false);
+        // IOS-04: the scroll view (SwipeRefreshLayout's direct child) clears
+        // the translucent header/bottom-nav and can scroll underneath them.
+        // Overview is the ONLY screen that takes both insets — it owns the full
+        // height behind both bars, with no tab strip between it and the header.
+        com.economic.dashboard.utils.EdgeToEdgeInsets.applyBothInsets(binding.dashboardScroll);
         return binding.getRoot();
     }
 
@@ -148,9 +154,7 @@ public class DashboardFragment extends Fragment {
             // Haptic tick when a refresh completes
             if (wasLoading && Boolean.FALSE.equals(loading)) {
                 hideSkeleton();
-                if (swipeRefresh != null)
-                    swipeRefresh.performHapticFeedback(
-                            android.view.HapticFeedbackConstants.CONTEXT_CLICK);
+                if (swipeRefresh != null) com.economic.dashboard.utils.HapticUtil.confirm(swipeRefresh); // IOS-09
             }
             wasLoading = Boolean.TRUE.equals(loading);
             swipeRefresh.setRefreshing(Boolean.TRUE.equals(loading));
@@ -162,6 +166,17 @@ public class DashboardFragment extends Fragment {
         skeletonShimmer  = v.findViewById(R.id.skeletonShimmer);
         contentContainer = v.findViewById(R.id.contentContainer);
         tvCacheAsOf      = v.findViewById(R.id.tvCacheAsOf);
+
+        // IOS-02: collapsing large title. The quarter pill moved here from
+        // the persistent header (MainActivity.currentQuarterLabel()).
+        TextView tvLargeTitleQuarter = v.findViewById(R.id.tvLargeTitleQuarter);
+        if (tvLargeTitleQuarter != null) tvLargeTitleQuarter.setText(MainActivity.currentQuarterLabel());
+        if (getActivity() instanceof MainActivity) {
+            MainActivity host = (MainActivity) getActivity();
+            com.economic.dashboard.ui.views.LargeTitleController.attach(
+                    binding.dashboardScroll, binding.largeTitleBlock,
+                    host.getHeaderCompactTitle(), host.getHeaderSeparator());
+        }
 
         // KPI badges
         // These are <include layout="@layout/card_kpi_badge"> entries, so view
@@ -184,6 +199,15 @@ public class DashboardFragment extends Fragment {
         startSkeleton(cardGdp); startSkeleton(cardCpiYoy); startSkeleton(cardSpread);
         startSkeleton(cardUnemployment); startSkeleton(cardMortgage); startSkeleton(cardVix);
 
+        // IOS-01: press-in spring instead of Material ripple (foreground is
+        // now @null in card_kpi_badge.xml).
+        PressFeedback.attach(cardGdp);
+        PressFeedback.attach(cardCpiYoy);
+        PressFeedback.attach(cardSpread);
+        PressFeedback.attach(cardUnemployment);
+        PressFeedback.attach(cardMortgage);
+        PressFeedback.attach(cardVix);
+
         // Tap KPI card → matching benchmark/status dialog
         // TICKET-24: pass the series key/label so each sheet offers "Add alert".
         wireCardDialog(cardGdp,          R.layout.dialog_gdp_status,          EconomicViewModel.CACHE_GDP,        "GDP growth");
@@ -191,18 +215,21 @@ public class DashboardFragment extends Fragment {
         wireCardDialog(cardSpread,       R.layout.dialog_treasury_3m_status,  EconomicViewModel.ALERT_SPREAD_3M,  "10Y-3M spread");
         wireCardDialog(cardUnemployment, R.layout.dialog_unemployment_status, EconomicViewModel.CACHE_EMPLOYMENT, "Unemployment");
 
-        // TICKET-13: Mortgage & VIX have no benchmark dialog — make the whole
-        // card a tap target (not just a long-press) that opens the AI Analyst.
-        wireCardTapAnalyst(cardMortgage, "the 30-year mortgage rate");
-        wireCardTapAnalyst(cardVix,      "the VIX index");
+        wireCardDialog(cardMortgage, R.layout.dialog_mortgage_status,
+                EconomicViewModel.CACHE_MBS, "30-year mortgage rate");
+        wireCardDialog(cardVix, R.layout.dialog_vix_status,
+                EconomicViewModel.CACHE_VIX, "VIX index");
 
-        // Long-press KPI card → ask the AI Analyst about that metric
-        wireAskAnalyst(cardGdp,          "GDP growth");
-        wireAskAnalyst(cardCpiYoy,       "CPI inflation (YoY)");
-        wireAskAnalyst(cardSpread,       "the 10Y-3M Treasury spread");
-        wireAskAnalyst(cardUnemployment, "the unemployment rate");
-        wireAskAnalyst(cardMortgage,     "the 30-year mortgage rate");
-        wireAskAnalyst(cardVix,          "the VIX index");
+        // Long-press KPI card → ask the Econ Analyst about that metric. Routed
+        // through the same AskAnalyst helper every other fragment uses, so
+        // these gesture turns get concise=true + screen-context injection
+        // (Laws 6-8, 12) instead of the bespoke path's plain full-length query.
+        AskAnalyst.wireCardLongPress(cardGdp,          requireActivity(), "GDP growth");
+        AskAnalyst.wireCardLongPress(cardCpiYoy,       requireActivity(), "CPI inflation (YoY)");
+        AskAnalyst.wireCardLongPress(cardSpread,       requireActivity(), "the 10Y-3M Treasury spread");
+        AskAnalyst.wireCardLongPress(cardUnemployment, requireActivity(), "the unemployment rate");
+        AskAnalyst.wireCardLongPress(cardMortgage,     requireActivity(), "the 30-year mortgage rate");
+        AskAnalyst.wireCardLongPress(cardVix,          requireActivity(), "the VIX index");
 
         // Fed funds hero — bind views directly from the root to avoid null-chain issues
         tvFedFundsHeroValue = v.findViewById(R.id.tvFedFundsHeroValue);
@@ -219,54 +246,33 @@ public class DashboardFragment extends Fragment {
         // Tap hero card → show Fed Funds history dialog
         View cardFedFundsHero = v.findViewById(R.id.cardFedFundsHero);
         if (cardFedFundsHero != null) {
+            PressFeedback.attach(cardFedFundsHero);
             cardFedFundsHero.setOnClickListener(view -> {
                 if (getActivity() instanceof MainActivity)
                     ((MainActivity) getActivity()).showFedFundsHistory();
             });
-            cardFedFundsHero.setOnLongClickListener(view -> {
-                String value = tvFedFundsHeroValue != null
-                        ? tvFedFundsHeroValue.getText().toString() : "";
-                showAskMenu(view, "the Fed Funds rate", value);
-                return true;
-            });
+            AskAnalyst.wireCardLongPress(cardFedFundsHero, requireActivity(), "the Fed Funds rate");
         }
     }
 
-    /** TICKET-13: whole-card tap opens the AI Analyst for metrics with no dialog. */
+    /**
+     * TICKET-13: whole-card tap opens the Econ Analyst for metrics with no
+     * benchmark dialog (Mortgage, VIX). Routed through AskAnalyst.openWithQuery
+     * with concise=true and a SCREEN CONTEXT block, matching the long-press
+     * path on every other card instead of the old plain-query/no-reuse call.
+     */
     private void wireCardTapAnalyst(View card, String label) {
         if (card == null) return;
         card.setOnClickListener(v -> {
             v.performHapticFeedback(android.view.HapticFeedbackConstants.CONTEXT_CLICK);
             TextView tv = card.findViewById(R.id.tvMetricValue);
             String value = tv != null ? tv.getText().toString() : "";
-            openAnalystWith(buildAskQuery(label, value));
+            String query = buildAskQuery(label, value);
+            String context = (value == null || value.isEmpty() || value.equals("—")) ? "" :
+                    "\nSCREEN CONTEXT: The user tapped the " + label + " card, which currently shows: "
+                            + value + ". These are the live on-screen values — use them directly and do not fetch them again.\n";
+            AskAnalyst.openWithQuery(requireActivity(), query, context, true);
         });
-    }
-
-    /** Long-press → menu offering to ask the AI Analyst about this card. */
-    private void wireAskAnalyst(View card, String label) {
-        if (card == null) return;
-        card.setOnLongClickListener(v -> {
-            TextView tv = card.findViewById(R.id.tvMetricValue);
-            String value = tv != null ? tv.getText().toString() : "";
-            showAskMenu(v, label, value);
-            return true;
-        });
-    }
-
-    /** Confirmation menu so a long-press never fires a query by itself. */
-    private void showAskMenu(View anchor, String label, String value) {
-        if (getContext() == null) return;
-        android.widget.PopupMenu menu = new android.widget.PopupMenu(getContext(), anchor);
-        menu.getMenu().add(0, 1, 0, "Ask AI Analyst");
-        menu.setOnMenuItemClickListener(item -> {
-            if (item.getItemId() == 1) {
-                openAnalystWith(buildAskQuery(label, value));
-                return true;
-            }
-            return false;
-        });
-        menu.show();
     }
 
     private static String buildAskQuery(String label, String value) {
@@ -274,13 +280,6 @@ public class DashboardFragment extends Fragment {
             return "Tell me about the current reading for " + label + " and what it means.";
         return "The dashboard shows " + label + " at " + value
                 + ". What's driving this, and what does it mean for the economy?";
-    }
-
-    private void openAnalystWith(String query) {
-        if (getActivity() == null) return;
-        androidx.fragment.app.FragmentManager fm = requireActivity().getSupportFragmentManager();
-        if (fm.findFragmentByTag(AiAnalystBottomSheet.TAG) == null)
-            AiAnalystBottomSheet.newInstance(query).show(fm, AiAnalystBottomSheet.TAG);
     }
 
     // ── TICKET-25: watchlist-driven cluster order ──────────────────────────
@@ -477,7 +476,20 @@ public class DashboardFragment extends Fragment {
     private void setSparkline(View card, List<Float> vals) {
         if (card == null) return;
         SparklineView sp = card.findViewById(R.id.sparkline);
-        if (sp != null) sp.setValues(vals);
+        if (sp == null) return;
+        // TICKET-H: consolidated onto the shared SparklineView (was a second,
+        // independently maintained class). Visibility toggling and the
+        // plain-stroke (no gradient fill) look are reproduced here since the
+        // shared view no longer owns that behavior internally.
+        boolean hasData = vals != null && vals.size() >= 2;
+        sp.setVisibility(hasData ? View.VISIBLE : View.GONE);
+        if (hasData) {
+            sp.setFillEnabled(false);
+            sp.setLineColor(0xFFC9A84C);
+            List<Double> doubles = new ArrayList<>(vals.size());
+            for (Float v : vals) doubles.add(v == null ? 0.0 : v.doubleValue());
+            sp.setData(doubles);
+        }
     }
 
     /** Last n values of a series, oldest first. */
@@ -726,6 +738,11 @@ public class DashboardFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        // IOS-02: stop driving the shared header's alpha once this screen is
+        // gone, so a torn-down Overview can't fight the tab that replaced it.
+        if (binding != null) {
+            com.economic.dashboard.ui.views.LargeTitleController.detach(binding.dashboardScroll);
+        }
         binding = null;
     }
 }

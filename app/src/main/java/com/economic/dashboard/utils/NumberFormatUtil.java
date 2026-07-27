@@ -1,5 +1,7 @@
 package com.economic.dashboard.utils;
 
+import android.widget.TextView;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -94,5 +96,16 @@ public final class NumberFormatUtil {
 
     private static int clampDecimals(int d) {
         return Math.max(0, Math.min(6, d));
+    }
+
+    /**
+     * IOS-03 — tabular (fixed-width) digits, so a count-up/rolling value never
+     * shifts horizontally. The app theme's default TextView style already
+     * carries this (see Widget.Econ.TextView in themes.xml); this is the
+     * explicit call for the count-up path (ValueAnimatorUtil) and any other
+     * TextView set up outside that default, so it can't be missed. Idempotent.
+     */
+    public static void applyTabularFigures(TextView tv) {
+        if (tv != null) tv.setFontFeatureSettings("tnum");
     }
 }

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     THE status badge row (R2-TICKET-03). Coloured dot + status word.
+
+     This layout is the only place the badge row is declared. Every screen
+     <include>s it with an id:
+
+         <include
+             android:id="@+id/statusUnemp"
+             layout="@layout/view_status_badge"
+             android:layout_width="wrap_content"
+             android:layout_height="wrap_content"
+             android:layout_marginTop="@dimen/space_xs" />
+
+     and fills it from the fragment with the shared helper:
+
+         BenchmarkStyle.applyBadge(binding.statusUnemp.getRoot(), requireContext(), result);
+
+     Adding a badge to a new screen is one <include> + one applyBadge() call.
+     Do NOT copy this row inline and do NOT set textColor/textSize on the word —
+     @style/Badge.Status owns that, and scripts/check_badges.sh enforces it.
+     ═══════════════════════════════════════════════════════════════════════════ -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical">
+
+    <!-- Neutral grey placeholder until BenchmarkStyle.tintDot() supplies the
+         tier colour, so the loading state is identical on every screen. -->
+    <View
+        android:id="@+id/viewTierDot"
+        android:layout_width="@dimen/dot_status"
+        android:layout_height="@dimen/dot_status"
+        android:background="@drawable/dot_neutral"
+        android:layout_marginEnd="@dimen/space_xs"
+        android:importantForAccessibility="no" />
+
+    <TextView
+        android:id="@+id/tvTierStatus"
+        style="@style/Badge.Status"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="—" />
+
+</LinearLayout>

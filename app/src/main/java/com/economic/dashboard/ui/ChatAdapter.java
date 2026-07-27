@@ -86,29 +86,10 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
     private static final Pattern CHART_TAG =
             Pattern.compile("\\[CHART:([A-Z0-9_]+):(\\d{1,2})M?\\]");
 
-    /** Human labels for chart captions. */
-    private static final Map<String, String> SERIES_LABELS = new HashMap<>();
-    static {
-        SERIES_LABELS.put("DGS10", "10-Year Treasury Yield");
-        SERIES_LABELS.put("DGS2", "2-Year Treasury Yield");
-        SERIES_LABELS.put("DGS3MO", "3-Month T-Bill Yield");
-        SERIES_LABELS.put("MORTGAGE30US", "30-Year Mortgage Rate");
-        SERIES_LABELS.put("LNS14000000", "Unemployment Rate");
-        SERIES_LABELS.put("GDP_BEA_T10101", "GDP Growth (QoQ annualized)");
-        // TICKET-2 (AI Law 13): the 11 live ViewModel-backed series get_series
-        // already serves — charted through the same LiveSeriesProvider.
-        SERIES_LABELS.put("CPI",            "CPI-U Index (All Items)");
-        SERIES_LABELS.put("PCE",            "PCE Price Index");
-        SERIES_LABELS.put("CORE_PCE",       "Core PCE Price Index");
-        SERIES_LABELS.put("SP500",          "S&P 500");
-        SERIES_LABELS.put("NASDAQ",         "Nasdaq Composite");
-        SERIES_LABELS.put("VIX",            "VIX Volatility Index");
-        SERIES_LABELS.put("WAGES",          "Avg Hourly Earnings");
-        SERIES_LABELS.put("HOUSING_STARTS", "Housing Starts");
-        SERIES_LABELS.put("HOME_SALES",     "Existing Home Sales");
-        SERIES_LABELS.put("BAA_SPREAD",     "BAA Corporate Spread");
-        SERIES_LABELS.put("HY_SPREAD",      "High Yield Spread");
-    }
+    /** Human labels for chart captions — derived from EconomicSeriesRegistry,
+     *  the single source of truth for series ids (TICKET-F / review F6). */
+    private static final Map<String, String> SERIES_LABELS =
+            com.economic.dashboard.analyst.EconomicSeriesRegistry.chartLabels();
 
     /**
      * Metric names → bottom-nav tab. First occurrence of each keyword in an
@@ -250,8 +231,10 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
                 start, s.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
     }
 
-    /** Removes [CHART:...] tags from the visible text (rendered separately). */
-    private static String stripChartTags(String text) {
+    /** Removes [CHART:...] tags from the visible text (rendered separately).
+     *  Package-visible (not private) so ChatAdapterTest can exercise it
+     *  directly (TICKET-I / review Q7). */
+    static String stripChartTags(String text) {
         if (text == null) return "";
         return CHART_TAG.matcher(text).replaceAll("").replace("\n\n\n", "\n\n").trim();
     }
@@ -262,7 +245,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
      * convert any slip so it never renders as raw markdown structure —
      * "## Title" becomes a bold line, "- item"/"* item" becomes a "• " line.
      */
-    private static String stripStrayMarkdown(String text) {
+    static String stripStrayMarkdown(String text) {
         if (text == null || text.isEmpty()) return text;
         if (text.indexOf('#') < 0 && !text.contains("\n- ") && !text.contains("\n* ")
                 && !text.startsWith("- ") && !text.startsWith("* ")) return text;
@@ -456,7 +439,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
             holder.llBubbleContainer.setClickable(false);
             holder.llBubbleContainer.setOnClickListener(null);
         } else {
-            holder.tvSenderLabel.setText(m.isError() ? "ERROR" : "ANALYST");
+            holder.tvSenderLabel.setText(m.isError() ? "ERROR" : "ECON ANALYST");
             bubbleParams.horizontalBias = 0.0f;
             labelParams.horizontalBias  = 0.0f;
             timeParams.horizontalBias   = 0.0f;
@@ -570,7 +553,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
             if (item.getItemId() == 1) {
                 ClipboardManager cm = (ClipboardManager) ctx.getSystemService(Context.CLIPBOARD_SERVICE);
                 if (cm != null) {
-                    cm.setPrimaryClip(ClipData.newPlainText("Analyst message", text));
+                    cm.setPrimaryClip(ClipData.newPlainText("Econ Analyst message", text));
                     Toast.makeText(ctx, "Copied", Toast.LENGTH_SHORT).show();
                 }
                 return true;

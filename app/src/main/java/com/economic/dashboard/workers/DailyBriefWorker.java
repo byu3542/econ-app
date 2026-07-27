@@ -76,7 +76,7 @@ public class DailyBriefWorker extends Worker {
             catch (Exception e) { news = NewsRepository.getInstance().getCachedItems(); }
 
             // TICKET-12 (End): a crisp brief that reads as headline + movers.
-            String systemPrompt = "You are an AI Economic Analyst writing a short morning brief "
+            String systemPrompt = "You are the Econ Analyst writing a short morning brief "
                     + "for the U.S. Economic Monitor app. Using the historical data, upcoming "
                     + "releases, and headlines below, write the brief in this shape:\n"
                     + "- First line: a punchy headline of at most 8 words, no period.\n"
@@ -93,7 +93,7 @@ public class DailyBriefWorker extends Worker {
                     .put("content", "Write today's morning economic brief."));
 
             JSONObject body = new JSONObject();
-            body.put("model", "claude-haiku-4-5-20251001");
+            body.put("model", com.economic.dashboard.analyst.ModelConfig.MODEL_FAST);
             body.put("max_tokens", 512);
             body.put("system", systemPrompt);
             body.put("messages", messages);

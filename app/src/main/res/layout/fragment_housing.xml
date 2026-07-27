@@ -17,6 +17,12 @@
 
         <!-- ═══════════════════════════════════════════════════════════════════
              HOUSING METRIC BADGES — Housing Starts & Existing Home Sales
+
+             R2-TICKET-04: these were the family-A geometry (12dp/4dp) over the
+             family-B colour (header_navy) — a third hybrid. Now fully family A.
+             R2-TICKET-05/06: values were @dimen/text_secondary (13sp), the
+             smallest KPI value in the app; now @dimen/text_display_lg like the
+             rest, auto-shrinking only if a reading is too wide for its card.
              ═══════════════════════════════════════════════════════════════════ -->
         <LinearLayout
             android:layout_width="match_parent"
@@ -31,9 +37,9 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginEnd="@dimen/space_sm"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="4dp"
-                app:cardBackgroundColor="@color/header_navy">
+                app:cardCornerRadius="@dimen/radius_card_kpi"
+                app:cardElevation="@dimen/elevation_card_kpi"
+                app:cardBackgroundColor="@color/card_navy_badge">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -43,46 +49,32 @@
                     android:gravity="center">
 
                     <TextView
+                        style="@style/Card.Overline"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="HOUSING STARTS"
-                        android:textColor="@color/accent_gold"
-                        android:textSize="@dimen/text_caption"
-                        android:textStyle="bold"
-                        android:letterSpacing="0.05" />
+                        android:text="HOUSING STARTS" />
 
                     <TextView
                         android:id="@+id/tvStartsValue"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/kpi_value_height"
                         android:text="\u2014"
+                        android:gravity="center"
                         android:textColor="@color/card_white"
-                        android:textSize="@dimen/text_secondary"
+                        android:maxLines="1"
+                        android:autoSizeTextType="uniform"
+                        android:autoSizeMinTextSize="@dimen/text_kpi_autosize_min"
+                        android:autoSizeMaxTextSize="@dimen/text_display_lg"
+                        android:autoSizeStepGranularity="1sp"
                         android:textStyle="bold"
                         android:layout_marginTop="@dimen/space_hairline" />
 
-                    <LinearLayout
+                    <include
+                        android:id="@+id/statusStarts"
+                        layout="@layout/view_status_badge"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical"
-                        android:layout_marginTop="@dimen/space_hairline">
-
-                        <View
-                            android:id="@+id/viewStartsDot"
-                            android:layout_width="@dimen/dot_status"
-                            android:layout_height="@dimen/dot_status"
-                            android:background="@drawable/dot_neutral"
-                            android:layout_marginEnd="@dimen/space_xs" />
-
-                        <TextView
-                            android:id="@+id/tvStartsStatus"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="\u2014"
-                            android:textColor="@color/text_slate"
-                            android:textSize="@dimen/text_caption" />
-                    </LinearLayout>
+                        android:layout_marginTop="@dimen/space_hairline" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
@@ -92,9 +84,9 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginStart="@dimen/space_sm"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="4dp"
-                app:cardBackgroundColor="@color/header_navy">
+                app:cardCornerRadius="@dimen/radius_card_kpi"
+                app:cardElevation="@dimen/elevation_card_kpi"
+                app:cardBackgroundColor="@color/card_navy_badge">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -104,46 +96,32 @@
                     android:gravity="center">
 
                     <TextView
+                        style="@style/Card.Overline"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="HOME SALES"
-                        android:textColor="@color/accent_gold"
-                        android:textSize="@dimen/text_caption"
-                        android:textStyle="bold"
-                        android:letterSpacing="0.05" />
+                        android:text="HOME SALES" />
 
                     <TextView
                         android:id="@+id/tvSalesValue"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/kpi_value_height"
                         android:text="\u2014"
+                        android:gravity="center"
                         android:textColor="@color/card_white"
-                        android:textSize="@dimen/text_secondary"
+                        android:maxLines="1"
+                        android:autoSizeTextType="uniform"
+                        android:autoSizeMinTextSize="@dimen/text_kpi_autosize_min"
+                        android:autoSizeMaxTextSize="@dimen/text_display_lg"
+                        android:autoSizeStepGranularity="1sp"
                         android:textStyle="bold"
                         android:layout_marginTop="@dimen/space_hairline" />
 
-                    <LinearLayout
+                    <include
+                        android:id="@+id/statusSales"
+                        layout="@layout/view_status_badge"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical"
-                        android:layout_marginTop="@dimen/space_hairline">
-
-                        <View
-                            android:id="@+id/viewSalesDot"
-                            android:layout_width="@dimen/dot_status"
-                            android:layout_height="@dimen/dot_status"
-                            android:background="@drawable/dot_neutral"
-                            android:layout_marginEnd="@dimen/space_xs" />
-
-                        <TextView
-                            android:id="@+id/tvSalesStatus"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="\u2014"
-                            android:textColor="@color/text_slate"
-                            android:textSize="@dimen/text_caption" />
-                    </LinearLayout>
+                        android:layout_marginTop="@dimen/space_hairline" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
         </LinearLayout>
@@ -165,9 +143,9 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginEnd="@dimen/space_sm"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="4dp"
-                app:cardBackgroundColor="@color/header_navy">
+                app:cardCornerRadius="@dimen/radius_card_kpi"
+                app:cardElevation="@dimen/elevation_card_kpi"
+                app:cardBackgroundColor="@color/card_navy_badge">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -177,47 +155,34 @@
                     android:gravity="center">
 
                     <TextView
+                        style="@style/Card.Overline"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="30-YR RATE"
-                        android:textColor="@color/accent_gold"
-                        android:textSize="@dimen/text_caption"
-                        android:textStyle="bold"
-                        android:letterSpacing="0.05" />
+                        android:text="30-YR RATE" />
 
-                    <!-- TICKET-21: screen hero \u2014 largest type -->
+                    <!-- R2-TICKET-05: all three rate cards read the same concept, so
+                         they share one value size and colour. -->
                     <TextView
                         android:id="@+id/tvBadgeMortgageValue"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/kpi_value_height"
                         android:text="\u2014"
+                        android:gravity="center"
                         android:textColor="@color/card_white"
-                        android:textSize="@dimen/text_headline"
+                        android:maxLines="1"
+                        android:autoSizeTextType="uniform"
+                        android:autoSizeMinTextSize="@dimen/text_kpi_autosize_min"
+                        android:autoSizeMaxTextSize="@dimen/text_display_lg"
+                        android:autoSizeStepGranularity="1sp"
                         android:textStyle="bold"
                         android:layout_marginTop="@dimen/space_hairline" />
 
-                    <LinearLayout
+                    <include
+                        android:id="@+id/statusMortgage"
+                        layout="@layout/view_status_badge"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical"
-                        android:layout_marginTop="@dimen/space_hairline">
-
-                        <View
-                            android:id="@+id/viewBadgeMortgageDot"
-                            android:layout_width="@dimen/dot_status"
-                            android:layout_height="@dimen/dot_status"
-                            android:background="@drawable/dot_neutral"
-                            android:layout_marginEnd="@dimen/space_xs" />
-
-                        <TextView
-                            android:id="@+id/tvBadgeMortgageStatus"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="\u2014"
-                            android:textColor="@color/text_slate"
-                            android:textSize="@dimen/text_caption" />
-                    </LinearLayout>
+                        android:layout_marginTop="@dimen/space_hairline" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
@@ -228,9 +193,9 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginHorizontal="@dimen/space_xs"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="4dp"
-                app:cardBackgroundColor="@color/header_navy">
+                app:cardCornerRadius="@dimen/radius_card_kpi"
+                app:cardElevation="@dimen/elevation_card_kpi"
+                app:cardBackgroundColor="@color/card_navy_badge">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -240,47 +205,32 @@
                     android:gravity="center">
 
                     <TextView
+                        style="@style/Card.Overline"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="10Y T-RATE"
-                        android:textColor="@color/accent_gold"
-                        android:textSize="@dimen/text_caption"
-                        android:textStyle="bold"
-                        android:letterSpacing="0.05" />
+                        android:text="10Y T-RATE" />
 
-                    <!-- TICKET-21: demoted sibling \u2014 muted -->
                     <TextView
                         android:id="@+id/tvBadge10YValue"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/kpi_value_height"
                         android:text="\u2014"
-                        android:textColor="@color/text_on_navy_muted"
-                        android:textSize="@dimen/text_secondary"
+                        android:gravity="center"
+                        android:textColor="@color/card_white"
+                        android:maxLines="1"
+                        android:autoSizeTextType="uniform"
+                        android:autoSizeMinTextSize="@dimen/text_kpi_autosize_min"
+                        android:autoSizeMaxTextSize="@dimen/text_display_lg"
+                        android:autoSizeStepGranularity="1sp"
                         android:textStyle="bold"
                         android:layout_marginTop="@dimen/space_hairline" />
 
-                    <LinearLayout
+                    <include
+                        android:id="@+id/status10Y"
+                        layout="@layout/view_status_badge"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical"
-                        android:layout_marginTop="@dimen/space_hairline">
-
-                        <View
-                            android:id="@+id/viewBadge10YDot"
-                            android:layout_width="@dimen/dot_status"
-                            android:layout_height="@dimen/dot_status"
-                            android:background="@drawable/dot_neutral"
-                            android:layout_marginEnd="@dimen/space_xs" />
-
-                        <TextView
-                            android:id="@+id/tvBadge10YStatus"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="\u2014"
-                            android:textColor="@color/text_slate"
-                            android:textSize="@dimen/text_caption" />
-                    </LinearLayout>
+                        android:layout_marginTop="@dimen/space_hairline" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
@@ -291,9 +241,9 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginStart="@dimen/space_sm"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="4dp"
-                app:cardBackgroundColor="@color/header_navy">
+                app:cardCornerRadius="@dimen/radius_card_kpi"
+                app:cardElevation="@dimen/elevation_card_kpi"
+                app:cardBackgroundColor="@color/card_navy_badge">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -303,47 +253,32 @@
                     android:gravity="center">
 
                     <TextView
+                        style="@style/Card.Overline"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="SPREAD"
-                        android:textColor="@color/accent_gold"
-                        android:textSize="@dimen/text_caption"
-                        android:textStyle="bold"
-                        android:letterSpacing="0.05" />
+                        android:text="SPREAD" />
 
-                    <!-- TICKET-21: demoted sibling \u2014 muted -->
                     <TextView
                         android:id="@+id/tvBadgeSpreadValue"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/kpi_value_height"
                         android:text="\u2014"
-                        android:textColor="@color/text_on_navy_muted"
-                        android:textSize="@dimen/text_secondary"
+                        android:gravity="center"
+                        android:textColor="@color/card_white"
+                        android:maxLines="1"
+                        android:autoSizeTextType="uniform"
+                        android:autoSizeMinTextSize="@dimen/text_kpi_autosize_min"
+                        android:autoSizeMaxTextSize="@dimen/text_display_lg"
+                        android:autoSizeStepGranularity="1sp"
                         android:textStyle="bold"
                         android:layout_marginTop="@dimen/space_hairline" />
 
-                    <LinearLayout
+                    <include
+                        android:id="@+id/statusHousingSpread"
+                        layout="@layout/view_status_badge"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical"
-                        android:layout_marginTop="@dimen/space_hairline">
-
-                        <View
-                            android:id="@+id/viewBadgeSpreadDot"
-                            android:layout_width="@dimen/dot_status"
-                            android:layout_height="@dimen/dot_status"
-                            android:background="@drawable/dot_neutral"
-                            android:layout_marginEnd="@dimen/space_xs" />
-
-                        <TextView
-                            android:id="@+id/tvBadgeSpreadStatus"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="\u2014"
-                            android:textColor="@color/text_slate"
-                            android:textSize="@dimen/text_caption" />
-                    </LinearLayout>
+                        android:layout_marginTop="@dimen/space_hairline" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
         </LinearLayout>
@@ -358,9 +293,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="@dimen/space_2xl"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="6dp"
-            app:cardBackgroundColor="@color/card_navy_badge">
+            app:cardCornerRadius="@dimen/radius_card_panel"
+            app:cardElevation="@dimen/elevation_card_panel"
+            app:cardBackgroundColor="@color/header_navy">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -409,9 +344,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="@dimen/space_2xl"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="6dp"
-            app:cardBackgroundColor="@color/card_navy_badge">
+            app:cardCornerRadius="@dimen/radius_card_panel"
+            app:cardElevation="@dimen/elevation_card_panel"
+            app:cardBackgroundColor="@color/header_navy">
 
             <LinearLayout
                 android:layout_width="match_parent"

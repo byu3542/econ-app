@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- IOS-06: iOS's sheet-presentation curve, in place of a linear translate.
+     Note: slide_in_up.xml / slide_out_down.xml (which use this) back
+     Theme.EconomicDashboard.FullScreenDialog, which nothing in the app
+     currently applies — the real sheets (AiAnalystBottomSheet,
+     MetricBottomSheet) are BottomSheetDialog(Fragment)s whose motion comes
+     from Material's own BottomSheetBehavior, not this resource. Fixed for
+     correctness / in case that theme is revived, not because it's visibly
+     wrong today. -->
+<pathInterpolator xmlns:android="http://schemas.android.com/apk/res/android"
+    android:controlX1="0.32"
+    android:controlY1="0.72"
+    android:controlX2="0"
+    android:controlY2="1" />

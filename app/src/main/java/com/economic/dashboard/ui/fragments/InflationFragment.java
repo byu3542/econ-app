@@ -1,10 +1,8 @@
 package com.economic.dashboard.ui.fragments;
 
-import androidx.core.content.ContextCompat;
 import com.economic.dashboard.ui.Benchmarks;
 import com.economic.dashboard.ui.BenchmarkStyle;
 import android.graphics.Color;
-import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -47,16 +45,16 @@ public class InflationFragment extends Fragment {
     private EconomicViewModel viewModel;
 
     private CardView cardPceStatus;
-    private TextView tvPceValue, tvPceStatus, tvPcePercentile;
-    private View viewPceDot;
+    private TextView tvPceValue, tvPcePercentile;
 
     private CardView cardCpiYoY;
-    private TextView tvCpiYoYValue, tvCpiYoYStatus, tvCpiPercentile;
-    private View viewCpiDot;
+    private TextView tvCpiYoYValue, tvCpiPercentile;
 
     private CardView cardWageYoY;
-    private TextView tvWageYoYValue, tvWageYoYStatus;
-    private View viewWageDot;
+    private TextView tvWageYoYValue;
+
+    /** Roots of the three included view_status_badge rows (R2-TICKET-03). */
+    private View statusPce, statusCpi, statusWage;
 
     private LineChart chartPceCpi;
     private LineChart chartComparison;
@@ -67,6 +65,9 @@ public class InflationFragment extends Fragment {
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
         binding = FragmentInflationBinding.inflate(inflater, container, false);
+        // IOS-04: bottom inset ONLY — this fragment lives inside EconomyFragment's
+        // ViewPager2, below the host's tab strip, so the host owns the top inset.
+        com.economic.dashboard.utils.EdgeToEdgeInsets.applyBottomInset(binding.getRoot());
         skeleton = com.economic.dashboard.ui.views.SkeletonController.wrap(binding.getRoot());
         return skeleton.getRoot();
     }
@@ -96,24 +97,21 @@ public class InflationFragment extends Fragment {
         com.economic.dashboard.analyst.AskAnalyst.wireCardLongPress(
                 cardPceStatus, requireActivity(), "PCE inflation");
         tvPceValue      = binding.tvPceValue;
-        tvPceStatus     = binding.tvPceStatus;
         tvPcePercentile = binding.tvPcePercentile;
-        viewPceDot      = binding.viewPceDot;
+        statusPce       = binding.statusPce.getRoot();
 
         cardCpiYoY      = binding.cardCpiYoY;
         com.economic.dashboard.analyst.AskAnalyst.wireCardLongPress(
                 cardCpiYoY, requireActivity(), "CPI inflation (YoY)");
         tvCpiYoYValue   = binding.tvCpiYoYValue;
-        tvCpiYoYStatus  = binding.tvCpiYoYStatus;
         tvCpiPercentile = binding.tvCpiPercentile;
-        viewCpiDot      = binding.viewCpiIndicatorDot;
+        statusCpi       = binding.statusCpi.getRoot();
 
         cardWageYoY     = binding.cardWageYoY;
         com.economic.dashboard.analyst.AskAnalyst.wireCardLongPress(
                 cardWageYoY, requireActivity(), "wage growth vs inflation");
         tvWageYoYValue  = binding.tvWageYoYValue;
-        tvWageYoYStatus = binding.tvWageYoYStatus;
-        viewWageDot     = binding.viewWageIndicatorDot;
+        statusWage      = binding.statusWage.getRoot();
 
         chartPceCpi     = binding.chartPceCpi;
         com.economic.dashboard.analyst.AskAnalyst.attachChartExplain(
@@ -197,8 +195,7 @@ public class InflationFragment extends Fragment {
 
         // PCE aligned to CPI wording + bands so the two inflation gauges match (TICKET-04)
         Benchmarks.Result result = Benchmarks.pceYoY(yoy);
-        if (tvPceStatus != null) tvPceStatus.setText(result.word);
-        BenchmarkStyle.tintDot(viewPceDot, requireContext(), result.tier);
+        BenchmarkStyle.applyBadge(statusPce, requireContext(), result);
     }
 
     private void updateCpiCard(List<EconomicDataPoint> cpiData) {
@@ -210,11 +207,10 @@ public class InflationFragment extends Fragment {
         if (tvCpiYoYValue != null) tvCpiYoYValue.setText(NumberFormatUtil.percent(yoy)); // TICKET-19
 
         Benchmarks.Result result = Benchmarks.cpiYoY(yoy);
-        if (tvCpiYoYStatus != null) {
-            tvCpiYoYStatus.setText(result.word);
-            tvCpiYoYStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_slate));
-        }
-        BenchmarkStyle.tintDot(viewCpiDot, requireContext(), result.tier);
+        // R2-TICKET-02: this screen used to setTextColor on two of its three badges
+        // and not the third, so the layout and the shipped pixel disagreed per card.
+        // @style/Badge.Status now owns the colour for all three.
+        BenchmarkStyle.applyBadge(statusCpi, requireContext(), result);
 
         int pct = EconomicViewModel.calculatePercentile(cpiData, "CPI-U All Items", latest);
         if (tvCpiPercentile != null) tvCpiPercentile.setText(EconomicViewModel.formatPercentile(pct));
@@ -238,11 +234,7 @@ public class InflationFragment extends Fragment {
         if (tvWageYoYValue != null) tvWageYoYValue.setText(NumberFormatUtil.percent(spread)); // TICKET-19
 
         Benchmarks.Result result = Benchmarks.realWageGrowth(spread);
-        if (tvWageYoYStatus != null) {
-            tvWageYoYStatus.setText(result.word);
-            tvWageYoYStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_slate));
-        }
-        BenchmarkStyle.tintDot(viewWageDot, requireContext(), result.tier);
+        BenchmarkStyle.applyBadge(statusWage, requireContext(), result);
     }
 
     private void buildPceCpiChart(List<EconomicDataPoint> pceData, List<EconomicDataPoint> cpiData) {
@@ -343,8 +335,7 @@ public class InflationFragment extends Fragment {
 
     private LineDataSet makeLineDataSet(List<Entry> entries, String label, String hexColor) {
         LineDataSet ds = new LineDataSet(entries, label);
-        ds.setColor(Color.parseColor(hexColor)); ds.setLineWidth(1.5f);
-        ds.setDrawCircles(false); ds.setDrawValues(false); ds.setMode(LineDataSet.Mode.CUBIC_BEZIER);
+        com.economic.dashboard.utils.ChartHelper.styleLineSeries(ds, Color.parseColor(hexColor)); // IOS-07
         // TICKET-08: draw the series name at the line's right end in its colour.
         com.economic.dashboard.utils.ChartHelper.labelLineEnd(ds, label);
         return ds;
@@ -359,12 +350,6 @@ public class InflationFragment extends Fragment {
         elevated.setTextColor(Color.parseColor("#D98E4F")); elevated.setTextSize(9f); elevated.enableDashedLine(8f, 4f, 0f);
         chart.getAxisLeft().addLimitLine(target); chart.getAxisLeft().addLimitLine(elevated);
         chart.getAxisLeft().setDrawLimitLinesBehindData(true);
-    }
-
-    private void setDot(View dot, int color) {
-        if (dot == null) return;
-        GradientDrawable gd = new GradientDrawable(); gd.setShape(GradientDrawable.OVAL); gd.setColor(color);
-        dot.setBackground(gd);
     }
 
     private void showBenchmarkDialog(int layoutRes) {

@@ -1,12 +1,8 @@
 package com.economic.dashboard.ui.fragments;
 
-import androidx.core.content.ContextCompat;
 import com.economic.dashboard.ui.Benchmarks;
 import com.economic.dashboard.ui.BenchmarkStyle;
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.GradientDrawable;
-import android.graphics.drawable.InsetDrawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -46,10 +42,10 @@ public class EmploymentFragment extends Fragment {
     private TextView tvChartTitle;
 
     private CardView cardUnemploymentStatus, cardLaborParticipation;
-    private TextView tvUnempValue, tvUnempStatus, tvUnempLowInfo;
-    private View viewUnempIndicatorDot;
-    private TextView tvLaborValue, tvLaborStatus;
-    private View viewLaborIndicatorDot;
+    private TextView tvUnempValue, tvUnempLowInfo;
+    private TextView tvLaborValue;
+    /** Roots of the included view_status_badge rows (R2-TICKET-03). */
+    private View statusUnemp, statusLabor;
 
     private String activeCard = "unemployment";
     private List<EconomicDataPoint> currentUnempData;
@@ -59,6 +55,9 @@ public class EmploymentFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = FragmentEmploymentBinding.inflate(inflater, container, false);
+        // IOS-04: bottom inset ONLY — this fragment lives inside EconomyFragment's
+        // ViewPager2, below the host's tab strip, so the host owns the top inset.
+        com.economic.dashboard.utils.EdgeToEdgeInsets.applyBottomInset(binding.getRoot());
         skeleton = com.economic.dashboard.ui.views.SkeletonController.wrap(binding.getRoot());
         return skeleton.getRoot();
     }
@@ -108,16 +107,14 @@ public class EmploymentFragment extends Fragment {
         com.economic.dashboard.analyst.AskAnalyst.wireCardLongPress(
                 cardUnemploymentStatus, requireActivity(), "the unemployment rate");
         tvUnempValue = binding.tvUnempValue;
-        tvUnempStatus = binding.tvUnempStatus;
         tvUnempLowInfo = binding.tvUnempLowInfo;
-        viewUnempIndicatorDot = binding.viewUnempIndicatorDot;
+        statusUnemp = binding.statusUnemp.getRoot();
 
         cardLaborParticipation = binding.cardLaborParticipation;
         com.economic.dashboard.analyst.AskAnalyst.wireCardLongPress(
                 cardLaborParticipation, requireActivity(), "labor force participation");
         tvLaborValue = binding.tvLaborValue;
-        tvLaborStatus = binding.tvLaborStatus;
-        viewLaborIndicatorDot = binding.viewLaborIndicatorDot;
+        statusLabor = binding.statusLabor.getRoot();
 
         cardUnemploymentStatus.setOnClickListener(v -> {
             activeCard = "unemployment"; setActiveCard("unemployment"); buildSwappableChart();
@@ -141,23 +138,12 @@ public class EmploymentFragment extends Fragment {
     }
 
     private void setActiveCard(String which) {
-        cardUnemploymentStatus.setForeground("unemployment".equals(which) ? makeActiveBorder() : null);
-        cardLaborParticipation.setForeground("labor".equals(which) ? makeActiveBorder() : null);
+        // R3-TICKET-01: border geometry lives in BenchmarkStyle so it tracks the card radius token.
+        cardUnemploymentStatus.setForeground("unemployment".equals(which) ? BenchmarkStyle.activeCardBorder(
+                requireContext(), com.economic.dashboard.R.dimen.radius_card_kpi) : null);
+        cardLaborParticipation.setForeground("labor".equals(which) ? BenchmarkStyle.activeCardBorder(
+                requireContext(), com.economic.dashboard.R.dimen.radius_card_kpi) : null);
         tvChartTitle.setText("labor".equals(which) ? "Labor Participation Rate Trend" : "Unemployment Rate Trend");
-    }
-
-    private Drawable makeActiveBorder() {
-        // Stroke is drawn centered on the shape edge; inset it so the full
-        // width renders inside the CardView's rounded clip, and match the
-        // card's 16dp corner radius (minus the inset) so corners align.
-        float density = getResources().getDisplayMetrics().density;
-        int strokePx = Math.max(2, Math.round(1.5f * density));
-        int insetPx = (int) Math.ceil(strokePx / 2f);
-        GradientDrawable gd = new GradientDrawable();
-        gd.setColor(Color.TRANSPARENT);
-        gd.setCornerRadius(16f * density - insetPx);
-        gd.setStroke(strokePx, Color.parseColor("#C9A84C"));
-        return new InsetDrawable(gd, insetPx);
     }
 
     private void buildSwappableChart() {
@@ -185,9 +171,8 @@ public class EmploymentFragment extends Fragment {
 
         // Shared with Overview so the same rate can't grade differently by screen (TICKET-03)
         Benchmarks.Result result = Benchmarks.unemployment(currentRate, riseFromLow);
-        tvUnempStatus.setText(result.word);
-        tvUnempStatus.setTextColor(ContextCompat.getColor(requireContext(), com.economic.dashboard.R.color.text_slate));
-        BenchmarkStyle.tintDot(viewUnempIndicatorDot, requireContext(), result.tier);
+        // R2-TICKET-02: no setTextColor here — @style/Badge.Status owns the colour.
+        BenchmarkStyle.applyBadge(statusUnemp, requireContext(), result);
     }
 
     private void calculateLaborParticipationStatus(List<EconomicDataPoint> data) {
@@ -196,9 +181,7 @@ public class EmploymentFragment extends Fragment {
         double currentRate = rows.get(rows.size()-1).getValue();
         tvLaborValue.setText(NumberFormatUtil.percent(currentRate, 1)); // TICKET-19
         Benchmarks.Result result = Benchmarks.laborForce(currentRate);
-        tvLaborStatus.setText(result.word);
-        tvLaborStatus.setTextColor(ContextCompat.getColor(requireContext(), com.economic.dashboard.R.color.text_slate));
-        BenchmarkStyle.tintDot(viewLaborIndicatorDot, requireContext(), result.tier);
+        BenchmarkStyle.applyBadge(statusLabor, requireContext(), result);
     }
 
     private void addEmploymentLimitLines(LineChart chart) {
@@ -236,8 +219,7 @@ public class EmploymentFragment extends Fragment {
             }
         });
         LineDataSet ds = new LineDataSet(entries, series);
-        ds.setColor(Color.parseColor(hexColor)); ds.setLineWidth(1.5f);
-        ds.setDrawCircles(false); ds.setDrawValues(false); ds.setMode(LineDataSet.Mode.CUBIC_BEZIER);
+        com.economic.dashboard.utils.ChartHelper.styleLineSeries(ds, Color.parseColor(hexColor)); // IOS-07
         chart.setData(new LineData(ds)); chart.animateX(500); chart.invalidate();
     }
 

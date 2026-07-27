@@ -19,16 +19,23 @@
             android:baselineAligned="false"
             android:layout_marginBottom="@dimen/space_lg">
 
-            <!-- 10Y-2Y SPREAD CARD -->
+            <!-- NOTE (2026-07-24): nothing currently inflates fragment_treasury.xml —
+                 the Treasury tab is hosted by fragment_markets_host and the spread
+                 cards live in fragment_spreads.xml. Kept in sync with the rest of
+                 the app so it isn't a stale template if it's ever wired back up.
+
+                 R2-TICKET-06: values were @dimen/text_display (28sp), a fourth step
+                 in the ramp that existed only here; now @dimen/text_display_lg like
+                 every other KPI value. -->
             <androidx.cardview.widget.CardView
                 android:id="@+id/cardSpreadYoY"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginEnd="@dimen/space_sm"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="6dp"
-                app:cardBackgroundColor="@color/header_navy">
+                app:cardCornerRadius="@dimen/radius_card_kpi"
+                app:cardElevation="@dimen/elevation_card_kpi"
+                app:cardBackgroundColor="@color/card_navy_badge">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -38,14 +45,10 @@
                     android:gravity="center">
 
                     <TextView
+                        style="@style/Card.Overline"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="10Y - 2Y"
-                        android:textColor="@color/accent_gold"
-                        android:textSize="@dimen/text_secondary"
-                        android:textStyle="bold"
-                        android:textAllCaps="true"
-                        android:letterSpacing="0.1"/>
+                        android:text="10Y - 2Y" />
 
                     <TextView
                         android:id="@+id/tvSpreadValue"
@@ -53,33 +56,17 @@
                         android:layout_height="wrap_content"
                         android:text="—"
                         android:textColor="@color/card_white"
-                        android:textSize="@dimen/text_display"
+                        android:textSize="@dimen/text_display_lg"
                         android:fontFamily="serif"
                         android:textStyle="bold"
                         android:layout_marginTop="@dimen/space_xs"/>
 
-                    <LinearLayout
+                    <include
+                        android:id="@+id/statusSpread2Y"
+                        layout="@layout/view_status_badge"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical"
-                        android:layout_marginTop="@dimen/space_xs">
-
-                        <View
-                            android:id="@+id/viewSpreadIndicatorDot"
-                            android:layout_width="@dimen/dot_status"
-                            android:layout_height="@dimen/dot_status"
-                            android:background="@drawable/dot_neutral"
-                            android:layout_marginEnd="@dimen/space_sm" />
-
-                        <TextView
-                            android:id="@+id/tvIndicatorText"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="LOADING"
-                            android:textColor="@color/text_muted"
-                            android:textSize="@dimen/text_caption"/>
-                    </LinearLayout>
+                        android:layout_marginTop="@dimen/space_xs" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
@@ -90,9 +77,9 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginStart="@dimen/space_sm"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="6dp"
-                app:cardBackgroundColor="@color/header_navy">
+                app:cardCornerRadius="@dimen/radius_card_kpi"
+                app:cardElevation="@dimen/elevation_card_kpi"
+                app:cardBackgroundColor="@color/card_navy_badge">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -102,14 +89,10 @@
                     android:gravity="center">
 
                     <TextView
+                        style="@style/Card.Overline"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="10Y - 3M"
-                        android:textColor="@color/accent_gold"
-                        android:textSize="@dimen/text_secondary"
-                        android:textStyle="bold"
-                        android:textAllCaps="true"
-                        android:letterSpacing="0.1"/>
+                        android:text="10Y - 3M" />
 
                     <TextView
                         android:id="@+id/tvSpread3MValue"
@@ -117,33 +100,17 @@
                         android:layout_height="wrap_content"
                         android:text="—"
                         android:textColor="@color/card_white"
-                        android:textSize="@dimen/text_display"
+                        android:textSize="@dimen/text_display_lg"
                         android:fontFamily="serif"
                         android:textStyle="bold"
                         android:layout_marginTop="@dimen/space_xs"/>
 
-                    <LinearLayout
+                    <include
+                        android:id="@+id/statusSpread3M"
+                        layout="@layout/view_status_badge"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical"
-                        android:layout_marginTop="@dimen/space_xs">
-
-                        <View
-                            android:id="@+id/viewSpread3MIndicatorDot"
-                            android:layout_width="@dimen/dot_status"
-                            android:layout_height="@dimen/dot_status"
-                            android:background="@drawable/dot_neutral"
-                            android:layout_marginEnd="@dimen/space_sm" />
-
-                        <TextView
-                            android:id="@+id/tvIndicator3MText"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="LOADING"
-                            android:textColor="@color/text_muted"
-                            android:textSize="@dimen/text_caption"/>
-                    </LinearLayout>
+                        android:layout_marginTop="@dimen/space_xs" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
         </LinearLayout>
@@ -153,8 +120,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="@dimen/space_2xl"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="6dp"
+            app:cardCornerRadius="@dimen/radius_card_panel"
+            app:cardElevation="@dimen/elevation_card_panel"
             app:cardBackgroundColor="@color/surface_card">
 
             <LinearLayout
@@ -200,8 +167,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="@dimen/space_2xl"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="6dp"
+            app:cardCornerRadius="@dimen/radius_card_panel"
+            app:cardElevation="@dimen/elevation_card_panel"
             app:cardBackgroundColor="@color/surface_card">
 
             <LinearLayout
@@ -247,8 +214,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="@dimen/space_2xl"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="6dp"
+            app:cardCornerRadius="@dimen/radius_card_panel"
+            app:cardElevation="@dimen/elevation_card_panel"
             app:cardBackgroundColor="@color/surface_card">
 
             <LinearLayout
@@ -294,8 +261,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="@dimen/space_2xl"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="6dp"
+            app:cardCornerRadius="@dimen/radius_card_panel"
+            app:cardElevation="@dimen/elevation_card_panel"
             app:cardBackgroundColor="@color/surface_card">
 
             <LinearLayout

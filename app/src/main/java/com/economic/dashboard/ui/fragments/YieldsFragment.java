@@ -44,6 +44,9 @@ public class YieldsFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = FragmentYieldsBinding.inflate(inflater, container, false);
+        // IOS-04: bottom inset ONLY — this fragment lives inside MarketsFragment's
+        // ViewPager2, below the host's tab strip, so the host owns the top inset.
+        com.economic.dashboard.utils.EdgeToEdgeInsets.applyBottomInset(binding.getRoot());
         skeleton = com.economic.dashboard.ui.views.SkeletonController.wrap(binding.getRoot());
         return skeleton.getRoot();
     }
@@ -121,8 +124,7 @@ public class YieldsFragment extends Fragment {
         }
 
         LineDataSet ds = new LineDataSet(entries, "Yield (%) — " + latestDate);
-        ds.setColor(Color.parseColor("#1a73e8")); ds.setLineWidth(1.5f);
-        ds.setDrawCircles(false); ds.setDrawValues(false); ds.setMode(LineDataSet.Mode.CUBIC_BEZIER);
+        com.economic.dashboard.utils.ChartHelper.styleLineSeries(ds, Color.parseColor("#1a73e8")); // IOS-07
 
         yieldCurveChart.getXAxis().setValueFormatter(new ValueFormatter() {
             @Override public String getFormattedValue(float value) {

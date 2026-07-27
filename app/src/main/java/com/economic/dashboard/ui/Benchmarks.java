@@ -89,12 +89,59 @@ public final class Benchmarks {
         return r("INVERTED", Tier.ALERT);
     }
 
-    /** 30Y mortgage rate (%) for the Overview hero badge. */
+    /*
+     * Mortgage affordability reference case.
+     *
+     * A rate by itself is not an affordability benchmark: the same rate can be
+     * manageable with a low home price and unaffordable with a high one. This
+     * reference case follows the structure used by HUD/NAR affordability
+     * measures: median income divided by the income required to carry a median-
+     * priced home. The inputs are intentionally visible and easy to refresh.
+     *
+     * Median household income: Census CPS ASEC 2024, $83,730.
+     * Median existing-home price: NAR June 2026 snapshot, $440,600.
+     * Housing cost cap: 30% of gross income (HUD/Freddie Mac guidance).
+     * Down payment: 20%; term: 30 years; taxes + insurance allowance: 1.5%
+     * of home value annually. The allowance is a national approximation; local
+     * property taxes, insurance, HOA dues, debt, and credit are not modeled.
+     */
+    private static final double MORTGAGE_MEDIAN_INCOME = 83730.0;
+    private static final double MORTGAGE_MEDIAN_HOME_PRICE = 440600.0;
+    private static final double MORTGAGE_DOWN_PAYMENT = 0.20;
+    private static final double MORTGAGE_HOUSING_COST_RATIO = 0.30;
+    private static final double MORTGAGE_TAX_INSURANCE_RATE = 0.015;
+    private static final int MORTGAGE_TERM_MONTHS = 360;
+
+    /** 30Y mortgage affordability badge for the Overview. */
     public static Result mortgage30(double rate) {
-        if (rate <= 4.0) return r("HEALTHY",  Tier.GOOD);
-        if (rate <= 5.0) return r("MODERATE", Tier.WATCH);
-        if (rate <= 6.5) return r("ELEVATED", Tier.ELEVATED);
+        double index = mortgageAffordabilityIndex(rate, MORTGAGE_MEDIAN_INCOME,
+                MORTGAGE_MEDIAN_HOME_PRICE);
+        if (index >= 1.30) return r("HEALTHY",  Tier.GOOD);
+        if (index >= 1.00) return r("MODERATE", Tier.WATCH);
+        if (index >= 0.80) return r("ELEVATED", Tier.ELEVATED);
         return r("CRITICAL", Tier.ALERT);
+    }
+
+    /** HUD/NAR-style affordability index: median income divided by the income
+     * needed for the reference home at the supplied 30-year fixed rate. */
+    static double mortgageAffordabilityIndex(double rate, double medianIncome,
+                                             double medianHomePrice) {
+        if (rate < 0 || medianIncome <= 0 || medianHomePrice <= 0) return 0.0;
+
+        double monthlyRate = rate / 100.0 / 12.0;
+        double loan = medianHomePrice * (1.0 - MORTGAGE_DOWN_PAYMENT);
+        double principalAndInterest;
+        if (monthlyRate == 0.0) {
+            principalAndInterest = loan / MORTGAGE_TERM_MONTHS;
+        } else {
+            double factor = Math.pow(1.0 + monthlyRate, MORTGAGE_TERM_MONTHS);
+            principalAndInterest = loan * (monthlyRate * factor) / (factor - 1.0);
+        }
+
+        double taxesAndInsurance = medianHomePrice * MORTGAGE_TAX_INSURANCE_RATE / 12.0;
+        double monthlyHousingCost = principalAndInterest + taxesAndInsurance;
+        double requiredIncome = monthlyHousingCost * 12.0 / MORTGAGE_HOUSING_COST_RATIO;
+        return medianIncome / requiredIncome;
     }
 
     /** A LOW/MODERATE/HIGH/VERY-HIGH rate badge (Housing mortgage + 10Y badges). */

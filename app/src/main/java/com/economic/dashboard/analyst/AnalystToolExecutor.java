@@ -14,7 +14,6 @@ import org.json.JSONObject;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -29,10 +28,11 @@ import java.util.Map;
  */
 public class AnalystToolExecutor {
 
-    /** Room-cached series ids (matches HistoricalDataRepository). */
-    public static final String[] SERIES_IDS = {
-            "DGS10", "DGS2", "DGS3MO", "MORTGAGE30US", "LNS14000000", "GDP_BEA_T10101"
-    };
+    /** Room-cached series ids (matches HistoricalDataRepository). Derived from
+     *  EconomicSeriesRegistry, the single source of truth for series ids
+     *  (TICKET-F / review F6) — was hand-duplicated here, in ChatAdapter, and
+     *  in buildSystemPrompt()'s INLINE CHARTS sentence. */
+    public static final String[] SERIES_IDS = EconomicSeriesRegistry.roomCachedIds();
 
     /**
      * AI Law 3 (tool coverage matches trigger surfaces): series served straight
@@ -40,20 +40,7 @@ public class AnalystToolExecutor {
      * fragment's card has real history behind it. Ids map to lists supplied by
      * the LiveSeriesProvider wired up in AiAnalystBottomSheet.
      */
-    public static final Map<String, String> LIVE_SERIES = new LinkedHashMap<>();
-    static {
-        LIVE_SERIES.put("CPI",            "CPI-U All Items index");
-        LIVE_SERIES.put("PCE",            "PCE Price Index");
-        LIVE_SERIES.put("CORE_PCE",       "Core PCE Price Index");
-        LIVE_SERIES.put("SP500",          "S&P 500 index");
-        LIVE_SERIES.put("NASDAQ",         "Nasdaq Composite index");
-        LIVE_SERIES.put("VIX",            "VIX volatility index");
-        LIVE_SERIES.put("WAGES",          "Average Hourly Earnings (private)");
-        LIVE_SERIES.put("HOUSING_STARTS", "Housing Starts");
-        LIVE_SERIES.put("HOME_SALES",     "Existing Home Sales");
-        LIVE_SERIES.put("BAA_SPREAD",     "BAA Corporate Bond Spread");
-        LIVE_SERIES.put("HY_SPREAD",      "High Yield Bond Spread");
-    }
+    public static final Map<String, String> LIVE_SERIES = EconomicSeriesRegistry.liveToolHints();
 
     /** Supplies live ViewModel-backed series lists; set by AiAnalystBottomSheet. */
     public interface LiveSeriesProvider {
@@ -80,22 +67,17 @@ public class AnalystToolExecutor {
     public static JSONArray buildToolsJson() throws Exception {
         JSONArray tools = new JSONArray();
 
-        JSONArray seriesEnum = new JSONArray()
-                .put("DGS10").put("DGS2").put("DGS3MO")
-                .put("MORTGAGE30US").put("LNS14000000").put("GDP_BEA_T10101");
-        for (String id : LIVE_SERIES.keySet()) seriesEnum.put(id);
+        JSONArray seriesEnum = new JSONArray();
+        for (String id : EconomicSeriesRegistry.allIds()) seriesEnum.put(id);
 
-        StringBuilder liveDesc = new StringBuilder();
-        for (Map.Entry<String, String> e : LIVE_SERIES.entrySet())
-            liveDesc.append(e.getKey()).append("=").append(e.getValue()).append(", ");
+        StringBuilder hintDesc = new StringBuilder();
+        for (EconomicSeriesRegistry.Entry e : EconomicSeriesRegistry.entries())
+            hintDesc.append(e.id).append("=").append(e.toolHint).append(", ");
 
         JSONObject seriesParam = new JSONObject()
                 .put("type", "string")
                 .put("enum", seriesEnum)
-                .put("description", "Series to fetch: DGS10=10Y Treasury, DGS2=2Y Treasury, "
-                        + "DGS3MO=3M T-Bill, MORTGAGE30US=30Y mortgage rate, "
-                        + "LNS14000000=unemployment rate, GDP_BEA_T10101=GDP growth QoQ annualized, "
-                        + liveDesc);
+                .put("description", "Series to fetch: " + hintDesc);
         JSONObject monthsParam = new JSONObject()
                 .put("type", "integer")
                 .put("description", "How many months of history to return (1-24). Default 24.");

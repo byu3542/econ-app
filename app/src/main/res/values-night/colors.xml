@@ -14,6 +14,23 @@
     <color name="text_muted">#707A8C</color>
     <color name="alabaster_dark_gray">#D8DCE6</color>
 
+    <!-- R2-TICKET-09: badge greys get explicit night values so the light and dark
+         badge can't silently diverge. Badge cards are navy in BOTH themes, so the
+         day values are correct here — the entries exist to record that intent and
+         to give every colour on the badge path a light + night pair.
+         text_slate is the only grey a status word may use (@style/Badge.Status);
+         dot_neutral is the pre-data placeholder dot. -->
+    <color name="text_slate">#8A9AB5</color>
+    <color name="dot_neutral">#9E9E9E</color>
+    <color name="text_on_navy_muted">#8CFFFFFF</color>
+    <!-- The two card surfaces a badge can sit on. Same reasoning: navy in both
+         themes, declared here so the whole badge path is theme-complete. -->
+    <color name="card_navy_badge">#1C2236</color>
+    <color name="header_navy">#1a1a2e</color>
+    <!-- 2026-07-27 nav fix: raised ~85% (#D9) → ~95% (#F2), matching
+         values/colors.xml. See the comment there for why. -->
+    <color name="header_navy_translucent">#F21A1A2E</color>
+
     <color name="background">#12161F</color>
     <color name="economy_tab_bg">#1C222E</color>
 

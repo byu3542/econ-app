@@ -1,11 +1,17 @@
 package com.economic.dashboard.ui;
 
 import android.content.Context;
+import android.graphics.Outline;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewOutlineProvider;
 import android.widget.FrameLayout;
 
+import androidx.annotation.NonNull;
+
 import com.economic.dashboard.R;
+import com.economic.dashboard.utils.EdgeToEdgeInsets;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 
 /** Shows metric-detail layouts as modal bottom sheets (replaces center AlertDialogs). */
@@ -29,6 +35,7 @@ public final class MetricBottomSheet {
     public static View show(Context ctx, int layoutRes, String seriesKey, String seriesLabel) {
         View wrap = LayoutInflater.from(ctx).inflate(R.layout.sheet_metric_wrapper, null);
         FrameLayout holder = wrap.findViewById(R.id.sheetContent);
+        View sheetScroll = wrap.findViewById(R.id.sheetScroll);
         View content = LayoutInflater.from(ctx).inflate(layoutRes, holder, false);
         holder.addView(content);
         BottomSheetDialog dialog =
@@ -36,6 +43,68 @@ public final class MetricBottomSheet {
         dialog.setContentView(wrap);
         View btn = content.findViewById(R.id.btnClose);
         if (btn != null) btn.setOnClickListener(v -> dialog.dismiss());
+
+        // Clear the gesture-nav inset so the last row and "+ Add alert" pill
+        // aren't flush with (or under) the home indicator. This is the raw
+        // systemBars() bottom, not the app's bottom-nav-wrapper height — the
+        // sheet sits above the bottom nav, not beside it.
+        if (sheetScroll != null) {
+            sheetScroll.setPadding(sheetScroll.getPaddingLeft(), sheetScroll.getPaddingTop(),
+                    sheetScroll.getPaddingRight(),
+                    sheetScroll.getPaddingBottom() + EdgeToEdgeInsets.getSystemBottomInsetPx());
+        }
+
+        // IOS-06: medium detent — opens to ~55% height, drags to full instead
+        // of always snapping straight to fitToContents' single measured height.
+        BottomSheetBehavior<FrameLayout> behavior = dialog.getBehavior();
+        behavior.setFitToContents(false);
+        behavior.setHalfExpandedRatio(0.55f);
+
+        // Expanded state stops short of the status bar (+8dp) instead of going
+        // flush to y=0 — a sheet flush to the top reads as a full-screen
+        // dialog, not a sheet with the presenting screen still peeking above it.
+        float density = ctx.getResources().getDisplayMetrics().density;
+        behavior.setExpandedOffset(
+                EdgeToEdgeInsets.getSystemTopInsetPx() + Math.round(8 * density));
+
+        // The presenting screen recedes as the sheet opens further, so it
+        // reads as still "there" behind the sheet rather than just gone.
+        View presenting = (ctx instanceof android.app.Activity)
+                ? ((android.app.Activity) ctx).findViewById(android.R.id.content) : null;
+        if (presenting != null) {
+            float maxCornerRadiusPx = 12 * density;
+            float[] cornerRadiusPx = {0f};
+            presenting.setClipToOutline(true);
+            presenting.setOutlineProvider(new ViewOutlineProvider() {
+                @Override public void getOutline(View view, Outline outline) {
+                    outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), cornerRadiusPx[0]);
+                }
+            });
+            behavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+                @Override public void onSlide(@NonNull View sheetView, float slideOffset) {
+                    float offset = Math.max(0f, slideOffset);
+                    float scale = 1f - (offset * 0.06f);
+                    presenting.setScaleX(scale);
+                    presenting.setScaleY(scale);
+                    cornerRadiusPx[0] = offset * maxCornerRadiusPx;
+                    presenting.invalidateOutline();
+                }
+                @Override public void onStateChanged(@NonNull View sheetView, int newState) {
+                    if (newState == BottomSheetBehavior.STATE_HIDDEN) {
+                        presenting.setScaleX(1f);
+                        presenting.setScaleY(1f);
+                        cornerRadiusPx[0] = 0f;
+                        presenting.invalidateOutline();
+                    }
+                }
+            });
+            dialog.setOnDismissListener(d -> {
+                presenting.setScaleX(1f);
+                presenting.setScaleY(1f);
+                cornerRadiusPx[0] = 0f;
+                presenting.invalidateOutline();
+            });
+        }
 
         // TICKET-24: metric-aware sheets get an "Add alert" row appended to the
         // content column (sheet content roots are vertical LinearLayouts).
