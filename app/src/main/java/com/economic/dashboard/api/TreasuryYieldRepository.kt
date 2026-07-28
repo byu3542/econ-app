@@ -3,7 +3,7 @@ package com.economic.dashboard.api
 import android.content.Context
 import android.util.Log
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.Transformations
+import androidx.lifecycle.MediatorLiveData
 import com.economic.dashboard.database.TreasuryYieldDao
 import com.economic.dashboard.database.YieldDatabase
 import com.economic.dashboard.models.EconomicDataPoint
@@ -24,14 +24,15 @@ class TreasuryYieldRepository(context: Context) {
     private val economicRepository: EconomicRepository = EconomicRepository()
 
     fun getYields(): LiveData<List<EconomicDataPoint>> {
-        val cachedData = Transformations.map(dao.getAllYields()) { treasuryYields ->
+        val cachedData = MediatorLiveData<List<EconomicDataPoint>>()
+        cachedData.addSource(dao.getAllYields()) { treasuryYields ->
             val points = ArrayList<EconomicDataPoint>()
             if (treasuryYields != null) {
                 for (ty in treasuryYields) {
                     points.add(ty.toEconomicDataPoint())
                 }
             }
-            points
+            cachedData.value = points
         }
         checkCacheAndRefreshIfNeeded()
         return cachedData

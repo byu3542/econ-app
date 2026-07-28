@@ -372,7 +372,7 @@ class EconomicRepository {
                 }
 
                 val results = ArrayList<EconomicDataPoint>()
-                val seriesList = blsResp.results?.series
+                val seriesList = blsResp.Results?.series
 
                 if (seriesList != null) {
                     for (series in seriesList) {

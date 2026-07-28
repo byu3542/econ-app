@@ -250,7 +250,7 @@ object HistoricalDataRepository {
                 }
 
                 val entries = ArrayList<EconomicHistoryEntry>()
-                val seriesList = blsResp.results?.series
+                val seriesList = blsResp.Results?.series
 
                 if (seriesList != null) {
                     for (series in seriesList) {
