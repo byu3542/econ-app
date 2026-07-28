@@ -285,3 +285,24 @@ actually shipped, what was scoped down from the ticket text (several "current
 state" descriptions above were stale — grabbers and some edge-to-edge plumbing
 already existed), and what to eyeball in Android Studio. Tier 3 (IOS-10–13) is
 not started.
+
+**IOS-02 and IOS-06 follow-up fixes (2026-07-27):** device screenshots after
+both shipped found the metric bottom sheets clipping their bottom content
+(DISMISS row, "+ Add alert") in the half-expanded state and floating
+mid-screen when expanded, and the IOS-02 large-title collapse fading on a
+fixed 56dp scroll distance instead of the title's actual position — both
+titles visible and legible at once mid-scroll, with the large title
+guillotined by the header's bottom edge. Also found the collapsed header bar
+running ~69dp instead of iOS's 44pt, and its separator a full-alpha gold rule
+rather than a hairline. All fixed — see
+`CHANGES_2026-07-27_sheet_and_largetitle.md` for root causes, what shipped,
+and an Eyeball-in-Android-Studio checklist per defect.
+
+**IOS-02 reverted (2026-07-28):** per design direction, Overview's collapsing
+large title (serif masthead + quarter pill) was removed entirely rather than
+polished further. Overview now uses the same static compact header as
+Markets/Economy/News — `LargeTitleController` was deleted, along with the
+masthead block in `fragment_dashboard.xml` and its wiring in
+`DashboardFragment`/`MainActivity`. IOS-02 is effectively un-implemented going
+forward; treat its ticket text above as historical. See
+`CHANGES_2026-07-28_remove_large_title.md`.

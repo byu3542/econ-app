@@ -133,4 +133,11 @@
     <color name="white_28">#47FFFFFF</color>
     <color name="navy_ripple">#331A1A2E</color>
     <color name="gold_hairline">#2EC9A84C</color>
+    <!-- IOS-02 follow-up (2026-07-27): neutral hairline for the persistent
+         header bar's bottom edge, split out of gold_hairline (see
+         headerSeparator in activity_main.xml). header_container stays navy in
+         both themes, so this doesn't need a values-night twin with a
+         different value — declared there anyway, identically, for the same
+         reason header_navy is. -->
+    <color name="header_hairline_neutral">#1FFFFFFF</color>
 </resources>

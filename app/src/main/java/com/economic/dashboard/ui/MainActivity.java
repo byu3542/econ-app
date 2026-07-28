@@ -5,7 +5,6 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -435,17 +434,12 @@ public class MainActivity extends AppCompatActivity {
         else                                 binding.bottomNav.setSelectedItemId(R.id.nav_overview);
     }
 
-    // ── IOS-02: collapsing large title ──────────────────────────────────────
-
-    /** The persistent header's compact centered title, for LargeTitleController. */
-    public TextView getHeaderCompactTitle() { return binding.tvHeaderCompactTitle; }
-
-    /** The persistent header's bottom hairline, for LargeTitleController. */
-    public View getHeaderSeparator() { return binding.headerSeparator; }
+    // ── Header ───────────────────────────────────────────────────────────────
 
     /**
-     * Tabs that don't (yet) drive the collapsing title behave exactly as
-     * before IOS-02: the compact title and separator are always visible.
+     * 2026-07-28: every tab shows a static compact title + hairline now (IOS-02's
+     * collapsing large title was reverted for Overview — see the dated changes
+     * doc). Called on every tab switch so no tab is special-cased.
      */
     private void resetHeaderCompactAlwaysVisible() {
         binding.tvHeaderCompactTitle.setAlpha(1f);
@@ -476,19 +470,15 @@ public class MainActivity extends AppCompatActivity {
                 String title = "Overview";
                 if (id == R.id.nav_markets) {
                     index = 1; title = "Markets"; loadFragment(new MarketsFragment(), "markets");
-                    resetHeaderCompactAlwaysVisible(); // IOS-02: no collapsing title on this tab (yet)
                 } else if (id == R.id.nav_economy) {
                     index = 3; title = "Economy"; loadFragment(new EconomyFragment(), "economy");
-                    resetHeaderCompactAlwaysVisible();
                 } else if (id == R.id.navigation_news) {
                     index = 4; title = "News"; loadFragment(new NewsFragment(), "news");
                     markNewsSeen(); clearNewsBadge(); // opening News clears the unread badge
-                    resetHeaderCompactAlwaysVisible();
                 } else {
                     loadFragment(new DashboardFragment(), "overview");
-                    // DashboardFragment's LargeTitleController takes over
-                    // tvHeaderCompactTitle/headerSeparator alpha from here.
                 }
+                resetHeaderCompactAlwaysVisible();
                 binding.tvHeaderCompactTitle.setText(title);
                 currentScreenLabel = title;
 
@@ -624,17 +614,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateHeader() {
-        // IOS-02: the quarter pill moved from the persistent header into
-        // Overview's own large-title block (DashboardFragment); nothing left
-        // here to update in the header itself.
-    }
-
-    /** "Q3 2026" — used by DashboardFragment's large-title quarter pill (IOS-02). */
-    public static String currentQuarterLabel() {
-        java.util.Calendar cal = java.util.Calendar.getInstance();
-        int month = cal.get(java.util.Calendar.MONTH), year = cal.get(java.util.Calendar.YEAR);
-        int quarter = month <= 2 ? 1 : month <= 5 ? 2 : month <= 8 ? 3 : 4;
-        return "Q" + quarter + " " + year;
+        // Nothing to update in the header itself — the compact title is set
+        // directly on tab switch (see setupBottomNav()).
     }
 
     @Override

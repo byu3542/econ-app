@@ -45,6 +45,7 @@
 
     <color name="hairline_on_surface">#1FFFFFFF</color>
     <color name="handle_on_surface">#33FFFFFF</color>
+    <color name="header_hairline_neutral">#1FFFFFFF</color>
 
     <color name="fab_ring">#2A3142</color>
 

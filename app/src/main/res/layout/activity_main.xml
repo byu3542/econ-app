@@ -41,21 +41,28 @@
             android:layout_height="wrap_content"
             android:layout_gravity="top"
             android:background="@color/header_navy_translucent"
+            android:clipChildren="false"
             android:orientation="vertical">
 
-            <!-- IOS-02: the persistent bar now only holds a compact, centered
-                 title — the large serif masthead (+ quarter pill) moved into
-                 each screen's own scroll content and collapses into this on
-                 scroll (see LargeTitleController). tvHeaderCompactTitle
-                 defaults to alpha=1 (today's always-visible behavior) for
-                 tabs that don't yet drive it; Overview's DashboardFragment
-                 sets it to 0 on attach and fades it in with scroll. -->
+            <!-- Persistent bar: a single compact, centered title, shared by
+                 all four tabs. IOS-02 briefly gave Overview a large serif
+                 masthead (+ quarter pill) that lived in its scroll content
+                 and collapsed into this bar on scroll (LargeTitleController);
+                 reverted 2026-07-28 per design direction back to a plain
+                 static header everywhere — tvHeaderCompactTitle now stays at
+                 alpha=1 on every tab (see resetHeaderCompactAlwaysVisible()
+                 in MainActivity).
+                 2026-07-27 follow-up: no vertical padding here — the bar's
+                 content height is now defined entirely by btnSettings' own
+                 (negative-margin) height below, targeting iOS's 44dp compact
+                 bar instead of the ~69dp this padding used to add on top of
+                 a 48dp icon. clipChildren=false so the icon's touch target
+                 can overflow this box's edges without being clipped. -->
             <FrameLayout
                 android:id="@+id/header_inner_layout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingTop="@dimen/space_md"
-                android:paddingBottom="@dimen/space_sm"
+                android:clipChildren="false"
                 android:paddingStart="@dimen/space_lg"
                 android:paddingEnd="@dimen/space_lg">
 
@@ -72,10 +79,20 @@
                     android:singleLine="true"
                     android:includeFontPadding="false"/>
 
+                <!-- 48dp touch target preserved (UX_DESIGN_LAWS.md Law 4,
+                     Fitts's Law: "Minimum touch target 48x48dp") via -2dp
+                     top/bottom margins rather than shrinking the ImageView
+                     itself: the view stays 48dp and overflows the
+                     FrameLayout's box by 2dp on each edge, but only
+                     contributes 44dp (48 - 2 - 2) to this FrameLayout's
+                     wrap_content height — the same 44dp the compact bar
+                     targets. -->
                 <ImageView
                     android:id="@+id/btnSettings"
                     android:layout_width="48dp"
                     android:layout_height="48dp"
+                    android:layout_marginTop="-2dp"
+                    android:layout_marginBottom="-2dp"
                     android:layout_gravity="end|center_vertical"
                     android:padding="@dimen/space_md"
                     android:src="@drawable/ic_settings"
@@ -85,15 +102,21 @@
 
             </FrameLayout>
 
-            <!-- 1dp gold hairline — doubles as the IOS-02 collapse separator.
-                 Always visible (alpha=1) for tabs without a collapsing large
-                 title; Overview fades it in from 0 as the large masthead
-                 collapses, so it only appears once content is under the bar. -->
+            <!-- 0.5dp neutral hairline under the persistent bar. Always
+                 visible (alpha=1, every tab — see
+                 resetHeaderCompactAlwaysVisible() in MainActivity).
+                 2026-07-27 follow-up: this used to double as both this
+                 hairline AND the identity gold rule under Overview's large
+                 masthead (1dp @color/gold_hairline), which read as a heavy
+                 border once it was the only thing under a compact title.
+                 That large-masthead state was later removed entirely
+                 (2026-07-28), so this View is now simply the one neutral
+                 hairline every tab's compact bar uses. -->
             <View
                 android:id="@+id/headerSeparator"
                 android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="@color/gold_hairline" />
+                android:layout_height="@dimen/divider_hairline_height"
+                android:background="@color/header_hairline_neutral" />
 
         </LinearLayout>
 

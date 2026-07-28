@@ -17,51 +17,6 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- IOS-02: large masthead — always visible (independent of the
-                 skeleton/content-loaded state below), collapses into the
-                 persistent header's compact title as this scroll view scrolls
-                 (see LargeTitleController, wired in DashboardFragment). Serif
-                 face + gold-tinted quarter pill are the identity carried over
-                 from the old always-visible header. -->
-            <LinearLayout
-                android:id="@+id/largeTitleBlock"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="@dimen/space_lg"
-                android:paddingBottom="0dp">
-
-                <TextView
-                    android:id="@+id/tvLargeTitle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Overview"
-                    android:textSize="@dimen/text_display"
-                    android:textColor="@color/text_navy"
-                    android:fontFamily="serif"
-                    android:textStyle="bold"
-                    android:textAllCaps="true"
-                    android:letterSpacing="0.08"
-                    android:includeFontPadding="false"/>
-
-                <TextView
-                    android:id="@+id/tvLargeTitleQuarter"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/space_sm"
-                    android:textSize="@dimen/text_caption"
-                    android:textColor="@color/gold_ink"
-                    android:fontFamily="sans-serif-medium"
-                    android:textAllCaps="true"
-                    android:letterSpacing="0.14"
-                    android:background="@drawable/bg_quarter_pill"
-                    android:paddingStart="@dimen/space_sm"
-                    android:paddingEnd="@dimen/space_sm"
-                    android:paddingTop="@dimen/space_xs"
-                    android:paddingBottom="@dimen/space_xs"/>
-
-            </LinearLayout>
-
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content">

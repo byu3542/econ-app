@@ -167,17 +167,6 @@ public class DashboardFragment extends Fragment {
         contentContainer = v.findViewById(R.id.contentContainer);
         tvCacheAsOf      = v.findViewById(R.id.tvCacheAsOf);
 
-        // IOS-02: collapsing large title. The quarter pill moved here from
-        // the persistent header (MainActivity.currentQuarterLabel()).
-        TextView tvLargeTitleQuarter = v.findViewById(R.id.tvLargeTitleQuarter);
-        if (tvLargeTitleQuarter != null) tvLargeTitleQuarter.setText(MainActivity.currentQuarterLabel());
-        if (getActivity() instanceof MainActivity) {
-            MainActivity host = (MainActivity) getActivity();
-            com.economic.dashboard.ui.views.LargeTitleController.attach(
-                    binding.dashboardScroll, binding.largeTitleBlock,
-                    host.getHeaderCompactTitle(), host.getHeaderSeparator());
-        }
-
         // KPI badges
         // These are <include layout="@layout/card_kpi_badge"> entries, so view
         // binding exposes them as CardKpiBadgeBinding — getRoot() gives the View.
@@ -738,11 +727,6 @@ public class DashboardFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        // IOS-02: stop driving the shared header's alpha once this screen is
-        // gone, so a torn-down Overview can't fight the tab that replaced it.
-        if (binding != null) {
-            com.economic.dashboard.ui.views.LargeTitleController.detach(binding.dashboardScroll);
-        }
         binding = null;
     }
 }
