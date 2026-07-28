@@ -311,36 +311,36 @@ class NewsAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             val textColor: Int
             when (tag) {
                 "FED" -> {
-                    bgColor = if (night) 0x2E8fa3c8.toInt() else 0x140f1729
+                    bgColor = if (night) 0x2E8fa3c8.toInt() else 0x140f1729.toInt()
                     textColor = if (night) 0xFFB9C6E0.toInt() else 0xFF0f1729.toInt()
                 }
                 "INFLATION" -> {
-                    bgColor = 0x18f0a500
+                    bgColor = 0x18f0a500.toInt()
                     textColor = if (night) 0xFFF0B23E.toInt() else 0xFFa06000.toInt()
                 }
                 "JOBS" -> {
-                    bgColor = 0x1822c55e
+                    bgColor = 0x1822c55e.toInt()
                     textColor = if (night) 0xFF6EE7A0.toInt() else 0xFF166534.toInt()
                 }
                 "YIELDS" -> {
-                    bgColor = 0x1ec9a84c
+                    bgColor = 0x1ec9a84c.toInt()
                     textColor = if (night) 0xFFDDBE6B.toInt() else 0xFF7a5a10.toInt()
                 }
                 "ECONOMY" -> {
-                    bgColor = 0x183b82f6
+                    bgColor = 0x183b82f6.toInt()
                     textColor = if (night) 0xFF8FB8F8.toInt() else 0xFF1e40af.toInt()
                 }
                 "RESEARCH" -> {
-                    bgColor = 0x186366f1
+                    bgColor = 0x186366f1.toInt()
                     textColor = if (night) 0xFFA5A8F5.toInt() else 0xFF3730a3.toInt()
                 }
                 "HOUSING" -> {
-                    bgColor = 0x1806b6d4
+                    bgColor = 0x1806b6d4.toInt()
                     textColor = if (night) 0xFF67D9EE.toInt() else 0xFF0e7490.toInt()
                 }
                 else -> { // GENERAL
-                    bgColor = 0x14888888
-                    textColor = if (night) 0xFF9AA3B5.toInt() else 0xFF666666
+                    bgColor = 0x14888888.toInt()
+                    textColor = if (night) 0xFF9AA3B5.toInt() else 0xFF666666.toInt()
                 }
             }
             val bg = GradientDrawable()
@@ -359,12 +359,12 @@ class NewsAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
                     bar.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
                 }
                 1 -> {
-                    bar.setBackgroundColor(0x59c9a84c) // gold @ ~35% alpha
+                    bar.setBackgroundColor(0x59c9a84c.toInt()) // gold @ ~35% alpha
                     bar.contentDescription = "Medium impact story"
                     bar.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
                 }
                 else -> {
-                    bar.setBackgroundColor(0x00000000) // transparent
+                    bar.setBackgroundColor(0x00000000.toInt()) // transparent
                     bar.contentDescription = null
                     bar.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
                 }

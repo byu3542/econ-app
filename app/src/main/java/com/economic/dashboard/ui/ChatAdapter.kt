@@ -150,7 +150,11 @@ class ChatAdapter(
             // (onBindViewHolder, the PAYLOAD_TEXT path) — fail loudly if that
             // invariant is ever broken, same as the original's implicit trust.
             val mw = checkNotNull(markwon) { "ensureMarkwon() must run before renderText()" }
-            val display = stripStrayMarkdown(stripChartTags(m.text))
+            // stripStrayMarkdown's signature stays nullable-in/nullable-out because
+            // ChatAdapterTest calls it directly with null and asserts a null result.
+            // stripChartTags always returns non-null, so this fallback is unreachable
+            // in practice — it just satisfies the compiler without loosening that contract.
+            val display = stripStrayMarkdown(stripChartTags(m.text)) ?: ""
             mw.setMarkdown(holder.tvMessage, display)
             addMetricCitations(holder.tvMessage)
             styleToolRoundStatus(holder.tvMessage)
