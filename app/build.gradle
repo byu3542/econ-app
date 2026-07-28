@@ -1,5 +1,7 @@
 plugins {
     id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+    id 'com.google.devtools.ksp'
 }
 
 android {
@@ -39,6 +41,9 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
     }
     buildFeatures {
         viewBinding true
@@ -86,6 +91,7 @@ dependencies {
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
     implementation 'com.facebook.shimmer:shimmer:0.5.0'  // skeleton loading
     implementation 'androidx.dynamicanimation:dynamicanimation:1.0.0'  // IOS-01 press springs
+    implementation 'androidx.core:core-ktx:1.13.1'
 
     // Networking
     implementation 'com.squareup.retrofit2:retrofit:2.9.0'
@@ -114,7 +120,7 @@ dependencies {
 
     // Room (local database for caching economic data)
     implementation 'androidx.room:room-runtime:2.6.1'
-    annotationProcessor 'androidx.room:room-compiler:2.6.1'
+    ksp 'androidx.room:room-compiler:2.6.1'
 
     // WorkManager (background refresh scheduling)
     implementation 'androidx.work:work-runtime:2.9.0'

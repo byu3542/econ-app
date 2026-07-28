@@ -87,6 +87,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // Phase 0 throwaway — remove with Hello.kt once build is confirmed on device.
+        android.util.Log.d("KotlinMigration", com.economic.dashboard.Hello.greet());
         freshLaunch = (savedInstanceState == null);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
