@@ -32,7 +32,7 @@ public class NewsApiClient {
     }
 
     public void searchNews(String query, String sortBy, NewsCallback callback) {
-        AppExecutors.getInstance().networkIO().execute(() -> {
+        AppExecutors.networkIO().execute(() -> {
             try {
                 String url = BASE_URL + ENDPOINT_EVERYTHING +
                         "?q=" + urlEncode(query) +

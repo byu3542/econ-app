@@ -54,7 +54,7 @@ public class EconomicRepository {
     /** Full-control overload — callers should pass the correct category for display and filtering. */
     public void fetchFredData(String seriesId, String seriesName, String limit, String frequency,
                               String category, DataCallback<List<EconomicDataPoint>> callback) {
-        AppExecutors.getInstance().networkIO().execute(() -> {
+        AppExecutors.networkIO().execute(() -> {
             try {
                 Map<String, String> params = new HashMap<>();
                 params.put("series_id", seriesId);
@@ -109,7 +109,7 @@ public class EconomicRepository {
     // PCE INFLATION — FRED
     // ============================================================
     public void fetchPCEData(DataCallback<List<EconomicDataPoint>> callback) {
-        AppExecutors.getInstance().networkIO().execute(() -> {
+        AppExecutors.networkIO().execute(() -> {
             try {
                 // Fetch PCE (all items) — 120 months for percentile context
                 List<EconomicDataPoint> pceAll   = fetchFredSync(ApiConfig.FRED_PCE,      "PCE Price Index",       ApiConfig.FRED_PCE_LIMIT, "m", "Inflation");
@@ -136,7 +136,7 @@ public class EconomicRepository {
     // HOUSING DATA — FRED
     // ============================================================
     public void fetchHousingData(DataCallback<List<EconomicDataPoint>> callback) {
-        AppExecutors.getInstance().networkIO().execute(() -> {
+        AppExecutors.networkIO().execute(() -> {
             try {
                 List<EconomicDataPoint> starts = fetchFredSync(
                         ApiConfig.FRED_HOUSING_STARTS, "Housing Starts",
@@ -197,7 +197,7 @@ public class EconomicRepository {
     // MBS & MORTGAGE RATES — FRED
     // ============================================================
     public void fetchMbsMortgageData(DataCallback<List<EconomicDataPoint>> callback) {
-        AppExecutors.getInstance().networkIO().execute(() -> {
+        AppExecutors.networkIO().execute(() -> {
             try {
                 List<EconomicDataPoint> bankMbs = fetchFredSync(
                         ApiConfig.FRED_BANK_MBS, "Bank MBS Holdings",
@@ -231,7 +231,7 @@ public class EconomicRepository {
     // GDP — BEA NIPA TABLE T10101
     // ============================================================
     public void fetchGDPData(DataCallback<List<EconomicDataPoint>> callback) {
-        AppExecutors.getInstance().networkIO().execute(() -> {
+        AppExecutors.networkIO().execute(() -> {
             try {
                 int currentYear = Calendar.getInstance().get(Calendar.YEAR);
                 StringBuilder yearsBuilder = new StringBuilder();
@@ -354,7 +354,7 @@ public class EconomicRepository {
     private void fetchBlsData(List<String> seriesIds, String category,
                                String[] seriesNames, String[] units,
                                DataCallback<List<EconomicDataPoint>> callback) {
-        AppExecutors.getInstance().networkIO().execute(() -> {
+        AppExecutors.networkIO().execute(() -> {
             try {
                 int currentYear = Calendar.getInstance().get(Calendar.YEAR);
                 int startYear   = currentYear - Integer.parseInt(ApiConfig.BLS_HISTORY_YEARS);
@@ -429,7 +429,7 @@ public class EconomicRepository {
     // TREASURY YIELD CURVE
     // ============================================================
     public void fetchTreasuryRates(DataCallback<List<EconomicDataPoint>> callback) {
-        AppExecutors.getInstance().networkIO().execute(() -> {
+        AppExecutors.networkIO().execute(() -> {
             try {
                 int currentYear = Calendar.getInstance().get(Calendar.YEAR);
                 String url = ApiConfig.TREASURY_BASE_URL +

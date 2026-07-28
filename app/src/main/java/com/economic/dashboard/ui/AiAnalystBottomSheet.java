@@ -249,7 +249,7 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
         // main thread). Uses application context — safe if the sheet closes.
         final android.content.Context appCtx = requireContext().getApplicationContext();
         appContext = appCtx;
-        AppExecutors.getInstance().diskIO().execute(() -> historicalContext = HistoricalContextBuilder.build(appCtx));
+        AppExecutors.diskIO().execute(() -> historicalContext = HistoricalContextBuilder.build(appCtx));
 
         // AI Law 3: back get_series with the live ViewModel series the app
         // already charts, so a long-press on ANY fragment has data behind it.
@@ -450,7 +450,7 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
     /** Loads + encodes an image on a background thread and shows the preview strip. */
     private void attachImage(Uri uri, boolean autoSend) {
         final android.content.Context appCtx = requireContext().getApplicationContext();
-        AppExecutors.getInstance().diskIO().execute(() -> {
+        AppExecutors.diskIO().execute(() -> {
             ImageUtils.EncodedImage img = ImageUtils.encode(appCtx, uri);
             runOnUi(() -> {
                 if (binding == null) return;

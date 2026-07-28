@@ -75,7 +75,7 @@ public class HistoricalDataRepository {
      *                 Pass null if you don't need a completion signal.
      */
     public static void refreshIfStale(Context context, RefreshCallback callback) {
-        AppExecutors.getInstance().networkIO().execute(() -> {
+        AppExecutors.networkIO().execute(() -> {
             try {
                 EconomicHistoryDao dao = YieldDatabase.getInstance(context).economicHistoryDao();
                 long lastCache = dao.getLastCacheTimeSync();
@@ -105,7 +105,7 @@ public class HistoricalDataRepository {
      * Clears existing data before fetching.
      */
     public static void forceRefresh(Context context, RefreshCallback callback) {
-        AppExecutors.getInstance().networkIO().execute(() -> {
+        AppExecutors.networkIO().execute(() -> {
             try {
                 EconomicHistoryDao dao = YieldDatabase.getInstance(context).economicHistoryDao();
                 dao.clearAll();
@@ -166,7 +166,7 @@ public class HistoricalDataRepository {
             AtomicInteger successCount,
             Runnable onDone) {
 
-        AppExecutors.getInstance().networkIO().execute(() -> {
+        AppExecutors.networkIO().execute(() -> {
             try {
                 Map<String, String> params = new HashMap<>();
                 params.put("series_id",  seriesId);
@@ -226,7 +226,7 @@ public class HistoricalDataRepository {
             AtomicInteger successCount,
             Runnable onDone) {
 
-        AppExecutors.getInstance().networkIO().execute(() -> {
+        AppExecutors.networkIO().execute(() -> {
             try {
                 int currentYear = Calendar.getInstance().get(Calendar.YEAR);
                 int startYear   = currentYear - 2;  // 2 years back
@@ -303,7 +303,7 @@ public class HistoricalDataRepository {
             AtomicInteger successCount,
             Runnable onDone) {
 
-        AppExecutors.getInstance().networkIO().execute(() -> {
+        AppExecutors.networkIO().execute(() -> {
             try {
                 int currentYear = Calendar.getInstance().get(Calendar.YEAR);
                 // Build comma-separated year list for the past 3 years

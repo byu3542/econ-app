@@ -55,7 +55,7 @@ public class TreasuryYieldRepository {
     }
 
     private void checkCacheAndRefreshIfNeeded() {
-        AppExecutors.getInstance().diskIO().execute(() -> {
+        AppExecutors.diskIO().execute(() -> {
             try {
                 long lastCacheTime = dao.getLastCacheTimeSync();
                 long currentTime = System.currentTimeMillis();
@@ -92,7 +92,7 @@ public class TreasuryYieldRepository {
     }
 
     private void updateCache(List<EconomicDataPoint> economicDataPoints) {
-        AppExecutors.getInstance().diskIO().execute(() -> {
+        AppExecutors.diskIO().execute(() -> {
             try {
                 long currentTime = System.currentTimeMillis();
                 List<TreasuryYield> yieldEntities = new ArrayList<>();
@@ -114,7 +114,7 @@ public class TreasuryYieldRepository {
     }
 
     public void clearCache() {
-        AppExecutors.getInstance().diskIO().execute(() -> {
+        AppExecutors.diskIO().execute(() -> {
             try { dao.clear(); Log.d(TAG, "Cache cleared"); }
             catch (Exception e) { Log.e(TAG, "Error clearing cache", e); }
         });

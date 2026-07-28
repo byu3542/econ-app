@@ -235,7 +235,7 @@ public class MainActivity extends AppCompatActivity {
 
     /** Restores the saved conversation; falls back to the welcome message. */
     private void loadPersistedChat() {
-        AppExecutors.getInstance().diskIO().execute(() -> {
+        AppExecutors.diskIO().execute(() -> {
             List<ChatMessageEntity> saved =
                     YieldDatabase.getInstance(this).chatMessageDao().getAll();
             List<ChatMessage> restored = new ArrayList<>();
@@ -278,7 +278,7 @@ public class MainActivity extends AppCompatActivity {
     /** Saves a message so the conversation survives app restarts. */
     public void persistChatMessage(ChatMessage m) {
         if (m == null || m.isTyping() || m.isError()) return;
-        AppExecutors.getInstance().diskIO().execute(() -> {
+        AppExecutors.diskIO().execute(() -> {
             YieldDatabase db = YieldDatabase.getInstance(this);
             db.chatMessageDao().insert(ChatMessageEntity.from(m));
             db.chatMessageDao().trim(CHAT_PERSIST_LIMIT);
@@ -287,7 +287,7 @@ public class MainActivity extends AppCompatActivity {
 
     /** Wipes the stored conversation and resets the visible chat. */
     public void clearChatHistory() {
-        AppExecutors.getInstance().diskIO().execute(() ->
+        AppExecutors.diskIO().execute(() ->
                 YieldDatabase.getInstance(this).chatMessageDao().clearAll());
         while (conversationHistory.length() > 0) conversationHistory.remove(0);
         lastUserQuery = "";

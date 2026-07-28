@@ -131,7 +131,7 @@ public final class CacheManager {
      * Read cache statistics off the main thread and deliver them via callback.
      */
     public static void getStatus(Context context, StatusCallback callback) {
-        AppExecutors.getInstance().diskIO().execute(() -> {
+        AppExecutors.diskIO().execute(() -> {
             try {
                 EconomicHistoryDao dao =
                         YieldDatabase.getInstance(context).economicHistoryDao();
@@ -189,7 +189,7 @@ public final class CacheManager {
      * APIs on next refresh, so this is always safe.
      */
     public static void clearAllCaches(Context context, OperationCallback callback) {
-        AppExecutors.getInstance().diskIO().execute(() -> {
+        AppExecutors.diskIO().execute(() -> {
             boolean ok = true;
             try {
                 YieldDatabase db = YieldDatabase.getInstance(context);

@@ -322,7 +322,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
         holder.sparkline.setTag(cacheKey);
         final Context appCtx = holder.itemView.getContext().getApplicationContext();
         final int m2 = months;
-        AppExecutors.getInstance().diskIO().execute(() -> {
+        AppExecutors.diskIO().execute(() -> {
             java.util.Calendar cal = java.util.Calendar.getInstance();
             cal.add(java.util.Calendar.MONTH, -m2);
             String cutoff = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(cal.getTime());

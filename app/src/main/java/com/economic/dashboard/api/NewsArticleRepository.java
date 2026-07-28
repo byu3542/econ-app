@@ -42,7 +42,7 @@ public class NewsArticleRepository {
                     article.cachedAtMillis = now;
                 }
 
-                AppExecutors.getInstance().diskIO().execute(() -> {
+                AppExecutors.diskIO().execute(() -> {
                     dao.insertAll(articles);
                     Log.d(TAG, "Articles cached to database");
                 });
@@ -68,6 +68,6 @@ public class NewsArticleRepository {
     }
 
     public void markAsRead(int articleId) {
-        AppExecutors.getInstance().diskIO().execute(() -> dao.markAsRead(articleId));
+        AppExecutors.diskIO().execute(() -> dao.markAsRead(articleId));
     }
 }
