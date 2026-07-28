@@ -150,14 +150,14 @@ public class AnalystToolExecutor {
                     + "data snapshot in the system prompt and say the history isn't loaded.";
 
         StringBuilder sb = new StringBuilder();
-        String seriesName = rows.get(0).seriesName;
+        String seriesName = rows.get(0).getSeriesName();
         sb.append(seriesName).append(" (").append(seriesId).append("), last ")
           .append(months).append(" months:\n");
         int count = 0;
         for (EconomicHistoryEntry e : rows) {
-            if (e.date.compareTo(cutoff) < 0) continue;
-            sb.append(e.date).append(": ")
-              .append(String.format(Locale.US, "%.2f", e.value)).append(e.unit).append("\n");
+            if (e.getDate().compareTo(cutoff) < 0) continue;
+            sb.append(e.getDate()).append(": ")
+              .append(String.format(Locale.US, "%.2f", e.getValue())).append(e.getUnit()).append("\n");
             count++;
         }
         return count == 0 ? "No data points in the requested window." : sb.toString();

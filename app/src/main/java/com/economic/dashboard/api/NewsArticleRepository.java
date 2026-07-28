@@ -39,7 +39,7 @@ public class NewsArticleRepository {
 
                 long now = System.currentTimeMillis();
                 for (NewsArticle article : articles) {
-                    article.cachedAtMillis = now;
+                    article.setCachedAtMillis(now);
                 }
 
                 AppExecutors.diskIO().execute(() -> {

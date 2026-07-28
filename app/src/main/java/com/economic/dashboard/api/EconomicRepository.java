@@ -80,13 +80,13 @@ public class EconomicRepository {
 
                 List<EconomicDataPoint> results = new ArrayList<>();
                 FredResponse fredResponse = response.body();
-                if (fredResponse.observations != null) {
-                    for (FredResponse.FredObservation obs : fredResponse.observations) {
+                if (fredResponse.getObservations() != null) {
+                    for (FredResponse.FredObservation obs : fredResponse.getObservations()) {
                         try {
-                            if (isValidValue(obs.value)) {
+                            if (isValidValue(obs.getValue())) {
                                 results.add(new EconomicDataPoint(
                                         "FRED", category, seriesName,
-                                        obs.date, Double.parseDouble(obs.value), "%"
+                                        obs.getDate(), Double.parseDouble(obs.getValue()), "%"
                                 ));
                             }
                         } catch (NumberFormatException ignored) {}
@@ -178,13 +178,13 @@ public class EconomicRepository {
         retrofit2.Response<FredResponse> response = call.execute();
 
         List<EconomicDataPoint> results = new ArrayList<>();
-        if (response.isSuccessful() && response.body() != null && response.body().observations != null) {
-            for (FredResponse.FredObservation obs : response.body().observations) {
+        if (response.isSuccessful() && response.body() != null && response.body().getObservations() != null) {
+            for (FredResponse.FredObservation obs : response.body().getObservations()) {
                 try {
-                    if (isValidValue(obs.value)) {
+                    if (isValidValue(obs.getValue())) {
                         results.add(new EconomicDataPoint(
                                 "FRED", category, seriesName,
-                                obs.date, Double.parseDouble(obs.value), "Index"
+                                obs.getDate(), Double.parseDouble(obs.getValue()), "Index"
                         ));
                     }
                 } catch (NumberFormatException ignored) {}
@@ -260,13 +260,13 @@ public class EconomicRepository {
                 BeaResponse beaResp = response.body();
                 List<EconomicDataPoint> results = new ArrayList<>();
 
-                if (beaResp.BEAAPI != null && beaResp.BEAAPI.Results != null
-                        && beaResp.BEAAPI.Results.Data != null) {
-                    for (BeaResponse.BeaDataPoint dp : beaResp.BEAAPI.Results.Data) {
-                        if (isValidValue(dp.DataValue) && dp.TimePeriod != null) {
+                if (beaResp.getBEAAPI() != null && beaResp.getBEAAPI().getResults() != null
+                        && beaResp.getBEAAPI().getResults().getData() != null) {
+                    for (BeaResponse.BeaDataPoint dp : beaResp.getBEAAPI().getResults().getData()) {
+                        if (isValidValue(dp.getDataValue()) && dp.getTimePeriod() != null) {
                             try {
-                                double value = Double.parseDouble(dp.DataValue.replace(",", ""));
-                                String date = beaTimePeriodToDate(dp.TimePeriod);
+                                double value = Double.parseDouble(dp.getDataValue().replace(",", ""));
+                                String date = beaTimePeriodToDate(dp.getTimePeriod());
                                 results.add(new EconomicDataPoint(
                                         "BEA", "GDP", dp.getDescription(),
                                         date, value, "%"
@@ -380,31 +380,31 @@ public class EconomicRepository {
                 BlsResponse blsResp = response.body();
                 List<EconomicDataPoint> results = new ArrayList<>();
 
-                if (blsResp.Results != null && blsResp.Results.series != null) {
-                    for (BlsResponse.BlsSeries series : blsResp.Results.series) {
+                if (blsResp.getResults() != null && blsResp.getResults().getSeries() != null) {
+                    for (BlsResponse.BlsSeries series : blsResp.getResults().getSeries()) {
                         // Map series ID → human name + unit
-                        String seriesName = series.seriesID;
+                        String seriesName = series.getSeriesID();
                         String unit = "";
                         for (int i = 0; i < seriesIds.size(); i++) {
-                            if (seriesIds.get(i).equals(series.seriesID)) {
+                            if (seriesIds.get(i).equals(series.getSeriesID())) {
                                 seriesName = seriesNames[i];
                                 unit = units[i];
                                 break;
                             }
                         }
 
-                        if (series.data != null) {
-                            for (BlsResponse.BlsDataPoint dp : series.data) {
+                        if (series.getData() != null) {
+                            for (BlsResponse.BlsDataPoint dp : series.getData()) {
                                 try {
-                                    if (dp.period != null && dp.period.startsWith("M")
-                                            && isValidValue(dp.value)) {
-                                        int month = Integer.parseInt(dp.period.substring(1));
-                                        String date = dp.year + "-"
+                                    if (dp.getPeriod() != null && dp.getPeriod().startsWith("M")
+                                            && isValidValue(dp.getValue())) {
+                                        int month = Integer.parseInt(dp.getPeriod().substring(1));
+                                        String date = dp.getYear() + "-"
                                                 + String.format(Locale.US, "%02d", month)
                                                 + "-01";
                                         results.add(new EconomicDataPoint(
                                                 "BLS", category, seriesName,
-                                                date, Double.parseDouble(dp.value), unit));
+                                                date, Double.parseDouble(dp.getValue()), unit));
                                     }
                                 } catch (NumberFormatException ignored) {}
                             }

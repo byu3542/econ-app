@@ -8,7 +8,7 @@ import java.util.List;
 public class SmartPromptGenerator {
 
     public static List<String> generatePromptsForArticle(NewsArticle article) {
-        return generatePromptsForHeadline(article.title);
+        return generatePromptsForHeadline(article.getTitle());
     }
 
     /** Keyword-matched prompts for any raw headline string (used by the chat sheet). */
@@ -94,7 +94,7 @@ public class SmartPromptGenerator {
         FEDERAL_RESERVE, INFLATION, EMPLOYMENT, GDP_GROWTH, HOUSING, DEBT_DEFICIT, WAGES, STOCK_MARKET, OTHER;
 
         public static EconomicCategory detectFromArticle(NewsArticle article) {
-            String text = (article.title + " " + article.description).toLowerCase();
+            String text = (article.getTitle() + " " + article.getDescription()).toLowerCase();
             if (text.contains("fed") || text.contains("federal reserve")) return FEDERAL_RESERVE;
             if (text.contains("inflation") || text.contains("cpi")) return INFLATION;
             if (text.contains("unemployment") || text.contains("jobs")) return EMPLOYMENT;

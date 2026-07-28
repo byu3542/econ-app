@@ -186,14 +186,14 @@ public class HistoricalDataRepository {
                 }
 
                 List<EconomicHistoryEntry> entries = new ArrayList<>();
-                if (response.body().observations != null) {
-                    for (FredResponse.FredObservation obs : response.body().observations) {
-                        if (isValidValue(obs.value)) {
+                if (response.body().getObservations() != null) {
+                    for (FredResponse.FredObservation obs : response.body().getObservations()) {
+                        if (isValidValue(obs.getValue())) {
                             try {
                                 entries.add(new EconomicHistoryEntry(
                                         seriesId, seriesName, category,
-                                        obs.date,
-                                        Double.parseDouble(obs.value),
+                                        obs.getDate(),
+                                        Double.parseDouble(obs.getValue()),
                                         "%", now
                                 ));
                             } catch (NumberFormatException ignored) {}
@@ -249,20 +249,20 @@ public class HistoricalDataRepository {
                 List<EconomicHistoryEntry> entries = new ArrayList<>();
                 BlsResponse blsResp = response.body();
 
-                if (blsResp.Results != null && blsResp.Results.series != null) {
-                    for (BlsResponse.BlsSeries series : blsResp.Results.series) {
-                        if (!SERIES_UNEMPLOYMENT.equals(series.seriesID)) continue;
-                        if (series.data == null) continue;
+                if (blsResp.getResults() != null && blsResp.getResults().getSeries() != null) {
+                    for (BlsResponse.BlsSeries series : blsResp.getResults().getSeries()) {
+                        if (!SERIES_UNEMPLOYMENT.equals(series.getSeriesID())) continue;
+                        if (series.getData() == null) continue;
 
-                        for (BlsResponse.BlsDataPoint dp : series.data) {
+                        for (BlsResponse.BlsDataPoint dp : series.getData()) {
                             // BLS periods: "M01"–"M12" are monthly; skip annual "M13"
-                            if (dp.period == null || !dp.period.startsWith("M")) continue;
-                            if ("M13".equals(dp.period)) continue;
-                            if (!isValidValue(dp.value)) continue;
+                            if (dp.getPeriod() == null || !dp.getPeriod().startsWith("M")) continue;
+                            if ("M13".equals(dp.getPeriod())) continue;
+                            if (!isValidValue(dp.getValue())) continue;
 
                             try {
-                                int month = Integer.parseInt(dp.period.substring(1));
-                                String date = dp.year + "-"
+                                int month = Integer.parseInt(dp.getPeriod().substring(1));
+                                String date = dp.getYear() + "-"
                                         + String.format(Locale.US, "%02d", month)
                                         + "-01";
                                 entries.add(new EconomicHistoryEntry(
@@ -270,7 +270,7 @@ public class HistoricalDataRepository {
                                         "Unemployment Rate",
                                         "Employment",
                                         date,
-                                        Double.parseDouble(dp.value),
+                                        Double.parseDouble(dp.getValue()),
                                         "%", now
                                 ));
                             } catch (NumberFormatException ignored) {}
@@ -335,11 +335,11 @@ public class HistoricalDataRepository {
                 BeaResponse beaResp = response.body();
                 List<EconomicHistoryEntry> entries = new ArrayList<>();
 
-                if (beaResp.BEAAPI != null && beaResp.BEAAPI.Results != null
-                        && beaResp.BEAAPI.Results.Data != null) {
+                if (beaResp.getBEAAPI() != null && beaResp.getBEAAPI().getResults() != null
+                        && beaResp.getBEAAPI().getResults().getData() != null) {
 
-                    for (BeaResponse.BeaDataPoint dp : beaResp.BEAAPI.Results.Data) {
-                        if (dp.TimePeriod == null || !isValidValue(dp.DataValue)) continue;
+                    for (BeaResponse.BeaDataPoint dp : beaResp.getBEAAPI().getResults().getData()) {
+                        if (dp.getTimePeriod() == null || !isValidValue(dp.getDataValue())) continue;
 
                         // Only keep "Gross domestic product" line (LineDescription)
                         String desc = dp.getDescription();
@@ -347,8 +347,8 @@ public class HistoricalDataRepository {
                                 .contains("gross domestic product")) continue;
 
                         try {
-                            double value = Double.parseDouble(dp.DataValue.replace(",", ""));
-                            String date  = beaTimePeriodToDate(dp.TimePeriod);
+                            double value = Double.parseDouble(dp.getDataValue().replace(",", ""));
+                            String date  = beaTimePeriodToDate(dp.getTimePeriod());
                             if (date == null) continue;
 
                             entries.add(new EconomicHistoryEntry(

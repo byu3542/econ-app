@@ -111,9 +111,9 @@ public class HistoricalContextBuilder {
         double max  = Double.MIN_VALUE;
         double sum  = 0;
         for (EconomicHistoryEntry e : rows) {
-            if (e.value < min) min = e.value;
-            if (e.value > max) max = e.value;
-            sum += e.value;
+            if (e.getValue() < min) min = e.getValue();
+            if (e.getValue() > max) max = e.getValue();
+            sum += e.getValue();
         }
         double avg    = sum / rows.size();
         EconomicHistoryEntry latest = rows.get(rows.size() - 1);
@@ -121,7 +121,7 @@ public class HistoricalContextBuilder {
 
         sb.append(String.format(Locale.US,
                 "  %s: Range %.2f–%.2f%%, 2yr avg %.2f%%, Latest %.2f%% (%s) %s\n",
-                label, min, max, avg, latest.value, latest.date, trend));
+                label, min, max, avg, latest.getValue(), latest.getDate(), trend));
     }
 
     /** Formats the unemployment block (similar to yield line but no %). */
@@ -136,15 +136,15 @@ public class HistoricalContextBuilder {
         double min = Double.MAX_VALUE;
         double max = Double.MIN_VALUE;
         for (EconomicHistoryEntry e : rows) {
-            if (e.value < min) min = e.value;
-            if (e.value > max) max = e.value;
+            if (e.getValue() < min) min = e.getValue();
+            if (e.getValue() > max) max = e.getValue();
         }
         EconomicHistoryEntry latest = rows.get(rows.size() - 1);
         String trend = trendArrow(rows);
 
         sb.append(String.format(Locale.US,
                 "  Range %.1f–%.1f%%, Latest %.1f%% (%s) %s\n",
-                min, max, latest.value, latest.date, trend));
+                min, max, latest.getValue(), latest.getDate(), trend));
     }
 
     /**
@@ -167,10 +167,10 @@ public class HistoricalContextBuilder {
 
         for (int i = start; i < rows.size(); i++) {
             EconomicHistoryEntry e = rows.get(i);
-            String qLabel = dateToQuarterLabel(e.date);
-            qSb.append(String.format(Locale.US, "%s %.1f%%", qLabel, e.value));
+            String qLabel = dateToQuarterLabel(e.getDate());
+            qSb.append(String.format(Locale.US, "%s %.1f%%", qLabel, e.getValue()));
             if (i < rows.size() - 1) qSb.append(" | ");
-            sum += e.value;
+            sum += e.getValue();
             count++;
         }
         sb.append(qSb).append("\n");
@@ -195,8 +195,8 @@ public class HistoricalContextBuilder {
         // earlier ones within the same month (= last reading of the month).
         Map<String, Double> byMonth = new LinkedHashMap<>();
         for (EconomicHistoryEntry e : rows) {
-            if (e.date != null && e.date.length() >= 7) {
-                byMonth.put(e.date.substring(0, 7), e.value);
+            if (e.getDate() != null && e.getDate().length() >= 7) {
+                byMonth.put(e.getDate().substring(0, 7), e.getValue());
             }
         }
         if (byMonth.isEmpty()) return;
@@ -223,8 +223,8 @@ public class HistoricalContextBuilder {
     private static String trendArrow(List<EconomicHistoryEntry> rows) {
         if (rows.size() < 8) {
             // Not enough history — compare first vs last
-            double first = rows.get(0).value;
-            double last  = rows.get(rows.size() - 1).value;
+            double first = rows.get(0).getValue();
+            double last  = rows.get(rows.size() - 1).getValue();
             double diff  = last - first;
             if (Math.abs(diff) < 0.10) return "→ stable";
             return diff > 0 ? "↑ rising" : "▼ declining";
@@ -233,8 +233,8 @@ public class HistoricalContextBuilder {
         // Compare avg of last 4 vs avg of preceding 4
         double recentSum = 0, priorSum = 0;
         int n = rows.size();
-        for (int i = n - 4; i < n;       i++) recentSum += rows.get(i).value;
-        for (int i = n - 8; i < n - 4;   i++) priorSum  += rows.get(i).value;
+        for (int i = n - 4; i < n;       i++) recentSum += rows.get(i).getValue();
+        for (int i = n - 8; i < n - 4;   i++) priorSum  += rows.get(i).getValue();
         double diff = (recentSum - priorSum) / 4.0;
 
         if (Math.abs(diff) < 0.10) return "→ stable";

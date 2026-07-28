@@ -350,7 +350,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
                         YieldDatabase.getInstance(appCtx).economicHistoryDao().getSeriesSync(seriesId);
                 if (rows != null)
                     for (EconomicHistoryEntry row : rows)
-                        if (row.date.compareTo(cutoff) >= 0) values.add(row.value);
+                        if (row.getDate().compareTo(cutoff) >= 0) values.add(row.getValue());
             }
             synchronized (seriesCache) { seriesCache.put(cacheKey, values); }
             holder.sparkline.post(() -> {

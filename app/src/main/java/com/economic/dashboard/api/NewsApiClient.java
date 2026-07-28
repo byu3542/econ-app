@@ -103,25 +103,25 @@ public class NewsApiClient {
     private NewsArticle parseArticleJson(JSONObject json) throws Exception {
         NewsArticle article = new NewsArticle();
 
-        article.title = json.optString("title", "");
-        article.description = json.optString("description", "");
-        article.content = json.optString("content", "");
-        article.url = json.optString("url", "");
-        article.imageUrl = json.optString("urlToImage", "");
-        article.publishedAt = json.optString("publishedAt", "");
-        article.source = json.optJSONObject("source").optString("name", "");
-        article.author = json.optString("author", "");
+        article.setTitle(json.optString("title", ""));
+        article.setDescription(json.optString("description", ""));
+        article.setContent(json.optString("content", ""));
+        article.setUrl(json.optString("url", ""));
+        article.setImageUrl(json.optString("urlToImage", ""));
+        article.setPublishedAt(json.optString("publishedAt", ""));
+        article.setSource(json.optJSONObject("source").optString("name", ""));
+        article.setAuthor(json.optString("author", ""));
 
-        article.contentLength = (article.description + " " + article.content).length();
-        int wordCount = article.contentLength / 5;
-        article.estimatedReadMinutes = Math.max(1, wordCount / 200);
-        article.economicRelevanceScore = calculateRelevanceScore(article);
+        article.setContentLength((article.getDescription() + " " + article.getContent()).length());
+        int wordCount = article.getContentLength() / 5;
+        article.setEstimatedReadMinutes(Math.max(1, wordCount / 200));
+        article.setEconomicRelevanceScore(calculateRelevanceScore(article));
 
         return article;
     }
 
     private int calculateRelevanceScore(NewsArticle article) {
-        String text = (article.title + " " + article.description + " " + article.content).toLowerCase();
+        String text = (article.getTitle() + " " + article.getDescription() + " " + article.getContent()).toLowerCase();
         int score = 0;
 
         if (text.contains("federal reserve")) score += 25;

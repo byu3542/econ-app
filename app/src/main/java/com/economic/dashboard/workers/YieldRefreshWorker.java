@@ -80,11 +80,11 @@ public class YieldRefreshWorker extends Worker {
             Double latest = null, previous = null;
             String latestDate = null;
             for (TreasuryYield y : rows) {
-                if (!"10 Year".equals(y.series)) continue;
+                if (!"10 Year".equals(y.getSeries())) continue;
                 if (latest == null) {
-                    latest = y.value; latestDate = y.date;
-                } else if (!y.date.equals(latestDate)) {
-                    previous = y.value; break;
+                    latest = y.getValue(); latestDate = y.getDate();
+                } else if (!y.getDate().equals(latestDate)) {
+                    previous = y.getValue(); break;
                 }
             }
             if (latest == null || previous == null || latestDate == null) return;
