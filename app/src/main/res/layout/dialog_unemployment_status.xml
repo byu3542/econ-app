@@ -219,15 +219,13 @@
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 
-    <TextView
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btnClose"
+        style="@style/BenchmarkDismissButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="DISMISS"
-        android:textColor="@color/accent_gold"
-        android:textSize="@dimen/text_secondary"
-        android:textStyle="bold"
-        android:padding="@dimen/space_lg"
+        android:contentDescription="Close"
         android:layout_gravity="end"
         android:layout_marginTop="@dimen/space_sm" />
 

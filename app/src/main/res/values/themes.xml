@@ -269,6 +269,15 @@
         <item name="android:paddingEnd">4dp</item>
     </style>
 
+    <!-- Dismiss button on the benchmark-scale dialogs (dark navy background) -->
+    <style name="BenchmarkDismissButton" parent="Widget.MaterialComponents.Button.OutlinedButton">
+        <item name="android:textColor">@color/accent_gold</item>
+        <item name="strokeColor">@color/accent_gold</item>
+        <item name="rippleColor">@color/accent_gold</item>
+        <item name="android:textSize">@dimen/text_secondary</item>
+        <item name="android:letterSpacing">0.05</item>
+    </style>
+
     <!-- Shimmer skeleton placeholders (Overview) -->
     <style name="SkeletonRow">
         <item name="android:layout_width">match_parent</item>

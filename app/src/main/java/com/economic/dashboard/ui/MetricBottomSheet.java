@@ -54,11 +54,13 @@ public final class MetricBottomSheet {
                     sheetScroll.getPaddingBottom() + EdgeToEdgeInsets.getSystemBottomInsetPx());
         }
 
-        // IOS-06: medium detent — opens to ~55% height, drags to full instead
-        // of always snapping straight to fitToContents' single measured height.
+        // The sheet is sized to its content rather than a fixed ratio, so it
+        // always occupies exactly the space its content needs — never dead
+        // space below a short list, never a half-height that clips a taller
+        // one and forces an extra drag to see the rest.
         BottomSheetBehavior<FrameLayout> behavior = dialog.getBehavior();
-        behavior.setFitToContents(false);
-        behavior.setHalfExpandedRatio(0.55f);
+        behavior.setFitToContents(true);
+        behavior.setSkipCollapsed(true);
 
         // Expanded state stops short of the status bar (+8dp) instead of going
         // flush to y=0 — a sheet flush to the top reads as a full-screen
@@ -120,6 +122,13 @@ public final class MetricBottomSheet {
         }
 
         dialog.show();
+
+        // Setting state before the sheet has been laid out is unreliable (the
+        // behavior can re-resolve to STATE_COLLAPSED on first measure), so the
+        // initial state is set after the first layout pass, via post().
+        content.post(() -> {
+            if (dialog.isShowing()) behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+        });
         return content;
     }
 

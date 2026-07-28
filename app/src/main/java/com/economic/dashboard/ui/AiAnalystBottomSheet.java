@@ -317,7 +317,7 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
             // IOS-06: the presenting screen recedes while the sheet is up.
             // This chat sheet stays full-height-on-open (keyboard-aware resize
             // below depends on that), so only the backdrop recede is added
-            // here — not the half-height detent applied to MetricBottomSheet.
+            // here — MetricBottomSheet sizes to its own content instead.
             View presenting = requireActivity().findViewById(android.R.id.content);
             behavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
                 @Override public void onSlide(@NonNull View sheetView, float slideOffset) {
