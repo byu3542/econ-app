@@ -1,6 +1,7 @@
 plugins {
     id 'com.android.application'
-    id 'org.jetbrains.kotlin.android'
+    // Kotlin comes from AGP's built-in support (AGP 9.0+) — no separate
+    // kotlin-android plugin needed or allowed.
     id 'com.google.devtools.ksp'
 }
 
@@ -42,9 +43,9 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
-    kotlinOptions {
-        jvmTarget = '1.8'
-    }
+    // No android.kotlinOptions block: that DSL belonged to the old
+    // kotlin-android plugin. AGP's built-in Kotlin defaults jvmTarget to
+    // compileOptions.targetCompatibility above, so it's already covered.
     buildFeatures {
         viewBinding true
         dataBinding false

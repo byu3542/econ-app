@@ -2,6 +2,43 @@
 
 Branch: `kotlin/batch-0`
 
+## Correction after first build attempt
+
+Aaron's first sync failed:
+
+```
+The 'org.jetbrains.kotlin.android' plugin is no longer required for Kotlin
+support since AGP 9.0.
+```
+
+This project is on **AGP 9.1.0**, which has *built-in* Kotlin support —
+applying the separate `org.jetbrains.kotlin.android` plugin on top of it is
+no longer just redundant, it's a hard error. I hadn't accounted for that
+(assumed the classic two-plugin setup this repo would have had on an older
+AGP). Fixed by:
+
+- Removing `id 'org.jetbrains.kotlin.android' version '2.2.21' apply false`
+  from [build.gradle](build.gradle) entirely — no Kotlin plugin/version is
+  declared at all now; AGP 9.1.0 supplies Kotlin itself.
+- Removing `id 'org.jetbrains.kotlin.android'` from
+  [app/build.gradle](app/build.gradle)'s `plugins {}` block.
+- Removing the `kotlinOptions { jvmTarget = '1.8' }` block from `app/build.gradle`
+  — that DSL belongs to the old plugin and no longer exists once it's not
+  applied. Per Google's built-in-Kotlin migration guide, `jvmTarget` defaults
+  to `compileOptions.targetCompatibility`, which is already `VERSION_1_8`, so
+  nothing was lost.
+
+**Residual uncertainty — please watch for this on next sync:** KSP plugin
+versions are normally paired to an exact Kotlin compiler version
+(`<kotlin>-<ksp>`, e.g. the `2.2.21-2.0.5` I used originally). With built-in
+Kotlin, AGP bundles its own internal Kotlin version that isn't user-selectable,
+and I could not find published documentation of exactly which Kotlin version
+AGP 9.1.0's built-in support uses. Google's own built-in-Kotlin + KSP example
+uses a plain (non-paired) version string, `com.google.devtools.ksp:2.3.4`, so
+I used that. **If sync now fails on a KSP/Kotlin version mismatch, paste the
+exact error** — it will name the Kotlin version AGP 9.1.0 actually bundles,
+and I'll pin KSP to the matching release immediately.
+
 ## Files converted
 
 None — this batch touches build config only, plus one throwaway file.
