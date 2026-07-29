@@ -61,7 +61,7 @@ public class NewsViewModel extends AndroidViewModel {
         }
         List<NewsItem> filtered = new ArrayList<>();
         for (NewsItem item : fullList) {
-            if (currentFilter.equals(item.tag)) {
+            if (currentFilter.equals(item.getTag())) {
                 filtered.add(item);
             }
         }
