@@ -1,0 +1,281 @@
+package com.economic.dashboard.ui.fragments
+
+import android.graphics.Color
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.LinearLayout
+import android.widget.TextView
+
+import androidx.cardview.widget.CardView
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
+
+import com.economic.dashboard.R
+import com.economic.dashboard.analyst.AskAnalyst
+import com.economic.dashboard.databinding.FragmentStocksBinding
+import com.economic.dashboard.models.EconomicDataPoint
+import com.economic.dashboard.ui.BenchmarkStyle
+import com.economic.dashboard.ui.Benchmarks
+import com.economic.dashboard.ui.EconomicViewModel
+import com.economic.dashboard.ui.views.PressFeedback
+import com.economic.dashboard.ui.views.SkeletonController
+import com.economic.dashboard.utils.ChartHelper
+import com.economic.dashboard.utils.EdgeToEdgeInsets
+import com.economic.dashboard.utils.NumberFormatUtil
+import com.economic.dashboard.utils.TimeframeSelector
+import com.github.mikephil.charting.charts.LineChart
+import com.github.mikephil.charting.components.LimitLine
+import com.github.mikephil.charting.components.XAxis
+import com.github.mikephil.charting.data.Entry
+import com.github.mikephil.charting.data.LineData
+import com.github.mikephil.charting.data.LineDataSet
+import com.github.mikephil.charting.formatter.ValueFormatter
+
+import java.util.Locale
+
+class StocksFragment : Fragment() {
+
+    private lateinit var viewModel: EconomicViewModel
+    private var binding: FragmentStocksBinding? = null
+    private lateinit var skeleton: SkeletonController
+    private lateinit var cardSp500: CardView
+    private lateinit var cardNasdaq: CardView
+    private lateinit var cardVix: CardView
+    private lateinit var tvSp500Value: TextView
+    private lateinit var tvNasdaqValue: TextView
+    private lateinit var tvVixValue: TextView
+    /** Roots of the included view_status_badge rows (R2-TICKET-03). */
+    private lateinit var statusSp500: View
+    private lateinit var statusNasdaq: View
+    private lateinit var statusVix: View
+    private lateinit var swappableChart: LineChart
+    private lateinit var tvChartTitle: TextView
+    private var activeCard = "sp500"
+    private var currentSp500Data: List<EconomicDataPoint>? = null
+    private var currentNasdaqData: List<EconomicDataPoint>? = null
+    private var currentVixData: List<EconomicDataPoint>? = null
+
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
+    ): View? {
+        val b = FragmentStocksBinding.inflate(inflater, container, false)
+        binding = b
+        // IOS-04: bottom inset ONLY — this fragment lives inside MarketsFragment's
+        // ViewPager2, below the host's tab strip, so the host owns the top inset.
+        EdgeToEdgeInsets.applyBottomInset(b.root)
+        skeleton = SkeletonController.wrap(b.root)
+        return skeleton.getRoot()
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        val b = binding ?: return
+        viewModel = ViewModelProvider(requireActivity()).get(EconomicViewModel::class.java)
+
+        // TICKET-18: per-screen retry chip for this screen's series
+        val retryChip: TextView? = view.findViewById(R.id.tvRetry)
+        val retryKeys = arrayOf(EconomicViewModel.KEY_SP500, EconomicViewModel.KEY_NASDAQ, EconomicViewModel.CACHE_VIX)
+        viewModel.getFailedSeries().observe(viewLifecycleOwner) { failed ->
+            if (retryChip != null) {
+                var hit: String? = null
+                if (failed != null) for (k in retryKeys) if (failed.contains(k)) { hit = k; break }
+                if (hit != null) {
+                    val key = hit
+                    retryChip.setOnClickListener { viewModel.retrySeries(key) }
+                    retryChip.visibility = View.VISIBLE
+                } else {
+                    retryChip.visibility = View.GONE
+                }
+            }
+        }
+
+        cardSp500 = b.cardSp500
+        AskAnalyst.wireCardLongPress(
+            cardSp500, requireActivity(), "the S&P 500 index")
+        cardNasdaq = b.cardNasdaq
+        AskAnalyst.wireCardLongPress(
+            cardNasdaq, requireActivity(), "the Nasdaq index")
+        cardVix = b.cardVix
+        AskAnalyst.wireCardLongPress(
+            cardVix, requireActivity(), "the VIX volatility index")
+        tvSp500Value = b.tvSp500Value
+        tvNasdaqValue = b.tvNasdaqValue
+        tvVixValue = b.tvVixValue
+        statusSp500 = b.statusSp500.root
+        statusNasdaq = b.statusNasdaq.root
+        statusVix = b.statusVix.root
+        swappableChart = b.swappableChart
+        AskAnalyst.attachChartExplain(
+            swappableChart, requireActivity(), "stock market indices (S&P 500, Nasdaq, VIX)")
+        tvChartTitle = b.tvChartTitle
+
+        styleChart(swappableChart)
+        ChartHelper.declutterDark(swappableChart)
+        ChartHelper.attachCrosshair(swappableChart) // TICKET-23
+        addVixBenchmarks(swappableChart)
+
+        // TICKET-11: inline range switcher redraws the active index/series.
+        val tfSel: LinearLayout? = view.findViewById(R.id.timeframeSelector)
+        TimeframeSelector.attach(tfSel, "stocks") { buildSwappableChart() }
+
+        cardSp500.setOnClickListener { activeCard = "sp500"; setActiveCard("sp500"); buildSwappableChart() }
+        cardNasdaq.setOnClickListener { activeCard = "nasdaq"; setActiveCard("nasdaq"); buildSwappableChart() }
+        cardVix.setOnClickListener { activeCard = "vix"; setActiveCard("vix"); buildSwappableChart() }
+        PressFeedback.attach(cardSp500)
+        PressFeedback.attach(cardNasdaq)
+        PressFeedback.attach(cardVix)
+
+        setActiveCard("sp500")
+
+        viewModel.getSp500Data().observe(viewLifecycleOwner) { data ->
+            if (data != null) {
+                currentSp500Data = data; updateSp500Card(data); buildSwappableChart()
+                if (::skeleton.isInitialized) skeleton.reveal()
+            }
+        }
+        viewModel.getNasdaqData().observe(viewLifecycleOwner) { data ->
+            if (data != null) {
+                currentNasdaqData = data; updateNasdaqCard(data); buildSwappableChart()
+                if (::skeleton.isInitialized) skeleton.reveal()
+            }
+        }
+        viewModel.getVixData().observe(viewLifecycleOwner) { data ->
+            if (data != null) {
+                currentVixData = data; updateVixCard(data); buildSwappableChart()
+                if (::skeleton.isInitialized) skeleton.reveal()
+            }
+        }
+    }
+
+    private fun updateSp500Card(data: List<EconomicDataPoint>) {
+        val rows = EconomicViewModel.filterBySeries(data, "S&P 500 Index")
+        if (rows.isEmpty()) return
+        val latest = rows[rows.size - 1].value
+        tvSp500Value.text = formatValueWithK(latest)
+        val result = Benchmarks.stockLevel(latest, 3500.0, 4000.0)
+        BenchmarkStyle.applyBadge(statusSp500, requireContext(), result)
+    }
+
+    private fun updateNasdaqCard(data: List<EconomicDataPoint>) {
+        val rows = EconomicViewModel.filterBySeries(data, "Nasdaq Composite Index")
+        if (rows.isEmpty()) return
+        val latest = rows[rows.size - 1].value
+        tvNasdaqValue.text = formatValueWithK(latest)
+        val result = Benchmarks.stockLevel(latest, 10000.0, 12000.0)
+        BenchmarkStyle.applyBadge(statusNasdaq, requireContext(), result)
+    }
+
+    private fun updateVixCard(data: List<EconomicDataPoint>) {
+        val rows = EconomicViewModel.filterBySeries(data, "VIX Volatility Index")
+        if (rows.isEmpty()) return
+        val latest = rows[rows.size - 1].value
+        tvVixValue.text = NumberFormatUtil.indexPoints(latest, 1) // TICKET-19
+        val result = Benchmarks.vix(latest)
+        BenchmarkStyle.applyBadge(statusVix, requireContext(), result)
+    }
+
+    private fun setActiveCard(which: String) {
+        // R3-TICKET-01: border geometry lives in BenchmarkStyle so it tracks the card radius token.
+        cardSp500.foreground = if ("sp500" == which) BenchmarkStyle.activeCardBorder(
+            requireContext(), R.dimen.radius_card_kpi) else null
+        cardNasdaq.foreground = if ("nasdaq" == which) BenchmarkStyle.activeCardBorder(
+            requireContext(), R.dimen.radius_card_kpi) else null
+        cardVix.foreground = if ("vix" == which) BenchmarkStyle.activeCardBorder(
+            requireContext(), R.dimen.radius_card_kpi) else null
+        when (which) {
+            "nasdaq" -> tvChartTitle.text = "Nasdaq Composite Index"
+            "vix" -> tvChartTitle.text = "VIX Volatility Index"
+            else -> tvChartTitle.text = "S&P 500 Index"
+        }
+    }
+
+    private fun buildSwappableChart() {
+        if (!::swappableChart.isInitialized) return
+        val data: List<EconomicDataPoint>?
+        val seriesName: String
+        val lineColor: String
+        val formatter: ValueFormatter
+        when (activeCard) {
+            "nasdaq" -> {
+                data = currentNasdaqData; seriesName = "Nasdaq Composite Index"; lineColor = "#F57C00"
+                formatter = object : ValueFormatter() {
+                    override fun getFormattedValue(value: Float): String = String.format(Locale.US, "%.0f", value)
+                }
+            }
+            "vix" -> {
+                data = currentVixData; seriesName = "VIX Volatility Index"; lineColor = "#D32F2F"
+                formatter = object : ValueFormatter() {
+                    override fun getFormattedValue(value: Float): String = String.format(Locale.US, "%.1f", value)
+                }
+            }
+            else -> {
+                data = currentSp500Data; seriesName = "S&P 500 Index"; lineColor = "#1976D2"
+                formatter = object : ValueFormatter() {
+                    override fun getFormattedValue(value: Float): String = String.format(Locale.US, "%.0f", value)
+                }
+            }
+        }
+        if (data == null) return
+        var rows = EconomicViewModel.filterBySeries(data, seriesName)
+        if (rows.isEmpty()) return
+        rows = EconomicViewModel.filterByTimeframe(requireContext(), rows, "stocks")
+        val entries = ArrayList<Entry>()
+        val dateLabels = ArrayList<String>()
+        for (i in rows.indices) {
+            entries.add(Entry(i.toFloat(), rows[i].value.toFloat()))
+            val d = rows[i].date
+            dateLabels.add(if (d.length >= 10) d.substring(5, 7) + "/" + d.substring(8, 10) + "/" + d.substring(2, 4) else d)
+        }
+        swappableChart.xAxis.setValueFormatter(object : ValueFormatter() {
+            override fun getFormattedValue(value: Float): String {
+                val idx = value.toInt()
+                return if ((idx % 20 == 0 || idx == dateLabels.size - 1) && idx >= 0 && idx < dateLabels.size) dateLabels[idx] else ""
+            }
+        })
+        swappableChart.axisLeft.setValueFormatter(formatter)
+        val ds = LineDataSet(entries, seriesName)
+        ChartHelper.styleLineSeries(ds, Color.parseColor(lineColor)) // IOS-07
+        swappableChart.setData(LineData(ds)); swappableChart.animateX(500); swappableChart.invalidate()
+    }
+
+    private fun styleChart(chart: LineChart) {
+        val darkBg = Color.parseColor("#1C2236")
+        val grid = Color.argb(0x14, 0xFF, 0xFF, 0xFF)
+        chart.setBackgroundColor(darkBg); chart.setDrawGridBackground(false); chart.setDrawBorders(false)
+        chart.setTouchEnabled(true); chart.setDragEnabled(true); chart.setScaleEnabled(true); chart.setPinchZoom(true)
+        chart.description.setEnabled(false); chart.setNoDataText("Loading…"); chart.setExtraBottomOffset(8f)
+        val x = chart.xAxis
+        x.setPosition(XAxis.XAxisPosition.BOTTOM); x.setTextColor(Color.parseColor("#5A6A8A")); x.setTextSize(9f)
+        x.setDrawGridLines(true); x.setGridColor(grid); x.setAxisLineColor(grid)
+        x.setLabelRotationAngle(-45f); x.setGranularity(1f); x.setLabelCount(6, false); x.setAvoidFirstLastClipping(true)
+        val y = chart.axisLeft
+        y.setTextColor(Color.parseColor("#8899BB")); y.setTextSize(10f); y.setDrawGridLines(true); y.setGridColor(grid)
+        chart.axisRight.setEnabled(false)
+    }
+
+    private fun addVixBenchmarks(chart: LineChart) {
+        addLine(chart, 12f, "Low Vol", "#6FA97A"); addLine(chart, 20f, "Normal", "#5B8DB8")
+        addLine(chart, 30f, "Elevated", "#D98E4F"); addLine(chart, 50f, "Extreme", "#C75B4E")
+        chart.axisLeft.setDrawLimitLinesBehindData(true)
+    }
+
+    private fun addLine(chart: LineChart, value: Float, label: String, color: String) {
+        val l = LimitLine(value, label)
+        l.setLineColor(Color.parseColor(color)); l.setLineWidth(1f)
+        l.setTextColor(Color.parseColor(color)); l.setTextSize(9f); l.enableDashedLine(8f, 4f, 0f)
+        chart.axisLeft.addLimitLine(l)
+    }
+
+    private fun formatValueWithK(value: Double): String {
+        // TICKET-19: route index levels through NumberFormatUtil for thousands
+        // separators consistent with the rest of the app (e.g. "5,900").
+        return NumberFormatUtil.number(value, 0)
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        binding = null
+    }
+}
