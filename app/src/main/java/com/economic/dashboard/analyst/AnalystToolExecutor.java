@@ -257,18 +257,18 @@ public class AnalystToolExecutor {
         for (int tier = 2; tier >= 0 && added < count; tier--) {
             for (NewsItem item : items) {
                 if (added >= count) break;
-                if (item.impactLevel != tier || item.title == null) continue;
+                if (item.getImpactLevel() != tier || item.getTitle() == null) continue;
                 if (!topic.isEmpty()) {
-                    String hay = (item.title + " " + (item.summary == null ? "" : item.summary)
-                            + " " + (item.tag == null ? "" : item.tag)).toLowerCase(Locale.US);
+                    String hay = (item.getTitle() + " " + (item.getSummary() == null ? "" : item.getSummary())
+                            + " " + (item.getTag() == null ? "" : item.getTag())).toLowerCase(Locale.US);
                     if (!hay.contains(topic)) continue;
                 }
-                sb.append("[").append(item.source).append(", ")
-                  .append(fmt.format(new Date(item.pubDateMillis))).append("] ")
-                  .append(item.title);
-                if (item.summary != null && !item.summary.isEmpty()) {
-                    String sum = item.summary.length() > 200
-                            ? item.summary.substring(0, 200) + "…" : item.summary;
+                sb.append("[").append(item.getSource()).append(", ")
+                  .append(fmt.format(new Date(item.getPubDateMillis()))).append("] ")
+                  .append(item.getTitle());
+                if (item.getSummary() != null && !item.getSummary().isEmpty()) {
+                    String sum = item.getSummary().length() > 200
+                            ? item.getSummary().substring(0, 200) + "…" : item.getSummary();
                     sb.append(" — ").append(sum);
                 }
                 sb.append("\n");

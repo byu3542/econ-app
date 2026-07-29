@@ -33,7 +33,7 @@ public class NewsContextBuilder {
         for (int tier = 2; tier >= 0 && count < FULL_COUNT; tier--) {
             for (NewsItem item : items) {
                 if (count >= FULL_COUNT) break;
-                if (item.impactLevel == tier && item.title != null) {
+                if (item.getImpactLevel() == tier && item.getTitle() != null) {
                     sb.append(formatLine(item));
                     count++;
                 }
@@ -61,8 +61,8 @@ public class NewsContextBuilder {
         for (int tier = 2; tier >= 0 && titles.size() < BRIEF_COUNT; tier--) {
             for (NewsItem item : items) {
                 if (titles.size() >= BRIEF_COUNT) break;
-                if (item.impactLevel == tier && item.title != null) {
-                    titles.add(item.title);
+                if (item.getImpactLevel() == tier && item.getTitle() != null) {
+                    titles.add(item.getTitle());
                 }
             }
         }
@@ -79,8 +79,8 @@ public class NewsContextBuilder {
     }
 
     private static String formatLine(NewsItem item) {
-        String tag    = item.tag    != null ? item.tag    : "GENERAL";
-        String source = item.source != null ? item.source : "";
-        return String.format(Locale.US, "• [%s] %s (%s)\n", tag, item.title, source);
+        String tag    = item.getTag()    != null ? item.getTag()    : "GENERAL";
+        String source = item.getSource() != null ? item.getSource() : "";
+        return String.format(Locale.US, "• [%s] %s (%s)\n", tag, item.getTitle(), source);
     }
 }

@@ -1592,8 +1592,8 @@ public class AiAnalystBottomSheet extends BottomSheetDialogFragment {
         for (int tier = 2; tier >= 1 && count < 3; tier--) {
             for (NewsItem item : cached) {
                 if (count >= 3) break;
-                if (item.impactLevel == tier && item.title != null) {
-                    sb.append(count == 0 ? " Recent headlines include: \"" : ", \"").append(item.title).append("\"");
+                if (item.getImpactLevel() == tier && item.getTitle() != null) {
+                    sb.append(count == 0 ? " Recent headlines include: \"" : ", \"").append(item.getTitle()).append("\"");
                     count++;
                 }
             }
