@@ -1,0 +1,66 @@
+package com.economic.dashboard.ui.fragments
+
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
+
+import com.economic.dashboard.databinding.FragmentMarketsBinding
+import com.economic.dashboard.ui.EconomicViewModel
+import com.economic.dashboard.utils.EdgeToEdgeInsets
+import com.google.android.material.tabs.TabLayoutMediator
+
+class MarketsFragment : Fragment() {
+
+    private var viewModel: EconomicViewModel? = null
+    private var binding: FragmentMarketsBinding? = null
+    private var pagerAdapter: MarketsPagerAdapter? = null
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        val b = FragmentMarketsBinding.inflate(inflater, container, false)
+        binding = b
+        // IOS-04 (2026-07-27 nav fix): this host owns the screen's topmost
+        // pixel — its TabLayout was previously sitting at y=0 underneath the
+        // translucent header, invisible and untappable, because the top inset
+        // had been applied to the leaf fragments inside the ViewPager2 instead.
+        // The host takes the top inset; the leaves take bottom only.
+        EdgeToEdgeInsets.applyTopInset(b.root)
+        return b.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        val b = binding ?: return
+        viewModel = ViewModelProvider(requireActivity()).get(EconomicViewModel::class.java)
+
+        val tabLayout = b.tabLayout
+        val viewPager = b.viewPager
+
+        val adapter = MarketsPagerAdapter(this)
+        pagerAdapter = adapter
+        viewPager.adapter = adapter
+
+        TabLayoutMediator(tabLayout, viewPager) { tab, position ->
+            when (position) {
+                0 -> tab.text = "STOCKS"
+                1 -> tab.text = "BONDS"
+                2 -> tab.text = "YIELDS"
+                3 -> tab.text = "SPREADS"
+                else -> tab.text = ""
+            }
+        }.attach()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        binding = null
+    }
+}
