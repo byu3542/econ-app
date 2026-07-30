@@ -1,14 +1,14 @@
-package com.economic.dashboard;
+package com.economic.dashboard
 
-import android.app.Application;
-import androidx.appcompat.app.AppCompatDelegate;
-import com.economic.dashboard.cache.CacheManager;
-import com.economic.dashboard.news.NewsRepository;
-import com.economic.dashboard.utils.NotificationHelper;
-import com.economic.dashboard.utils.SettingsManager;
-import com.economic.dashboard.workers.CacheCleanupWorker;
-import com.economic.dashboard.workers.ReleaseReminderWorker;
-import com.economic.dashboard.workers.YieldRefreshScheduler;
+import android.app.Application
+import androidx.appcompat.app.AppCompatDelegate
+import com.economic.dashboard.cache.CacheManager
+import com.economic.dashboard.news.NewsRepository
+import com.economic.dashboard.utils.NotificationHelper
+import com.economic.dashboard.utils.SettingsManager
+import com.economic.dashboard.workers.CacheCleanupWorker
+import com.economic.dashboard.workers.ReleaseReminderWorker
+import com.economic.dashboard.workers.YieldRefreshScheduler
 
 /**
  * Application class for global initialization.
@@ -23,36 +23,38 @@ import com.economic.dashboard.workers.YieldRefreshScheduler;
  *   6. Weekly cache cleanup (purges history rows older than 26 months)
  *   7. Background population/refresh of the 24-month history cache
  *      (no-op if cache is fresh — see CacheManager.STALE_AFTER_DAYS)
+ *
+ * The fully-qualified name is referenced by `android:name` in
+ * AndroidManifest.xml, so the package and class name must not change.
  */
-public class EconomicDashboardApplication extends Application {
+class EconomicDashboardApplication : Application() {
 
-    @Override
-    public void onCreate() {
-        super.onCreate();
+    override fun onCreate() {
+        super.onCreate()
 
         // Apply saved theme before any UI is created. Defaults to following
         // the system setting until the user picks one in Settings.
-        AppCompatDelegate.setDefaultNightMode(SettingsManager.getNightMode(this));
+        AppCompatDelegate.setDefaultNightMode(SettingsManager.getNightMode(this))
 
         // Give the news repository a context so it can read the
         // news-source toggles from settings.
-        NewsRepository.init(this);
+        NewsRepository.init(this)
 
         // Channel for big-move alerts and release reminders (idempotent)
-        NotificationHelper.createChannel(this);
+        NotificationHelper.createChannel(this)
 
         // Schedule daily Treasury Yield refresh at 2:30 PM MST
         // Safe to call multiple times (uses KEEP policy to prevent duplicates)
-        YieldRefreshScheduler.scheduleDailyYieldRefresh(this);
+        YieldRefreshScheduler.scheduleDailyYieldRefresh(this)
 
         // Daily morning check for scheduled data releases (jobs report)
-        ReleaseReminderWorker.scheduleDaily(this);
+        ReleaseReminderWorker.scheduleDaily(this)
 
         // Schedule weekly cache cleanup (KEEP policy — idempotent)
-        CacheCleanupWorker.scheduleWeekly(this);
+        CacheCleanupWorker.scheduleWeekly(this)
 
         // Populate/refresh the 24-month history cache in the background.
         // Skips the network entirely if the cache is < 7 days old.
-        CacheManager.refreshIfStale(this, null);
+        CacheManager.refreshIfStale(this, null)
     }
 }
