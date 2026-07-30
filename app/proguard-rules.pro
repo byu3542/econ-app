@@ -14,6 +14,17 @@
 # EconomicHistoryEntry, EconomicDataPoint, ChatMessage, etc.
 -keep class com.economic.dashboard.models.** { *; }
 
+# ── Gson-serialized classes OUTSIDE models/ ──────────────────────────────────
+# AlertRule is persisted to SharedPreferences as JSON (SettingsManager
+# get/saveAlertRules) but lives in alerts/, so the models rule above never
+# covered it. Without this, R8 renames seriesKey/label/op/threshold and Gson
+# writes the obfuscated names into the user's stored rules — which then fail to
+# deserialize after any release whose R8 name assignment differs. The failure is
+# silent: rules load as all-null, render as "• null", and stop firing.
+# Found during the batch-11a Kotlin conversion (pre-existing, not introduced by
+# it — converting the class just made a name shift likely on the next release).
+-keep class com.economic.dashboard.alerts.AlertRule { *; }
+
 # ── Retrofit ─────────────────────────────────────────────────────────────────
 -keep interface com.economic.dashboard.api.EconomicApiService { *; }
 -keepattributes RuntimeVisibleAnnotations, RuntimeVisibleParameterAnnotations
