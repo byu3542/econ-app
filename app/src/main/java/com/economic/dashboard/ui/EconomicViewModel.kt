@@ -1,0 +1,663 @@
+package com.economic.dashboard.ui
+
+import android.app.Application
+import android.content.Context
+
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+
+import com.economic.dashboard.alerts.ThresholdAlertEvaluator
+import com.economic.dashboard.api.ApiConfig
+import com.economic.dashboard.api.EconomicRepository
+import com.economic.dashboard.cache.DashboardDataCache
+import com.economic.dashboard.models.EconomicDataPoint
+import com.economic.dashboard.utils.DeltaFormatter
+import com.economic.dashboard.utils.SettingsManager
+
+import java.text.ParseException
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Collections
+import java.util.Date
+import java.util.Locale
+import java.util.concurrent.atomic.AtomicInteger
+
+/**
+ * Note on accessor shape: every `getXxxData()` below stays a FUNCTION rather than
+ * becoming a Kotlin property. Around 100 already-converted Kotlin call sites
+ * write `vm.getCpiData()` with parens (plus MainActivity.java, still Java), and
+ * Kotlin's synthetic-property sugar does not apply to a Kotlin-declared
+ * `getX()` function — turning these into `val`s would break every one of them.
+ * This is the mirror image of the `NewsRepository.getCachedItems()` case in
+ * batch 8, where the sole Kotlin caller used property syntax and the getter
+ * therefore had to become a property. The call sites decide, not the idiom.
+ */
+class EconomicViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val repository = EconomicRepository()
+
+    private val treasuryData = MutableLiveData<List<EconomicDataPoint>>()
+    private val gdpData = MutableLiveData<List<EconomicDataPoint>>()
+    private val employmentData = MutableLiveData<List<EconomicDataPoint>>()
+    private val cpiData = MutableLiveData<List<EconomicDataPoint>>()
+    private val wageData = MutableLiveData<List<EconomicDataPoint>>()
+    private val fedFundsData = MutableLiveData<List<EconomicDataPoint>>()
+    private val ismPmiData = MutableLiveData<List<EconomicDataPoint>>()
+    private val fedFundsHistory = MutableLiveData<List<EconomicDataPoint>>()
+    private val pceData = MutableLiveData<List<EconomicDataPoint>>()
+    private val housingData = MutableLiveData<List<EconomicDataPoint>>()
+    private val mbsMortgageData = MutableLiveData<List<EconomicDataPoint>>()
+
+    // Stock Market Indices
+    private val sp500Data = MutableLiveData<List<EconomicDataPoint>>()
+    private val nasdaqData = MutableLiveData<List<EconomicDataPoint>>()
+    private val vixData = MutableLiveData<List<EconomicDataPoint>>()
+
+    // Bond Market Spreads
+    private val baaSpreadData = MutableLiveData<List<EconomicDataPoint>>()
+    private val hySpreadData = MutableLiveData<List<EconomicDataPoint>>()
+    private val moveData = MutableLiveData<List<EconomicDataPoint>>()
+
+    private val latestQuarterGdp = MutableLiveData<String>()
+    private val latestQuarterLabel = MutableLiveData<String>()
+
+    private var currentTenYearList: List<EconomicDataPoint>? = null
+    private var currentTwoYearList: List<EconomicDataPoint>? = null
+    private var currentThreeMonthList: List<EconomicDataPoint>? = null
+
+    private val calculatedSpreadData = MutableLiveData<List<EconomicDataPoint>>()
+    private val calculatedSpread3MData = MutableLiveData<List<EconomicDataPoint>>()
+
+    private val isLoading = MutableLiveData(false)
+    private val errorMsg = MutableLiveData<String>()
+    private val statusMsg = MutableLiveData<String>()
+    /** "as of …" label shown while cached (stale) values are on screen; null once fresh. */
+    private val cacheAsOf = MutableLiveData<String?>()
+
+    // ── TICKET-22: "Since you last opened" strip ─────────────────────────────
+    // Latest values from the snapshot the app *opened with*, captured before
+    // the fresh fetch overwrites the cache. Null on a first-ever launch.
+    private var openedFedFunds: Double? = null
+    private var openedCpiYoY: Double? = null
+    private var openedVix: Double? = null
+    private val sinceLastOpen = MutableLiveData<String?>()
+    /** Session-scoped dismiss flag (VM outlives the fragment view). */
+    private var sinceLastOpenDismissed = false
+
+    // Per-series failure tracking so one dead API can't blank a screen.
+    private val failed: MutableSet<String> = Collections.synchronizedSet(HashSet())
+    private val failedSeries = MutableLiveData<Set<String>>()
+
+    private val pendingFetches = AtomicInteger(0)
+    private val lock = Any()
+
+    fun getTreasuryData(): LiveData<List<EconomicDataPoint>> = treasuryData
+    fun getGdpData(): LiveData<List<EconomicDataPoint>> = gdpData
+    fun getEmploymentData(): LiveData<List<EconomicDataPoint>> = employmentData
+    fun getCpiData(): LiveData<List<EconomicDataPoint>> = cpiData
+    fun getWageData(): LiveData<List<EconomicDataPoint>> = wageData
+    fun getFedFundsData(): LiveData<List<EconomicDataPoint>> = fedFundsData
+    fun getIsmPmiData(): LiveData<List<EconomicDataPoint>> = ismPmiData
+    fun getFedFundsHistory(): LiveData<List<EconomicDataPoint>> = fedFundsHistory
+    fun getPceData(): LiveData<List<EconomicDataPoint>> = pceData
+    fun getHousingData(): LiveData<List<EconomicDataPoint>> = housingData
+    fun getMbsMortgageData(): LiveData<List<EconomicDataPoint>> = mbsMortgageData
+    fun getSp500Data(): LiveData<List<EconomicDataPoint>> = sp500Data
+    fun getNasdaqData(): LiveData<List<EconomicDataPoint>> = nasdaqData
+    fun getVixData(): LiveData<List<EconomicDataPoint>> = vixData
+    fun getBaaSpreadData(): LiveData<List<EconomicDataPoint>> = baaSpreadData
+    fun getHySpreadData(): LiveData<List<EconomicDataPoint>> = hySpreadData
+    fun getMoveData(): LiveData<List<EconomicDataPoint>> = moveData
+    fun getCalculatedSpreadData(): LiveData<List<EconomicDataPoint>> = calculatedSpreadData
+    fun getCalculatedSpread3MData(): LiveData<List<EconomicDataPoint>> = calculatedSpread3MData
+    fun getLatestQuarterGdp(): LiveData<String> = latestQuarterGdp
+    fun getLatestQuarterLabel(): LiveData<String> = latestQuarterLabel
+    fun getIsLoading(): LiveData<Boolean> = isLoading
+    fun getErrorMsg(): LiveData<String> = errorMsg
+    fun getStatusMsg(): LiveData<String> = statusMsg
+    fun getCacheAsOf(): LiveData<String?> = cacheAsOf
+    fun getSinceLastOpen(): LiveData<String?> = sinceLastOpen
+
+    fun isSinceLastOpenDismissed(): Boolean = sinceLastOpenDismissed
+
+    fun dismissSinceLastOpen() {
+        sinceLastOpenDismissed = true
+        sinceLastOpen.postValue(null)
+    }
+
+    fun getFailedSeries(): LiveData<Set<String>> = failedSeries
+
+    /** True if a cached snapshot exists — used to skip the skeleton on warm launch. */
+    fun hasCache(): Boolean {
+        return DashboardDataCache.hasAny(getApplication<Application>())
+    }
+
+    private fun markFailed(key: String) {
+        failed.add(key)
+        failedSeries.postValue(HashSet(failed))
+    }
+
+    private fun markRecovered(key: String) {
+        if (failed.remove(key)) failedSeries.postValue(HashSet(failed))
+    }
+
+    /**
+     * Re-fetch a single series after a failure, without disturbing the other
+     * cards. Keeps the pending counter balanced so the refresh spinner behaves.
+     */
+    fun retrySeries(key: String) {
+        isLoading.postValue(true)
+        pendingFetches.incrementAndGet()
+        when (key) {
+            CACHE_TREASURY -> fetchTreasury()
+            CACHE_FED_FUNDS -> fetchFedFunds()
+            CACHE_EMPLOYMENT -> fetchEmployment()
+            CACHE_CPI -> fetchCPI()
+            CACHE_GDP -> fetchGDP()
+            CACHE_MBS -> fetchMbsMortgage()
+            CACHE_VIX -> fetchVix()
+            KEY_WAGES -> fetchWages()
+            KEY_PCE -> fetchPCE()
+            KEY_HOUSING -> fetchHousing()
+            KEY_SP500 -> fetchSp500()
+            KEY_NASDAQ -> fetchNasdaq()
+            KEY_BAA -> fetchBaaSpread()
+            KEY_HY -> fetchHySpread()
+            else -> pendingFetches.decrementAndGet() // unknown key — undo
+        }
+    }
+
+    /**
+     * Posts the last cached values immediately so the dashboard paints in
+     * <400ms on a warm launch, then sets the "as of …" label. Only touches
+     * LiveData that has a cached snapshot; a first-ever launch is a no-op.
+     */
+    private fun primeFromCache() {
+        val ctx: Context = getApplication<Application>()
+        if (!DashboardDataCache.hasAny(ctx)) return
+        postCached(treasuryData, CACHE_TREASURY)
+        postCached(fedFundsData, CACHE_FED_FUNDS)
+        postCached(employmentData, CACHE_EMPLOYMENT)
+        postCached(cpiData, CACHE_CPI)
+        postCached(gdpData, CACHE_GDP)
+        postCached(mbsMortgageData, CACHE_MBS)
+        // Stocks is a Markets child tab, but its data is also consumed by the
+        // Econ Analyst. Prime these series here so opening the analyst after a
+        // lifecycle change does not lose the values that Stocks already showed.
+        postCached(sp500Data, KEY_SP500)
+        postCached(nasdaqData, KEY_NASDAQ)
+        postCached(vixData, CACHE_VIX)
+        val ts = DashboardDataCache.lastUpdated(ctx)
+        if (ts > 0) {
+            val stamp = SimpleDateFormat("MMM d, h:mm a", Locale.US).format(Date(ts))
+            cacheAsOf.postValue("Showing cached data · as of $stamp")
+        }
+    }
+
+    private fun postCached(live: MutableLiveData<List<EconomicDataPoint>>, key: String) {
+        val cached = DashboardDataCache.load(getApplication<Application>(), key)
+        if (cached != null && !cached.isEmpty()) live.postValue(cached)
+    }
+
+    /** Posts fresh data to LiveData and writes it back to the snapshot cache. */
+    private fun deliver(
+        live: MutableLiveData<List<EconomicDataPoint>>, key: String,
+        data: List<EconomicDataPoint>
+    ) {
+        live.postValue(data)
+        DashboardDataCache.save(getApplication<Application>(), key, data)
+        markRecovered(key)
+    }
+
+    fun fetchAllData() {
+        // TICKET-22: remember what the app opened with, before deliver()
+        // overwrites the snapshot cache with fresh values.
+        captureOpenedWithSnapshot()
+        // Cache-first: paint the last known values before the network returns.
+        primeFromCache()
+        isLoading.postValue(true)
+        synchronized(lock) {
+            currentTenYearList = null; currentTwoYearList = null; currentThreeMonthList = null
+        }
+        // Build the task list first so the pending count is always derived from
+        // the actual number of fetches — no hardcoded magic number to maintain.
+        val fetchTasks: List<() -> Unit> = listOf(
+            ::fetchTreasury, ::fetchGDP, ::fetchEmployment, ::fetchCPI, ::fetchWages,
+            ::fetchFedFunds, ::fetchFedFundsHistory, ::fetchTenYearHistory,
+            ::fetchTwoYearHistory, ::fetchThreeMonthHistory,
+            ::fetchPCE, ::fetchHousing, ::fetchMbsMortgage,
+            ::fetchSp500, ::fetchNasdaq, ::fetchVix,
+            ::fetchBaaSpread, ::fetchHySpread)
+        pendingFetches.set(fetchTasks.size)
+        for (task in fetchTasks) task()
+    }
+
+    private fun checkAllDone() {
+        if (pendingFetches.decrementAndGet() <= 0) {
+            isLoading.postValue(false)
+            // Fresh data has landed — drop the "showing cached data" label.
+            cacheAsOf.postValue(null)
+            // TICKET-22: all fetches settled — diff fresh vs. opened-with values.
+            computeSinceLastOpen()
+            // TICKET-24: evaluate the user's threshold alert rules against the
+            // freshly fetched values (keys that failed are simply absent).
+            evaluateAlertRules()
+        }
+    }
+
+    /** TICKET-24: latest value per series key → threshold rule evaluation. */
+    private fun evaluateAlertRules() {
+        val latest = HashMap<String, Double>()
+        putIfPresent(latest, CACHE_FED_FUNDS, latestOf(fedFundsData.value, "Federal Funds Effective Rate"))
+        putIfPresent(latest, CACHE_GDP, latestOf(gdpData.value, "Gross domestic product"))
+        putIfPresent(latest, CACHE_EMPLOYMENT, latestOf(employmentData.value, "Unemployment Rate"))
+        putIfPresent(latest, CACHE_CPI, cpiYoyOf(cpiData.value)) // CPI = YoY %
+        putIfPresent(latest, CACHE_VIX, latestOf(vixData.value, "VIX Volatility Index"))
+        putIfPresent(latest, CACHE_MBS, latestOf(mbsMortgageData.value, "30-Yr Mortgage Rate"))
+        putIfPresent(latest, KEY_WAGES, latestOf(wageData.value, "Average Hourly Earnings - Private"))
+        putIfPresent(latest, KEY_PCE, latestOf(pceData.value, "PCE Price Index"))
+        putIfPresent(latest, KEY_HOUSING, latestOf(housingData.value, "Housing Starts"))
+        putIfPresent(latest, KEY_SP500, latestOf(sp500Data.value, "S&P 500 Index"))
+        putIfPresent(latest, KEY_NASDAQ, latestOf(nasdaqData.value, "Nasdaq Composite Index"))
+        putIfPresent(latest, KEY_BAA, latestOf(baaSpreadData.value, "BAA Corporate Spread"))
+        putIfPresent(latest, KEY_HY, latestOf(hySpreadData.value, "High Yield Spread"))
+        putIfPresent(latest, ALERT_SPREAD_3M, latestOf(calculatedSpread3MData.value))
+        ThresholdAlertEvaluator.evaluate(getApplication<Application>(), latest)
+    }
+
+    /** Snapshot the headline values the app opened with (warm launch only). */
+    private fun captureOpenedWithSnapshot() {
+        val ctx: Context = getApplication<Application>()
+        if (!DashboardDataCache.hasAny(ctx)) return          // first-ever launch
+        if (openedFedFunds != null || openedCpiYoY != null || openedVix != null)
+            return                                            // already captured this session
+        openedFedFunds = latestOf(DashboardDataCache.load(ctx, CACHE_FED_FUNDS),
+            "Federal Funds Effective Rate")
+        openedCpiYoY = cpiYoyOf(DashboardDataCache.load(ctx, CACHE_CPI))
+        openedVix = latestOf(DashboardDataCache.load(ctx, CACHE_VIX),
+            "VIX Volatility Index")
+    }
+
+    /**
+     * Builds "Since last open: Fed Funds ▲ +0.25pp · CPI • unchanged · VIX ▼ −1.2"
+     * from the opened-with snapshot vs. the fresh values now in LiveData.
+     * Posts null (strip hidden) on first-ever launch or after dismiss.
+     */
+    private fun computeSinceLastOpen() {
+        if (sinceLastOpenDismissed) { sinceLastOpen.postValue(null); return }
+        val parts = ArrayList<String>()
+        appendDeltaPart(parts, "Fed Funds", openedFedFunds,
+            latestOf(fedFundsData.value, "Federal Funds Effective Rate"), "%.2fpp")
+        appendDeltaPart(parts, "CPI", openedCpiYoY, cpiYoyOf(cpiData.value), "%.2fpp")
+        appendDeltaPart(parts, "VIX", openedVix,
+            latestOf(vixData.value, "VIX Volatility Index"), "%.1f")
+        if (parts.isEmpty()) { sinceLastOpen.postValue(null); return }
+        val sb = StringBuilder("Since last open: ")
+        for (i in parts.indices) {
+            if (i > 0) sb.append(" · ")
+            sb.append(parts[i])
+        }
+        sinceLastOpen.postValue(sb.toString())
+    }
+
+    fun fetchFedFunds() {
+        repository.fetchFredData(ApiConfig.FRED_FED_FUNDS, "Federal Funds Effective Rate", "24", null, "Interest Rates",
+            object : EconomicRepository.DataCallback<List<EconomicDataPoint>> {
+                override fun onSuccess(data: List<EconomicDataPoint>) { deliver(fedFundsData, CACHE_FED_FUNDS, data); checkAllDone() }
+                override fun onError(error: String) { errorMsg.postValue("Fed Funds: $error"); markFailed(CACHE_FED_FUNDS); checkAllDone() }
+            })
+    }
+
+    fun fetchFedFundsHistory() {
+        repository.fetchFredData(ApiConfig.FRED_FED_FUNDS, "Fed Funds History", "37", "m", "Interest Rates",
+            object : EconomicRepository.DataCallback<List<EconomicDataPoint>> {
+                override fun onSuccess(data: List<EconomicDataPoint>) { fedFundsHistory.postValue(data); checkAllDone() }
+                override fun onError(error: String) { errorMsg.postValue("Fed History: $error"); checkAllDone() }
+            })
+    }
+
+    fun fetchTenYearHistory() {
+        repository.fetchFredData(ApiConfig.FRED_10Y_MATURITY, "10-Year Maturity", "36", "m", "Interest Rates",
+            object : EconomicRepository.DataCallback<List<EconomicDataPoint>> {
+                override fun onSuccess(data: List<EconomicDataPoint>) {
+                    synchronized(lock) { currentTenYearList = data; combineForSpread(); combineFor3MSpread() }
+                    checkAllDone()
+                }
+                override fun onError(error: String) { errorMsg.postValue("10Y: $error"); checkAllDone() }
+            })
+    }
+
+    fun fetchTwoYearHistory() {
+        repository.fetchFredData(ApiConfig.FRED_2Y_MATURITY, "2-Year Maturity", "36", "m", "Interest Rates",
+            object : EconomicRepository.DataCallback<List<EconomicDataPoint>> {
+                override fun onSuccess(data: List<EconomicDataPoint>) {
+                    synchronized(lock) { currentTwoYearList = data; combineForSpread() }
+                    checkAllDone()
+                }
+                override fun onError(error: String) { errorMsg.postValue("2Y: $error"); checkAllDone() }
+            })
+    }
+
+    fun fetchThreeMonthHistory() {
+        repository.fetchFredData(ApiConfig.FRED_3M_MATURITY, "3-Month Maturity", "36", "m", "Interest Rates",
+            object : EconomicRepository.DataCallback<List<EconomicDataPoint>> {
+                override fun onSuccess(data: List<EconomicDataPoint>) {
+                    synchronized(lock) { currentThreeMonthList = data; combineFor3MSpread() }
+                    checkAllDone()
+                }
+                override fun onError(error: String) { errorMsg.postValue("3M: $error"); checkAllDone() }
+            })
+    }
+
+    fun fetchPCE() {
+        repository.fetchPCEData(object : EconomicRepository.DataCallback<List<EconomicDataPoint>> {
+            override fun onSuccess(data: List<EconomicDataPoint>) { pceData.postValue(data); markRecovered(KEY_PCE); checkAllDone() }
+            override fun onError(error: String) { errorMsg.postValue("PCE: $error"); markFailed(KEY_PCE); checkAllDone() }
+        })
+    }
+
+    fun fetchHousing() {
+        repository.fetchHousingData(object : EconomicRepository.DataCallback<List<EconomicDataPoint>> {
+            override fun onSuccess(data: List<EconomicDataPoint>) { housingData.postValue(data); markRecovered(KEY_HOUSING); checkAllDone() }
+            override fun onError(error: String) { errorMsg.postValue("Housing: $error"); markFailed(KEY_HOUSING); checkAllDone() }
+        })
+    }
+
+    fun fetchMbsMortgage() {
+        repository.fetchMbsMortgageData(object : EconomicRepository.DataCallback<List<EconomicDataPoint>> {
+            override fun onSuccess(data: List<EconomicDataPoint>) { deliver(mbsMortgageData, CACHE_MBS, data); checkAllDone() }
+            override fun onError(error: String) { errorMsg.postValue("MBS: $error"); markFailed(CACHE_MBS); checkAllDone() }
+        })
+    }
+
+    private fun combineForSpread() {
+        val tens = currentTenYearList ?: return
+        val twos = currentTwoYearList ?: return
+        val results = ArrayList<EconomicDataPoint>()
+        for (t in tens)
+            for (w in twos)
+                if (t.date == w.date) {
+                    results.add(EconomicDataPoint("Calculated", "Treasury", "10Y-2Y Spread", t.date, t.value - w.value, "%")); break
+                }
+        results.sortBy { it.date }
+        calculatedSpreadData.postValue(results)
+    }
+
+    private fun combineFor3MSpread() {
+        val tens = currentTenYearList ?: return
+        val threes = currentThreeMonthList ?: return
+        val results = ArrayList<EconomicDataPoint>()
+        for (t in tens)
+            for (w in threes)
+                if (t.date == w.date) {
+                    results.add(EconomicDataPoint("Calculated", "Treasury", "10Y-3M Spread", t.date, t.value - w.value, "%")); break
+                }
+        results.sortBy { it.date }
+        calculatedSpread3MData.postValue(results)
+    }
+
+    fun fetchTreasury() {
+        repository.fetchTreasuryRates(object : EconomicRepository.DataCallback<List<EconomicDataPoint>> {
+            override fun onSuccess(data: List<EconomicDataPoint>) { deliver(treasuryData, CACHE_TREASURY, data); checkAllDone() }
+            override fun onError(error: String) { errorMsg.postValue("Treasury: $error"); markFailed(CACHE_TREASURY); checkAllDone() }
+        })
+    }
+
+    fun fetchGDP() {
+        repository.fetchGDPData(object : EconomicRepository.DataCallback<List<EconomicDataPoint>> {
+            override fun onSuccess(data: List<EconomicDataPoint>) { deliver(gdpData, CACHE_GDP, data); updateLatestQuarter(data); checkAllDone() }
+            override fun onError(error: String) { errorMsg.postValue("GDP: $error"); markFailed(CACHE_GDP); checkAllDone() }
+        })
+    }
+
+    fun fetchEmployment() {
+        repository.fetchEmploymentData(object : EconomicRepository.DataCallback<List<EconomicDataPoint>> {
+            override fun onSuccess(data: List<EconomicDataPoint>) { deliver(employmentData, CACHE_EMPLOYMENT, data); checkAllDone() }
+            override fun onError(error: String) { errorMsg.postValue("Employment: $error"); markFailed(CACHE_EMPLOYMENT); checkAllDone() }
+        })
+    }
+
+    fun fetchCPI() {
+        repository.fetchCPIData(object : EconomicRepository.DataCallback<List<EconomicDataPoint>> {
+            override fun onSuccess(data: List<EconomicDataPoint>) { deliver(cpiData, CACHE_CPI, data); checkAllDone() }
+            override fun onError(error: String) { errorMsg.postValue("CPI: $error"); markFailed(CACHE_CPI); checkAllDone() }
+        })
+    }
+
+    fun fetchWages() {
+        repository.fetchWageData(object : EconomicRepository.DataCallback<List<EconomicDataPoint>> {
+            override fun onSuccess(data: List<EconomicDataPoint>) { wageData.postValue(data); markRecovered(KEY_WAGES); checkAllDone() }
+            override fun onError(error: String) { errorMsg.postValue("Wages: $error"); markFailed(KEY_WAGES); checkAllDone() }
+        })
+    }
+
+    fun fetchSp500() {
+        // SP500 on FRED is a weekly series — "w" is the correct frequency
+        repository.fetchFredData(ApiConfig.FRED_SP500, "S&P 500 Index", ApiConfig.STOCK_INDICES_LIMIT, "w", "Stocks",
+            object : EconomicRepository.DataCallback<List<EconomicDataPoint>> {
+                override fun onSuccess(data: List<EconomicDataPoint>) { deliver(sp500Data, KEY_SP500, data); checkAllDone() }
+                override fun onError(error: String) { errorMsg.postValue("S&P 500: $error"); markFailed(KEY_SP500); checkAllDone() }
+            })
+    }
+
+    fun fetchNasdaq() {
+        // NASDAQCOM on FRED is a monthly series — "m" is the correct frequency
+        repository.fetchFredData(ApiConfig.FRED_NASDAQ, "Nasdaq Composite Index", ApiConfig.STOCK_INDICES_LIMIT, "m", "Stocks",
+            object : EconomicRepository.DataCallback<List<EconomicDataPoint>> {
+                override fun onSuccess(data: List<EconomicDataPoint>) { deliver(nasdaqData, KEY_NASDAQ, data); checkAllDone() }
+                override fun onError(error: String) { errorMsg.postValue("Nasdaq: $error"); markFailed(KEY_NASDAQ); checkAllDone() }
+            })
+    }
+
+    fun fetchVix() {
+        // VIXCLS on FRED is daily — "d" is correct
+        repository.fetchFredData(ApiConfig.FRED_VIX, "VIX Volatility Index", ApiConfig.STOCK_INDICES_LIMIT, "d", "Volatility",
+            object : EconomicRepository.DataCallback<List<EconomicDataPoint>> {
+                override fun onSuccess(data: List<EconomicDataPoint>) { deliver(vixData, CACHE_VIX, data); checkAllDone() }
+                override fun onError(error: String) { errorMsg.postValue("VIX: $error"); markFailed(CACHE_VIX); checkAllDone() }
+            })
+    }
+
+    fun fetchBaaSpread() {
+        repository.fetchFredData(ApiConfig.FRED_BAA_SPREAD, "BAA Corporate Spread", ApiConfig.BOND_SPREADS_LIMIT, "d", "Credit Spreads",
+            object : EconomicRepository.DataCallback<List<EconomicDataPoint>> {
+                override fun onSuccess(data: List<EconomicDataPoint>) { baaSpreadData.postValue(data); markRecovered(KEY_BAA); checkAllDone() }
+                override fun onError(error: String) { errorMsg.postValue("BAA: $error"); markFailed(KEY_BAA); checkAllDone() }
+            })
+    }
+
+    fun fetchHySpread() {
+        repository.fetchFredData(ApiConfig.FRED_HY_SPREAD, "High Yield Spread", ApiConfig.BOND_SPREADS_LIMIT, "d", "Credit Spreads",
+            object : EconomicRepository.DataCallback<List<EconomicDataPoint>> {
+                override fun onSuccess(data: List<EconomicDataPoint>) { hySpreadData.postValue(data); markRecovered(KEY_HY); checkAllDone() }
+                override fun onError(error: String) { errorMsg.postValue("HY: $error"); markFailed(KEY_HY); checkAllDone() }
+            })
+    }
+    // fetchMove() removed — MOVE Index (bond market volatility) is not available via the FRED API.
+    // moveData LiveData is retained in case a future data source is wired in.
+
+    private fun updateLatestQuarter(data: List<EconomicDataPoint>) {
+        val rows = filterBySeries(data, "Gross domestic product")
+        if (rows.isEmpty()) return
+        val latest = rows[rows.size - 1]
+        latestQuarterGdp.postValue(String.format(Locale.US, "%.2f%%", latest.value))
+        latestQuarterLabel.postValue(formatQuarterLabel(latest.date))
+    }
+
+    private fun formatQuarterLabel(date: String?): String {
+        if (date == null || date.length < 7) return ""
+        val year = date.substring(0, 4)
+        val month = date.substring(5, 7)
+        val q = when (month) {
+            "01" -> "Q1"
+            "04" -> "Q2"
+            "07" -> "Q3"
+            "10" -> "Q4"
+            else -> "Q?"
+        }
+        return "$q $year"
+    }
+
+    companion object {
+        // ── Series keys — used for the snapshot cache (DashboardDataCache),
+        //    per-series failure tracking, and single-series retry. Public so the
+        //    dashboard can map a failed key back to its card. ─────────────────────
+        //    `const val` (not @JvmField): MainActivity.java still reads
+        //    EconomicViewModel.CACHE_FED_FUNDS, and const emits a real static field.
+        const val CACHE_TREASURY = "treasury"
+        const val CACHE_FED_FUNDS = "fed_funds"
+        const val CACHE_EMPLOYMENT = "employment"
+        const val CACHE_CPI = "cpi"
+        const val CACHE_GDP = "gdp"
+        const val CACHE_MBS = "mbs_mortgage"
+        const val CACHE_VIX = "vix"
+        // TICKET-18: additional leaf-screen series get per-key failure tracking +
+        // single-series retry too (these aren't snapshot-cached, only tracked so a
+        // leaf card can show the "tap to retry" chip when its own fetch fails).
+        const val KEY_WAGES = "wages"
+        const val KEY_PCE = "pce"
+        const val KEY_HOUSING = "housing"
+        const val KEY_SP500 = "sp500"
+        const val KEY_NASDAQ = "nasdaq"
+        const val KEY_BAA = "baa_spread"
+        const val KEY_HY = "hy_spread"
+        // TICKET-24: alert-only key for the computed 10Y-3M spread (not a fetched
+        // series — derived from the Treasury maturity histories).
+        const val ALERT_SPREAD_3M = "spread_10y3m"
+
+        private fun putIfPresent(map: MutableMap<String, Double>, key: String, v: Double?) {
+            if (v != null) map[key] = v
+        }
+
+        // ── TICKET-22 helpers ────────────────────────────────────────────────────
+
+        /** Latest numeric value of a series list, or null if absent/empty. */
+        private fun latestOf(rows: List<EconomicDataPoint>?): Double? {
+            if (rows == null || rows.isEmpty()) return null
+            return rows[rows.size - 1].value
+        }
+
+        /** Latest value of one named series inside a (possibly multi-series) list. */
+        private fun latestOf(rows: List<EconomicDataPoint>?, seriesName: String): Double? {
+            if (rows == null || rows.isEmpty()) return null
+            return latestOf(filterBySeries(rows, seriesName))
+        }
+
+        /** CPI YoY % from a monthly index series (needs ≥13 rows), or null. */
+        private fun yoyOf(rows: List<EconomicDataPoint>?): Double? {
+            if (rows == null || rows.size < 13) return null
+            val latest = rows[rows.size - 1].value
+            val base = rows[rows.size - 13].value
+            if (base == 0.0) return null
+            return ((latest - base) / base) * 100.0
+        }
+
+        /** CPI YoY % from the CPI-U series within a multi-series CPI list. */
+        private fun cpiYoyOf(rows: List<EconomicDataPoint>?): Double? {
+            if (rows == null || rows.isEmpty()) return null
+            return yoyOf(filterBySeries(rows, "CPI-U All Items"))
+        }
+
+        private fun appendDeltaPart(
+            parts: MutableList<String>, label: String,
+            opened: Double?, fresh: Double?, fmt: String
+        ) {
+            if (opened == null || fresh == null) return
+            val delta = fresh - opened
+            if (Math.abs(delta) < 0.005) {
+                parts.add("$label unchanged")
+            } else {
+                parts.add(label + " " + DeltaFormatter.format(delta, fmt))
+            }
+        }
+
+        @JvmStatic
+        fun getLatest(data: List<EconomicDataPoint>?, series: String): EconomicDataPoint? {
+            if (data == null) return null
+            var latest: EconomicDataPoint? = null
+            for (p in data) {
+                val current = latest
+                if (p.series == series && (current == null || p.date.compareTo(current.date) > 0))
+                    latest = p
+            }
+            return latest
+        }
+
+        @JvmStatic
+        fun filterBySeries(data: List<EconomicDataPoint>?, series: String): List<EconomicDataPoint> {
+            val result = ArrayList<EconomicDataPoint>()
+            if (data != null) for (p in data) if (p.series == series) result.add(p)
+            result.sortBy { it.date }
+            return result
+        }
+
+        /**
+         * Returns the tail of a date-sorted (yyyy-MM-dd) series that falls within the
+         * given number of months of its most recent point. This standardizes the
+         * x-axis window across every chart in the app. Falls back to the full list
+         * when the window would leave fewer than two points, so sparse series
+         * (e.g. quarterly GDP) stay drawable, and when a date fails to parse.
+         *
+         * Takes and returns a NON-NULL list, unlike the Java. Every caller passes
+         * the result of [filterBySeries], which never returns null, and the
+         * ~10 already-converted fragments assign the result straight back into a
+         * non-null `List` — a nullable return would break all of them. The Java's
+         * `if (sortedRows == null) return sortedRows` branch was therefore
+         * unreachable and is dropped, along with the now-dead `date == null`
+         * guards (EconomicDataPoint.date is non-null since batch 3).
+         */
+        @JvmStatic
+        fun filterByMonths(sortedRows: List<EconomicDataPoint>, months: Int): List<EconomicDataPoint> {
+            if (sortedRows.size < 2 || months <= 0) return sortedRows
+            val latest = sortedRows[sortedRows.size - 1].date
+            if (latest.length < 10) return sortedRows
+            return try {
+                val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+                val d = sdf.parse(latest) ?: return sortedRows
+                val cal = Calendar.getInstance()
+                cal.time = d
+                cal.add(Calendar.MONTH, -months)
+                val cutoff = sdf.format(cal.time)
+                val result = ArrayList<EconomicDataPoint>()
+                for (p in sortedRows)
+                    if (p.date.compareTo(cutoff) >= 0) result.add(p)
+                if (result.size >= 2) result else sortedRows
+            } catch (e: ParseException) {
+                sortedRows
+            }
+        }
+
+        /** Windows a date-sorted series using the user's chart-timeframe setting. */
+        @JvmStatic
+        fun filterByTimeframe(ctx: Context, sortedRows: List<EconomicDataPoint>): List<EconomicDataPoint> {
+            return filterByMonths(sortedRows, SettingsManager.getChartTimeframeMonths(ctx))
+        }
+
+        /** Per-chart timeframe window (TICKET-11): honors that chart's own range. */
+        @JvmStatic
+        fun filterByTimeframe(ctx: Context, sortedRows: List<EconomicDataPoint>, chartId: String): List<EconomicDataPoint> {
+            return filterByMonths(sortedRows, SettingsManager.getChartTimeframeMonths(ctx, chartId))
+        }
+
+        @JvmStatic
+        fun calculatePercentile(data: List<EconomicDataPoint>?, series: String, currentValue: Double): Int {
+            val rows = filterBySeries(data, series)
+            if (rows.size < 5) return -1
+            var count = 0
+            for (p in rows) if (p.value <= currentValue) count++
+            return Math.round((count * 100.0) / rows.size).toInt()
+        }
+
+        @JvmStatic
+        fun formatPercentile(pct: Int): String {
+            if (pct < 0) return ""
+            val s = if (pct == 11 || pct == 12 || pct == 13) "th"
+            else if (pct % 10 == 1) "st"
+            else if (pct % 10 == 2) "nd"
+            else if (pct % 10 == 3) "rd"
+            else "th"
+            return "$pct$s pct."
+        }
+    }
+}
