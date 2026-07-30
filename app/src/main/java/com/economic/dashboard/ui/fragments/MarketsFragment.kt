@@ -6,18 +6,14 @@ import android.view.View
 import android.view.ViewGroup
 
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
 
 import com.economic.dashboard.databinding.FragmentMarketsBinding
-import com.economic.dashboard.ui.EconomicViewModel
 import com.economic.dashboard.utils.EdgeToEdgeInsets
 import com.google.android.material.tabs.TabLayoutMediator
 
 class MarketsFragment : Fragment() {
 
-    private var viewModel: EconomicViewModel? = null
     private var binding: FragmentMarketsBinding? = null
-    private var pagerAdapter: MarketsPagerAdapter? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -39,14 +35,11 @@ class MarketsFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         val b = binding ?: return
-        viewModel = ViewModelProvider(requireActivity()).get(EconomicViewModel::class.java)
 
         val tabLayout = b.tabLayout
         val viewPager = b.viewPager
 
-        val adapter = MarketsPagerAdapter(this)
-        pagerAdapter = adapter
-        viewPager.adapter = adapter
+        viewPager.adapter = MarketsPagerAdapter(this)
 
         TabLayoutMediator(tabLayout, viewPager) { tab, position ->
             when (position) {

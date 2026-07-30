@@ -23,6 +23,12 @@ import com.economic.dashboard.models.TreasuryYield
  *       version lets destructive fallback recreate the table cleanly. All tables
  *       are re-fetchable API caches, so no real data is lost.)
  * v5 → added chat_messages table (AI Analyst conversation persistence)
+ *
+ * Note: the `news_articles` table (NewsArticle) is retained in the schema but has
+ * no DAO — the NewsAPI path that populated it was never wired up and was removed
+ * in kotlin batch 12a. The entity stays because dropping it is a schema change
+ * requiring a version bump and migration. The live News tab uses the separate
+ * RSS-backed news/NewsRepository and does not touch this table.
  */
 @Database(
     entities = [TreasuryYield::class, NewsArticle::class, EconomicHistoryEntry::class, ChatMessageEntity::class],
@@ -32,7 +38,6 @@ import com.economic.dashboard.models.TreasuryYield
 abstract class YieldDatabase : RoomDatabase() {
 
     abstract fun treasuryYieldDao(): TreasuryYieldDao
-    abstract fun newsArticleDao(): NewsArticleDao
     abstract fun economicHistoryDao(): EconomicHistoryDao
     abstract fun chatMessageDao(): ChatMessageDao
 

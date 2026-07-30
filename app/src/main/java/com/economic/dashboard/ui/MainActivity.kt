@@ -183,11 +183,12 @@ class MainActivity : AppCompatActivity() {
                 AiAnalystBottomSheet().show(supportFragmentManager, AiAnalystBottomSheet.TAG)
         }
         binding.btnSettings.setOnClickListener { showSettingsSheet() }
-        updateHeader()
         observeViewModel()
         viewModel.fetchAllData()
         if (freshLaunch && SettingsManager.getBool(this, SettingsManager.KEY_REFRESH_ON_OPEN, false)) {
-            CacheManager.forceRefreshAll(this) { runOnUiThread { updateHeader() } }
+            // Callback intentionally empty: the refresh itself is the point, and
+            // the header has nothing to redraw (see setupBottomNav()).
+            CacheManager.forceRefreshAll(this) { }
         }
         // TICKET-17: recompute the News unread badge whenever a fetch lands.
         NewsRepository.getInstance().setOnFetchCompleteListener {
@@ -611,7 +612,6 @@ class MainActivity : AppCompatActivity() {
         viewModel.getIsLoading().observe(this) { loading ->
             binding.progressBar.visibility = if (loading) View.VISIBLE else View.GONE
         }
-        viewModel.getFedFundsData().observe(this) { data -> if (data != null) updateHeader() }
         viewModel.getErrorMsg().observe(this) { error ->
             if (error != null && !error.isEmpty()) {
                 android.util.Log.w("MainActivity", "Data fetch error: $error")
@@ -620,13 +620,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun updateHeader() {
-        // Nothing to update in the header itself — the compact title is set
-        // directly on tab switch (see setupBottomNav()).
-    }
-
     override fun onResume() {
-        super.onResume(); updateHeader(); refreshNewsBadge(); refreshAnalystBadge()
+        super.onResume(); refreshNewsBadge(); refreshAnalystBadge()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -642,7 +637,6 @@ class MainActivity : AppCompatActivity() {
             viewModel.fetchAllData()
             CacheManager.forceRefreshAll(this) { success ->
                 runOnUiThread {
-                    updateHeader()
                     Toast.makeText(this,
                         if (success) R.string.refresh_done else R.string.refresh_failed,
                         Toast.LENGTH_SHORT).show()
@@ -660,7 +654,6 @@ class MainActivity : AppCompatActivity() {
                             Toast.makeText(this,
                                 R.string.cache_cleared,
                                 Toast.LENGTH_SHORT).show()
-                            updateHeader()
                         }
                     }
                 }

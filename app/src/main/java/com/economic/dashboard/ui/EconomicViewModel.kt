@@ -71,7 +71,6 @@ class EconomicViewModel(application: Application) : AndroidViewModel(application
 
     private val isLoading = MutableLiveData(false)
     private val errorMsg = MutableLiveData<String>()
-    private val statusMsg = MutableLiveData<String>()
     /** "as of …" label shown while cached (stale) values are on screen; null once fresh. */
     private val cacheAsOf = MutableLiveData<String?>()
 
@@ -115,7 +114,6 @@ class EconomicViewModel(application: Application) : AndroidViewModel(application
     fun getLatestQuarterLabel(): LiveData<String> = latestQuarterLabel
     fun getIsLoading(): LiveData<Boolean> = isLoading
     fun getErrorMsg(): LiveData<String> = errorMsg
-    fun getStatusMsg(): LiveData<String> = statusMsg
     fun getCacheAsOf(): LiveData<String?> = cacheAsOf
     fun getSinceLastOpen(): LiveData<String?> = sinceLastOpen
 
@@ -626,12 +624,6 @@ class EconomicViewModel(application: Application) : AndroidViewModel(application
             } catch (e: ParseException) {
                 sortedRows
             }
-        }
-
-        /** Windows a date-sorted series using the user's chart-timeframe setting. */
-        @JvmStatic
-        fun filterByTimeframe(ctx: Context, sortedRows: List<EconomicDataPoint>): List<EconomicDataPoint> {
-            return filterByMonths(sortedRows, SettingsManager.getChartTimeframeMonths(ctx))
         }
 
         /** Per-chart timeframe window (TICKET-11): honors that chart's own range. */

@@ -430,13 +430,9 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
         }
     }
 
-    /** Entry point for external callers (share sheet, selection Ask AI, news). */
-    fun submitExternalQuery(query: String) {
-        submitExternalQuery(query, "", false)
-    }
-
     /**
-     * Entry point for gesture callers (AI Law 12: every door behaves the same):
+     * Entry point for external and gesture callers (AI Law 12: every door
+     * behaves the same):
      * carries a screen-context block and the concise flag into an already-open
      * sheet, matching what newInstanceForGesture does for a fresh one.
      */
@@ -1494,14 +1490,6 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
             val args = Bundle()
             args.putString(ARG_PREFILL, prefillQuery)
             sheet.arguments = args
-            return sheet
-        }
-
-        /** Opens the sheet with a question plus an extra screen-context block for the system prompt. */
-        @JvmStatic
-        fun newInstanceWithContext(prefillQuery: String?, screenContext: String?): AiAnalystBottomSheet {
-            val sheet = newInstance(prefillQuery)
-            sheet.arguments?.putString(ARG_SCREEN_CONTEXT, screenContext)
             return sheet
         }
 
