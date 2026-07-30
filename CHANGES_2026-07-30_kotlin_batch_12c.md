@@ -182,7 +182,7 @@ If red: paste the exact error back.
 
 ## Migration complete
 
-`app/src/main` is 100% Kotlin (93 files), batches 0–12 are done, and
+`app/src/main` is 100% Kotlin (88 files — 92 at the end of batch 11, minus the 5 `.kt` files deleted in 12a, plus `RetryChip.kt`), batches 0–12 are done, and
 `./gradlew check` is green. The four files in `app/src/test` remain Java
 deliberately — they are the interop regression net, and porting them would make
 the `@JvmField`/`@JvmStatic`/package-private traps they guard against invisible.
