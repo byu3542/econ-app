@@ -23,6 +23,7 @@ import com.economic.dashboard.ui.MetricBottomSheet
 import com.economic.dashboard.utils.ChartHelper
 import com.economic.dashboard.utils.EdgeToEdgeInsets
 import com.economic.dashboard.utils.NumberFormatUtil
+import com.economic.dashboard.utils.RetryChip
 import com.economic.dashboard.utils.TimeframeSelector
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.data.Entry
@@ -62,21 +63,8 @@ class WagesFragment : Fragment() {
         viewModel = ViewModelProvider(requireActivity()).get(EconomicViewModel::class.java)
 
         // TICKET-18: per-screen retry chip for this screen's series
-        val retryChip: TextView? = view.findViewById(R.id.tvRetry)
-        val retryKeys = arrayOf(EconomicViewModel.KEY_WAGES, EconomicViewModel.CACHE_CPI)
-        viewModel.getFailedSeries().observe(viewLifecycleOwner) { failed ->
-            if (retryChip != null) {
-                var hit: String? = null
-                if (failed != null) for (k in retryKeys) if (failed.contains(k)) { hit = k; break }
-                if (hit != null) {
-                    val key = hit
-                    retryChip.setOnClickListener { viewModel.retrySeries(key) }
-                    retryChip.visibility = View.VISIBLE
-                } else {
-                    retryChip.visibility = View.GONE
-                }
-            }
-        }
+        RetryChip.wire(this, view, viewModel,
+            EconomicViewModel.KEY_WAGES, EconomicViewModel.CACHE_CPI)
 
         hourlyWageChart = b.hourlyWageChart
         AskAnalyst.attachChartExplain(
