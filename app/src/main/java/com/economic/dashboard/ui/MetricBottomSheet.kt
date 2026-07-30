@@ -26,19 +26,11 @@ object MetricBottomSheet {
      * Inflates layoutRes inside the sheet chrome (rounded navy top + drag handle),
      * wires the optional btnClose, and shows the sheet.
      *
-     * Unused today (no caller) — kept verbatim per the dead-code decision.
+     * TICKET-24: when `seriesKey`/`seriesLabel` are given, appends an
+     * "＋ Add alert" affordance that opens the threshold-rule dialog for that
+     * metric. Both are nullable — pass null/null for a plain detail sheet.
      *
      * @return the inflated content view so callers can bind data to it.
-     */
-    @JvmStatic
-    fun show(ctx: Context, layoutRes: Int): View {
-        return show(ctx, layoutRes, null, null)
-    }
-
-    /**
-     * TICKET-24 overload: when `seriesKey`/`seriesLabel` are given,
-     * appends an "＋ Add alert" affordance to the sheet that opens the
-     * threshold-rule dialog for that metric.
      */
     @JvmStatic
     fun show(ctx: Context, layoutRes: Int, seriesKey: String?, seriesLabel: String?): View {

@@ -242,28 +242,6 @@ class DashboardFragment : Fragment() {
         }
     }
 
-    /**
-     * TICKET-13: whole-card tap opens the Econ Analyst for metrics with no
-     * benchmark dialog (Mortgage, VIX). Routed through AskAnalyst.openWithQuery
-     * with concise=true and a SCREEN CONTEXT block, matching the long-press
-     * path on every other card instead of the old plain-query/no-reuse call.
-     *
-     * Unused today (no caller) — kept verbatim per the dead-code decision.
-     */
-    private fun wireCardTapAnalyst(card: View?, label: String) {
-        if (card == null) return
-        card.setOnClickListener { v ->
-            v.performHapticFeedback(android.view.HapticFeedbackConstants.CONTEXT_CLICK)
-            val tv: TextView? = card.findViewById(R.id.tvMetricValue)
-            val value = if (tv != null) tv.text.toString() else ""
-            val query = buildAskQuery(label, value)
-            val context = if (value.isEmpty() || value == "—") "" else
-                "\nSCREEN CONTEXT: The user tapped the " + label + " card, which currently shows: " +
-                    value + ". These are the live on-screen values — use them directly and do not fetch them again.\n"
-            AskAnalyst.openWithQuery(requireActivity(), query, context, true)
-        }
-    }
-
     // ── TICKET-25: watchlist-driven cluster order ──────────────────────────
 
     /**
@@ -707,13 +685,6 @@ class DashboardFragment : Fragment() {
             "Jan", "Feb", "Mar", "Apr", "May", "Jun",
             "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
         )
-
-        private fun buildAskQuery(label: String, value: String?): String {
-            if (value == null || value.isEmpty() || value == "—")
-                return "Tell me about the current reading for " + label + " and what it means."
-            return "The dashboard shows " + label + " at " + value +
-                ". What's driving this, and what does it mean for the economy?"
-        }
 
         /** Lowest index of any of the keys in the watchlist; large if none listed. */
         private fun bestRank(watch: List<String>, vararg keys: String): Int {

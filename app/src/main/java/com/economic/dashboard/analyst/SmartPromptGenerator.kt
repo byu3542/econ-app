@@ -1,15 +1,8 @@
 package com.economic.dashboard.analyst
 
-import com.economic.dashboard.models.NewsArticle
-
 import java.util.Locale
 
 object SmartPromptGenerator {
-
-    @JvmStatic
-    fun generatePromptsForArticle(article: NewsArticle): List<String> {
-        return generatePromptsForHeadline(article.title)
-    }
 
     /** Keyword-matched prompts for any raw headline string (used by the chat sheet). */
     @JvmStatic
@@ -70,52 +63,7 @@ object SmartPromptGenerator {
         return prompts.subList(0, Math.min(5, prompts.size))
     }
 
-    @JvmStatic
-    fun generateComparativePrompts(articles: List<NewsArticle>): List<String> {
-        val prompts = ArrayList<String>()
-        if (articles.isEmpty()) return prompts
-        prompts.add("🔗 How are these economic stories connected?")
-        prompts.add("📊 What's the common theme across these headlines?")
-        prompts.add("🎯 Which story is most significant for long-term economic outlook?")
-        prompts.add("⚖️ Are these stories bullish or bearish for the economy?")
-        prompts.add("🔮 Based on these trends, what should we expect next month?")
-        return prompts.subList(0, Math.min(5, prompts.size))
-    }
-
-    @JvmStatic
-    fun generateOutlookPrompts(article: NewsArticle): List<String> {
-        val prompts = ArrayList<String>()
-        prompts.add("🔮 What does this trend suggest for the next quarter?")
-        prompts.add("📅 When might we see the impact of this development?")
-        prompts.add("⚠️ What are the upside and downside risks?")
-        prompts.add("🎯 What leading indicators should we watch?")
-        prompts.add("💡 How should policy respond to prevent negative outcomes?")
-        return prompts.subList(0, Math.min(5, prompts.size))
-    }
-
     private fun contains(text: String, keyword: String): Boolean {
         return text.contains(keyword)
-    }
-
-    enum class EconomicCategory {
-        FEDERAL_RESERVE, INFLATION, EMPLOYMENT, GDP_GROWTH, HOUSING, DEBT_DEFICIT, WAGES, STOCK_MARKET, OTHER;
-
-        companion object {
-            @JvmStatic
-            fun detectFromArticle(article: NewsArticle): EconomicCategory {
-                // String template reproduces Java's null-stringification of the
-                // nullable title/description exactly.
-                val text = "${article.title} ${article.description}".lowercase(Locale.getDefault())
-                if (text.contains("fed") || text.contains("federal reserve")) return FEDERAL_RESERVE
-                if (text.contains("inflation") || text.contains("cpi")) return INFLATION
-                if (text.contains("unemployment") || text.contains("jobs")) return EMPLOYMENT
-                if (text.contains("gdp") || text.contains("growth")) return GDP_GROWTH
-                if (text.contains("housing") || text.contains("real estate")) return HOUSING
-                if (text.contains("debt") || text.contains("deficit")) return DEBT_DEFICIT
-                if (text.contains("wage") || text.contains("salary")) return WAGES
-                if (text.contains("stock") || text.contains("market")) return STOCK_MARKET
-                return OTHER
-            }
-        }
     }
 }

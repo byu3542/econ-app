@@ -49,7 +49,16 @@ if [ -n "$hits" ]; then
     # Re-read each offending file and check the attribute block around the id.
     while IFS=: read -r file line _rest; do
         [ -n "${file:-}" ] || continue
-        block="$(awk -v s="$line" 'NR>=s-8 && NR<=s+10' "$file")"
+        # Bound the scan to the single XML element that declares the id: walk
+        # back to its opening tag, forward to its closing bracket. The previous
+        # fixed ±8/+10 line window bled into sibling views and blamed this id
+        # for a neighbour's textColor (false-positived tvNotifStatus in
+        # sheet_settings.xml against the tvNotifBlocked below it).
+        start="$(awk -v s="$line" 'NR<=s && /<[A-Za-z]/ { n=NR } END { print n+0 }' "$file")"
+        end="$(awk -v s="$line" 'NR>=s && /\/?>[[:space:]]*$/ { print NR; exit }' "$file")"
+        [ "$start" -gt 0 ] 2>/dev/null || start="$line"
+        [ -n "$end" ] && [ "$end" -ge "$start" ] 2>/dev/null || end="$line"
+        block="$(awk -v a="$start" -v b="$end" 'NR>=a && NR<=b' "$file")"
         if printf '%s' "$block" | grep -qE 'android:(textColor|textSize|textStyle|textAllCaps|letterSpacing)'; then
             if [ $fail -eq 0 ]; then
                 echo "FAIL: status badge styled outside @style/Badge.Status"
@@ -76,13 +85,20 @@ fi
 # The dot is always @dimen/dot_status. If a layout sizes a View with it without
 # going through the shared include, someone rebuilt the badge row by hand.
 dot_hits="$(grep -rln --include='*.xml' 'dot_status' "$LAYOUTS" 2>/dev/null || true)"
-for f in $dot_hits; do
-    [ "$f" = "$BADGE_LAYOUT" ] && continue
-    echo "FAIL: hand-written status dot"
-    note "$f sizes a dot with @dimen/dot_status directly."
-    note "Use <include layout=\"@layout/view_status_badge\" android:id=\"@+id/statusXxx\" /> instead."
-    fail=1
-done
+if [ -n "$dot_hits" ]; then
+    # Read line-by-line, not `for f in $dot_hits` — the repo path contains a
+    # space ("Android App"), so word-splitting broke each path into fragments
+    # and the $BADGE_LAYOUT exclusion below could never match. That made this
+    # check flag view_status_badge.xml, the very file it tells you to use.
+    while IFS= read -r f; do
+        [ -n "$f" ] || continue
+        [ "$f" = "$BADGE_LAYOUT" ] && continue
+        echo "FAIL: hand-written status dot"
+        note "$f sizes a dot with @dimen/dot_status directly."
+        note "Use <include layout=\"@layout/view_status_badge\" android:id=\"@+id/statusXxx\" /> instead."
+        fail=1
+    done <<< "$dot_hits"
+fi
 
 if [ $fail -eq 0 ]; then
     echo "check_badges: OK — every status badge goes through @style/Badge.Status."
