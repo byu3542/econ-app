@@ -8,11 +8,11 @@ object SmartPromptGenerator {
     @JvmStatic
     fun generatePromptsForHeadline(headline: String?): List<String> {
         val prompts = ArrayList<String>()
-        // Java's bare toLowerCase() uses the default locale; Kotlin's bare
-        // lowercase() uses Locale.ROOT. Locale.getDefault() is passed explicitly
-        // to keep the port behaviour-identical — see the CHANGES file for the
-        // latent Turkish-locale issue this preserves.
-        val title = if (headline == null) "" else headline.lowercase(Locale.getDefault())
+        // Locale.US, not getDefault(): the keywords below are English ASCII
+        // literals, and on a Turkish-locale device "I" lowercases to "ı", so
+        // headlines containing a capital I would fail to match their bucket.
+        // Matches the convention used at every other case-conversion site.
+        val title = if (headline == null) "" else headline.lowercase(Locale.US)
 
         if (contains(title, "fed") || contains(title, "federal reserve") || contains(title, "interest rate")) {
             prompts.add("🏦 How might this Fed action affect Treasury yields and bond prices?")

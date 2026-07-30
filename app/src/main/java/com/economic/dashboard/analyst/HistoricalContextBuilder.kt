@@ -109,11 +109,10 @@ object HistoricalContextBuilder {
         }
 
         var min = Double.MAX_VALUE
-        // Double.MIN_VALUE is the smallest POSITIVE double (~4.9e-324), not the
-        // most negative one — so this is a latent bug for an all-negative series.
-        // Kotlin's Double.MIN_VALUE is identical to Java's, so this is a faithful
-        // port; see the CHANGES file rather than "fixing" it in a syntax batch.
-        var max = Double.MIN_VALUE
+        // -Double.MAX_VALUE, not Double.MIN_VALUE: the latter is the smallest
+        // POSITIVE double (~4.9e-324), so seeding a running max with it reports
+        // ~0.00 for any all-negative series instead of the real maximum.
+        var max = -Double.MAX_VALUE
         var sum = 0.0
         for (e in rows) {
             if (e.value < min) min = e.value
@@ -139,7 +138,7 @@ object HistoricalContextBuilder {
         }
 
         var min = Double.MAX_VALUE
-        var max = Double.MIN_VALUE
+        var max = -Double.MAX_VALUE // see appendYieldLine — not Double.MIN_VALUE
         for (e in rows) {
             if (e.value < min) min = e.value
             if (e.value > max) max = e.value
