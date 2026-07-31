@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Placeholder shaped like item_news_row: same 10dp card radius, 1dp elevation and
+  margins, the left impact bar, a source/time row, two headline lines and a tag
+  pill. Repeated a few times by view_news_skeleton to fill the viewport.
+  Purely decorative — the parent shimmer container owns the accessibility label.
+-->
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="@dimen/space_md"
+    android:layout_marginVertical="@dimen/space_xs"
+    android:importantForAccessibility="noHideDescendants"
+    app:cardBackgroundColor="@color/surface_card"
+    app:cardElevation="1dp"
+    app:cardCornerRadius="10dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="@dimen/space_md">
+
+        <!-- Impact bar on the left edge -->
+        <View
+            android:layout_width="3dp"
+            android:layout_height="match_parent"
+            android:layout_marginEnd="@dimen/space_md"
+            android:background="@drawable/bg_skeleton_line" />
+
+        <!-- Content column -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <!-- Source + time row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <View
+                    android:layout_width="80dp"
+                    android:layout_height="9dp"
+                    android:background="@drawable/bg_skeleton_line" />
+
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1" />
+
+                <View
+                    android:layout_width="36dp"
+                    android:layout_height="9dp"
+                    android:layout_marginStart="@dimen/space_sm"
+                    android:background="@drawable/bg_skeleton_line" />
+
+            </LinearLayout>
+
+            <!-- Headline: two lines, second one short -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="12dp"
+                android:layout_marginTop="@dimen/space_sm"
+                android:background="@drawable/bg_skeleton_line" />
+
+            <View
+                android:layout_width="160dp"
+                android:layout_height="12dp"
+                android:layout_marginTop="@dimen/space_xs"
+                android:background="@drawable/bg_skeleton_line" />
+
+            <!-- Tag pill -->
+            <View
+                android:layout_width="56dp"
+                android:layout_height="12dp"
+                android:layout_marginTop="@dimen/space_sm"
+                android:background="@drawable/bg_skeleton_line" />
+
+        </LinearLayout>
+
+        <View
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_marginStart="@dimen/space_md"
+            android:layout_gravity="center_vertical"
+            android:background="@drawable/bg_skeleton_line" />
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

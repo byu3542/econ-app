@@ -4,7 +4,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -17,18 +16,29 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.economic.dashboard.databinding.FragmentNewsBinding;
 import com.economic.dashboard.R;
+import com.economic.dashboard.utils.MotionUtil;
+import com.facebook.shimmer.ShimmerFrameLayout;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 
+import java.util.List;
+
 public class NewsFragment extends Fragment {
+
+    /** Cross-fade duration for the skeleton → content swap. */
+    private static final long REVEAL_MS = 300L;
 
     private FragmentNewsBinding binding;
 
     private NewsViewModel        viewModel;
     private NewsAdapter          adapter;
     private SwipeRefreshLayout   swipeRefresh;
-    private ProgressBar          progressBar;
     private TextView             tvError;
+
+    /** Cold-start skeleton (view_news_skeleton), null once the view is torn down. */
+    private ShimmerFrameLayout skeleton;
+    /** Latched the first time content lands, so refresh never re-shows the skeleton. */
+    private boolean skeletonHidden = true;
 
     @Nullable
     @Override
@@ -59,11 +69,25 @@ public class NewsFragment extends Fragment {
         recycler.setLayoutManager(new LinearLayoutManager(requireContext()));
         recycler.setAdapter(adapter);
 
-        // ─── Progress / Error views ──────────────────────────────────────────────
-        progressBar = binding.progressNews;
+        // ─── Cold-start skeleton ─────────────────────────────────────────────────
+        // Decided before the observers are attached: LiveData replays its last
+        // value the moment we observe, so checking afterwards would flash a
+        // skeleton on every return to the tab. Warm = this process already has
+        // stories (activity-scoped ViewModel survives rotation and tab switches)
+        // or the repository still holds a fresh feed.
+        skeleton = binding.newsSkeleton.getRoot();
+        List<NewsItem> known = viewModel.getNewsItems().getValue();
+        boolean coldStart = (known == null || known.isEmpty())
+                && NewsRepository.getInstance().getCachedItems().isEmpty();
+        if (coldStart) showSkeleton();
+
+        // ─── Error views ─────────────────────────────────────────────────────────
         tvError     = binding.textNewsError;
         binding.btnNewsRetry.setOnClickListener(v -> {
             binding.errorContainer.setVisibility(View.GONE);
+            // Retrying from the error card is still a cold start — there is
+            // nothing on screen to keep the reader occupied.
+            if (adapter.getItemCount() == 0) showSkeleton();
             viewModel.loadNews(true);
         });
         binding.btnNewsClearFilter.setOnClickListener(v -> binding.chipAll.setChecked(true));
@@ -96,20 +120,24 @@ public class NewsFragment extends Fragment {
             adapter.submitList(items);
             boolean empty = items == null || items.isEmpty();
             recycler.setVisibility(empty ? View.GONE : View.VISIBLE);
-            binding.emptyContainer.setVisibility(empty ? View.VISIBLE : View.GONE);
+            binding.emptyContainer.setVisibility(
+                    empty && skeletonHidden ? View.VISIBLE : View.GONE);
             if (!empty) {
                 binding.textNewsMeta.setText(getString(R.string.news_meta, items.size(), "just now"));
+                hideSkeleton();
             }
         });
 
         viewModel.getIsLoading().observe(getViewLifecycleOwner(), loading -> {
             boolean hasData = adapter.getItemCount() > 0;
-            // Show ProgressBar only on initial load (no data yet)
-            progressBar.setVisibility(loading && !hasData ? View.VISIBLE : View.GONE);
-            binding.textNewsLoading.setVisibility(loading && !hasData ? View.VISIBLE : View.GONE);
             if (loading && !hasData) binding.emptyContainer.setVisibility(View.GONE);
-            // Stop swipe refresh indicator when done
-            if (!loading) swipeRefresh.setRefreshing(false);
+            // The fetch is over: drop the skeleton even if it came back empty,
+            // so the empty state isn't stuck behind a shimmer forever.
+            if (!loading) {
+                hideSkeleton();
+                // Stop swipe refresh indicator when done
+                swipeRefresh.setRefreshing(false);
+            }
         });
 
         viewModel.getErrorMessage().observe(getViewLifecycleOwner(), error -> {
@@ -119,8 +147,8 @@ public class NewsFragment extends Fragment {
             binding.errorContainer.setVisibility(
                     hasError && adapter.getItemCount() == 0 ? View.VISIBLE : View.GONE);
             if (hasError && adapter.getItemCount() == 0) {
+                hideSkeleton();
                 binding.emptyContainer.setVisibility(View.GONE);
-                binding.textNewsLoading.setVisibility(View.GONE);
             }
             if (hasError) tvError.setText(error);
         });
@@ -129,9 +157,66 @@ public class NewsFragment extends Fragment {
         viewModel.loadNews(false);
     }
 
+    /**
+     * Puts the shape of the feed on screen — one hero card plus rows — while the
+     * first fetch is in flight. Only ever called with an empty list: a cold start
+     * with no cache, or a retry from the error card.
+     */
+    private void showSkeleton() {
+        if (binding == null || skeleton == null) return;
+        skeletonHidden = false;
+        binding.emptyContainer.setVisibility(View.GONE);
+        binding.recyclerNews.setAlpha(0f);
+        skeleton.animate().cancel(); // drop any in-flight fade-out from a prior reveal
+        skeleton.setAlpha(1f);
+        skeleton.setVisibility(View.VISIBLE);
+        // TICKET-28: reduced motion gets the same skeleton, rendered static.
+        if (MotionUtil.animationsEnabled(skeleton.getContext())) skeleton.startShimmer();
+    }
+
+    /**
+     * Cross-fades the cold-start skeleton out and the list in. Idempotent: once
+     * the first feed (or error) lands, {@code skeletonHidden} stays latched, so
+     * pull-to-refresh and chip filtering can never bring the skeleton back —
+     * refresh keeps the SwipeRefreshLayout spinner it always had. Only an
+     * explicit {@link #showSkeleton()} (retry with an empty list) unlatches it.
+     */
+    private void hideSkeleton() {
+        if (skeletonHidden || binding == null || skeleton == null) return;
+        skeletonHidden = true;
+
+        final ShimmerFrameLayout shimmer = skeleton;
+        final RecyclerView recycler = binding.recyclerNews;
+        shimmer.stopShimmer();
+
+        // TICKET-28: reduced motion swaps instantly instead of cross-fading.
+        if (!MotionUtil.animationsEnabled(shimmer.getContext())) {
+            recycler.setAlpha(1f);
+            shimmer.setVisibility(View.GONE);
+        } else {
+            recycler.animate().alpha(1f).setDuration(REVEAL_MS).start();
+            shimmer.animate().alpha(0f).setDuration(REVEAL_MS)
+                    .withEndAction(() -> shimmer.setVisibility(View.GONE))
+                    .start();
+        }
+
+        // Nothing came back: hand the screen over to the empty state, unless the
+        // error card already owns it.
+        if (adapter.getItemCount() == 0
+                && binding.errorContainer.getVisibility() != View.VISIBLE) {
+            binding.emptyContainer.setVisibility(View.VISIBLE);
+        }
+    }
+
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        if (skeleton != null) {
+            skeleton.stopShimmer();
+            skeleton.animate().cancel();
+            skeleton = null;
+        }
+        skeletonHidden = true;
         binding = null;
     }
 }

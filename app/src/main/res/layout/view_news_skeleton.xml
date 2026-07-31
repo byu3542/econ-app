@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Cold-start loading skeleton for News. Mirrors the real feed shape — one hero
+  card, a section header, then row cards — so the reader sees the layout that is
+  coming rather than a bare spinner. Shown only when the feed has nothing cached
+  (NewsFragment.onViewCreated); pull-to-refresh keeps using the SwipeRefreshLayout
+  spinner and never re-shows this.
+
+  shimmer_auto_start is false on purpose: NewsFragment starts the sweep only when
+  MotionUtil.animationsEnabled() is true, so a reduced-motion user gets the same
+  skeleton rendered static. Shimmer's default direction is left → right.
+
+  Enough rows to fill a tall viewport; the surplus is clipped by the parent.
+-->
+<com.facebook.shimmer.ShimmerFrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_warm_off_white"
+    android:contentDescription="@string/news_loading"
+    android:importantForAccessibility="yes"
+    app:shimmer_auto_start="false">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingTop="@dimen/space_sm">
+
+        <include layout="@layout/skeleton_news_hero" />
+
+        <!-- Section header ("TODAY") placeholder — item_news_header metrics -->
+        <View
+            android:layout_width="72dp"
+            android:layout_height="10dp"
+            android:layout_marginHorizontal="@dimen/space_lg"
+            android:layout_marginTop="@dimen/space_lg"
+            android:layout_marginBottom="@dimen/space_xs"
+            android:background="@drawable/bg_skeleton_line" />
+
+        <include layout="@layout/skeleton_news_row" />
+        <include layout="@layout/skeleton_news_row" />
+        <include layout="@layout/skeleton_news_row" />
+        <include layout="@layout/skeleton_news_row" />
+        <include layout="@layout/skeleton_news_row" />
+        <include layout="@layout/skeleton_news_row" />
+
+    </LinearLayout>
+
+</com.facebook.shimmer.ShimmerFrameLayout>

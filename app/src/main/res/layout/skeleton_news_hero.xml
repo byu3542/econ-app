@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Placeholder shaped like item_news_hero: same card radius/elevation/margins,
+  the gold accent bar, a source row, three headline lines and two summary lines.
+  Matching the real shape (not a generic grey box) is what lets the reader
+  anticipate the layout while the feed is still in flight.
+  Purely decorative — the parent shimmer container owns the accessibility label.
+-->
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="@dimen/space_md"
+    android:layout_marginTop="@dimen/space_sm"
+    android:layout_marginBottom="@dimen/space_sm"
+    android:importantForAccessibility="noHideDescendants"
+    app:cardBackgroundColor="@color/surface_card"
+    app:cardElevation="3dp"
+    app:cardCornerRadius="12dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Gold accent bar — chrome, present regardless of data -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="3dp"
+            android:background="@color/accent_gold" />
+
+        <!-- Source row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="@dimen/space_lg"
+            android:paddingTop="@dimen/space_md"
+            android:paddingBottom="@dimen/space_xs">
+
+            <View
+                android:layout_width="96dp"
+                android:layout_height="10dp"
+                android:background="@drawable/bg_skeleton_line" />
+
+            <Space
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
+
+            <View
+                android:layout_width="40dp"
+                android:layout_height="10dp"
+                android:layout_marginStart="@dimen/space_sm"
+                android:background="@drawable/bg_skeleton_line" />
+
+            <View
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:layout_marginStart="@dimen/space_sm"
+                android:background="@drawable/bg_skeleton_line" />
+
+        </LinearLayout>
+
+        <!-- Headline: three lines, last one short -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="14dp"
+            android:layout_marginHorizontal="@dimen/space_lg"
+            android:layout_marginTop="@dimen/space_sm"
+            android:background="@drawable/bg_skeleton_line" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="14dp"
+            android:layout_marginHorizontal="@dimen/space_lg"
+            android:layout_marginTop="@dimen/space_sm"
+            android:background="@drawable/bg_skeleton_line" />
+
+        <View
+            android:layout_width="180dp"
+            android:layout_height="14dp"
+            android:layout_marginHorizontal="@dimen/space_lg"
+            android:layout_marginTop="@dimen/space_sm"
+            android:background="@drawable/bg_skeleton_line" />
+
+        <!-- Summary: two lines -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="10dp"
+            android:layout_marginHorizontal="@dimen/space_lg"
+            android:layout_marginTop="@dimen/space_md"
+            android:background="@drawable/bg_skeleton_line" />
+
+        <View
+            android:layout_width="220dp"
+            android:layout_height="10dp"
+            android:layout_marginHorizontal="@dimen/space_lg"
+            android:layout_marginTop="@dimen/space_sm"
+            android:layout_marginBottom="@dimen/space_lg"
+            android:background="@drawable/bg_skeleton_line" />
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

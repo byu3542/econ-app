@@ -180,7 +180,8 @@
             </com.google.android.material.chip.ChipGroup>
         </HorizontalScrollView>
 
-        <!-- Content area: SwipeRefresh wraps RecyclerView; Progress and Error overlay -->
+        <!-- Content area: SwipeRefresh wraps RecyclerView; skeleton, empty and
+             error states overlay it -->
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
@@ -200,22 +201,15 @@
 
             </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
-            <ProgressBar
-                android:id="@+id/progress_news"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:visibility="gone" />
-
-            <TextView
-                android:id="@+id/text_news_loading"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_marginTop="56dp"
-                android:text="@string/news_loading"
-                android:textColor="@color/text_secondary"
-                android:textSize="@dimen/text_secondary"
+            <!-- Cold-start skeleton (replaces the old centered ProgressBar).
+                 Sits above the list so it covers the empty RecyclerView while
+                 the first fetch is in flight; NewsFragment cross-fades it out
+                 on first data and never re-shows it on refresh. -->
+            <include
+                android:id="@+id/news_skeleton"
+                layout="@layout/view_news_skeleton"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
                 android:visibility="gone" />
 
             <LinearLayout
