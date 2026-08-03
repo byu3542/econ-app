@@ -105,23 +105,6 @@ class DashboardFragment : Fragment() {
             }
         }
 
-        // TICKET-22: "Since you last opened" strip — warm launches only,
-        // dismissible for the session (flag lives on the VM).
-        val stripSince: View? = view.findViewById(R.id.stripSinceLastOpen)
-        val tvSince: TextView? = view.findViewById(R.id.tvSinceLastOpen)
-        val btnSinceClose: View? = view.findViewById(R.id.btnSinceLastOpenClose)
-        btnSinceClose?.setOnClickListener { viewModel.dismissSinceLastOpen() }
-        viewModel.getSinceLastOpen().observe(viewLifecycleOwner) { text ->
-            if (stripSince != null && tvSince != null) {
-                if (text == null || text.isEmpty() || viewModel.isSinceLastOpenDismissed()) {
-                    stripSince.visibility = View.GONE
-                } else {
-                    tvSince.text = text
-                    stripSince.visibility = View.VISIBLE
-                }
-            }
-        }
-
         // Partial-failure: show a per-card retry chip for any series that failed
         // to refresh, without blanking the cards that succeeded.
         viewModel.getFailedSeries().observe(viewLifecycleOwner) { failed ->
@@ -181,7 +164,7 @@ class DashboardFragment : Fragment() {
         setupCardLabel(cardSpread, "10Y-3M SPREAD")
         setupCardLabel(cardUnemployment, "UNEMPLOYMENT")
         setupCardLabel(cardMortgage, "30 YEAR MORTGAGE")
-        setupCardLabel(cardVix, "VIX INDEX")
+        setupCardLabel(cardVix, "VIX INDEX", labelLines = 2)
 
         // Skeleton pulse until real data arrives
         startSkeleton(cardGdp); startSkeleton(cardCpiYoy); startSkeleton(cardSpread)
@@ -288,9 +271,17 @@ class DashboardFragment : Fragment() {
         }
     }
 
-    private fun setupCardLabel(card: View, label: String) {
+    /**
+     * [labelLines] reserves that many lines for the overline so a short label
+     * doesn't leave its card shorter than the one beside it — "VIX INDEX" fits
+     * on one line while "30 YEAR MORTGAGE" wraps to two.
+     */
+    private fun setupCardLabel(card: View, label: String, labelLines: Int = 1) {
         val tv: TextView? = card.findViewById(R.id.tvMetricLabel)
-        if (tv != null) tv.text = label
+        if (tv != null) {
+            tv.text = label
+            tv.minLines = labelLines
+        }
     }
 
     /** Unused today (no caller) — kept verbatim per the dead-code decision. */
@@ -468,9 +459,7 @@ class DashboardFragment : Fragment() {
         var low = Double.MAX_VALUE
         for (i in Math.max(0, rows.size - 12) until rows.size) low = Math.min(low, rows[i].value)
         val rise = current - low
-        val pct = EconomicViewModel.calculatePercentile(data, "Unemployment Rate", current)
-        applyTierToCard(cardUnemployment, Benchmarks.unemployment(current, rise),
-            EconomicViewModel.formatPercentile(pct))
+        applyTierToCard(cardUnemployment, Benchmarks.unemployment(current, rise))
     }
 
     private fun applyCpiYoYTier(data: List<EconomicDataPoint>) {
@@ -478,8 +467,7 @@ class DashboardFragment : Fragment() {
         if (rows.size < 13) return
         val latest = rows[rows.size - 1].value
         val yoy = ((latest - rows[rows.size - 13].value) / rows[rows.size - 13].value) * 100.0
-        val pct = EconomicViewModel.calculatePercentile(data, "CPI-U All Items", latest)
-        applyTierToCard(cardCpiYoy, Benchmarks.cpiYoY(yoy), EconomicViewModel.formatPercentile(pct))
+        applyTierToCard(cardCpiYoy, Benchmarks.cpiYoY(yoy))
     }
 
     private fun applySpread3MTier(data: List<EconomicDataPoint>) {
@@ -487,7 +475,7 @@ class DashboardFragment : Fragment() {
         val shortRate = EconomicViewModel.getLatest(data, "3 Month")
         if (longRate == null || shortRate == null) return
         val spread = longRate.value - shortRate.value
-        applyTierToCard(cardSpread, Benchmarks.spread3m10y(spread), "")
+        applyTierToCard(cardSpread, Benchmarks.spread3m10y(spread))
     }
 
     private fun applyGdpTier(data: List<EconomicDataPoint>) {
@@ -497,30 +485,28 @@ class DashboardFragment : Fragment() {
         var count = 0
         for (i in Math.max(0, rows.size - 4) until rows.size) { sum += rows[i].value; count++ }
         val avg = if (count > 0) sum / count else 0.0
-        applyTierToCard(cardGdp, Benchmarks.gdpGrowth(avg), "")
+        applyTierToCard(cardGdp, Benchmarks.gdpGrowth(avg))
     }
 
     private fun applyMortgageTier(data: List<EconomicDataPoint>) {
         val rows = EconomicViewModel.filterBySeries(data, "30-Yr Mortgage Rate")
         if (rows.isEmpty()) return
         val current = rows[rows.size - 1].value
-        applyTierToCard(cardMortgage, Benchmarks.mortgage30(current), "")
+        applyTierToCard(cardMortgage, Benchmarks.mortgage30(current))
     }
 
     private fun applyVixTier(data: List<EconomicDataPoint>) {
         val rows = EconomicViewModel.filterBySeries(data, "VIX Volatility Index")
         if (rows.isEmpty()) return
         val current = rows[rows.size - 1].value
-        applyTierToCard(cardVix, Benchmarks.vix(current), "")
+        applyTierToCard(cardVix, Benchmarks.vix(current))
     }
 
-    private fun applyTierToCard(card: View, result: Benchmarks.Result?, percentile: String) {
+    private fun applyTierToCard(card: View, result: Benchmarks.Result?) {
         if (result == null) return
         BenchmarkStyle.tintDot(card.findViewById(R.id.viewTierDot), requireContext(), result.tier)
         val tvStatus: TextView? = card.findViewById(R.id.tvTierStatus)
-        val tvPct: TextView? = card.findViewById(R.id.tvPercentile)
         if (tvStatus != null) tvStatus.text = result.word
-        if (tvPct != null) tvPct.text = percentile
     }
 
     // ── Fed funds hero ──────────────────────────────────────────────────────
@@ -543,10 +529,16 @@ class DashboardFragment : Fragment() {
             if (Math.abs(delta) > 0.001) { lastChange = delta; break }
         }
         val change = changeFedFunds
-        if (change != null) {
+        val ctx = context
+        if (change != null && ctx != null) {
             if (Math.abs(lastChange) > 0.001) {
-                val arrow = if (lastChange < 0) "↓" else "↑"
-                change.text = String.format(Locale.US, "%s %.2f from prev.", arrow, Math.abs(lastChange))
+                // Same ticker treatment as every other Overview badge: ▲/▼ glyph
+                // + signed value, colored by DeltaFormatter so it honors the
+                // colorblind-safe palette. goodWhenDown matches the mortgage
+                // card on the same screen — a lower borrowing rate is the
+                // favorable direction.
+                change.setTextColor(DeltaFormatter.color(ctx, lastChange, true))
+                change.text = DeltaFormatter.format(lastChange, "%.2f")
                 change.visibility = View.VISIBLE
             } else {
                 change.visibility = View.GONE
@@ -555,8 +547,8 @@ class DashboardFragment : Fragment() {
         // Cycle note driven by the direction of the last actual move
         val cycle = tvFedFundsHeroCycle
         if (cycle != null) {
-            if (lastChange < -0.001) cycle.text = "Cut cycle ongoing"
-            else if (lastChange > 0.001) cycle.text = "Hike cycle ongoing"
+            if (lastChange < -0.01) cycle.text = "Cut cycle ongoing"
+            else if (lastChange > 0.01) cycle.text = "Hike cycle ongoing"
             else cycle.text = "Rates on hold"
             cycle.visibility = View.VISIBLE
         }
@@ -622,7 +614,7 @@ class DashboardFragment : Fragment() {
         setCardValue(cardCpiYoy, NumberFormatUtil.percent(latest.toDouble()))
         setCardDate(cardCpiYoy, rows[rows.size - 1].date)
         if (yoySeries.size >= 2)
-            applyDelta(cardCpiYoy, (latest - yoySeries[yoySeries.size - 2]).toDouble(), "%.2fpp", true)
+            applyDelta(cardCpiYoy, (latest - yoySeries[yoySeries.size - 2]).toDouble(), "%.2f", true)
         setSparkline(cardCpiYoy, yoySeries.subList(Math.max(0, yoySeries.size - 12), yoySeries.size))
     }
 
@@ -636,7 +628,7 @@ class DashboardFragment : Fragment() {
         setCardDate(cardGdp, rows[rows.size - 1].date)
         if (rows.size >= 2)
             applyDelta(cardGdp, rows[rows.size - 1].value - rows[rows.size - 2].value,
-                "%.1fpp", false)
+                "%.1f", false)
         setSparkline(cardGdp, tailValues(rows, 8))
     }
 
@@ -646,11 +638,11 @@ class DashboardFragment : Fragment() {
     }
 
     private fun updateEmployment(data: List<EconomicDataPoint>) {
-        updateSimpleCard(data, "Unemployment Rate", cardUnemployment, "%.1f%%", "%.1fpp", true, 12)
+        updateSimpleCard(data, "Unemployment Rate", cardUnemployment, "%.1f%%", "%.1f", true, 12)
     }
 
     private fun updateMortgage(data: List<EconomicDataPoint>) {
-        updateSimpleCard(data, "30-Yr Mortgage Rate", cardMortgage, "%.2f%%", "%.2fpp", true, 12)
+        updateSimpleCard(data, "30-Yr Mortgage Rate", cardMortgage, "%.2f%%", "%.2f", true, 12)
     }
 
     /** Shared: value + delta vs. previous observation + sparkline of the last n points. */

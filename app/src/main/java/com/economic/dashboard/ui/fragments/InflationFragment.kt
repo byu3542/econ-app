@@ -2,6 +2,7 @@ package com.economic.dashboard.ui.fragments
 
 import android.graphics.Color
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -83,7 +84,8 @@ class InflationFragment : Fragment() {
 
         // TICKET-18: per-screen retry chip for this screen's series
         RetryChip.wire(this, view, viewModel,
-            EconomicViewModel.CACHE_CPI, EconomicViewModel.KEY_PCE)
+            EconomicViewModel.CACHE_CPI, EconomicViewModel.KEY_PCE,
+            EconomicViewModel.KEY_WAGES)
 
         cardPceStatus = b.cardPceStatus
         AskAnalyst.wireCardLongPress(
@@ -211,11 +213,21 @@ class InflationFragment : Fragment() {
     private fun tryUpdateWageCard() {
         val wageData = viewModel.getWageData().getValue()
         val cpiData = viewModel.getCpiData().getValue()
-        if (wageData == null || cpiData == null) return
+        if (wageData == null || cpiData == null) {
+            // Diagnostics for the blank Real Wage Growth card: this card is the
+            // only one on the screen needing two series at once, so it goes
+            // blank for reasons its neighbours never show.
+            Log.w(DIAG, "skipped — wageData=${wageData?.size ?: "null"}, cpiData=${cpiData?.size ?: "null"}")
+            return
+        }
 
         val wRows = EconomicViewModel.filterBySeries(wageData, "Average Hourly Earnings - Private")
         val cRows = EconomicViewModel.filterBySeries(cpiData, "CPI-U All Items")
-        if (wRows.size < 13 || cRows.size < 13) return
+        if (wRows.size < 13 || cRows.size < 13) {
+            Log.w(DIAG, "skipped — hourly=${wRows.size}, cpi=${cRows.size} (need 13 each); " +
+                "series in wage payload=${wageData.map { it.series }.distinct()}")
+            return
+        }
 
         val wYoy = ((wRows[wRows.size - 1].value - wRows[wRows.size - 13].value)
             / wRows[wRows.size - 13].value) * 100.0
@@ -224,6 +236,7 @@ class InflationFragment : Fragment() {
         val spread = wYoy - cYoy
 
         tvWageYoYValue.text = NumberFormatUtil.percent(spread) // TICKET-19
+        Log.i(DIAG, "populated — wageYoY=$wYoy, cpiYoY=$cYoy, spread=$spread")
 
         val result = Benchmarks.realWageGrowth(spread)
         BenchmarkStyle.applyBadge(statusWage, requireContext(), result)
@@ -380,5 +393,10 @@ class InflationFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         binding = null
+    }
+
+    companion object {
+        /** Logcat tag for the Real Wage Growth card — filter with `-s RealWageDiag`. */
+        private const val DIAG = "RealWageDiag"
     }
 }

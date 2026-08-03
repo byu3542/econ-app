@@ -12,7 +12,6 @@ import com.economic.dashboard.api.ApiConfig
 import com.economic.dashboard.api.EconomicRepository
 import com.economic.dashboard.cache.DashboardDataCache
 import com.economic.dashboard.models.EconomicDataPoint
-import com.economic.dashboard.utils.DeltaFormatter
 import com.economic.dashboard.utils.SettingsManager
 
 import java.text.ParseException
@@ -73,16 +72,12 @@ class EconomicViewModel(application: Application) : AndroidViewModel(application
     private val errorMsg = MutableLiveData<String>()
     /** "as of …" label shown while cached (stale) values are on screen; null once fresh. */
     private val cacheAsOf = MutableLiveData<String?>()
-
-    // ── TICKET-22: "Since you last opened" strip ─────────────────────────────
-    // Latest values from the snapshot the app *opened with*, captured before
-    // the fresh fetch overwrites the cache. Null on a first-ever launch.
-    private var openedFedFunds: Double? = null
-    private var openedCpiYoY: Double? = null
-    private var openedVix: Double? = null
-    private val sinceLastOpen = MutableLiveData<String?>()
-    /** Session-scoped dismiss flag (VM outlives the fragment view). */
-    private var sinceLastOpenDismissed = false
+    /**
+     * One-shot summary posted when a refresh settles with at least one failed
+     * series, so a dead network is reported instead of looking like a no-op.
+     * Consumed (set back to null) by the observer that shows it.
+     */
+    private val refreshFailure = MutableLiveData<String?>()
 
     // Per-series failure tracking so one dead API can't blank a screen.
     private val failed: MutableSet<String> = Collections.synchronizedSet(HashSet())
@@ -115,13 +110,11 @@ class EconomicViewModel(application: Application) : AndroidViewModel(application
     fun getIsLoading(): LiveData<Boolean> = isLoading
     fun getErrorMsg(): LiveData<String> = errorMsg
     fun getCacheAsOf(): LiveData<String?> = cacheAsOf
-    fun getSinceLastOpen(): LiveData<String?> = sinceLastOpen
+    fun getRefreshFailure(): LiveData<String?> = refreshFailure
 
-    fun isSinceLastOpenDismissed(): Boolean = sinceLastOpenDismissed
-
-    fun dismissSinceLastOpen() {
-        sinceLastOpenDismissed = true
-        sinceLastOpen.postValue(null)
+    /** Clears the one-shot failure message once it has been shown. */
+    fun consumeRefreshFailure() {
+        if (refreshFailure.value != null) refreshFailure.value = null
     }
 
     fun getFailedSeries(): LiveData<Set<String>> = failedSeries
@@ -180,18 +173,44 @@ class EconomicViewModel(application: Application) : AndroidViewModel(application
         postCached(cpiData, CACHE_CPI)
         postCached(gdpData, CACHE_GDP)
         postCached(mbsMortgageData, CACHE_MBS)
+        // Inflation's "Real Wage Growth" card needs wages AND CPI together. CPI
+        // was already primed here but wages was not, so on any launch where the
+        // live BLS wage call didn't land the card sat blank next to two
+        // populated neighbours.
+        postCached(wageData, KEY_WAGES)
         // Stocks is a Markets child tab, but its data is also consumed by the
         // Econ Analyst. Prime these series here so opening the analyst after a
         // lifecycle change does not lose the values that Stocks already showed.
         postCached(sp500Data, KEY_SP500)
         postCached(nasdaqData, KEY_NASDAQ)
         postCached(vixData, CACHE_VIX)
-        val ts = DashboardDataCache.lastUpdated(ctx)
-        if (ts > 0) {
-            val stamp = SimpleDateFormat("MMM d, h:mm a", Locale.US).format(Date(ts))
-            cacheAsOf.postValue("Showing cached data · as of $stamp")
-        }
+        val stamp = cacheStamp()
+        if (stamp != null) cacheAsOf.postValue("Showing cached data · as of $stamp")
     }
+
+    /** Formatted time of the last successful cache write, or null if never written. */
+    private fun cacheStamp(): String? {
+        val ts = DashboardDataCache.lastUpdated(getApplication<Application>())
+        if (ts <= 0) return null
+        return SimpleDateFormat("MMM d, h:mm a", Locale.US).format(Date(ts))
+    }
+
+    /**
+     * Persistent banner text for a refresh that did not fully land. The
+     * timestamp is the last *successful* write, so on a total failure it still
+     * points at the data actually on screen.
+     */
+    private fun staleLabel(failedCount: Int): String {
+        val head = if (failedCount == 1) "1 series didn't refresh"
+        else "$failedCount series didn't refresh"
+        val stamp = cacheStamp()
+        return if (stamp == null) head else "$head · showing data as of $stamp"
+    }
+
+    /** Transient message for the same condition, shown on every tab. */
+    private fun failureMessage(failedCount: Int): String =
+        if (failedCount == 1) "Couldn't refresh 1 series — check your connection"
+        else "Couldn't refresh $failedCount series — check your connection"
 
     private fun postCached(live: MutableLiveData<List<EconomicDataPoint>>, key: String) {
         val cached = DashboardDataCache.load(getApplication<Application>(), key)
@@ -209,9 +228,6 @@ class EconomicViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun fetchAllData() {
-        // TICKET-22: remember what the app opened with, before deliver()
-        // overwrites the snapshot cache with fresh values.
-        captureOpenedWithSnapshot()
         // Cache-first: paint the last known values before the network returns.
         primeFromCache()
         isLoading.postValue(true)
@@ -234,10 +250,19 @@ class EconomicViewModel(application: Application) : AndroidViewModel(application
     private fun checkAllDone() {
         if (pendingFetches.decrementAndGet() <= 0) {
             isLoading.postValue(false)
-            // Fresh data has landed — drop the "showing cached data" label.
-            cacheAsOf.postValue(null)
-            // TICKET-22: all fetches settled — diff fresh vs. opened-with values.
-            computeSinceLastOpen()
+            // Report the outcome, not just the end of the spinner. fetchAllData()
+            // primes every card from the snapshot cache BEFORE touching the
+            // network, so a refresh in which every series failed repaints the
+            // same numbers and is otherwise indistinguishable from one that
+            // succeeded. Only drop the "showing cached data" label when the
+            // data behind it was actually replaced.
+            val failedCount = failed.size
+            if (failedCount == 0) {
+                cacheAsOf.postValue(null)
+            } else {
+                cacheAsOf.postValue(staleLabel(failedCount))
+                refreshFailure.postValue(failureMessage(failedCount))
+            }
             // TICKET-24: evaluate the user's threshold alert rules against the
             // freshly fetched values (keys that failed are simply absent).
             evaluateAlertRules()
@@ -262,41 +287,6 @@ class EconomicViewModel(application: Application) : AndroidViewModel(application
         putIfPresent(latest, KEY_HY, latestOf(hySpreadData.value, "High Yield Spread"))
         putIfPresent(latest, ALERT_SPREAD_3M, latestOf(calculatedSpread3MData.value))
         ThresholdAlertEvaluator.evaluate(getApplication<Application>(), latest)
-    }
-
-    /** Snapshot the headline values the app opened with (warm launch only). */
-    private fun captureOpenedWithSnapshot() {
-        val ctx: Context = getApplication<Application>()
-        if (!DashboardDataCache.hasAny(ctx)) return          // first-ever launch
-        if (openedFedFunds != null || openedCpiYoY != null || openedVix != null)
-            return                                            // already captured this session
-        openedFedFunds = latestOf(DashboardDataCache.load(ctx, CACHE_FED_FUNDS),
-            "Federal Funds Effective Rate")
-        openedCpiYoY = cpiYoyOf(DashboardDataCache.load(ctx, CACHE_CPI))
-        openedVix = latestOf(DashboardDataCache.load(ctx, CACHE_VIX),
-            "VIX Volatility Index")
-    }
-
-    /**
-     * Builds "Since last open: Fed Funds ▲ +0.25pp · CPI • unchanged · VIX ▼ −1.2"
-     * from the opened-with snapshot vs. the fresh values now in LiveData.
-     * Posts null (strip hidden) on first-ever launch or after dismiss.
-     */
-    private fun computeSinceLastOpen() {
-        if (sinceLastOpenDismissed) { sinceLastOpen.postValue(null); return }
-        val parts = ArrayList<String>()
-        appendDeltaPart(parts, "Fed Funds", openedFedFunds,
-            latestOf(fedFundsData.value, "Federal Funds Effective Rate"), "%.2fpp")
-        appendDeltaPart(parts, "CPI", openedCpiYoY, cpiYoyOf(cpiData.value), "%.2fpp")
-        appendDeltaPart(parts, "VIX", openedVix,
-            latestOf(vixData.value, "VIX Volatility Index"), "%.1f")
-        if (parts.isEmpty()) { sinceLastOpen.postValue(null); return }
-        val sb = StringBuilder("Since last open: ")
-        for (i in parts.indices) {
-            if (i > 0) sb.append(" · ")
-            sb.append(parts[i])
-        }
-        sinceLastOpen.postValue(sb.toString())
     }
 
     fun fetchFedFunds() {
@@ -425,7 +415,7 @@ class EconomicViewModel(application: Application) : AndroidViewModel(application
 
     fun fetchWages() {
         repository.fetchWageData(object : EconomicRepository.DataCallback<List<EconomicDataPoint>> {
-            override fun onSuccess(data: List<EconomicDataPoint>) { wageData.postValue(data); markRecovered(KEY_WAGES); checkAllDone() }
+            override fun onSuccess(data: List<EconomicDataPoint>) { deliver(wageData, KEY_WAGES, data); checkAllDone() }
             override fun onError(error: String) { errorMsg.postValue("Wages: $error"); markFailed(KEY_WAGES); checkAllDone() }
         })
     }
@@ -528,7 +518,7 @@ class EconomicViewModel(application: Application) : AndroidViewModel(application
             if (v != null) map[key] = v
         }
 
-        // ── TICKET-22 helpers ────────────────────────────────────────────────────
+        // ── Latest-value helpers (TICKET-24 alert-rule evaluation) ───────────────
 
         /** Latest numeric value of a series list, or null if absent/empty. */
         private fun latestOf(rows: List<EconomicDataPoint>?): Double? {
@@ -555,19 +545,6 @@ class EconomicViewModel(application: Application) : AndroidViewModel(application
         private fun cpiYoyOf(rows: List<EconomicDataPoint>?): Double? {
             if (rows == null || rows.isEmpty()) return null
             return yoyOf(filterBySeries(rows, "CPI-U All Items"))
-        }
-
-        private fun appendDeltaPart(
-            parts: MutableList<String>, label: String,
-            opened: Double?, fresh: Double?, fmt: String
-        ) {
-            if (opened == null || fresh == null) return
-            val delta = fresh - opened
-            if (Math.abs(delta) < 0.005) {
-                parts.add("$label unchanged")
-            } else {
-                parts.add(label + " " + DeltaFormatter.format(delta, fmt))
-            }
         }
 
         @JvmStatic

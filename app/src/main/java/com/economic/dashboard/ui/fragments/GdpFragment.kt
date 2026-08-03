@@ -114,7 +114,7 @@ class GdpFragment : Fragment() {
             if (value != null) tvGdpLatestQuarterValue.text = value
         }
         viewModel.getLatestQuarterLabel().observe(viewLifecycleOwner) { label ->
-            if (label != null) tvGdpLatestQuarterLabel.text = label
+            if (label != null) tvGdpLatestQuarterLabel.text = ""
         }
 
         cardGdpStatus.setOnClickListener { showGdpBenchmarks() }
@@ -138,7 +138,7 @@ class GdpFragment : Fragment() {
         val rollingAvg = if (count > 0) sum / count else 0.0
 
         tvGdpLatest.text = NumberFormatUtil.percent(rollingAvg) // TICKET-19
-        tvGdpDesc.text = "4-Quarter Rolling Average"
+        tvGdpDesc.text = ""
 
         // Shared grading + semantic palette (TICKET-01/02/04)
         val result = Benchmarks.gdpGrowth(rollingAvg)

@@ -2,7 +2,9 @@ package com.economic.dashboard.workers
 
 import android.content.Context
 import android.util.Log
+import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
 import java.time.LocalTime
@@ -31,7 +33,8 @@ object YieldRefreshScheduler {
 
     /**
      * Schedule daily Treasury Yield refresh at 2:30 PM MST.
-     * Safe to call multiple times; uses ExistingPeriodicWorkPolicy.KEEP to prevent duplicates.
+     * Safe to call multiple times; uses ExistingPeriodicWorkPolicy.UPDATE, which
+     * is idempotent for an unchanged spec and rolls out a changed one.
      *
      * @param context Application context
      */
@@ -47,20 +50,32 @@ object YieldRefreshScheduler {
             // Create a periodic work request:
             // - Runs every 24 hours
             // - First execution after initialDelayMinutes
-            // - Uses WorkManager's default constraints (battery, network, etc.)
+            // - Requires a network: the worker's only job is an HTTP fetch, and
+            //   WorkManager's defaults impose NO network constraint, so without
+            //   this it burned runs (and retry backoff) while offline.
             val refreshWorkRequest = PeriodicWorkRequest.Builder(
                 YieldRefreshWorker::class.java,
                 1,
                 TimeUnit.DAYS
             )
                 .setInitialDelay(initialDelayMinutes, TimeUnit.MINUTES)
+                .setConstraints(
+                    Constraints.Builder()
+                        .setRequiredNetworkType(NetworkType.CONNECTED)
+                        .build()
+                )
                 .build()
 
-            // Enqueue with KEEP policy: if work already exists, don't replace it
-            // This prevents duplicate scheduled tasks
+            // UPDATE, not KEEP. KEEP ignores the request whenever work under
+            // this id already exists, which meant an already-installed app kept
+            // running whatever spec it first enqueued — a worker fixed in a
+            // later release, or one enqueued without the network constraint
+            // above, could never be corrected. UPDATE swaps in the new spec
+            // while preserving the existing schedule, and is still idempotent,
+            // so calling this on every Application.onCreate stays safe.
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(
                 YIELD_REFRESH_WORK_ID,
-                ExistingPeriodicWorkPolicy.KEEP,
+                ExistingPeriodicWorkPolicy.UPDATE,
                 refreshWorkRequest
             )
 

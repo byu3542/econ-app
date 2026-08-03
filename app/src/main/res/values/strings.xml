@@ -34,8 +34,6 @@
     <string name="haptics_title">Haptics</string>
     <string name="haptics_sub">Feel a tick on tab switches, segment changes, and chart scrubbing</string>
     <string name="couldnt_refresh">Couldn\'t refresh · tap to retry</string>
-    <!-- TICKET-22: since-last-open strip -->
-    <string name="dismiss_since_last_open">Dismiss</string>
     <!-- TICKET-24: threshold alerts -->
     <string name="add_alert">＋ Add alert</string>
     <string name="alert_op_above">Notify when it rises above…</string>

@@ -38,9 +38,21 @@ object AnalystToolExecutor {
      * from the ViewModel data the app already charts, so a long-press on ANY
      * fragment's card has real history behind it. Ids map to lists supplied by
      * the LiveSeriesProvider wired up in AiAnalystBottomSheet.
+     *
+     * Since the 2026-07-30 cache expansion every catalogued series is
+     * ROOM_CACHED, so this map is empty in practice — but the live provider is
+     * still wired and still load-bearing: [getCachedSeries] falls back to it
+     * whenever Room has no rows yet (first launch, before the catalog refresh
+     * lands), which is exactly the case the live path was built for.
      */
     @JvmField
     val LIVE_SERIES: Map<String, String> = EconomicSeriesRegistry.liveToolHints()
+
+    /** Max points emitted in one tool result before down-sampling kicks in. */
+    private const val MAX_POINTS = 40
+
+    /** Normalized (date, value) pair so the Room and live paths share a renderer. */
+    private class Pt(@JvmField val date: String, @JvmField val value: Double)
 
     /**
      * Supplies live ViewModel-backed series lists; set by AiAnalystBottomSheet.
@@ -161,101 +173,155 @@ object AnalystToolExecutor {
             "retry; answer from the data snapshot in the system prompt instead."
     }
 
-    /** Room-cached series (the original six). */
+    /**
+     * Room-cached series — as of the 2026-07-30 cache expansion that is the
+     * whole catalog, including daily market series with ~550 rows over the
+     * 24-month window. [render] down-samples, so a get_series call costs the
+     * model a bounded number of lines regardless of the series' frequency.
+     *
+     * Falls back to the live ViewModel provider when Room has nothing yet — the
+     * catalog refresh is asynchronous, so on a cold first launch the table can
+     * still be empty while the dashboard already has points in memory.
+     */
     private fun getCachedSeries(ctx: Context, seriesId: String, months: Int): String {
-        val cutoffCal = Calendar.getInstance()
-        cutoffCal.add(Calendar.MONTH, -months)
-        val cutoff = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(cutoffCal.time)
+        val cutoff = cutoffDate(months)
 
         val rows: List<EconomicHistoryEntry> = YieldDatabase.getInstance(ctx)
             .economicHistoryDao().getSeriesSync(seriesId)
-        if (rows.isEmpty())
-            return "No cached data for " + seriesId + " yet — do not retry; answer from the " +
-                "data snapshot in the system prompt and say the history isn't loaded."
 
-        val sb = StringBuilder()
-        val seriesName = rows[0].seriesName
-        sb.append(seriesName).append(" (").append(seriesId).append("), last ")
-            .append(months).append(" months:\n")
-        var count = 0
+        val all = ArrayList<Pt>(rows.size)
+        val window = ArrayList<Pt>()
+        var unit = ""
+        var seriesName = seriesId
         for (e in rows) {
-            if (e.date.compareTo(cutoff) < 0) continue
-            sb.append(e.date).append(": ")
-                .append(String.format(Locale.US, "%.2f", e.value)).append(e.unit).append("\n")
-            count++
+            all.add(Pt(e.date, e.value))
+            if (e.date.compareTo(cutoff) >= 0) window.add(Pt(e.date, e.value))
+            unit = e.unit
+            seriesName = e.seriesName
         }
-        return if (count == 0) "No data points in the requested window." else sb.toString()
+
+        if (window.isEmpty()) {
+            val live = buildLiveSeries(seriesId, months)
+            if (live != null) return live
+            return if (rows.isEmpty())
+                "No cached data for " + seriesId + " yet — do not retry; answer from the " +
+                    "data snapshot in the system prompt and say the history isn't loaded."
+            else
+                "No data points in the requested window."
+        }
+
+        return render(seriesName, seriesId, months, window, all, unit)
     }
 
-    /** Live ViewModel-backed series (everything else the app charts). */
-    private fun getLiveSeries(seriesId: String, months: Int): String {
+    /** Live ViewModel-backed series (used as the cache-cold fallback). */
+    private fun getLiveSeries(seriesId: String, months: Int): String =
+        buildLiveSeries(seriesId, months)
+            ?: ("No data loaded for " + seriesId + " right now — do not retry; answer from " +
+                "the data snapshot in the system prompt and say the history isn't available.")
+
+    /** Renders the live series, or null when the provider has nothing to show. */
+    private fun buildLiveSeries(seriesId: String, months: Int): String? {
         val p = liveProvider
         val rows: List<EconomicDataPoint>? = if (p != null) p.get(seriesId) else null
-        if (rows == null || rows.isEmpty())
-            return "No data loaded for " + seriesId + " right now — do not retry; answer from " +
-                "the data snapshot in the system prompt and say the history isn't available."
+        if (rows == null || rows.isEmpty()) return null
 
         // Date-window filter. Dates are "yyyy-MM-dd" or "yyyy-MM" strings, so a
         // lexicographic compare against a cutoff works; unparseable dates pass.
-        val cal = Calendar.getInstance()
-        cal.add(Calendar.MONTH, -months)
-        val cutoff = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(cal.time)
-        val filtered = ArrayList<EconomicDataPoint>()
+        val cutoff = cutoffDate(months)
+        val all = ArrayList<Pt>(rows.size)
+        val filtered = ArrayList<Pt>()
+        var unit = ""
         for (dp in rows) {
+            val pt = Pt(dp.date, dp.value)
+            all.add(pt)
+            if (dp.unit.isNotEmpty()) unit = dp.unit
             val d = dp.date
-            if (d.length < 7) { filtered.add(dp); continue }
+            if (d.length < 7) { filtered.add(pt); continue }
             val norm = if (d.length == 7) d + "-28" else d
-            if (norm.compareTo(cutoff) >= 0) filtered.add(dp)
+            if (norm.compareTo(cutoff) >= 0) filtered.add(pt)
         }
         // Reassigned to a subList view below, so the reference is `var` while the
         // type stays read-only.
-        var window: List<EconomicDataPoint> = filtered
-        if (window.isEmpty())
-            window = rows.subList(Math.max(0, rows.size - months), rows.size)
+        var window: List<Pt> = filtered
+        if (window.isEmpty()) window = all.subList(Math.max(0, all.size - months), all.size)
 
+        val name = LIVE_SERIES[seriesId]
+            ?: EconomicSeriesRegistry.byId(seriesId)?.toolHint
+            ?: seriesId
+        return render(name, seriesId, months, window, all, unit)
+    }
+
+    /**
+     * Shared renderer for both paths.
+     *
+     * @param window the points to print (already date-filtered)
+     * @param all    the complete series — YoY is always computed from this, never
+     *               from the sampled window
+     */
+    private fun render(
+        seriesName: String, seriesId: String, months: Int,
+        window: List<Pt>, all: List<Pt>, unit: String
+    ): String {
         // Daily series would be hundreds of points — sample down to keep the
         // tool result a reasonable size for the model.
-        val maxPoints = 40
-        val step = Math.max(1, Math.ceil(window.size / maxPoints.toDouble()).toInt())
+        val step = Math.max(1, Math.ceil(window.size / MAX_POINTS.toDouble()).toInt())
 
         val sb = StringBuilder()
-        sb.append(LIVE_SERIES.get(seriesId)).append(" (").append(seriesId).append("), last ")
+        sb.append(seriesName).append(" (").append(seriesId).append("), last ")
             .append(months).append(" months, ").append(window.size).append(" points")
             .append(if (step > 1) " (every " + step + getOrdinalSuffix(step) + " point shown)" else "")
             .append(":\n")
         for (i in window.indices) {
             if (i % step != 0 && i != window.size - 1) continue
-            val dp = window[i]
-            sb.append(dp.date).append(": ")
-                .append(String.format(Locale.US, "%.2f", dp.value))
-            if (dp.unit.isNotEmpty())
-                sb.append(" ").append(dp.unit)
+            val pt = window[i]
+            sb.append(pt.date).append(": ")
+                .append(String.format(Locale.US, "%.2f", pt.value))
+            if (unit.isNotEmpty()) {
+                // "%" reads as a suffix; every other unit needs a separator so
+                // an index level doesn't render as "5432.10Index".
+                if ("%" != unit) sb.append(" ")
+                sb.append(unit)
+            }
             sb.append("\n")
         }
-        // TICKET-4 (AI Laws 15, 16): pre-compute the trailing YoY for index-level
-        // series from the FULL row list (never the sampled window), so the model
-        // reports a guaranteed-correct number instead of deriving one from points
-        // the down-sampler may not have kept 12 months apart.
-        if ("CPI" == seriesId || "PCE" == seriesId || "CORE_PCE" == seriesId) {
-            sb.append("(These are index LEVELS, not percentages.)\n")
-            var yoyAppended = false
-            if (rows.size >= 13) {
-                val latest = rows[rows.size - 1]
-                val anchor = rows[rows.size - 13]
-                if (Math.abs(anchor.value) > 1e-9) {
-                    val yoy = ((latest.value - anchor.value) / anchor.value) * 100.0
-                    sb.append(String.format(Locale.US,
-                        "Trailing YoY change (pre-computed, %s -> %s): %+.2f%% — use this " +
-                            "figure directly; do not derive YoY from the sampled points above.\n",
-                        anchor.date, latest.date, yoy))
-                    yoyAppended = true
-                }
-            }
-            if (!yoyAppended)
-                sb.append("(Fewer than 13 monthly points loaded — YoY is not computable; " +
-                    "describe the level trend only and say the YoY figure isn't available.)\n")
-        }
+        appendYoyIfIndexLevel(sb, seriesId, all)
         return sb.toString()
+    }
+
+    /**
+     * TICKET-4 (AI Laws 15, 16): pre-compute the trailing YoY for index-level
+     * series from the FULL row list (never the sampled window), so the model
+     * reports a guaranteed-correct number instead of deriving one from points
+     * the down-sampler may not have kept 12 months apart.
+     *
+     * These three series are monthly in both Room and the ViewModel, so the
+     * 13th-from-last point is exactly 12 months back.
+     */
+    private fun appendYoyIfIndexLevel(sb: StringBuilder, seriesId: String, all: List<Pt>) {
+        if ("CPI" != seriesId && "PCE" != seriesId && "CORE_PCE" != seriesId) return
+
+        sb.append("(These are index LEVELS, not percentages.)\n")
+        if (all.size >= 13) {
+            val latest = all[all.size - 1]
+            val anchor = all[all.size - 13]
+            if (Math.abs(anchor.value) > 1e-9) {
+                val yoy = ((latest.value - anchor.value) / anchor.value) * 100.0
+                sb.append(String.format(Locale.US,
+                    "Trailing YoY change (pre-computed, %s -> %s): %+.2f%% — use this " +
+                        "figure directly; do not derive YoY from the sampled points above.\n",
+                    anchor.date, latest.date, yoy))
+                return
+            }
+        }
+        sb.append("(Fewer than 13 monthly points loaded — YoY is not computable; " +
+            "describe the level trend only and say the YoY figure isn't available.)\n")
+    }
+
+    /** "yyyy-MM-dd" cutoff `months` back from today. */
+    private fun cutoffDate(months: Int): String {
+        val cal = Calendar.getInstance()
+        cal.add(Calendar.MONTH, -months)
+        return SimpleDateFormat("yyyy-MM-dd", Locale.US).format(cal.time)
     }
 
     private fun getOrdinalSuffix(n: Int): String {

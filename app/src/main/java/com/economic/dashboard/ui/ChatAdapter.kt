@@ -278,6 +278,22 @@ class ChatAdapter(
                 for (row in rows) {
                     if (row.date.compareTo(cutoff) >= 0) values.add(row.value)
                 }
+                if (values.size < 2) {
+                    // Cache-cold fallback (mirrors AnalystToolExecutor.getCachedSeries):
+                    // every series is Room-backed since the 2026-07-30 cache
+                    // expansion, but the catalog refresh is asynchronous, so on a
+                    // first launch the table can still be empty while the dashboard
+                    // already holds points in memory. Draw those rather than nothing.
+                    val pts: List<EconomicDataPoint>? = AnalystToolExecutor.getLiveSeriesPoints(seriesId)
+                    if (pts != null) {
+                        values.clear()
+                        for (dp in pts) {
+                            val d = dp.date
+                            val norm = if (d.length == 7) "$d-28" else d
+                            if (norm.length < 10 || norm.compareTo(cutoff) >= 0) values.add(dp.value)
+                        }
+                    }
+                }
             }
             synchronized(seriesCache) { seriesCache[cacheKey] = values }
             holder.sparkline.post {

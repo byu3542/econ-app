@@ -6,8 +6,10 @@ import androidx.work.ListenableWorker.Result
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.economic.dashboard.api.TreasuryYieldRepository
+import com.economic.dashboard.cache.DashboardDataCache
 import com.economic.dashboard.database.YieldDatabase
 import com.economic.dashboard.models.TreasuryYield
+import com.economic.dashboard.ui.EconomicViewModel
 import com.economic.dashboard.utils.NotificationHelper
 import com.economic.dashboard.utils.SettingsManager
 import java.util.Locale
@@ -17,9 +19,11 @@ import java.util.Locale
  *
  * Lifecycle:
  * - Scheduled by WorkManager to run daily at approximately 2:30 PM MST
- * - Calls TreasuryYieldRepository.forceRefresh() to update cache
- * - If API succeeds: Cache is updated, UI automatically reflects new data
- * - If API fails: Cached data remains available (graceful degradation)
+ * - Blocks on TreasuryYieldRepository.refreshBlocking() so the fetch is durable
+ *   before doWork() returns
+ * - If the API succeeds: the Room cache AND the dashboard snapshot cache are
+ *   updated, so the Overview actually reflects the new curve
+ * - If the API fails: Result.retry(), and the cached data remains on screen
  * - If the user enabled "Big rate moves" alerts, compares the two most
  *   recent 10Y readings in the cache and notifies on a 10+ bp move.
  */
@@ -30,13 +34,26 @@ class YieldRefreshWorker(context: Context, params: WorkerParameters) : Worker(co
 
         return try {
             val repository = TreasuryYieldRepository(applicationContext)
-            repository.forceRefresh()
-            Log.d(TAG, "Yield refresh completed successfully")
+            // Blocking on purpose. doWork() already runs on a background thread,
+            // and the write must be durable before we return — the previous
+            // forceRefresh() call dispatched onto another executor and returned
+            // immediately, so this worker reported success before a single byte
+            // was fetched and WorkManager was free to kill the process
+            // mid-request. maybeNotifyBigMove() also read the pre-refresh DB.
+            val points = repository.refreshBlocking()
+
+            // The Overview dashboard reads DashboardDataCache, NOT the Room
+            // tables refreshBlocking() writes (nothing observes those — see
+            // TreasuryYieldRepository.getYields()). Without this mirror a
+            // successful background refresh never reached the UI.
+            DashboardDataCache.save(
+                applicationContext, EconomicViewModel.CACHE_TREASURY, points
+            )
+
+            Log.d(TAG, "Yield refresh completed successfully (" + points.size + " points)")
 
             maybeNotifyBigMove(applicationContext)
 
-            // Return success even if API call fails asynchronously
-            // (cache is still available as fallback)
             Result.success()
         } catch (e: Exception) {
             Log.e(TAG, "Yield refresh failed with exception", e)

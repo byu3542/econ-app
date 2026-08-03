@@ -6,6 +6,16 @@ class BlsResponse {
     @SerializedName("status")
     var status: String? = null
 
+    /**
+     * BLS reports soft failures with HTTP 200 + an empty `Results` object and
+     * the reason in here (invalid registration key, daily threshold exceeded,
+     * unknown series id). Without this field those all surfaced as a bare
+     * "no data returned", which is indistinguishable from a genuinely empty
+     * series.
+     */
+    @SerializedName("message")
+    var message: List<String>? = null
+
     @SerializedName("Results")
     var Results: BlsResults? = null
 

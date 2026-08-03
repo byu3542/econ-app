@@ -137,7 +137,7 @@ class EmploymentFragment : Fragment() {
             requireContext(), R.dimen.radius_card_kpi) else null
         cardLaborParticipation.foreground = if ("labor" == which) BenchmarkStyle.activeCardBorder(
             requireContext(), R.dimen.radius_card_kpi) else null
-        tvChartTitle.text = if ("labor" == which) "Labor Participation Rate Trend" else "Unemployment Rate Trend"
+        tvChartTitle.text = if ("labor" == which) "Labor Participation Trends" else "Unemployment Trends"
     }
 
     private fun buildSwappableChart() {

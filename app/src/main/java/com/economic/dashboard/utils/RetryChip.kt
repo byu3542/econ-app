@@ -20,16 +20,16 @@ object RetryChip {
 
     /**
      * Shows `R.id.tvRetry` in [view] whenever any of [keys] is in the
-     * ViewModel's failed-series set, wiring the tap to retry that series;
-     * hides it otherwise.
+     * ViewModel's failed-series set, wiring the tap to retry *every* failed
+     * series on the screen; hides it otherwise.
      *
      * Screens whose layout has no `tvRetry` are a no-op.
      *
-     * [keys] order is significant: when several of a screen's series have
-     * failed at once, the chip retries the first one listed here. That matches
-     * the behaviour of the per-fragment loops this replaced — iterate the
-     * screen's declared keys and take the first hit, rather than iterating the
-     * failed set, which is unordered.
+     * This used to retry only `keys.firstOrNull { failed.contains(it) }`. On a
+     * screen watching several series that fail together — Inflation watches
+     * CPI, PCE and wages — the tap re-fetched whichever key happened to be
+     * listed first and silently left the others broken, so the card the user
+     * was actually looking at never came back no matter how often they tapped.
      */
     fun wire(
         fragment: Fragment, view: View,
@@ -37,9 +37,9 @@ object RetryChip {
     ) {
         val chip: TextView = view.findViewById(R.id.tvRetry) ?: return
         viewModel.getFailedSeries().observe(fragment.viewLifecycleOwner) { failed ->
-            val hit = if (failed == null) null else keys.firstOrNull { failed.contains(it) }
-            if (hit != null) {
-                chip.setOnClickListener { viewModel.retrySeries(hit) }
+            val hits = if (failed == null) emptyList() else keys.filter { failed.contains(it) }
+            if (hits.isNotEmpty()) {
+                chip.setOnClickListener { for (k in hits) viewModel.retrySeries(k) }
                 chip.visibility = View.VISIBLE
             } else {
                 chip.visibility = View.GONE

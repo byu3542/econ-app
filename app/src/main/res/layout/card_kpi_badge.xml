@@ -103,15 +103,6 @@
             android:textSize="@dimen/text_caption"
             android:layout_marginTop="@dimen/space_hairline" />
 
-        <!-- Sub-label: historical percentile (when available) -->
-        <TextView
-            android:id="@+id/tvPercentile"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text=""
-            android:textColor="@color/text_slate"
-            android:textSize="@dimen/text_caption" />
-
         <!-- Partial-failure affordance: shown only when this series failed to
              refresh. The cached value above stays visible; tapping re-fetches
              just this metric. -->

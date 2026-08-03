@@ -42,7 +42,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="FED FUNDS RATE"
-                    android:textColor="@color/text_on_navy_secondary"
+                    android:textColor="@color/accent_gold"
                     android:textSize="@dimen/text_caption"
                     android:textStyle="bold"
                     android:textAllCaps="true"
@@ -53,9 +53,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="—"
-                    android:textColor="@color/accent_gold"
+                    android:textColor="@color/card_white"
                     android:textSize="@dimen/text_display_lg"
-                    android:fontFamily="serif"
                     android:textStyle="bold"
                     android:includeFontPadding="false" />
 
@@ -104,18 +103,16 @@
                 android:orientation="vertical"
                 android:gravity="end">
 
+                <!-- Ticker: identical treatment to tvMetricDelta on the Overview
+                     KPI badges (caption size, bold, color set at runtime by
+                     DeltaFormatter). No chip background — the other tickers
+                     don't carry one. -->
                 <TextView
                     android:id="@+id/change_fed_funds"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textSize="@dimen/text_caption"
-                    android:textColor="@color/accent_gold"
-                    android:fontFamily="sans-serif-medium"
-                    android:background="@drawable/bg_fed_change_chip"
-                    android:paddingStart="@dimen/space_sm"
-                    android:paddingEnd="@dimen/space_sm"
-                    android:paddingTop="@dimen/space_xs"
-                    android:paddingBottom="@dimen/space_xs"
+                    android:textStyle="bold"
                     android:layout_marginBottom="@dimen/space_sm"
                     android:visibility="gone"/>
 

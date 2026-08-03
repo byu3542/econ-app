@@ -85,4 +85,15 @@ object ApiConfig {
     @JvmField val FRED_PCE_LIMIT: String = "120"
     @JvmField val STOCK_INDICES_LIMIT: String = "120"
     @JvmField val BOND_SPREADS_LIMIT: String = "120"
+
+    // ── economic_history cache limits ─────────────────────────────────────────
+    // Used only by HistoricalDataRepository / EconomicSeriesRegistry, which fill
+    // the Room cache the AI Analyst reads. Sized against CacheManager's 26-month
+    // retention window; anything older is purged weekly by CacheCleanupWorker.
+    // The dashboard's own live fetches keep using the limits above — they render
+    // charts, not history, and are tuned for a much shorter window.
+    /** ~26 months of daily observations (≈566 business days, ≈792 calendar days). */
+    @JvmField val FRED_CACHE_DAILY_LIMIT: String = "800"
+    /** ~3 years of monthly observations — retention trims the tail. */
+    @JvmField val FRED_CACHE_MONTHLY_LIMIT: String = "36"
 }

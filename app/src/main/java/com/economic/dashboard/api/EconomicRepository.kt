@@ -9,6 +9,7 @@ import com.economic.dashboard.models.FredResponse
 import com.economic.dashboard.utils.AppExecutors
 import okhttp3.Request
 import org.xmlpull.v1.XmlPullParser
+import java.io.IOException
 import java.io.StringReader
 import java.util.Calendar
 import java.util.Locale
@@ -409,9 +410,16 @@ class EconomicRepository {
                 }
 
                 if (results.isEmpty()) {
-                    callback.onError("No BLS data returned for: $seriesIds")
+                    // Include what BLS actually said — a bad key or a blown daily
+                    // quota comes back as HTTP 200 with an empty Results block.
+                    val detail = blsResp.message?.joinToString("; ") ?: ""
+                    val msg = "No BLS data returned for $seriesIds " +
+                        "(status=${blsResp.status}${if (detail.isEmpty()) "" else "; $detail"})"
+                    Log.w(TAG, msg)
+                    callback.onError(msg)
                 } else {
                     results.sortWith(compareBy { it.date })
+                    Log.i(TAG, "BLS $seriesIds → status=${blsResp.status}, parsed ${results.size} points")
                     callback.onSuccess(results)
                 }
             } catch (e: Exception) {
@@ -427,28 +435,39 @@ class EconomicRepository {
     fun fetchTreasuryRates(callback: DataCallback<List<EconomicDataPoint>>) {
         AppExecutors.networkIO().execute {
             try {
-                val currentYear = Calendar.getInstance().get(Calendar.YEAR)
-                val url = ApiConfig.TREASURY_BASE_URL +
-                    "xml?data=daily_treasury_yield_curve&field_tdr_date_value=" + currentYear
-
-                val client = RetrofitClient.buildClient()
-                val request = Request.Builder().url(url).build()
-                val response = client.newCall(request).execute()
-                val responseBody = response.body
-
-                if (!response.isSuccessful || responseBody == null) {
-                    callback.onError("Treasury HTTP error: " + response.code)
-                    return@execute
-                }
-
-                val xmlContent = responseBody.string()
-                val results = parseTreasuryXml(xmlContent)
-                callback.onSuccess(results)
+                callback.onSuccess(fetchTreasuryRatesSync())
             } catch (e: Exception) {
                 Log.e(TAG, "Treasury fetch error", e)
                 callback.onError("Treasury fetch failed: " + e.message)
             }
         }
+    }
+
+    /**
+     * Blocking variant of [fetchTreasuryRates] — runs the request and the XML
+     * parse on the CALLING thread and throws on failure.
+     *
+     * Exists for [com.economic.dashboard.workers.YieldRefreshWorker], which
+     * must not return from `doWork()` until the fetch is durable: the callback
+     * form dispatches onto [AppExecutors.networkIO] and returns immediately,
+     * which let WorkManager tear the process down mid-request.
+     */
+    @Throws(Exception::class)
+    fun fetchTreasuryRatesSync(): List<EconomicDataPoint> {
+        val currentYear = Calendar.getInstance().get(Calendar.YEAR)
+        val url = ApiConfig.TREASURY_BASE_URL +
+            "xml?data=daily_treasury_yield_curve&field_tdr_date_value=" + currentYear
+
+        val client = RetrofitClient.buildClient()
+        val request = Request.Builder().url(url).build()
+        val response = client.newCall(request).execute()
+        val responseBody = response.body
+
+        if (!response.isSuccessful || responseBody == null) {
+            throw IOException("Treasury HTTP error: " + response.code)
+        }
+
+        return parseTreasuryXml(responseBody.string())
     }
 
     @Throws(Exception::class)

@@ -43,6 +43,8 @@ import com.economic.dashboard.utils.HapticUtil
 import com.economic.dashboard.utils.SettingsManager
 import com.economic.dashboard.workers.DailyBriefWorker
 
+import com.google.android.material.snackbar.Snackbar
+
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -616,6 +618,16 @@ class MainActivity : AppCompatActivity() {
             if (error != null && !error.isEmpty()) {
                 android.util.Log.w("MainActivity", "Data fetch error: $error")
                 HapticUtil.reject(binding.root) // IOS-09
+            }
+        }
+        // Per-series errors above are logged only — they arrive up to 13 at a
+        // time and are far too noisy to show. This is the aggregated one-shot
+        // summary instead: exactly one message per refresh that didn't fully
+        // land, on whichever tab the user is looking at.
+        viewModel.getRefreshFailure().observe(this) { message ->
+            if (message != null && message.isNotEmpty()) {
+                Snackbar.make(binding.root, message, Snackbar.LENGTH_LONG).show()
+                viewModel.consumeRefreshFailure()
             }
         }
     }
