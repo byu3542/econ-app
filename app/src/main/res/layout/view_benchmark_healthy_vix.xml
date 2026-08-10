@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:paddingVertical="@dimen/space_md">
-    <View android:layout_width="10dp" android:layout_height="10dp" android:background="@drawable/dot_neutral" android:backgroundTint="@color/signal_good" android:layout_marginEnd="@dimen/space_lg" />
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="HEALTHY" android:textColor="@color/signal_good_soft" android:textSize="@dimen/text_caption" android:textStyle="bold" android:letterSpacing="0.05" />
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Below 20 points" android:textColor="@color/card_white" android:textSize="@dimen/text_secondary" android:fontFamily="sans-serif-light" />
-    </LinearLayout>
-</LinearLayout>

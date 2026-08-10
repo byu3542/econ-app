@@ -18,6 +18,7 @@ import com.economic.dashboard.models.EconomicDataPoint
 import com.economic.dashboard.ui.EconomicViewModel
 import com.economic.dashboard.ui.views.SkeletonController
 import com.economic.dashboard.utils.ChartHelper
+import com.economic.dashboard.utils.DeltaFormatter
 import com.economic.dashboard.utils.EdgeToEdgeInsets
 import com.economic.dashboard.utils.NumberFormatUtil
 import com.economic.dashboard.utils.RetryChip
@@ -169,10 +170,8 @@ class YieldsFragment : Fragment() {
                     changeView.setTextColor(ContextCompat.getColor(
                         requireContext(), R.color.text_muted))
                 } else {
-                    changeView.text = String.format(Locale.US, "%s%.0fbp",
-                        if (bps > 0) "▲" else "▼", Math.abs(bps))
-                    changeView.setTextColor(ContextCompat.getColor(requireContext(),
-                        if (bps > 0) R.color.delta_bad else R.color.delta_good))
+                    changeView.text = DeltaFormatter.format(bps, "%.0fbp")
+                    changeView.setTextColor(DeltaFormatter.color(requireContext(), bps, goodWhenDown = true))
                 }
             }
         } else {

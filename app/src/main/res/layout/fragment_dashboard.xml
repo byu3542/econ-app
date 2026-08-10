@@ -42,6 +42,43 @@
                     android:textSize="@dimen/text_caption"
                     android:visibility="gone" />
 
+                <!-- Design branch 2a: customizable dashboard — single edit entry
+                     point. Cards themselves keep their original tap (status
+                     detail) / long-press (ask analyst) behavior; this is the
+                     only way to open the indicator picker. -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="@dimen/space_sm">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/customize_hint"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="@dimen/text_caption" />
+
+                    <TextView
+                        android:id="@+id/btnEditDashboard"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:minHeight="32dp"
+                        android:gravity="center"
+                        android:paddingHorizontal="@dimen/space_md"
+                        android:paddingVertical="@dimen/space_xs"
+                        android:background="@drawable/bg_pill_navy"
+                        android:text="@string/edit_dashboard_button"
+                        android:textColor="@color/accent_gold"
+                        android:textSize="@dimen/text_caption"
+                        android:textStyle="bold"
+                        android:clickable="true"
+                        android:focusable="true" />
+
+                </LinearLayout>
+
                 <include layout="@layout/card_fed_funds_hero" />
 
                 <!-- TICKET-05/06: KPI cards grouped into labelled common regions

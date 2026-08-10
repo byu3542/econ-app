@@ -43,6 +43,8 @@
     <color name="text_on_navy_muted">#8CFFFFFF</color>
     <color name="text_on_navy_secondary">#A6FFFFFF</color>
     <color name="gold_muted">#99C9A84C</color>
+    <!-- Design branch 2a: indicator picker's checked-row tint -->
+    <color name="bg_selected_row">#1FEFE6C9</color>
 
     <!-- Chat error bubble -->
     <color name="error_bubble_bg">#FFF8F8</color>
@@ -120,6 +122,19 @@
     <color name="signal_alert_cb">#D55E00</color>
     <color name="signal_alert_deep_cb">#8C3D00</color>
     <color name="signal_imbalance_cb">#CC79A7</color>
+    <!-- Metric popup sheet surfaces. Unlike the always-navy data surfaces above
+         (header, KPI badge cards, charts), these FLIP with the theme — the popup
+         is a "reading" surface, so it goes light in light mode. The values-night
+         twins reproduce the original navy sheet exactly. -->
+    <color name="sheet_surface">#f5f3ef</color>
+    <color name="sheet_card">#ffffff</color>
+    <color name="sheet_divider">#e6e2db</color>
+    <color name="sheet_text_primary">#1a1a2e</color>
+    <color name="sheet_text_secondary">#666666</color>
+    <!-- accent_gold (#c9a84c) is too light to read on a white sheet; gold_ink is
+         the established darker gold for gold-on-light text. -->
+    <color name="sheet_accent">#8F6F2A</color>
+
     <!-- Informational accents -->
     <color name="info_blue">#5B8DB8</color>
     <color name="info_blue_soft">#B3C9DD</color>

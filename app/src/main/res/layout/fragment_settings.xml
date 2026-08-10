@@ -1,0 +1,638 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Design 1b: Settings as a full-screen page, opened like any other tab.
+     Two panes stacked in this FrameLayout, toggled by visibility:
+       settingsListScroll   — grouped list of section rows with live summaries
+       settingsDetailScroll — the tapped section's own controls (back row + title
+                               + exactly one of the 8 cards below made visible)
+     See SettingsFragment.kt for the show/hide + binding logic. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- ══════════════════════ LIST PANE ══════════════════════ -->
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/settingsListScroll"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="@dimen/space_lg"
+            android:paddingEnd="@dimen/space_lg"
+            android:paddingTop="@dimen/space_md"
+            android:paddingBottom="@dimen/space_3xl">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/bg_search_field"
+                android:paddingStart="@dimen/space_md"
+                android:paddingEnd="@dimen/space_md"
+                android:paddingTop="@dimen/space_sm"
+                android:paddingBottom="@dimen/space_sm">
+
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_marginEnd="@dimen/space_sm"
+                    android:src="@drawable/ic_search"
+                    app:tint="@color/text_secondary"
+                    android:contentDescription="@null"/>
+
+                <EditText
+                    android:id="@+id/etSettingsSearch"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@null"
+                    android:hint="@string/settings_search_hint"
+                    android:textColorHint="@color/text_secondary"
+                    android:textColor="@color/text_navy"
+                    android:textSize="@dimen/text_body"
+                    android:inputType="text"
+                    android:imeOptions="actionSearch"
+                    android:maxLines="1"
+                    android:singleLine="true"/>
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvGroupFrequent"
+                style="@style/SettingsSectionHeader"
+                android:layout_marginTop="@dimen/space_lg"
+                android:layout_marginBottom="@dimen/space_sm"
+                android:text="@string/settings_group_frequent"/>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardGroupFrequent"
+                style="@style/SettingsCard"
+                android:layout_marginTop="0dp">
+                <LinearLayout
+                    android:id="@+id/llGroupFrequent"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"/>
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                android:id="@+id/tvGroupMore"
+                style="@style/SettingsSectionHeader"
+                android:layout_marginTop="@dimen/space_lg"
+                android:layout_marginBottom="@dimen/space_sm"
+                android:text="@string/settings_group_more"/>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardGroupMore"
+                style="@style/SettingsCard"
+                android:layout_marginTop="0dp">
+                <LinearLayout
+                    android:id="@+id/llGroupMore"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"/>
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                android:id="@+id/tvGroupAbout"
+                style="@style/SettingsSectionHeader"
+                android:layout_marginTop="@dimen/space_lg"
+                android:layout_marginBottom="@dimen/space_sm"
+                android:text="@string/section_about"/>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardGroupAbout"
+                style="@style/SettingsCard"
+                android:layout_marginTop="0dp">
+                <LinearLayout
+                    android:id="@+id/llGroupAbout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"/>
+            </com.google.android.material.card.MaterialCardView>
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <!-- ══════════════════════ DETAIL PANE ══════════════════════ -->
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/settingsDetailScroll"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="@dimen/space_lg"
+            android:paddingEnd="@dimen/space_lg"
+            android:paddingTop="@dimen/space_md"
+            android:paddingBottom="@dimen/space_3xl">
+
+            <LinearLayout
+                android:id="@+id/rowBackToList"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="?attr/selectableItemBackground"
+                android:padding="@dimen/space_xs"
+                android:layout_marginBottom="@dimen/space_sm">
+
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_chevron_left"
+                    app:tint="@color/text_navy"
+                    android:contentDescription="@null"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/space_xs"
+                    android:text="@string/settings_back_to_list"
+                    android:textSize="@dimen/text_body"
+                    android:textColor="@color/text_navy"/>
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvDetailTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/space_sm"
+                android:textSize="@dimen/text_title"
+                android:textStyle="bold"
+                android:fontFamily="serif"
+                android:textColor="@color/text_navy"
+                tools:text="Appearance"/>
+
+            <!-- ~~ APPEARANCE ~~ -->
+            <com.google.android.material.card.MaterialCardView android:id="@+id/cardAppearance" style="@style/SettingsCard" android:layout_marginTop="0dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <com.google.android.material.button.MaterialButtonToggleGroup
+                        android:id="@+id/tgTheme"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        app:singleSelection="true"
+                        app:selectionRequired="true">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnThemeLight"
+                            style="@style/SettingsSegmentButton"
+                            android:text="@string/theme_light"/>
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnThemeDark"
+                            style="@style/SettingsSegmentButton"
+                            android:text="@string/theme_dark"/>
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnThemeSystem"
+                            style="@style/SettingsSegmentButton"
+                            android:text="@string/theme_system"/>
+                    </com.google.android.material.button.MaterialButtonToggleGroup>
+
+                    <LinearLayout style="@style/SettingsRow">
+                        <LinearLayout style="@style/SettingsRowText">
+                            <TextView style="@style/SettingsRowTitle" android:text="@string/colorblind_title"/>
+                            <TextView style="@style/SettingsRowSub" android:text="@string/colorblind_sub"/>
+                        </LinearLayout>
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switchColorblind"
+                            style="@style/SettingsSwitch"
+                            android:contentDescription="@string/colorblind_title"/>
+                    </LinearLayout>
+
+                    <View android:layout_width="match_parent" android:layout_height="@dimen/divider_hairline_height"
+                        android:background="@drawable/divider_hairline_inset"/>
+
+                    <LinearLayout style="@style/SettingsRow">
+                        <LinearLayout style="@style/SettingsRowText">
+                            <TextView style="@style/SettingsRowTitle" android:text="@string/haptics_title"/>
+                            <TextView style="@style/SettingsRowSub" android:text="@string/haptics_sub"/>
+                        </LinearLayout>
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switchHaptics"
+                            style="@style/SettingsSwitch"
+                            android:contentDescription="@string/haptics_title"/>
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- ~~ STARTUP TAB ~~ -->
+            <com.google.android.material.card.MaterialCardView android:id="@+id/cardStartup" style="@style/SettingsCard" android:layout_marginTop="0dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <com.google.android.material.chip.ChipGroup
+                        android:id="@+id/cgDefaultTab"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        app:singleSelection="true"
+                        app:selectionRequired="true"
+                        app:chipSpacingHorizontal="@dimen/space_sm">
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipTabOverview"
+                            style="@style/Widget.MaterialComponents.Chip.Choice"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/tab_overview"/>
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipTabMarkets"
+                            style="@style/Widget.MaterialComponents.Chip.Choice"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/tab_markets"/>
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipTabEconomy"
+                            style="@style/Widget.MaterialComponents.Chip.Choice"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/tab_economy"/>
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipTabNews"
+                            style="@style/Widget.MaterialComponents.Chip.Choice"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/tab_news"/>
+                    </com.google.android.material.chip.ChipGroup>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- ~~ ECON ANALYST ~~ -->
+            <com.google.android.material.card.MaterialCardView android:id="@+id/cardAi" style="@style/SettingsCard" android:layout_marginTop="0dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <LinearLayout style="@style/SettingsRow">
+                        <LinearLayout style="@style/SettingsRowText">
+                            <TextView style="@style/SettingsRowTitle" android:text="@string/smart_chips"/>
+                            <TextView style="@style/SettingsRowSub" android:text="@string/smart_chips_sub"/>
+                        </LinearLayout>
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switchSmartChips"
+                            style="@style/SettingsSwitch"
+                            android:contentDescription="@string/smart_chips"/>
+                    </LinearLayout>
+
+                    <View android:layout_width="match_parent" android:layout_height="@dimen/divider_hairline_height"
+                        android:background="@drawable/divider_hairline_inset"/>
+
+                    <LinearLayout style="@style/SettingsRow">
+                        <LinearLayout style="@style/SettingsRowText">
+                            <TextView style="@style/SettingsRowTitle" android:text="@string/detailed_ai"/>
+                            <TextView style="@style/SettingsRowSub" android:text="@string/detailed_ai_sub"/>
+                        </LinearLayout>
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switchDetailedAi"
+                            style="@style/SettingsSwitch"
+                            android:contentDescription="@string/detailed_ai"/>
+                    </LinearLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnClearChat"
+                        style="@style/SettingsDestructiveButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_xs"
+                        android:text="@string/clear_chat_history"/>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- ~~ DATA & SYNC ~~ -->
+            <com.google.android.material.card.MaterialCardView android:id="@+id/cardData" style="@style/SettingsCard" android:layout_marginTop="0dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tvLastUpdated"
+                        style="@style/SettingsRowSub"
+                        android:layout_marginBottom="@dimen/space_sm"
+                        android:text="@string/checking_freshness"/>
+
+                    <TextView
+                        style="@style/SettingsRowSub"
+                        android:layout_marginBottom="@dimen/space_sm"
+                        android:text="@string/data_cache_sub"/>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnRefreshNow"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginEnd="@dimen/space_sm"
+                            android:text="@string/refresh_data"
+                            android:textAllCaps="false"
+                            android:textSize="@dimen/text_body"
+                            android:textColor="@color/text_navy"/>
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnClearCache"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/clear_cache"
+                            android:textAllCaps="false"
+                            android:textSize="@dimen/text_body"
+                            android:textColor="@color/text_navy"/>
+                    </LinearLayout>
+
+                    <LinearLayout style="@style/SettingsRow">
+                        <LinearLayout style="@style/SettingsRowText">
+                            <TextView style="@style/SettingsRowTitle" android:text="@string/refresh_on_open"/>
+                            <TextView style="@style/SettingsRowSub" android:text="@string/refresh_on_open_sub"/>
+                        </LinearLayout>
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switchRefreshOnOpen"
+                            style="@style/SettingsSwitch"
+                            android:contentDescription="@string/refresh_on_open"/>
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- ~~ NEWS SOURCES ~~ -->
+            <com.google.android.material.card.MaterialCardView android:id="@+id/cardNews" style="@style/SettingsCard" android:layout_marginTop="0dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tvNewsSourcesSummary"
+                        style="@style/SettingsRowSub"
+                        android:layout_marginBottom="@dimen/space_xs"/>
+
+                    <LinearLayout style="@style/SettingsRow">
+                        <LinearLayout style="@style/SettingsRowText">
+                            <TextView style="@style/SettingsRowTitle" android:text="@string/news_gov"/>
+                            <TextView style="@style/SettingsRowSub" android:text="@string/news_gov_sub"/>
+                        </LinearLayout>
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switchNewsGov"
+                            style="@style/SettingsSwitch"
+                            android:contentDescription="@string/news_gov"/>
+                    </LinearLayout>
+
+                    <View android:layout_width="match_parent" android:layout_height="@dimen/divider_hairline_height"
+                        android:background="@drawable/divider_hairline_inset"/>
+
+                    <LinearLayout style="@style/SettingsRow">
+                        <LinearLayout style="@style/SettingsRowText">
+                            <TextView style="@style/SettingsRowTitle" android:text="@string/news_media"/>
+                            <TextView style="@style/SettingsRowSub" android:text="@string/news_media_sub"/>
+                        </LinearLayout>
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switchNewsMedia"
+                            style="@style/SettingsSwitch"
+                            android:contentDescription="@string/news_media"/>
+                    </LinearLayout>
+
+                    <View android:layout_width="match_parent" android:layout_height="@dimen/divider_hairline_height"
+                        android:background="@drawable/divider_hairline_inset"/>
+
+                    <LinearLayout style="@style/SettingsRow">
+                        <LinearLayout style="@style/SettingsRowText">
+                            <TextView style="@style/SettingsRowTitle" android:text="@string/news_intl"/>
+                            <TextView style="@style/SettingsRowSub" android:text="@string/news_intl_sub"/>
+                        </LinearLayout>
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switchNewsIntl"
+                            style="@style/SettingsSwitch"
+                            android:contentDescription="@string/news_intl"/>
+                    </LinearLayout>
+
+                    <View android:layout_width="match_parent" android:layout_height="@dimen/divider_hairline_height"
+                        android:background="@drawable/divider_hairline_inset"/>
+
+                    <LinearLayout style="@style/SettingsRow">
+                        <LinearLayout style="@style/SettingsRowText">
+                            <TextView style="@style/SettingsRowTitle" android:text="@string/news_research"/>
+                            <TextView style="@style/SettingsRowSub" android:text="@string/news_research_sub"/>
+                        </LinearLayout>
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switchNewsResearch"
+                            style="@style/SettingsSwitch"
+                            android:contentDescription="@string/news_research"/>
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- ~~ CHARTS ~~ -->
+            <com.google.android.material.card.MaterialCardView android:id="@+id/cardCharts" style="@style/SettingsCard" android:layout_marginTop="0dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <LinearLayout style="@style/SettingsRow">
+                        <LinearLayout style="@style/SettingsRowText">
+                            <TextView style="@style/SettingsRowTitle" android:text="@string/gridlines"/>
+                            <TextView style="@style/SettingsRowSub" android:text="@string/gridlines_sub"/>
+                        </LinearLayout>
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switchGridlines"
+                            style="@style/SettingsSwitch"
+                            android:contentDescription="@string/gridlines"/>
+                    </LinearLayout>
+
+                    <TextView style="@style/SettingsRowTitle"
+                        android:layout_marginTop="@dimen/space_sm"
+                        android:layout_marginBottom="@dimen/space_xs"
+                        android:text="@string/axis_decimals"/>
+
+                    <com.google.android.material.button.MaterialButtonToggleGroup
+                        android:id="@+id/tgDecimals"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        app:singleSelection="true"
+                        app:selectionRequired="true">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnDec1"
+                            style="@style/SettingsSegmentButton"
+                            android:text="@string/dec_one"/>
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnDec2"
+                            style="@style/SettingsSegmentButton"
+                            android:text="@string/dec_two"/>
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnDec3"
+                            style="@style/SettingsSegmentButton"
+                            android:text="@string/dec_three"/>
+                    </com.google.android.material.button.MaterialButtonToggleGroup>
+
+                    <TextView style="@style/SettingsRowTitle"
+                        android:layout_marginTop="@dimen/space_sm"
+                        android:layout_marginBottom="@dimen/space_xs"
+                        android:text="@string/chart_timeframe"/>
+
+                    <com.google.android.material.button.MaterialButtonToggleGroup
+                        android:id="@+id/tgTimeframe"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        app:singleSelection="true"
+                        app:selectionRequired="true">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnTf3m"
+                            style="@style/SettingsSegmentButton"
+                            android:text="@string/tf_3m"/>
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnTf6m"
+                            style="@style/SettingsSegmentButton"
+                            android:text="@string/tf_6m"/>
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnTf1y"
+                            style="@style/SettingsSegmentButton"
+                            android:text="@string/tf_1y"/>
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnTf2y"
+                            style="@style/SettingsSegmentButton"
+                            android:text="@string/tf_2y"/>
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnTf5y"
+                            style="@style/SettingsSegmentButton"
+                            android:text="@string/tf_5y"/>
+                    </com.google.android.material.button.MaterialButtonToggleGroup>
+
+                    <TextView style="@style/SettingsRowSub"
+                        android:layout_marginTop="@dimen/space_sm"
+                        android:textStyle="italic"
+                        android:text="@string/chart_apply_note"/>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- ~~ NOTIFICATIONS ~~ -->
+            <com.google.android.material.card.MaterialCardView android:id="@+id/cardNotifications" style="@style/SettingsCard" android:layout_marginTop="0dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tvNotifStatus"
+                        style="@style/SettingsRowSub"
+                        android:layout_marginBottom="@dimen/space_xs"/>
+
+                    <TextView
+                        android:id="@+id/tvNotifBlocked"
+                        style="@style/SettingsRowTitle"
+                        android:textColor="@color/info_blue"
+                        android:background="?attr/selectableItemBackground"
+                        android:paddingStart="@dimen/space_sm"
+                        android:paddingEnd="@dimen/space_sm"
+                        android:paddingTop="@dimen/space_xs"
+                        android:paddingBottom="@dimen/space_xs"
+                        android:visibility="gone"
+                        android:text="@string/notif_blocked_title"/>
+
+                    <TextView
+                        android:id="@+id/tvNotifBlockedHint"
+                        style="@style/SettingsRowSub"
+                        android:paddingStart="@dimen/space_sm"
+                        android:paddingEnd="@dimen/space_sm"
+                        android:paddingBottom="@dimen/space_xs"
+                        android:visibility="gone"
+                        android:text="@string/notif_blocked_tap"/>
+
+                    <LinearLayout style="@style/SettingsRow">
+                        <LinearLayout style="@style/SettingsRowText">
+                            <TextView style="@style/SettingsRowTitle" android:text="@string/notify_moves"/>
+                            <TextView style="@style/SettingsRowSub" android:text="@string/notify_moves_sub"/>
+                        </LinearLayout>
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switchNotifyMoves"
+                            style="@style/SettingsSwitch"
+                            android:contentDescription="@string/notify_moves"/>
+                    </LinearLayout>
+
+                    <View android:layout_width="match_parent" android:layout_height="@dimen/divider_hairline_height"
+                        android:background="@drawable/divider_hairline_inset"/>
+
+                    <LinearLayout style="@style/SettingsRow">
+                        <LinearLayout style="@style/SettingsRowText">
+                            <TextView style="@style/SettingsRowTitle" android:text="@string/notify_releases"/>
+                            <TextView style="@style/SettingsRowSub" android:text="@string/notify_releases_sub"/>
+                        </LinearLayout>
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switchNotifyReleases"
+                            style="@style/SettingsSwitch"
+                            android:contentDescription="@string/notify_releases"/>
+                    </LinearLayout>
+
+                    <View android:layout_width="match_parent" android:layout_height="@dimen/divider_hairline_height"
+                        android:background="@drawable/divider_hairline_inset"/>
+
+                    <LinearLayout style="@style/SettingsRow">
+                        <LinearLayout style="@style/SettingsRowText">
+                            <TextView style="@style/SettingsRowTitle" android:text="@string/daily_brief"/>
+                            <TextView style="@style/SettingsRowSub" android:text="@string/daily_brief_sub"/>
+                        </LinearLayout>
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switchDailyBrief"
+                            style="@style/SettingsSwitch"
+                            android:contentDescription="@string/daily_brief"/>
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- ~~ ABOUT ~~ -->
+            <com.google.android.material.card.MaterialCardView android:id="@+id/cardAbout" style="@style/SettingsCard" android:layout_marginTop="0dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tvVersion"
+                        style="@style/SettingsRowSub"
+                        android:text="Econ Monitor"/>
+
+                    <TextView
+                        style="@style/SettingsRowSub"
+                        android:layout_marginTop="@dimen/space_xs"
+                        android:text="@string/about_data_note"/>
+
+                    <TextView
+                        style="@style/SettingsRowSub"
+                        android:layout_marginTop="@dimen/space_sm"
+                        android:text="@string/about_privacy"/>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+</FrameLayout>

@@ -10,6 +10,7 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
 
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -21,8 +22,6 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import androidx.lifecycle.ViewModelProvider
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 
 import com.economic.dashboard.R
 import com.economic.dashboard.analyst.AskAnalyst
@@ -37,6 +36,7 @@ import com.economic.dashboard.news.NewsRepository
 import com.economic.dashboard.ui.fragments.DashboardFragment
 import com.economic.dashboard.ui.fragments.EconomyFragment
 import com.economic.dashboard.ui.fragments.MarketsFragment
+import com.economic.dashboard.ui.views.PressFeedback
 import com.economic.dashboard.utils.AppExecutors
 import com.economic.dashboard.utils.EdgeToEdgeInsets
 import com.economic.dashboard.utils.HapticUtil
@@ -179,14 +179,49 @@ class MainActivity : AppCompatActivity() {
 
         setupBottomNav()
 
+        // TICKET-41: bottom-nav tab switches don't push to the back stack, so
+        // without this, back from Markets/Economy/News exits the app instead
+        // of returning to Overview first (the standard bottom-nav contract).
+        // Only fires when no dialog/bottom sheet has focus — those own the
+        // back gesture on their own Window and never reach this dispatcher.
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (isSettingsShowing()) {
+                    handleSettingsBackOrClose()
+                } else if (binding.bottomNav.selectedItemId != R.id.nav_overview) {
+                    binding.bottomNav.selectedItemId = R.id.nav_overview
+                } else {
+                    // Already on Overview — let this press fall through to the
+                    // system default (finish the Activity), unchanged from today.
+                    isEnabled = false
+                    onBackPressedDispatcher.onBackPressed()
+                }
+            }
+        })
+
+        PressFeedback.attach(binding.fabAiAnalyst) // same bouncy spring feedback as the overview KPI badges
         binding.fabAiAnalyst.setOnClickListener {
             markAnalystSeen(); clearAnalystBadge() // TICKET-26: opening Analyst clears its badge
-            if (supportFragmentManager.findFragmentByTag(AiAnalystBottomSheet.TAG) == null)
+            if (supportFragmentManager.findFragmentByTag(AiAnalystBottomSheet.TAG) == null) {
+                HapticUtil.confirm(binding.fabAiAnalyst) // firmer pulse — primary action, not a tab switch
                 AiAnalystBottomSheet().show(supportFragmentManager, AiAnalystBottomSheet.TAG)
+            }
         }
-        binding.btnSettings.setOnClickListener { showSettingsSheet() }
+        binding.btnSettings.setOnClickListener { openSettings() }
         observeViewModel()
-        viewModel.fetchAllData()
+        // Skip on a theme-toggle/rotation recreate: the ViewModel survives
+        // those (ViewModelStore), so its LiveData already holds the current
+        // values and every fragment gets them back the moment it re-observes
+        // — re-fetching here just re-primes from disk and re-posts the same
+        // data, forcing every chart to rebuild for nothing during the
+        // recreate itself. That redundant burst was the main cause of the
+        // multi-second freeze a theme switch used to cause. A genuinely
+        // fresh ViewModel (cold launch, or the process was killed and
+        // restored) always has hasFetchedOnce() == false, so this still
+        // fetches exactly when it needs to.
+        if (!viewModel.hasFetchedOnce()) {
+            viewModel.fetchAllData()
+        }
         if (freshLaunch && SettingsManager.getBool(this, SettingsManager.KEY_REFRESH_ON_OPEN, false)) {
             // Callback intentionally empty: the refresh itself is the point, and
             // the header has nothing to redraw (see setupBottomNav()).
@@ -207,12 +242,75 @@ class MainActivity : AppCompatActivity() {
         handleShareIntent(intent)
     }
 
-    // ── Settings ─────────────────────────────────────────────────────────────
+    // ── Settings (design 1b: full-screen page, opens like any other tab) ───────
 
-    /** Gear icon in the header — opens the settings bottom sheet. */
-    private fun showSettingsSheet() {
-        if (supportFragmentManager.findFragmentByTag(SettingsBottomSheet.TAG) == null)
-            SettingsBottomSheet().show(supportFragmentManager, SettingsBottomSheet.TAG)
+    private fun isSettingsShowing(): Boolean =
+        supportFragmentManager.findFragmentByTag(SettingsFragment.TAG)?.isAdded == true
+
+    /** Gear icon in the header — opens Settings into fragmentContainer, same
+     *  mechanism as switching to Markets/Economy/News. Never touches
+     *  bottomNav.selectedItemId, so closeSettings() can just re-load whatever
+     *  tab is still selected there to restore the screen underneath. */
+    private fun openSettings() {
+        if (isSettingsShowing()) return
+        loadFragment(SettingsFragment(), SettingsFragment.TAG)
+        resetHeaderCompactAlwaysVisible()
+        binding.tvHeaderCompactTitle.text = getString(R.string.settings)
+        currentScreenLabel = getString(R.string.settings)
+        binding.btnSettings.setImageResource(R.drawable.ic_chevron_left)
+        binding.btnSettings.contentDescription = getString(R.string.settings_back_to_list)
+        binding.btnSettings.setOnClickListener { handleSettingsBackOrClose() }
+        // Full-screen page, no bottom chrome — the FAB floats on top of the
+        // nav bar, so it goes with it.
+        binding.bottomNavWrapper.visibility = View.GONE
+        binding.fabAiAnalyst.visibility = View.GONE
+    }
+
+    /** Restores whichever tab bottomNav still has selected and puts the gear
+     *  icon back to normal. */
+    private fun closeSettings() {
+        val id = binding.bottomNav.selectedItemId
+        loadFragmentForNavId(id)
+        val (_, title) = fragmentIndexAndTitle(id)
+        binding.tvHeaderCompactTitle.text = title
+        currentScreenLabel = title
+        resetSettingsGearIcon()
+        binding.bottomNavWrapper.visibility = View.VISIBLE
+        binding.fabAiAnalyst.visibility = View.VISIBLE
+    }
+
+    /** Gear icon back to its normal look + action. Idempotent — also called
+     *  from the bottom-nav listener since tapping another tab while Settings
+     *  is open should always leave Settings behind. */
+    private fun resetSettingsGearIcon() {
+        binding.btnSettings.setImageResource(R.drawable.ic_settings)
+        binding.btnSettings.contentDescription = getString(R.string.settings)
+        binding.btnSettings.setOnClickListener { openSettings() }
+    }
+
+    /** Shared by the back gesture and by tapping the header's back chevron
+     *  while Settings is open: detail → list first, list → close Settings. */
+    private fun handleSettingsBackOrClose() {
+        val f = supportFragmentManager.findFragmentByTag(SettingsFragment.TAG) as? SettingsFragment
+        if (f != null && f.handleBack()) return
+        closeSettings()
+    }
+
+    /** Maps a bottom-nav item id to the fragment shown underneath the header —
+     *  shared by the nav listener (on tap) and closeSettings() (on restore). */
+    private fun loadFragmentForNavId(id: Int) {
+        if (id == R.id.nav_markets) loadFragment(MarketsFragment(), "markets")
+        else if (id == R.id.nav_economy) loadFragment(EconomyFragment(), "economy")
+        else if (id == R.id.navigation_news) loadFragment(NewsFragment(), "news")
+        else loadFragment(DashboardFragment(), "overview")
+    }
+
+    /** Active-indicator slot index + header title for a bottom-nav item id. */
+    private fun fragmentIndexAndTitle(id: Int): Pair<Int, String> {
+        return if (id == R.id.nav_markets) 1 to "Markets"
+        else if (id == R.id.nav_economy) 3 to "Economy"
+        else if (id == R.id.navigation_news) 4 to "News"
+        else 0 to "Overview"
     }
 
     /** Asks for the Android 13+ notification permission if not yet granted. */
@@ -239,8 +337,8 @@ class MainActivity : AppCompatActivity() {
             SettingsManager.setBool(this, SettingsManager.KEY_NOTIFY_RELEASES, false)
             SettingsManager.setBool(this, SettingsManager.KEY_DAILY_BRIEF, false)
             Toast.makeText(this, R.string.notifications_denied, Toast.LENGTH_LONG).show()
-            val f = supportFragmentManager.findFragmentByTag(SettingsBottomSheet.TAG)
-            if (f is SettingsBottomSheet) f.onNotificationPermissionDenied()
+            val f = supportFragmentManager.findFragmentByTag(SettingsFragment.TAG)
+            if (f is SettingsFragment) f.onNotificationPermissionDenied()
         }
     }
 
@@ -473,18 +571,12 @@ class MainActivity : AppCompatActivity() {
 
                 // Center slot (nav_ai_placeholder) is disabled — the floating
                 // fabAiAnalyst button handles the AI Analyst instead.
-                var index = 0
-                var title = "Overview"
-                if (id == R.id.nav_markets) {
-                    index = 1; title = "Markets"; loadFragment(MarketsFragment(), "markets")
-                } else if (id == R.id.nav_economy) {
-                    index = 3; title = "Economy"; loadFragment(EconomyFragment(), "economy")
-                } else if (id == R.id.navigation_news) {
-                    index = 4; title = "News"; loadFragment(NewsFragment(), "news")
+                loadFragmentForNavId(id)
+                resetSettingsGearIcon() // in case a tab was tapped while Settings was open
+                if (id == R.id.navigation_news) {
                     markNewsSeen(); clearNewsBadge() // opening News clears the unread badge
-                } else {
-                    loadFragment(DashboardFragment(), "overview")
                 }
+                val (index, title) = fragmentIndexAndTitle(id)
                 resetHeaderCompactAlwaysVisible()
                 binding.tvHeaderCompactTitle.text = title
                 currentScreenLabel = title
@@ -595,19 +687,6 @@ class MainActivity : AppCompatActivity() {
     private fun retryLastQuery() {
         val f = supportFragmentManager.findFragmentByTag(AiAnalystBottomSheet.TAG)
         if (f is AiAnalystBottomSheet && f.isAdded) f.resendLastQuery()
-    }
-
-    fun showFedFundsHistory() {
-        // TICKET-24: metric-aware sheet — offers "Add alert" for Fed Funds.
-        val dialogView = MetricBottomSheet.show(this, R.layout.dialog_fed_funds_history,
-            EconomicViewModel.CACHE_FED_FUNDS, "Fed Funds")
-        val rv: RecyclerView? = dialogView.findViewById(R.id.rvFedFundsHistory)
-        if (rv != null) {
-            rv.layoutManager = LinearLayoutManager(this)
-            val adapter = FedFundsHistoryAdapter()
-            rv.adapter = adapter
-            viewModel.getFedFundsHistory().observe(this) { data -> if (data != null) adapter.setData(data) }
-        }
     }
 
     private fun observeViewModel() {

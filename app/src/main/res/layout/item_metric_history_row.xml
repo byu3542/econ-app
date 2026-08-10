@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- One row in a metric popup's DATA → TABLE pane (mockup 1c). Generalized
+     from item_fed_funds_history.xml so MetricHistoryAdapter can drive it for
+     any of the 13 catalog indicators, not just Fed Funds. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -17,18 +20,16 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="01-2024"
-            android:textColor="@color/card_white"
+            android:textColor="@color/sheet_text_primary"
             android:textSize="@dimen/text_secondary"
             android:fontFamily="sans-serif-light" />
 
         <TextView
-            android:id="@+id/tvHistoryRate"
+            android:id="@+id/tvHistoryValue"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="5.33%"
-            android:textColor="@color/card_white"
+            android:textColor="@color/sheet_text_primary"
             android:textSize="@dimen/text_secondary"
             android:gravity="center"
             android:textStyle="bold" />
@@ -38,8 +39,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="+25 bps"
-            android:textColor="@color/signal_good_soft"
+            android:textColor="@color/sheet_text_secondary"
             android:textSize="@dimen/text_secondary"
             android:gravity="end"
             android:textStyle="bold" />
@@ -49,6 +49,6 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="@color/navy_divider" />
+        android:background="@color/sheet_divider" />
 
 </LinearLayout>

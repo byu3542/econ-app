@@ -66,6 +66,15 @@ object SettingsManager {
     @JvmField val KEY_WATCHLIST = "watchlist"
     @JvmField val KEY_ONBOARDING_COMPLETE = "onboarding_complete"
 
+    /** Design-branch 2a: which indicator each Overview slot tracks. */
+    @JvmField val KEY_DASHBOARD_HERO = "dashboard_hero"
+    @JvmField val KEY_DASHBOARD_SLOTS = "dashboard_slots"
+
+    /** Direction 1d: manually drag-reordered cluster order (category keys,
+     *  e.g. "growth,inflation,housing_markets"). Unset/invalid falls back to
+     *  the watchlist-ranked order. */
+    @JvmField val KEY_DASHBOARD_CATEGORY_ORDER = "dashboard_category_order"
+
     @JvmStatic
     fun prefs(c: Context): SharedPreferences = c.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
@@ -256,5 +265,66 @@ object SettingsManager {
     @JvmStatic
     fun setOnboardingComplete(c: Context) {
         setBool(c, KEY_ONBOARDING_COMPLETE, true)
+    }
+
+    // ── Customizable dashboard (design branch 2a) ────────────────────────
+    /** Default hero + 6 slots — matches the fixed layout this feature replaces. */
+    @JvmField val DEFAULT_DASHBOARD_HERO = "fedfunds"
+    @JvmField val DEFAULT_DASHBOARD_SLOTS = arrayOf("gdp", "spread", "cpi", "unemployment", "mortgage", "vix")
+
+    @JvmStatic
+    fun getDashboardHero(c: Context): String =
+        getString(c, KEY_DASHBOARD_HERO, DEFAULT_DASHBOARD_HERO) ?: DEFAULT_DASHBOARD_HERO
+
+    @JvmStatic
+    fun setDashboardHero(c: Context, id: String) {
+        setString(c, KEY_DASHBOARD_HERO, id)
+    }
+
+    /** Always returns exactly 6 ids — missing slots are backfilled from the default. */
+    @JvmStatic
+    fun getDashboardSlots(c: Context): List<String> {
+        val csv = getString(c, KEY_DASHBOARD_SLOTS, null)
+        val out = ArrayList<String>()
+        if (!csv.isNullOrEmpty()) {
+            for (k in csv.split(",")) {
+                val t = k.trim()
+                if (t.isNotEmpty()) out.add(t)
+            }
+        }
+        var i = 0
+        while (out.size < 6) {
+            out.add(DEFAULT_DASHBOARD_SLOTS[i % DEFAULT_DASHBOARD_SLOTS.size])
+            i++
+        }
+        return out.subList(0, 6)
+    }
+
+    @JvmStatic
+    fun setDashboardSlots(c: Context, ids: List<String>) {
+        setString(c, KEY_DASHBOARD_SLOTS, ids.joinToString(","))
+    }
+
+    /** Manually drag-reordered category order, or null when the user has
+     *  never reordered (caller should fall back to the watchlist rank). */
+    @JvmStatic
+    fun getDashboardCategoryOrder(c: Context): List<String>? {
+        val csv = getString(c, KEY_DASHBOARD_CATEGORY_ORDER, null)
+        if (csv.isNullOrEmpty()) return null
+        val out = ArrayList<String>()
+        for (k in csv.split(",")) {
+            val t = k.trim()
+            if (t.isNotEmpty()) out.add(t)
+        }
+        return if (out.isEmpty()) null else out
+    }
+
+    @JvmStatic
+    fun setDashboardCategoryOrder(c: Context, keys: List<String>?) {
+        if (keys.isNullOrEmpty()) {
+            setString(c, KEY_DASHBOARD_CATEGORY_ORDER, "")
+            return
+        }
+        setString(c, KEY_DASHBOARD_CATEGORY_ORDER, keys.joinToString(","))
     }
 }

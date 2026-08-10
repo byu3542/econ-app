@@ -18,19 +18,18 @@ import com.facebook.shimmer.ShimmerFrameLayout
 import com.economic.dashboard.R
 import com.economic.dashboard.analyst.AskAnalyst
 import com.economic.dashboard.databinding.FragmentDashboardBinding
-import com.economic.dashboard.models.EconomicDataPoint
 import com.economic.dashboard.ui.BenchmarkStyle
-import com.economic.dashboard.ui.Benchmarks
+import com.economic.dashboard.ui.DashboardIndicatorCatalog
+import com.economic.dashboard.ui.EditCardsBottomSheet
 import com.economic.dashboard.ui.EconomicViewModel
-import com.economic.dashboard.ui.MainActivity
-import com.economic.dashboard.ui.MetricBottomSheet
+import com.economic.dashboard.ui.MetricPopupController
+import com.economic.dashboard.ui.MetricPopupRegistry
 import com.economic.dashboard.ui.onboarding.WatchlistSetupFragment
 import com.economic.dashboard.ui.views.PressFeedback
 import com.economic.dashboard.utils.DeltaFormatter
 import com.economic.dashboard.utils.EdgeToEdgeInsets
 import com.economic.dashboard.utils.HapticUtil
 import com.economic.dashboard.utils.MotionUtil
-import com.economic.dashboard.utils.NumberFormatUtil
 import com.economic.dashboard.utils.SettingsManager
 import com.economic.dashboard.utils.ValueAnimatorUtil
 import com.economic.dashboard.views.SparklineView
@@ -38,27 +37,38 @@ import com.economic.dashboard.views.SparklineView
 import java.util.Calendar
 import java.util.Locale
 
+/**
+ * Design branch 2a — "Customizable dashboard: pick any indicator for 7 slots".
+ *
+ * The hero card and the 6 KPI cards below it no longer track fixed metrics.
+ * Each one persists which [DashboardIndicatorCatalog] entry it shows
+ * ([SettingsManager.getDashboardHero]/[SettingsManager.getDashboardSlots]).
+ * Editing is centralized behind the single "Edit cards" button, which opens
+ * [EditCardsBottomSheet] (direction 1d — drag category blocks and slots to
+ * reorder them, tap a slot's Swap chip for [IndicatorPickerBottomSheet]
+ * scoped to that slot's own category) — the cards themselves keep their
+ * original tap (status detail, where one exists) and long-press (ask
+ * analyst) behavior.
+ */
 class DashboardFragment : Fragment() {
 
     private lateinit var viewModel: EconomicViewModel
     private var binding: FragmentDashboardBinding? = null
 
-    // KPI cards come from ViewBinding <include> roots, so they are non-null.
-    private lateinit var cardUnemployment: View
-    private lateinit var cardCpiYoy: View
-    private lateinit var cardGdp: View
-    private lateinit var cardSpread: View
-    private lateinit var cardMortgage: View
-    private lateinit var cardVix: View
+    // The 6 KPI slots, in the same fixed physical/visual order as
+    // SettingsManager.DEFAULT_DASHBOARD_SLOTS: [gdp, spread] [cpi, unemployment] [mortgage, vix]
+    // positions. Which INDICATOR each one shows is dynamic (slotIndicatorIds).
+    private lateinit var slotCards: Array<View>
+    private val slotIndicatorIds = ArrayList<String>(6)
+    private var heroIndicatorId: String = SettingsManager.DEFAULT_DASHBOARD_HERO
 
     // Fed funds hero views — bound directly so they never fail silently.
-    // These come from findViewById and the Java null-checks every use, so they
-    // stay nullable rather than lateinit (nullability reflects reality).
     private var tvFedFundsHeroValue: TextView? = null
     private var changeFedFunds: TextView? = null
     private var tvFedFundsHeroCycle: TextView? = null
     private var tvFedFundsHeroDate: TextView? = null
     private var tvFedFundsRetry: TextView? = null
+    private var cardFedFundsHero: View? = null
     private lateinit var swipeRefresh: SwipeRefreshLayout
     private var skeletonShimmer: ShimmerFrameLayout? = null
     private var contentContainer: View? = null
@@ -84,6 +94,12 @@ class DashboardFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         viewModel = ViewModelProvider(requireActivity()).get(EconomicViewModel::class.java)
+
+        val ctx = context
+        heroIndicatorId = if (ctx != null) SettingsManager.getDashboardHero(ctx) else SettingsManager.DEFAULT_DASHBOARD_HERO
+        slotIndicatorIds.clear()
+        slotIndicatorIds.addAll(if (ctx != null) SettingsManager.getDashboardSlots(ctx) else SettingsManager.DEFAULT_DASHBOARD_SLOTS.toList())
+
         bindViews(view)
         observeData()
 
@@ -109,24 +125,18 @@ class DashboardFragment : Fragment() {
         // to refresh, without blanking the cards that succeeded.
         viewModel.getFailedSeries().observe(viewLifecycleOwner) { failed ->
             val f: Set<String> = failed ?: emptySet()
-            toggleRetry(cardGdp, EconomicViewModel.CACHE_GDP, f)
-            toggleRetry(cardCpiYoy, EconomicViewModel.CACHE_CPI, f)
-            toggleRetry(cardSpread, EconomicViewModel.CACHE_TREASURY, f)
-            toggleRetry(cardUnemployment, EconomicViewModel.CACHE_EMPLOYMENT, f)
-            toggleRetry(cardMortgage, EconomicViewModel.CACHE_MBS, f)
-            toggleRetry(cardVix, EconomicViewModel.CACHE_VIX, f)
-            toggleHeroRetry(f.contains(EconomicViewModel.CACHE_FED_FUNDS))
+            for (i in slotCards.indices) toggleRetry(slotCards[i], slotIndicatorIds[i], f)
+            toggleHeroRetry(f.contains(EconomicViewModel.CACHE_FED_FUNDS) && heroIndicatorId == "fedfunds")
         }
 
-        // TICKET-25: rank the Overview clusters by the user's watchlist, and
-        // show the one-time first-run watchlist setup sheet.
-        applyWatchlistOrder(view)
-        val ctx = context
+        // TICKET-25: rank the Overview clusters by the user's watchlist (or,
+        // once the user has dragged Edit Cards' category blocks, by that
+        // manual order instead — see applyCategoryOrder), and show the
+        // one-time first-run watchlist setup sheet.
+        applyCategoryOrder(view)
         if (ctx != null && !SettingsManager.isOnboardingComplete(ctx)) {
             val sheet = WatchlistSetupFragment()
-            // Kotlin lambda: only compiles because WatchlistSetupFragment.Listener
-            // was declared `fun interface` in batch 10a, ahead of this conversion.
-            sheet.setListener { getView()?.let { applyWatchlistOrder(it) } }
+            sheet.setListener { getView()?.let { applyCategoryOrder(it) } }
             sheet.show(parentFragmentManager, WatchlistSetupFragment.TAG)
         }
 
@@ -149,58 +159,23 @@ class DashboardFragment : Fragment() {
         contentContainer = v.findViewById(R.id.contentContainer)
         tvCacheAsOf = v.findViewById(R.id.tvCacheAsOf)
 
-        // KPI badges
-        // These are <include layout="@layout/card_kpi_badge"> entries, so view
-        // binding exposes them as CardKpiBadgeBinding — getRoot() gives the View.
-        cardGdp = b.cardGdp.root
-        cardCpiYoy = b.cardCpiYoy.root
-        cardSpread = b.cardSpread.root
-        cardUnemployment = b.cardUnemployment.root
-        cardMortgage = b.cardMortgage.root
-        cardVix = b.cardVix.root
+        // KPI slots — physical order matches SettingsManager.DEFAULT_DASHBOARD_SLOTS.
+        slotCards = arrayOf(
+            b.cardGdp.root, b.cardSpread.root, b.cardCpiYoy.root,
+            b.cardUnemployment.root, b.cardMortgage.root, b.cardVix.root
+        )
 
-        setupCardLabel(cardGdp, "GDP GROWTH")
-        setupCardLabel(cardCpiYoy, "CPI-U YOY")
-        setupCardLabel(cardSpread, "10Y-3M SPREAD")
-        setupCardLabel(cardUnemployment, "UNEMPLOYMENT")
-        setupCardLabel(cardMortgage, "30 YEAR MORTGAGE")
-        setupCardLabel(cardVix, "VIX INDEX", labelLines = 2)
+        for (i in slotCards.indices) {
+            val card = slotCards[i]
+            startSkeleton(card)
+            // IOS-01: press-in spring instead of Material ripple.
+            PressFeedback.attach(card)
+            // Tap (status detail, where mapped) + long-press (ask analyst) are
+            // wired per-slot in refreshSlot(), since they depend on whichever
+            // indicator currently occupies that slot.
+        }
 
-        // Skeleton pulse until real data arrives
-        startSkeleton(cardGdp); startSkeleton(cardCpiYoy); startSkeleton(cardSpread)
-        startSkeleton(cardUnemployment); startSkeleton(cardMortgage); startSkeleton(cardVix)
-
-        // IOS-01: press-in spring instead of Material ripple (foreground is
-        // now @null in card_kpi_badge.xml).
-        PressFeedback.attach(cardGdp)
-        PressFeedback.attach(cardCpiYoy)
-        PressFeedback.attach(cardSpread)
-        PressFeedback.attach(cardUnemployment)
-        PressFeedback.attach(cardMortgage)
-        PressFeedback.attach(cardVix)
-
-        // Tap KPI card → matching benchmark/status dialog
-        // TICKET-24: pass the series key/label so each sheet offers "Add alert".
-        wireCardDialog(cardGdp, R.layout.dialog_gdp_status, EconomicViewModel.CACHE_GDP, "GDP growth")
-        wireCardDialog(cardCpiYoy, R.layout.dialog_cpi_status, EconomicViewModel.CACHE_CPI, "CPI YoY")
-        wireCardDialog(cardSpread, R.layout.dialog_treasury_3m_status, EconomicViewModel.ALERT_SPREAD_3M, "10Y-3M spread")
-        wireCardDialog(cardUnemployment, R.layout.dialog_unemployment_status, EconomicViewModel.CACHE_EMPLOYMENT, "Unemployment")
-
-        wireCardDialog(cardMortgage, R.layout.dialog_mortgage_status,
-            EconomicViewModel.CACHE_MBS, "30-year mortgage rate")
-        wireCardDialog(cardVix, R.layout.dialog_vix_status,
-            EconomicViewModel.CACHE_VIX, "VIX index")
-
-        // Long-press KPI card → ask the Econ Analyst about that metric. Routed
-        // through the same AskAnalyst helper every other fragment uses, so
-        // these gesture turns get concise=true + screen-context injection
-        // (Laws 6-8, 12) instead of the bespoke path's plain full-length query.
-        AskAnalyst.wireCardLongPress(cardGdp, requireActivity(), "GDP growth")
-        AskAnalyst.wireCardLongPress(cardCpiYoy, requireActivity(), "CPI inflation (YoY)")
-        AskAnalyst.wireCardLongPress(cardSpread, requireActivity(), "the 10Y-3M Treasury spread")
-        AskAnalyst.wireCardLongPress(cardUnemployment, requireActivity(), "the unemployment rate")
-        AskAnalyst.wireCardLongPress(cardMortgage, requireActivity(), "the 30-year mortgage rate")
-        AskAnalyst.wireCardLongPress(cardVix, requireActivity(), "the VIX index")
+        v.findViewById<View>(R.id.btnEditDashboard)?.setOnClickListener { openEditTargetSheet() }
 
         // Fed funds hero — bind views directly from the root to avoid null-chain issues
         tvFedFundsHeroValue = v.findViewById(R.id.tvFedFundsHeroValue)
@@ -214,27 +189,101 @@ class DashboardFragment : Fragment() {
 
         updateNextFomcLabel()
 
-        // Tap hero card → show Fed Funds history dialog
-        val cardFedFundsHero: View? = v.findViewById(R.id.cardFedFundsHero)
-        if (cardFedFundsHero != null) {
-            PressFeedback.attach(cardFedFundsHero)
-            cardFedFundsHero.setOnClickListener {
-                (activity as? MainActivity)?.showFedFundsHistory()
-            }
-            AskAnalyst.wireCardLongPress(cardFedFundsHero, requireActivity(), "the Fed Funds rate")
+        cardFedFundsHero = v.findViewById(R.id.cardFedFundsHero)
+        cardFedFundsHero?.let { hero ->
+            PressFeedback.attach(hero)
+        }
+
+        // Paint labels + refresh cards from whatever's already cached, so a
+        // slot shows the right label/value immediately, before any new data
+        // observer fires. This also wires each card's tap/long-press for
+        // whichever indicator it currently holds.
+        refreshAllSlots()
+        refreshHeroLabel()
+    }
+
+    // ── Design branch 2a, direction 1d: single edit entry point ─────────────
+
+    /** "Edit cards" button → the drag-to-reorder, tap-to-swap editor. */
+    private fun openEditTargetSheet() {
+        val heroRow = EditCardsBottomSheet.HeroRow(
+            getString(R.string.edit_dashboard_hero_title), heroIndicatorId
+        )
+        val ctx = context
+        val orderKeys = if (ctx != null) computeCategoryOrder(ctx) else SLOT_CATEGORIES.map { it.key }
+        val blocks = ArrayList<EditCardsBottomSheet.CategoryBlock>()
+        for (key in orderKeys) {
+            val cat = SLOT_CATEGORIES.firstOrNull { it.key == key } ?: continue
+            val slots = ArrayList<EditCardsBottomSheet.SlotRow>()
+            for (idx in cat.slotIndices) slots.add(EditCardsBottomSheet.SlotRow(idx, slotIndicatorIds[idx]))
+            blocks.add(EditCardsBottomSheet.CategoryBlock(cat.key, cat.title, cat.catalogGroups, slots))
+        }
+
+        EditCardsBottomSheet.show(parentFragmentManager, heroRow, blocks) { heroId, slotIds, categoryOrder ->
+            heroIndicatorId = heroId
+            context?.let { SettingsManager.setDashboardHero(it, heroId) }
+            refreshHeroLabel()
+            refreshHero()
+
+            slotIndicatorIds.clear()
+            slotIndicatorIds.addAll(slotIds)
+            context?.let { SettingsManager.setDashboardSlots(it, slotIndicatorIds) }
+            refreshAllSlots()
+
+            context?.let { SettingsManager.setDashboardCategoryOrder(it, categoryOrder) }
+            view?.let { applyCategoryOrder(it) }
         }
     }
 
-    // ── TICKET-25: watchlist-driven cluster order ──────────────────────────
+    /** Wires the hero card's tap (same generic benchmark/data popup every other
+     *  badge opens, for whatever indicator the hero currently shows) and
+     *  long-press (ask analyst about whatever it currently shows). */
+    private fun refreshHeroLabel() {
+        val v = view ?: return
+        val llHeroLeft: LinearLayout? = v.findViewById(R.id.llHeroLeft)
+        val label: TextView? = llHeroLeft?.getChildAt(0) as? TextView
+        label?.text = DashboardIndicatorCatalog.label(heroIndicatorId)
+
+        val hero = cardFedFundsHero ?: return
+        if (MetricPopupRegistry.byId(heroIndicatorId) != null) {
+            hero.setOnClickListener { v2 ->
+                v2.performHapticFeedback(android.view.HapticFeedbackConstants.CONTEXT_CLICK)
+                val ctx = context ?: return@setOnClickListener
+                MetricPopupController.show(ctx, viewModel, heroIndicatorId)
+            }
+        } else {
+            hero.setOnClickListener(null)
+        }
+        AskAnalyst.wireCardLongPress(hero, requireActivity(), DashboardIndicatorCatalog.label(heroIndicatorId))
+    }
+
+    // ── TICKET-25 / direction 1d: category cluster order ────────────────────
 
     /**
-     * Reorders the three Overview metric clusters (header + region pairs) so
-     * the cluster containing the user's highest-ranked watchlist metric comes
-     * first. No-op when views are missing or the order is already right.
+     * The order the three Overview clusters should appear in, as category
+     * keys (see [SLOT_CATEGORIES]). Once the user has dragged category blocks
+     * in Edit Cards, that manual order sticks ([SettingsManager.getDashboardCategoryOrder]);
+     * until then, it falls back to ranking each cluster by the user's
+     * highest-ranked watchlist metric currently assigned to one of its slots
+     * — a few watchlist keys are aliased to their matching catalog id
+     * (spread_10y3m→spread, employment→unemployment, mbs_mortgage→mortgage).
      */
-    private fun applyWatchlistOrder(root: View) {
+    private fun computeCategoryOrder(ctx: android.content.Context): List<String> {
+        val allKeys = SLOT_CATEGORIES.map { it.key }
+        val manual = SettingsManager.getDashboardCategoryOrder(ctx)
+        if (manual != null && manual.toSet() == allKeys.toSet()) return manual
+
+        if (slotIndicatorIds.size < 6) return allKeys
+        val watch = SettingsManager.getWatchlist(ctx).map { WATCHLIST_ALIAS[it] ?: it }
+        return SLOT_CATEGORIES
+            .sortedBy { cat -> bestRank(watch, *cat.slotIndices.map { slotIndicatorIds[it] }.toTypedArray()) }
+            .map { it.key }
+    }
+
+    /** Reorders the three Overview metric clusters (header + region pairs) to match [computeCategoryOrder]. */
+    private fun applyCategoryOrder(root: View) {
         val ctx = context ?: return
-        val watch = SettingsManager.getWatchlist(ctx)
+        if (slotIndicatorIds.size < 6) return
 
         val hGrowth: View? = root.findViewById(R.id.headerGroupGrowth)
         val rGrowth: View? = root.findViewById(R.id.regionGroupGrowth)
@@ -247,34 +296,30 @@ class DashboardFragment : Fragment() {
         ) return
         val column = contentContainer as? LinearLayout ?: return
 
-        // Cluster rank = best (lowest) watchlist position of its metrics.
-        class Group(val header: View, val region: View, val rank: Int)
+        val views = mapOf(
+            "growth" to Pair(hGrowth, rGrowth),
+            "inflation" to Pair(hInflation, rInflation),
+            "housing_markets" to Pair(hMarkets, rMarkets)
+        )
+        val orderKeys = computeCategoryOrder(ctx)
 
-        val groups = ArrayList<Group>()
-        groups.add(Group(hGrowth, rGrowth, bestRank(watch, "gdp", "spread_10y3m")))
-        groups.add(Group(hInflation, rInflation, bestRank(watch, "cpi", "employment")))
-        groups.add(Group(hMarkets, rMarkets, bestRank(watch, "mbs_mortgage", "vix")))
-        groups.sortBy { it.rank }
-
-        // Re-insert the pairs, in rank order, at the first cluster's position.
         var insertAt = column.indexOfChild(hGrowth)
-        for (g in groups) {
-            insertAt = Math.min(insertAt, column.indexOfChild(g.header))
+        for ((_, pair) in views) insertAt = Math.min(insertAt, column.indexOfChild(pair.first))
+        for (key in orderKeys) {
+            val pair = views[key] ?: continue
+            column.removeView(pair.first)
+            column.removeView(pair.second)
         }
-        for (g in groups) {
-            column.removeView(g.header)
-            column.removeView(g.region)
-        }
-        for (g in groups) {
-            column.addView(g.header, insertAt++)
-            column.addView(g.region, insertAt++)
+        for (key in orderKeys) {
+            val pair = views[key] ?: continue
+            column.addView(pair.first, insertAt++)
+            column.addView(pair.second, insertAt++)
         }
     }
 
     /**
      * [labelLines] reserves that many lines for the overline so a short label
-     * doesn't leave its card shorter than the one beside it — "VIX INDEX" fits
-     * on one line while "30 YEAR MORTGAGE" wraps to two.
+     * doesn't leave its card shorter than the one beside it.
      */
     private fun setupCardLabel(card: View, label: String, labelLines: Int = 1) {
         val tv: TextView? = card.findViewById(R.id.tvMetricLabel)
@@ -282,29 +327,6 @@ class DashboardFragment : Fragment() {
             tv.text = label
             tv.minLines = labelLines
         }
-    }
-
-    /** Unused today (no caller) — kept verbatim per the dead-code decision. */
-    private fun wireCardDialog(card: View, layoutRes: Int) {
-        wireCardDialog(card, layoutRes, null, null)
-    }
-
-    /** TICKET-24: metric-aware overload — the sheet gains an "Add alert" row. */
-    private fun wireCardDialog(card: View, layoutRes: Int, seriesKey: String?, seriesLabel: String?) {
-        card.setOnClickListener { v ->
-            v.performHapticFeedback(android.view.HapticFeedbackConstants.CONTEXT_CLICK)
-            showBenchmarkDialog(layoutRes, seriesKey, seriesLabel)
-        }
-    }
-
-    /** Unused today (no caller) — kept verbatim per the dead-code decision. */
-    private fun showBenchmarkDialog(layoutRes: Int) {
-        showBenchmarkDialog(layoutRes, null, null)
-    }
-
-    private fun showBenchmarkDialog(layoutRes: Int, seriesKey: String?, seriesLabel: String?) {
-        val ctx = context ?: return
-        MetricBottomSheet.show(ctx, layoutRes, seriesKey, seriesLabel)
     }
 
     // ── Skeleton loading state ──────────────────────────────────────────────
@@ -352,8 +374,6 @@ class DashboardFragment : Fragment() {
     /**
      * Sets the metric value, stops the skeleton pulse, and — when a fresh value
      * replaces a real cached one — rolls the number to its new value (TICKET-27).
-     * Count-up is skipped for unchanged values, first paint, and when motion is
-     * disabled (TICKET-28); in those cases the text is set instantly.
      */
     private fun setCardValue(card: View, text: String) {
         val tv: TextView = card.findViewById(R.id.tvMetricValue) ?: return
@@ -370,15 +390,10 @@ class DashboardFragment : Fragment() {
 
     // ── Delta chip ──────────────────────────────────────────────────────────
 
-    /**
-     * Shows the change vs. the previous release next to the value.
-     * goodWhenDown: true for metrics where a decrease is favorable (CPI,
-     * unemployment, mortgage rate, VIX).
-     */
-    private fun applyDelta(card: View, delta: Double, fmt: String, goodWhenDown: Boolean) {
+    private fun applyDelta(card: View, delta: Double?, fmt: String, goodWhenDown: Boolean) {
         val ctx = context ?: return
         val tv: TextView = card.findViewById(R.id.tvMetricDelta) ?: return
-        if (Math.abs(delta) < 1e-9) { tv.visibility = View.GONE; return }
+        if (delta == null || Math.abs(delta) < 1e-9) { tv.visibility = View.GONE; return }
         // Direction is carried by glyph + sign + color, so it survives grayscale
         // and colorblind viewing. Palette honors the colorblind-safe setting.
         tv.setTextColor(DeltaFormatter.color(ctx, delta, goodWhenDown))
@@ -389,9 +404,10 @@ class DashboardFragment : Fragment() {
     // ── Partial-failure retry chips ───────────────────────────────────────────
 
     /** Shows/hides a KPI card's retry chip and wires a single-series re-fetch. */
-    private fun toggleRetry(card: View, seriesKey: String, failed: Set<String>) {
+    private fun toggleRetry(card: View, indicatorId: String, failed: Set<String>) {
         val tv: TextView = card.findViewById(R.id.tvRetry) ?: return
-        if (failed.contains(seriesKey)) {
+        val seriesKey = INDICATOR_CACHE_KEY[indicatorId]
+        if (seriesKey != null && failed.contains(seriesKey)) {
             tv.setOnClickListener { viewModel.retrySeries(seriesKey) }
             tv.visibility = View.VISIBLE
         } else {
@@ -407,16 +423,10 @@ class DashboardFragment : Fragment() {
 
     private fun setSparkline(card: View, vals: List<Float>?) {
         val sp: SparklineView = card.findViewById(R.id.sparkline) ?: return
-        // TICKET-H: consolidated onto the shared SparklineView (was a second,
-        // independently maintained class). Visibility toggling and the
-        // plain-stroke (no gradient fill) look are reproduced here since the
-        // shared view no longer owns that behavior internally.
         val hasData = vals != null && vals.size >= 2
         sp.visibility = if (hasData) View.VISIBLE else View.GONE
         if (hasData && vals != null) {
             sp.setFillEnabled(false)
-            // .toInt(): 8-digit hex is inferred as Long in Kotlin and
-            // setLineColor takes int (migration lesson 4).
             sp.setLineColor(0xFFC9A84C.toInt())
             val doubles = ArrayList<Double>(vals.size)
             for (v in vals) doubles.add(v.toDouble())
@@ -426,140 +436,124 @@ class DashboardFragment : Fragment() {
 
     // ── Data observers ──────────────────────────────────────────────────────
 
+    /** Any relevant series arriving refreshes every slot + the hero — each one
+     *  independently re-resolves its own indicator against the latest snapshot. */
     private fun observeData() {
-        viewModel.getTreasuryData().observe(viewLifecycleOwner) { data ->
-            if (data != null) { hideSkeleton(); updateSpread3M(data); applySpread3MTier(data) }
+        viewModel.getTreasuryData().observe(viewLifecycleOwner) { data -> if (data != null) onDataTick() }
+        viewModel.getFedFundsData().observe(viewLifecycleOwner) { data -> if (data != null) onDataTick() }
+        viewModel.getEmploymentData().observe(viewLifecycleOwner) { data -> if (data != null) onDataTick() }
+        viewModel.getCpiData().observe(viewLifecycleOwner) { data -> if (data != null) onDataTick() }
+        viewModel.getGdpData().observe(viewLifecycleOwner) { data -> if (data != null) onDataTick() }
+        viewModel.getMbsMortgageData().observe(viewLifecycleOwner) { data -> if (data != null) onDataTick() }
+        viewModel.getVixData().observe(viewLifecycleOwner) { data -> if (data != null) onDataTick() }
+        viewModel.getPceData().observe(viewLifecycleOwner) { data -> if (data != null) onDataTick() }
+        viewModel.getWageData().observe(viewLifecycleOwner) { data -> if (data != null) onDataTick() }
+        viewModel.getHousingData().observe(viewLifecycleOwner) { data -> if (data != null) onDataTick() }
+        viewModel.getSp500Data().observe(viewLifecycleOwner) { data -> if (data != null) onDataTick() }
+        viewModel.getNasdaqData().observe(viewLifecycleOwner) { data -> if (data != null) onDataTick() }
+    }
+
+    private fun onDataTick() {
+        hideSkeleton()
+        refreshAllSlots()
+        refreshHero()
+    }
+
+    // ── Slot / hero rendering (design branch 2a) ────────────────────────────
+
+    private fun refreshAllSlots() {
+        for (i in slotCards.indices) refreshSlot(i)
+    }
+
+    private fun refreshSlot(index: Int) {
+        val card = slotCards[index]
+        val id = slotIndicatorIds[index]
+        val meta = DashboardIndicatorCatalog.byId(id)
+        setupCardLabel(card, meta?.label ?: "—", labelLines = if ((meta?.label?.length ?: 0) > 12) 2 else 1)
+        AskAnalyst.wireCardLongPress(card, requireActivity(), meta?.label ?: id)
+
+        // Tap → status/benchmark detail, for every indicator with an authored
+        // MetricPopupRegistry spec (mockup 1c). Everything else has no popup
+        // content yet, so the card just shows its data with no tap action.
+        if (MetricPopupRegistry.byId(id) != null) {
+            card.setOnClickListener { v ->
+                v.performHapticFeedback(android.view.HapticFeedbackConstants.CONTEXT_CLICK)
+                val ctx = context ?: return@setOnClickListener
+                MetricPopupController.show(ctx, viewModel, id)
+            }
+        } else {
+            card.setOnClickListener(null)
         }
-        viewModel.getFedFundsData().observe(viewLifecycleOwner) { data ->
-            if (data != null) { hideSkeleton(); updateFedFundsRate(data) }
+
+        val display = DashboardIndicatorCatalog.resolve(id, viewModel)
+        val statusBadge: View? = card.findViewById(R.id.statusBadge)
+        if (display == null) {
+            // No data yet — leave the skeleton pulse running.
+            statusBadge?.visibility = View.GONE
+            return
         }
-        viewModel.getEmploymentData().observe(viewLifecycleOwner) { data ->
-            if (data != null) { hideSkeleton(); updateEmployment(data); applyUnemploymentTier(data) }
-        }
-        viewModel.getCpiData().observe(viewLifecycleOwner) { data ->
-            if (data != null) { hideSkeleton(); updateCpiYoY(data); applyCpiYoYTier(data) }
-        }
-        viewModel.getGdpData().observe(viewLifecycleOwner) { data ->
-            if (data != null) { hideSkeleton(); updateGdpGrowth(data); applyGdpTier(data) }
-        }
-        viewModel.getMbsMortgageData().observe(viewLifecycleOwner) { data ->
-            if (data != null) { hideSkeleton(); updateMortgage(data); applyMortgageTier(data) }
-        }
-        viewModel.getVixData().observe(viewLifecycleOwner) { data ->
-            if (data != null) { hideSkeleton(); updateVix(data); applyVixTier(data) }
+        setCardValue(card, display.value)
+        setCardDate(card, display.date)
+        applyDelta(card, display.delta, display.deltaFmt, display.goodWhenDown)
+        setSparkline(card, display.spark)
+        if (display.tier != null) {
+            statusBadge?.visibility = View.VISIBLE
+            BenchmarkStyle.applyBadge(card, requireContext(), display.tier)
+        } else {
+            statusBadge?.visibility = View.GONE
         }
     }
 
-    // ── Tier badge helpers ──────────────────────────────────────────────────
-
-    private fun applyUnemploymentTier(data: List<EconomicDataPoint>) {
-        val rows = EconomicViewModel.filterBySeries(data, "Unemployment Rate")
-        if (rows.isEmpty()) return
-        val current = rows[rows.size - 1].value
-        var low = Double.MAX_VALUE
-        for (i in Math.max(0, rows.size - 12) until rows.size) low = Math.min(low, rows[i].value)
-        val rise = current - low
-        applyTierToCard(cardUnemployment, Benchmarks.unemployment(current, rise))
-    }
-
-    private fun applyCpiYoYTier(data: List<EconomicDataPoint>) {
-        val rows = EconomicViewModel.filterBySeries(data, "CPI-U All Items")
-        if (rows.size < 13) return
-        val latest = rows[rows.size - 1].value
-        val yoy = ((latest - rows[rows.size - 13].value) / rows[rows.size - 13].value) * 100.0
-        applyTierToCard(cardCpiYoy, Benchmarks.cpiYoY(yoy))
-    }
-
-    private fun applySpread3MTier(data: List<EconomicDataPoint>) {
-        val longRate = EconomicViewModel.getLatest(data, "10 Year")
-        val shortRate = EconomicViewModel.getLatest(data, "3 Month")
-        if (longRate == null || shortRate == null) return
-        val spread = longRate.value - shortRate.value
-        applyTierToCard(cardSpread, Benchmarks.spread3m10y(spread))
-    }
-
-    private fun applyGdpTier(data: List<EconomicDataPoint>) {
-        val rows = EconomicViewModel.filterBySeries(data, "Gross domestic product")
-        if (rows.isEmpty()) return
-        var sum = 0.0
-        var count = 0
-        for (i in Math.max(0, rows.size - 4) until rows.size) { sum += rows[i].value; count++ }
-        val avg = if (count > 0) sum / count else 0.0
-        applyTierToCard(cardGdp, Benchmarks.gdpGrowth(avg))
-    }
-
-    private fun applyMortgageTier(data: List<EconomicDataPoint>) {
-        val rows = EconomicViewModel.filterBySeries(data, "30-Yr Mortgage Rate")
-        if (rows.isEmpty()) return
-        val current = rows[rows.size - 1].value
-        applyTierToCard(cardMortgage, Benchmarks.mortgage30(current))
-    }
-
-    private fun applyVixTier(data: List<EconomicDataPoint>) {
-        val rows = EconomicViewModel.filterBySeries(data, "VIX Volatility Index")
-        if (rows.isEmpty()) return
-        val current = rows[rows.size - 1].value
-        applyTierToCard(cardVix, Benchmarks.vix(current))
-    }
-
-    private fun applyTierToCard(card: View, result: Benchmarks.Result?) {
-        if (result == null) return
-        BenchmarkStyle.tintDot(card.findViewById(R.id.viewTierDot), requireContext(), result.tier)
-        val tvStatus: TextView? = card.findViewById(R.id.tvTierStatus)
-        if (tvStatus != null) tvStatus.text = result.word
-    }
-
-    // ── Fed funds hero ──────────────────────────────────────────────────────
-
-    private fun updateFedFundsRate(data: List<EconomicDataPoint>) {
-        val rows = EconomicViewModel.filterBySeries(data, "Federal Funds Effective Rate")
-        if (rows.isEmpty()) return
-        val current = rows[rows.size - 1]
+    private fun refreshHero() {
+        val display = DashboardIndicatorCatalog.resolve(heroIndicatorId, viewModel) ?: return
         val heroValue = tvFedFundsHeroValue
         if (heroValue != null) {
             // TICKET-27: roll the hero value up/down on refresh.
             val heroOld = if (heroValue.text != null) heroValue.text.toString() else ""
-            ValueAnimatorUtil.animateOrSet(heroValue, heroOld,
-                NumberFormatUtil.percent(current.value))
-        }
-
-        var lastChange = 0.0
-        for (i in rows.size - 1 downTo 1) {
-            val delta = rows[i].value - rows[i - 1].value
-            if (Math.abs(delta) > 0.001) { lastChange = delta; break }
+            ValueAnimatorUtil.animateOrSet(heroValue, heroOld, display.value)
         }
         val change = changeFedFunds
         val ctx = context
         if (change != null && ctx != null) {
-            if (Math.abs(lastChange) > 0.001) {
-                // Same ticker treatment as every other Overview badge: ▲/▼ glyph
-                // + signed value, colored by DeltaFormatter so it honors the
-                // colorblind-safe palette. goodWhenDown matches the mortgage
-                // card on the same screen — a lower borrowing rate is the
-                // favorable direction.
-                change.setTextColor(DeltaFormatter.color(ctx, lastChange, true))
-                change.text = DeltaFormatter.format(lastChange, "%.2f")
+            val delta = display.delta
+            if (delta != null && Math.abs(delta) > 1e-9) {
+                change.setTextColor(DeltaFormatter.color(ctx, delta, display.goodWhenDown))
+                change.text = DeltaFormatter.format(delta, display.deltaFmt)
                 change.visibility = View.VISIBLE
             } else {
                 change.visibility = View.GONE
             }
         }
-        // Cycle note driven by the direction of the last actual move
         val cycle = tvFedFundsHeroCycle
         if (cycle != null) {
-            if (lastChange < -0.01) cycle.text = "Cut cycle ongoing"
-            else if (lastChange > 0.01) cycle.text = "Hike cycle ongoing"
-            else cycle.text = "Rates on hold"
-            cycle.visibility = View.VISIBLE
+            if (heroIndicatorId == "fedfunds") {
+                val delta = display.delta ?: 0.0
+                if (delta < -0.01) cycle.text = "Cut cycle ongoing"
+                else if (delta > 0.01) cycle.text = "Hike cycle ongoing"
+                else cycle.text = "Rates on hold"
+                cycle.visibility = View.VISIBLE
+            } else {
+                // The cut/hike narration only makes sense for the policy rate —
+                // any other indicator in the hero slot just shows its date.
+                cycle.visibility = View.GONE
+            }
+        }
+        val heroDate = tvFedFundsHeroDate
+        if (heroDate != null && heroIndicatorId != "fedfunds") {
+            heroDate.text = display.date
+            heroDate.visibility = View.VISIBLE
+        } else if (heroIndicatorId == "fedfunds") {
+            updateNextFomcLabel()
         }
     }
 
-    /** Next scheduled FOMC meeting from the published calendar. */
+    /** Next scheduled FOMC meeting from the published calendar — only relevant
+     *  when the hero is actually showing the Fed Funds rate. */
     private fun updateNextFomcLabel() {
         val heroDate = tvFedFundsHeroDate ?: return
         val now = Calendar.getInstance()
         val year = now.get(Calendar.YEAR)
-        if (year < 2026) { heroDate.text = "Next FOMC: Jan 27–28"; return }
+        if (year < 2026) { heroDate.text = "Next FOMC: Jan 27–28"; heroDate.visibility = View.VISIBLE; return }
         if (year == 2026) {
             val month = now.get(Calendar.MONTH) + 1
             val day = now.get(Calendar.DAY_OF_MONTH)
@@ -567,97 +561,13 @@ class DashboardFragment : Fragment() {
                 if (m[0] > month || (m[0] == month && m[2] >= day)) {
                     heroDate.text = String.format(Locale.US,
                         "Next FOMC: %s %d–%d", MONTH_ABBR[m[0] - 1], m[1], m[2])
+                    heroDate.visibility = View.VISIBLE
                     return
                 }
             }
         }
         // Past Dec 2026 — schedule not embedded; hide rather than show stale info
         heroDate.visibility = View.GONE
-    }
-
-    // ── Value update helpers ────────────────────────────────────────────────
-
-    private fun updateSpread3M(data: List<EconomicDataPoint>) {
-        // Build the spread series by matching 10Y and 3M observations by date
-        val tens = EconomicViewModel.filterBySeries(data, "10 Year")
-        val threes = EconomicViewModel.filterBySeries(data, "3 Month")
-        val threeByDate = HashMap<String, Double>()
-        for (p in threes) threeByDate[p.date] = p.value
-        val spreads = ArrayList<EconomicDataPoint>()
-        for (p in tens) {
-            val s = threeByDate[p.date]
-            if (s != null) spreads.add(EconomicDataPoint("FRED", "Treasury", "10Y-3M Spread", p.date, p.value - s, "%"))
-        }
-        if (!spreads.isEmpty()) {
-            val latest = spreads[spreads.size - 1]
-            setCardValue(cardSpread, NumberFormatUtil.percent(latest.value))
-            setCardDate(cardSpread, latest.date)
-            if (spreads.size >= 2)
-                applyDelta(cardSpread, latest.value - spreads[spreads.size - 2].value,
-                    "%.2f", false)
-            setSparkline(cardSpread, tailValues(spreads, 30))
-        }
-    }
-
-    private fun updateCpiYoY(data: List<EconomicDataPoint>) {
-        val rows = EconomicViewModel.filterBySeries(data, "CPI-U All Items")
-        if (rows.size < 13) return
-        // YoY series for value, delta, and sparkline
-        val yoySeries = ArrayList<Float>()
-        for (i in 12 until rows.size) {
-            val base = rows[i - 12].value
-            if (Math.abs(base) > 1e-9)
-                yoySeries.add((((rows[i].value - base) / base) * 100.0).toFloat())
-        }
-        if (yoySeries.isEmpty()) return
-        val latest = yoySeries[yoySeries.size - 1]
-        setCardValue(cardCpiYoy, NumberFormatUtil.percent(latest.toDouble()))
-        setCardDate(cardCpiYoy, rows[rows.size - 1].date)
-        if (yoySeries.size >= 2)
-            applyDelta(cardCpiYoy, (latest - yoySeries[yoySeries.size - 2]).toDouble(), "%.2f", true)
-        setSparkline(cardCpiYoy, yoySeries.subList(Math.max(0, yoySeries.size - 12), yoySeries.size))
-    }
-
-    private fun updateGdpGrowth(data: List<EconomicDataPoint>) {
-        val rows = EconomicViewModel.filterBySeries(data, "Gross domestic product")
-        if (rows.isEmpty()) return
-        var sum = 0.0
-        var count = 0
-        for (i in Math.max(0, rows.size - 4) until rows.size) { sum += rows[i].value; count++ }
-        setCardValue(cardGdp, NumberFormatUtil.percent(if (count > 0) sum / count else 0.0))
-        setCardDate(cardGdp, rows[rows.size - 1].date)
-        if (rows.size >= 2)
-            applyDelta(cardGdp, rows[rows.size - 1].value - rows[rows.size - 2].value,
-                "%.1f", false)
-        setSparkline(cardGdp, tailValues(rows, 8))
-    }
-
-    private fun updateVix(data: List<EconomicDataPoint>) {
-        // VIX is an index level — carry a "pt" unit so it isn't a bare number.
-        updateSimpleCard(data, "VIX Volatility Index", cardVix, "%.1f pt", "%.1f", true, 30)
-    }
-
-    private fun updateEmployment(data: List<EconomicDataPoint>) {
-        updateSimpleCard(data, "Unemployment Rate", cardUnemployment, "%.1f%%", "%.1f", true, 12)
-    }
-
-    private fun updateMortgage(data: List<EconomicDataPoint>) {
-        updateSimpleCard(data, "30-Yr Mortgage Rate", cardMortgage, "%.2f%%", "%.2f", true, 12)
-    }
-
-    /** Shared: value + delta vs. previous observation + sparkline of the last n points. */
-    private fun updateSimpleCard(
-        data: List<EconomicDataPoint>, series: String, card: View,
-        fmt: String, deltaFmt: String, goodWhenDown: Boolean, sparkN: Int
-    ) {
-        val rows = EconomicViewModel.filterBySeries(data, series)
-        if (rows.isEmpty()) return
-        val latest = rows[rows.size - 1]
-        setCardValue(card, String.format(Locale.US, fmt, latest.value))
-        setCardDate(card, latest.date)
-        if (rows.size >= 2)
-            applyDelta(card, latest.value - rows[rows.size - 2].value, deltaFmt, goodWhenDown)
-        setSparkline(card, tailValues(rows, sparkN))
     }
 
     override fun onResume() { super.onResume() }
@@ -668,6 +578,26 @@ class DashboardFragment : Fragment() {
     }
 
     companion object {
+        /** One Edit Cards / Overview cluster: its display title, which
+         *  [DashboardIndicatorCatalog] groups a slot in it may be swapped to
+         *  (direction 1d's category-scoped swap), and its fixed physical slot
+         *  indices (into [slotCards]/[slotIndicatorIds] — always [0,1], [2,3]
+         *  or [4,5]; reordering within a category changes which indicator id
+         *  occupies which index, never the indices themselves). */
+        private class SlotCategory(
+            @JvmField val key: String, @JvmField val title: String,
+            @JvmField val catalogGroups: List<String>, @JvmField val slotIndices: IntArray
+        )
+
+        private val SLOT_CATEGORIES = listOf(
+            SlotCategory("growth", "GROWTH & RATES", listOf(DashboardIndicatorCatalog.GROUP_GROWTH), intArrayOf(0, 1)),
+            SlotCategory("inflation", "INFLATION & LABOR", listOf(DashboardIndicatorCatalog.GROUP_INFLATION), intArrayOf(2, 3)),
+            SlotCategory(
+                "housing_markets", "HOUSING & MARKETS",
+                listOf(DashboardIndicatorCatalog.GROUP_HOUSING, DashboardIndicatorCatalog.GROUP_MARKETS), intArrayOf(4, 5)
+            )
+        )
+
         /** 2026 FOMC meetings: {month(1-12), startDay, endDay} — federalreserve.gov. */
         private val FOMC_2026 = arrayOf(
             intArrayOf(1, 27, 28), intArrayOf(3, 17, 18), intArrayOf(4, 28, 29), intArrayOf(6, 16, 17),
@@ -678,6 +608,28 @@ class DashboardFragment : Fragment() {
             "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
         )
 
+        /** Maps a customizable-dashboard indicator id to the CACHE_ key its data
+         *  arrives under, for retry-chip wiring. Indicators without a cache key
+         *  (corepce/wages/housing/sp500/nasdaq) never show a retry chip today —
+         *  those series don't yet report per-series refresh failures. */
+        private val INDICATOR_CACHE_KEY = mapOf(
+            "fedfunds" to EconomicViewModel.CACHE_FED_FUNDS,
+            "gdp" to EconomicViewModel.CACHE_GDP,
+            "cpi" to EconomicViewModel.CACHE_CPI,
+            "unemployment" to EconomicViewModel.CACHE_EMPLOYMENT,
+            "mortgage" to EconomicViewModel.CACHE_MBS,
+            "vix" to EconomicViewModel.CACHE_VIX,
+            "yield10y" to EconomicViewModel.CACHE_TREASURY,
+            "spread" to EconomicViewModel.CACHE_TREASURY
+        )
+
+        /** Watchlist keys (SettingsManager.DEFAULT_WATCHLIST) → catalog ids, where they differ. */
+        private val WATCHLIST_ALIAS = mapOf(
+            "spread_10y3m" to "spread",
+            "employment" to "unemployment",
+            "mbs_mortgage" to "mortgage"
+        )
+
         /** Lowest index of any of the keys in the watchlist; large if none listed. */
         private fun bestRank(watch: List<String>, vararg keys: String): Int {
             var best = Integer.MAX_VALUE
@@ -686,14 +638,6 @@ class DashboardFragment : Fragment() {
                 if (i >= 0 && i < best) best = i
             }
             return best
-        }
-
-        /** Last n values of a series, oldest first. */
-        private fun tailValues(rows: List<EconomicDataPoint>, n: Int): List<Float> {
-            val out = ArrayList<Float>()
-            for (i in Math.max(0, rows.size - n) until rows.size)
-                out.add(rows[i].value.toFloat())
-            return out
         }
     }
 }

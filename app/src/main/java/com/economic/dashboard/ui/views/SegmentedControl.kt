@@ -2,6 +2,7 @@ package com.economic.dashboard.ui.views
 
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewTreeObserver
 import androidx.dynamicanimation.animation.DynamicAnimation
 import androidx.dynamicanimation.animation.SpringAnimation
 import androidx.dynamicanimation.animation.SpringForce
@@ -34,6 +35,36 @@ object SegmentedControl {
         if (thumb == null || target == null || target.width <= 0) return
         matchWidth(thumb, target)
         thumb.translationX = target.left.toFloat()
+    }
+
+    /**
+     * Same as [snapTo], but tolerant of [target] living inside a subtree that's
+     * `GONE` right now (e.g. the DATA pane's TABLE/GRAPH switch and timeframe
+     * selector, both initialized while the pane is still collapsed). A single
+     * `post {}` fires with `target.width == 0` in that case and [snapTo] bails
+     * out silently — the thumb never gets a width, so the "active" segment's
+     * text (colored for on-thumb contrast) renders directly on the bare sheet
+     * background with no pill behind it, i.e. invisible in dark mode. This
+     * retries via the view tree observer until a real layout pass gives the
+     * target nonzero width, then snaps once and detaches.
+     */
+    @JvmStatic
+    fun snapToWhenReady(selector: View?, thumb: View?, target: View?) {
+        if (selector == null || thumb == null || target == null) return
+        if (target.width > 0) {
+            snapTo(thumb, target)
+            return
+        }
+        val vto = selector.viewTreeObserver
+        if (vto == null || !vto.isAlive) return
+        vto.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
+            override fun onGlobalLayout() {
+                if (target.width <= 0) return
+                snapTo(thumb, target)
+                val liveVto = selector.viewTreeObserver
+                if (liveVto != null && liveVto.isAlive) liveVto.removeOnGlobalLayoutListener(this)
+            }
+        })
     }
 
     private fun matchWidth(thumb: View, target: View) {

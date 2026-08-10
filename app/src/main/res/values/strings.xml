@@ -18,6 +18,26 @@
 
     <!-- Settings sheet -->
     <string name="settings">Settings</string>
+
+    <!-- Settings full-screen page (design 1b) -->
+    <string name="settings_search_hint">Search settings</string>
+    <string name="settings_group_frequent">Frequently changed</string>
+    <string name="settings_group_more">More settings</string>
+    <string name="settings_back_to_list">Settings</string>
+    <string name="settings_summary_appearance">%1$s · Haptics %2$s</string>
+    <string name="settings_summary_ai">%1$s · %2$s</string>
+    <string name="settings_summary_ai_chips_on">Chips on</string>
+    <string name="settings_summary_ai_chips_off">Chips off</string>
+    <string name="settings_summary_ai_detailed">Detailed</string>
+    <string name="settings_summary_ai_concise">Concise</string>
+    <string name="settings_summary_data_on_open">Refreshes on open</string>
+    <string name="settings_summary_data_manual">Manual refresh</string>
+    <string name="settings_summary_news">%1$d of 4 enabled</string>
+    <string name="settings_summary_charts">Gridlines %1$s · %2$s</string>
+    <string name="settings_summary_on">on</string>
+    <string name="settings_summary_off">off</string>
+    <string name="settings_summary_notifications">%1$d of 3 on</string>
+
     <string name="section_appearance">Appearance</string>
     <string name="section_data">Data</string>
     <string name="section_startup_tab">Startup and dashboard</string>
@@ -57,6 +77,18 @@
     <string name="watchlist_done">Done</string>
     <string name="refresh_data">Refresh data</string>
     <string name="refresh_done">Data refreshed</string>
+    <!-- Design branch 2a: customizable dashboard indicator picker -->
+    <string name="indicator_picker_title">Choose an indicator</string>
+    <string name="close_glyph">✕</string>
+    <string name="check_glyph">✓</string>
+    <string name="customize_hint">Customize which indicators the cards below track</string>
+    <string name="edit_dashboard_button">Edit cards</string>
+    <string name="edit_dashboard_hero_title">Hero card</string>
+    <!-- Design branch 2a, direction 1d: drag to reorder, tap to swap -->
+    <string name="edit_cards_title">Edit Cards</string>
+    <string name="edit_cards_cancel">Cancel</string>
+    <string name="edit_cards_swap">Swap</string>
+    <string name="drag_handle_glyph">⠿</string>
     <string name="refresh_failed">Refresh failed — check your connection</string>
     <string name="refresh_on_open">Refresh data when the app opens</string>
     <string name="refresh_on_open_sub">Uses more data and may take longer to load</string>
@@ -102,6 +134,15 @@
     <string name="tf_1y">1Y</string>
     <string name="tf_2y">2Y</string>
     <string name="tf_5y">5Y</string>
+
+    <!-- Metric popup redesign (mockup 1c) -->
+    <string name="str_seg_benchmarks">BENCHMARKS</string>
+    <string name="str_seg_data">DATA</string>
+    <string name="str_seg_table">TABLE</string>
+    <string name="str_seg_graph">GRAPH</string>
+    <string name="table_header_date">DATE</string>
+    <string name="table_header_value">VALUE</string>
+    <string name="table_header_change">CHANGE</string>
     <string name="dec_one">1.2</string>
     <string name="dec_two">1.23</string>
     <string name="dec_three">1.234</string>

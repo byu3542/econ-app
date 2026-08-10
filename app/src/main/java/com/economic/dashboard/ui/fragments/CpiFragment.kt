@@ -19,7 +19,7 @@ import com.economic.dashboard.models.EconomicDataPoint
 import com.economic.dashboard.ui.BenchmarkStyle
 import com.economic.dashboard.ui.Benchmarks
 import com.economic.dashboard.ui.EconomicViewModel
-import com.economic.dashboard.ui.MetricBottomSheet
+import com.economic.dashboard.ui.MetricPopupController
 import com.economic.dashboard.utils.ChartHelper
 import com.economic.dashboard.utils.EdgeToEdgeInsets
 import com.economic.dashboard.utils.NumberFormatUtil
@@ -118,9 +118,7 @@ class CpiFragment : Fragment() {
 
     private fun showCpiBenchmarks() {
         val ctx = context ?: return
-        // TICKET-24: metric-aware sheet — offers "Add alert" for CPI YoY.
-        MetricBottomSheet.show(ctx, R.layout.dialog_cpi_status,
-            EconomicViewModel.CACHE_CPI, "CPI YoY")
+        MetricPopupController.show(ctx, viewModel, "cpi")
     }
 
     private fun calculateYoYInflation(data: List<EconomicDataPoint>) {

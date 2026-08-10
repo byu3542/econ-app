@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Navy bottom-sheet surface with 24dp rounded top corners. -->
+<!-- Metric popup sheet surface with 24dp rounded top corners. Theme-aware:
+     warm off-white in light mode, navy in dark (see @color/sheet_surface). -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
-    <solid android:color="@color/header_navy" />
+    <solid android:color="@color/sheet_surface" />
     <corners android:topLeftRadius="24dp" android:topRightRadius="24dp" />
 </shape>

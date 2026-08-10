@@ -20,12 +20,13 @@ import com.economic.dashboard.models.EconomicDataPoint
 import com.economic.dashboard.ui.BenchmarkStyle
 import com.economic.dashboard.ui.Benchmarks
 import com.economic.dashboard.ui.EconomicViewModel
-import com.economic.dashboard.ui.MetricBottomSheet
+import com.economic.dashboard.ui.MetricPopupController
 import com.economic.dashboard.ui.views.SkeletonController
 import com.economic.dashboard.utils.ChartHelper
 import com.economic.dashboard.utils.EdgeToEdgeInsets
 import com.economic.dashboard.utils.NumberFormatUtil
 import com.economic.dashboard.utils.RetryChip
+import com.economic.dashboard.utils.SeriesMath
 import com.economic.dashboard.utils.SettingsManager
 import com.economic.dashboard.utils.TimeframeSelector
 import com.github.mikephil.charting.charts.LineChart
@@ -142,10 +143,12 @@ class InflationFragment : Fragment() {
         addYoYLimitLines(chartPceCpi)
 
         cardCpiYoY.setOnClickListener {
-            showBenchmarkDialog(R.layout.dialog_cpi_status, EconomicViewModel.CACHE_CPI, "CPI YoY")
+            val ctx = context ?: return@setOnClickListener
+            MetricPopupController.show(ctx, viewModel, "cpi")
         }
         cardWageYoY.setOnClickListener {
-            showBenchmarkDialog(R.layout.dialog_wages_status, EconomicViewModel.KEY_WAGES, "Wage growth")
+            val ctx = context ?: return@setOnClickListener
+            MetricPopupController.show(ctx, viewModel, "wages")
         }
 
         viewModel.getPceData().observe(viewLifecycleOwner) { pce ->
@@ -229,14 +232,13 @@ class InflationFragment : Fragment() {
             return
         }
 
-        val wYoy = ((wRows[wRows.size - 1].value - wRows[wRows.size - 13].value)
-            / wRows[wRows.size - 13].value) * 100.0
-        val cYoy = ((cRows[cRows.size - 1].value - cRows[cRows.size - 13].value)
-            / cRows[cRows.size - 13].value) * 100.0
-        val spread = wYoy - cYoy
+        // Shared with WagesFragment and MetricPopupController's "wages" popup — one formula (TICKET-03).
+        val spreadRows = SeriesMath.realWageGrowthSpread(wRows, cRows)
+        if (spreadRows.isEmpty()) return
+        val spread = spreadRows[spreadRows.size - 1].value
 
         tvWageYoYValue.text = NumberFormatUtil.percent(spread) // TICKET-19
-        Log.i(DIAG, "populated — wageYoY=$wYoy, cpiYoY=$cYoy, spread=$spread")
+        Log.i(DIAG, "populated — spread=$spread")
 
         val result = Benchmarks.realWageGrowth(spread)
         BenchmarkStyle.applyBadge(statusWage, requireContext(), result)
@@ -361,18 +363,6 @@ class InflationFragment : Fragment() {
         elevated.setTextColor(Color.parseColor("#D98E4F")); elevated.setTextSize(9f); elevated.enableDashedLine(8f, 4f, 0f)
         chart.axisLeft.addLimitLine(target); chart.axisLeft.addLimitLine(elevated)
         chart.axisLeft.setDrawLimitLinesBehindData(true)
-    }
-
-    /** Unused today (no caller) — kept verbatim from the Java per the batch-9/10
-     *  dead-code decision; see the CHANGES file. */
-    private fun showBenchmarkDialog(layoutRes: Int) {
-        showBenchmarkDialog(layoutRes, null, null)
-    }
-
-    /** TICKET-24: metric-aware overload — the sheet gains an "Add alert" row. */
-    private fun showBenchmarkDialog(layoutRes: Int, seriesKey: String?, seriesLabel: String?) {
-        val ctx = context ?: return
-        MetricBottomSheet.show(ctx, layoutRes, seriesKey, seriesLabel)
     }
 
     private fun styleChart(chart: LineChart) {

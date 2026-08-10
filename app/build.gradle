@@ -92,6 +92,7 @@ dependencies {
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
     implementation 'com.facebook.shimmer:shimmer:0.5.0'  // skeleton loading
     implementation 'androidx.dynamicanimation:dynamicanimation:1.0.0'  // IOS-01 press springs
+    implementation 'androidx.transition:transition:1.4.1'  // animates the BENCHMARKS/DATA + TABLE/GRAPH pane swaps
     implementation 'androidx.core:core-ktx:1.13.1'
 
     // Networking

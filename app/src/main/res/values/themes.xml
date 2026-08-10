@@ -152,9 +152,27 @@
         <item name="cornerSizeBottomRight">0dp</item>
     </style>
 
-    <!-- Updated bottom sheet style using 24dp corners -->
+    <!-- Updated bottom sheet style using 24dp corners.
+         `android:background` is a no-op here and must NOT be relied on: once
+         `shapeAppearanceOverlay` is set, BottomSheetBehavior's constructor
+         (see BottomSheetBehavior_Layout in the Material library's attrs.xml)
+         unconditionally builds its own MaterialShapeDrawable in
+         createMaterialShapeDrawableIfNeeded() and replaces this view's
+         background with it in onLayoutChild() — android:background is
+         simply never read once shape theming is on. The drawable's fill
+         comes from `backgroundTint` (a distinct attr from android:background)
+         and, when that's unset, falls back to the theme's android:colorBackground
+         — which under Theme.MaterialComponents.DayNight resolves to a plain
+         light/white color regardless of the app's own navy palette. That
+         fallback fill, painted at the exact same 24dp-rounded geometry as
+         MetricBottomSheet's own `wrap` clip but by an independently
+         anti-aliased shape, is what showed through as a thin white halo
+         tracing the rounded top corners. Setting `backgroundTint` explicitly
+         to the same navy `wrap` already uses fixes it at the source (and
+         means any residual sub-pixel seam is navy-on-navy, so invisible even
+         if the two roundrects don't align exactly). -->
     <style name="EconomicBottomSheetStyle24" parent="Widget.MaterialComponents.BottomSheet.Modal">
-        <item name="android:background">@color/bg_warm_off_white</item>
+        <item name="backgroundTint">@color/header_navy</item>
         <item name="shapeAppearanceOverlay">@style/BottomSheetRoundedCorners24</item>
         <item name="android:elevation">16dp</item>
     </style>
@@ -269,11 +287,11 @@
         <item name="android:paddingEnd">4dp</item>
     </style>
 
-    <!-- Dismiss button on the benchmark-scale dialogs (dark navy background) -->
+    <!-- Dismiss button on the metric popup sheet (theme-aware surface) -->
     <style name="BenchmarkDismissButton" parent="Widget.MaterialComponents.Button.OutlinedButton">
-        <item name="android:textColor">@color/accent_gold</item>
-        <item name="strokeColor">@color/accent_gold</item>
-        <item name="rippleColor">@color/accent_gold</item>
+        <item name="android:textColor">@color/sheet_accent</item>
+        <item name="strokeColor">@color/sheet_accent</item>
+        <item name="rippleColor">@color/sheet_accent</item>
         <item name="android:textSize">@dimen/text_secondary</item>
         <item name="android:letterSpacing">0.05</item>
     </style>

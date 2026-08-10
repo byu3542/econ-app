@@ -40,6 +40,12 @@ class MarketsFragment : Fragment() {
         val viewPager = b.viewPager
 
         viewPager.adapter = MarketsPagerAdapter(this)
+        // UX request (2026-08-03): swipe-between-tabs removed in favor of
+        // tab-press-only navigation. TabLayoutMediator still drives
+        // viewPager.setCurrentItem() programmatically on tab tap, which is
+        // unaffected by isUserInputEnabled — only touch/drag gestures are
+        // disabled.
+        viewPager.isUserInputEnabled = false
 
         TabLayoutMediator(tabLayout, viewPager) { tab, position ->
             when (position) {

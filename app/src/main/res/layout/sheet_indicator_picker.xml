@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Design branch 2a: "Choose an indicator" picker for the customizable
+     Overview. Rows are built at runtime (one per DashboardIndicatorCatalog
+     entry, grouped under a header per category) — see IndicatorPickerBottomSheet. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@color/bg_warm_off_white">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="@dimen/space_lg"
+        android:paddingEnd="@dimen/space_md"
+        android:paddingTop="@dimen/space_lg"
+        android:paddingBottom="@dimen/space_sm">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/indicator_picker_title"
+            android:textColor="@color/text_navy"
+            android:textSize="@dimen/text_title"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/btnPickerClose"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:gravity="center"
+            android:text="@string/close_glyph"
+            android:textColor="@color/text_secondary"
+            android:textSize="@dimen/text_title"
+            android:clickable="true"
+            android:focusable="true" />
+    </LinearLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:maxHeight="480dp">
+
+        <LinearLayout
+            android:id="@+id/llPickerContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="@dimen/space_md"
+            android:paddingBottom="@dimen/space_lg" />
+
+    </androidx.core.widget.NestedScrollView>
+
+</LinearLayout>

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One tier row in a metric popup's BENCHMARKS pane (mockup 1c). Inflated at
+     runtime from MetricPopupRegistry.MetricPopupSpec.bands — no row exists
+     without a matching Kotlin entry, which is what the old hand-typed
+     dialog_*_status.xml rows could drift out of sync with Benchmarks.kt on. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingVertical="@dimen/space_md"
+    android:paddingHorizontal="@dimen/space_sm">
+
+    <View
+        android:id="@+id/viewBandDot"
+        android:layout_width="10dp"
+        android:layout_height="10dp"
+        android:background="@drawable/dot_neutral"
+        android:layout_marginEnd="@dimen/space_lg" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvBandLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/text_caption"
+            android:textStyle="bold"
+            android:letterSpacing="0.05" />
+
+        <TextView
+            android:id="@+id/tvBandRange"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/sheet_text_primary"
+            android:textSize="@dimen/text_secondary"
+            android:fontFamily="sans-serif-light" />
+
+    </LinearLayout>
+
+</LinearLayout>

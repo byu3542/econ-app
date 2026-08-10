@@ -50,6 +50,12 @@ class EconomyFragment : Fragment() {
         // Child fragment adapter — use getChildFragmentManager() for nested fragments
         viewPager.adapter = EconomyPagerAdapter(this)
         viewPager.offscreenPageLimit = 3
+        // UX request (2026-08-03): swipe-between-tabs removed in favor of
+        // tab-press-only navigation. TabLayoutMediator still drives
+        // viewPager.setCurrentItem() programmatically on tab tap, which is
+        // unaffected by isUserInputEnabled — only touch/drag gestures are
+        // disabled.
+        viewPager.isUserInputEnabled = false
 
         TabLayoutMediator(tabLayout, viewPager) { tab, position ->
             tab.text = TAB_TITLES[position]

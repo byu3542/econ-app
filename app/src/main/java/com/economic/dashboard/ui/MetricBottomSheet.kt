@@ -35,6 +35,20 @@ object MetricBottomSheet {
     @JvmStatic
     fun show(ctx: Context, layoutRes: Int, seriesKey: String?, seriesLabel: String?): View {
         val wrap = LayoutInflater.from(ctx).inflate(R.layout.sheet_metric_wrapper, null)
+
+        // Guarantee the rounded top corners regardless of what child content
+        // draws over them (the extra height pushes the bottom of the round-rect
+        // below the view's visible bounds, so only the top corners round off).
+        val density0 = ctx.resources.displayMetrics.density
+        val cornerRadiusPxOutline = 24 * density0
+        wrap.clipToOutline = true
+        wrap.outlineProvider = object : ViewOutlineProvider() {
+            override fun getOutline(view: View, outline: Outline) {
+                outline.setRoundRect(0, 0, view.width,
+                    view.height + cornerRadiusPxOutline.toInt(), cornerRadiusPxOutline)
+            }
+        }
+
         val holder: FrameLayout = wrap.findViewById(R.id.sheetContent)
         val sheetScroll: View? = wrap.findViewById(R.id.sheetScroll)
         val content = LayoutInflater.from(ctx).inflate(layoutRes, holder, false)
@@ -43,6 +57,15 @@ object MetricBottomSheet {
         dialog.setContentView(wrap)
         val btn: View? = content.findViewById(R.id.btnClose)
         btn?.setOnClickListener { dialog.dismiss() }
+
+        // These sheets close via their own DISMISS button, or the system
+        // back button/gesture (which takes the user back to whatever screen
+        // was presenting the sheet) — but not by swiping down or tapping the
+        // scrim. setCancelable(true) must come before setCanceledOnTouchOutside(false):
+        // the latter only overrides touch-outside behavior, so this order is
+        // what keeps back-to-cancel enabled while touch-outside stays disabled.
+        dialog.setCancelable(true)
+        dialog.setCanceledOnTouchOutside(false)
 
         // Clear the gesture-nav inset so the last row and "+ Add alert" pill
         // aren't flush with (or under) the home indicator. This is the raw
@@ -61,6 +84,18 @@ object MetricBottomSheet {
         val behavior = dialog.behavior
         behavior.isFitToContents = true
         behavior.skipCollapsed = true
+        // STATE_HIDDEN must stay reachable: BottomSheetDialog's back-button/
+        // predictive-back handling doesn't dismiss directly, it drives the
+        // sheet to STATE_HIDDEN first (that's what animates it away) and only
+        // then dismisses. With isHideable = false that transition is rejected
+        // and back gets stuck mid-gesture. isDraggable = false below already
+        // blocks manual finger-drag regardless of this flag, so this doesn't
+        // reopen swipe-to-dismiss — it only lets the back gesture complete.
+        behavior.isHideable = true
+
+        // Fully disable the drag gesture itself — the sheet doesn't even nudge
+        // or spring back on a swipe attempt. DISMISS is the only way to close it.
+        behavior.isDraggable = false
 
         // Expanded state stops short of the status bar (+8dp) instead of going
         // flush to y=0 — a sheet flush to the top reads as a full-screen

@@ -1,0 +1,311 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Mockup 1c: "full-width sliding segment, stacked secondary segment."
+     Single content layout for every metric popup (MetricPopupController) —
+     replaces the 13 hand-typed dialog_*_status.xml the old, non-generic
+     approach would have needed. Root MUST stay LinearLayout: MetricBottomSheet
+     appends the "+ Add alert" row as this root's last child when the sheet
+     is opened with a non-null seriesKey/seriesLabel. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@color/sheet_surface"
+    android:padding="@dimen/space_2xl">
+
+    <TextView
+        android:id="@+id/tvPopupTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/sheet_accent"
+        android:textSize="@dimen/text_secondary"
+        android:textStyle="bold"
+        android:textAllCaps="true"
+        android:letterSpacing="0.1"
+        android:gravity="center" />
+
+    <TextView
+        android:id="@+id/tvPopupSubtitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_xs"
+        android:layout_marginBottom="@dimen/space_xl"
+        android:textColor="@color/sheet_text_secondary"
+        android:textSize="@dimen/text_secondary"
+        android:gravity="center" />
+
+    <!-- Primary switch: BENCHMARKS / DATA — full-width, filled (mockup 1c). -->
+    <FrameLayout
+        android:id="@+id/switchPrimaryRoot"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/space_lg">
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:background="@drawable/bg_segmented_track" />
+
+        <View
+            android:id="@+id/switchPrimaryThumb"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_marginTop="4dp"
+            android:layout_gravity="top|start"
+            android:background="@drawable/bg_segmented_thumb"
+            android:importantForAccessibility="no" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:orientation="horizontal"
+            android:baselineAligned="false">
+
+            <TextView
+                android:id="@+id/tvSegBenchmarks"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:tag="benchmarks"
+                android:gravity="center"
+                android:text="@string/str_seg_benchmarks"
+                android:textSize="@dimen/text_caption"
+                android:textStyle="bold"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <TextView
+                android:id="@+id/tvSegData"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:tag="data"
+                android:gravity="center"
+                android:text="@string/str_seg_data"
+                android:textSize="@dimen/text_caption"
+                android:textStyle="bold"
+                android:clickable="true"
+                android:focusable="true" />
+
+        </LinearLayout>
+    </FrameLayout>
+
+    <!-- paneStack: BENCHMARKS and DATA overlaid in the same FrameLayout slot
+         (rather than stacked as plain siblings) so the sheet's overall height
+         is always the taller of the two, from the very first layout pass —
+         switching tabs swaps which one is drawn but never resizes this
+         container, so the sheet itself never jumps. The inactive pane is
+         INVISIBLE (not GONE): it still needs to be measured/laid out to hold
+         its share of that "always big enough" height. -->
+    <FrameLayout
+        android:id="@+id/paneStack"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+    <!-- BENCHMARKS pane: tier rows inflated at runtime -->
+    <FrameLayout
+        android:id="@+id/paneBenchmarks"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="12dp"
+            app:cardBackgroundColor="@color/sheet_card"
+            app:cardElevation="0dp">
+
+            <LinearLayout
+                android:id="@+id/benchmarkBandContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="@dimen/space_md" />
+
+        </androidx.cardview.widget.CardView>
+    </FrameLayout>
+
+    <!-- DATA pane: secondary TABLE/GRAPH switch (visually subordinate) → the
+         existing 3M/6M/1Y/5Y timeframe row → table or chart. -->
+    <LinearLayout
+        android:id="@+id/paneData"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="invisible"
+        android:importantForAccessibility="noHideDescendants">
+
+        <FrameLayout
+            android:id="@+id/switchSecondaryRoot"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/space_md">
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="36dp"
+                android:background="@drawable/bg_segmented_track_subtle" />
+
+            <View
+                android:id="@+id/switchSecondaryThumb"
+                android:layout_width="0dp"
+                android:layout_height="28dp"
+                android:layout_marginTop="4dp"
+                android:layout_gravity="top|start"
+                android:background="@drawable/bg_segmented_thumb_subtle"
+                android:importantForAccessibility="no" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="36dp"
+                android:orientation="horizontal"
+                android:baselineAligned="false">
+
+                <TextView
+                    android:id="@+id/tvSegTable"
+                    android:layout_width="0dp"
+                    android:layout_height="36dp"
+                    android:layout_weight="1"
+                    android:tag="table"
+                    android:gravity="center"
+                    android:text="@string/str_seg_table"
+                    android:textSize="@dimen/text_caption"
+                    android:textStyle="bold"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+                <TextView
+                    android:id="@+id/tvSegGraph"
+                    android:layout_width="0dp"
+                    android:layout_height="36dp"
+                    android:layout_weight="1"
+                    android:tag="graph"
+                    android:gravity="center"
+                    android:text="@string/str_seg_graph"
+                    android:textSize="@dimen/text_caption"
+                    android:textStyle="bold"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+            </LinearLayout>
+        </FrameLayout>
+
+        <include layout="@layout/view_timeframe_selector" />
+
+        <!-- Same overlay trick as paneStack above, one level down: TABLE
+             (fixed 320dp card) and GRAPH (~260dp chart + padding) differ in
+             height too, so without this the sheet would still jump on a
+             TABLE/GRAPH switch even after the BENCHMARKS/DATA jump is fixed. -->
+        <FrameLayout
+            android:id="@+id/dataPaneStack"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+        <FrameLayout
+            android:id="@+id/paneTable"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="invisible"
+            android:importantForAccessibility="noHideDescendants">
+
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="320dp"
+                app:cardCornerRadius="12dp"
+                app:cardBackgroundColor="@color/sheet_card"
+                app:cardElevation="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="@dimen/space_sm"
+                        android:paddingTop="@dimen/space_sm"
+                        android:paddingBottom="@dimen/space_xs">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/table_header_date"
+                            android:textColor="@color/sheet_text_secondary"
+                            android:textSize="@dimen/text_caption"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/table_header_value"
+                            android:textColor="@color/sheet_text_secondary"
+                            android:textSize="@dimen/text_caption"
+                            android:textStyle="bold"
+                            android:gravity="center" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/table_header_change"
+                            android:textColor="@color/sheet_text_secondary"
+                            android:textSize="@dimen/text_caption"
+                            android:textStyle="bold"
+                            android:gravity="end" />
+
+                    </LinearLayout>
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rvMetricHistory"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:padding="@dimen/space_xs"
+                        android:clipToPadding="false" />
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+        </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/paneGraph"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="12dp"
+                app:cardBackgroundColor="@color/sheet_card"
+                app:cardElevation="0dp">
+
+                <com.github.mikephil.charting.charts.LineChart
+                    android:id="@+id/chartMetricHistory"
+                    android:layout_width="match_parent"
+                    android:layout_height="260dp"
+                    android:padding="@dimen/space_md" />
+
+            </androidx.cardview.widget.CardView>
+        </FrameLayout>
+
+        </FrameLayout>
+
+    </LinearLayout>
+
+    </FrameLayout>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnClose"
+        style="@style/BenchmarkDismissButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="DISMISS"
+        android:contentDescription="Close"
+        android:layout_gravity="end"
+        android:layout_marginTop="@dimen/space_lg" />
+
+</LinearLayout>

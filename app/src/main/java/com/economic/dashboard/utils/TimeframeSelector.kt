@@ -81,7 +81,11 @@ object TimeframeSelector {
         if (animate) {
             SegmentedControl.slideTo(thumb, target)
         } else {
-            selector.post { SegmentedControl.snapTo(thumb, target) }
+            // Not a plain post {} — this selector may still be inside a GONE
+            // pane (DATA tab isn't open yet) when attach() first runs, so the
+            // segment has zero width on the first layout pass. See
+            // SegmentedControl.snapToWhenReady for why that matters.
+            SegmentedControl.snapToWhenReady(selector, thumb, target)
         }
     }
 

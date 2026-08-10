@@ -19,7 +19,7 @@ import com.economic.dashboard.models.EconomicDataPoint
 import com.economic.dashboard.ui.BenchmarkStyle
 import com.economic.dashboard.ui.Benchmarks
 import com.economic.dashboard.ui.EconomicViewModel
-import com.economic.dashboard.ui.MetricBottomSheet
+import com.economic.dashboard.ui.MetricPopupController
 import com.economic.dashboard.ui.views.SkeletonController
 import com.economic.dashboard.utils.ChartHelper
 import com.economic.dashboard.utils.EdgeToEdgeInsets
@@ -122,9 +122,7 @@ class GdpFragment : Fragment() {
 
     private fun showGdpBenchmarks() {
         val ctx = context ?: return
-        // TICKET-24: metric-aware sheet — offers "Add alert" for GDP growth.
-        MetricBottomSheet.show(ctx, R.layout.dialog_gdp_status,
-            EconomicViewModel.CACHE_GDP, "GDP growth")
+        MetricPopupController.show(ctx, viewModel, "gdp")
     }
 
     private fun updateGdpIndicator(data: List<EconomicDataPoint>) {

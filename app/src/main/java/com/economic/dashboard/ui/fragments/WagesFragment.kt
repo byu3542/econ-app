@@ -19,11 +19,12 @@ import com.economic.dashboard.models.EconomicDataPoint
 import com.economic.dashboard.ui.BenchmarkStyle
 import com.economic.dashboard.ui.Benchmarks
 import com.economic.dashboard.ui.EconomicViewModel
-import com.economic.dashboard.ui.MetricBottomSheet
+import com.economic.dashboard.ui.MetricPopupController
 import com.economic.dashboard.utils.ChartHelper
 import com.economic.dashboard.utils.EdgeToEdgeInsets
 import com.economic.dashboard.utils.NumberFormatUtil
 import com.economic.dashboard.utils.RetryChip
+import com.economic.dashboard.utils.SeriesMath
 import com.economic.dashboard.utils.TimeframeSelector
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.data.Entry
@@ -129,9 +130,7 @@ class WagesFragment : Fragment() {
 
     private fun showWagesBenchmarks() {
         val ctx = context ?: return
-        // TICKET-24: metric-aware sheet — offers "Add alert" for wage growth.
-        MetricBottomSheet.show(ctx, R.layout.dialog_wages_status,
-            EconomicViewModel.KEY_WAGES, "Wage growth")
+        MetricPopupController.show(ctx, viewModel, "wages")
     }
 
     private fun calculateRealWageGrowth() {
@@ -145,18 +144,10 @@ class WagesFragment : Fragment() {
 
         if (wageRows.size < 13 || cpiRows.size < 13) return
 
-        // Calculate Wage YoY
-        val latestWage = wageRows[wageRows.size - 1]
-        val yearAgoWage = wageRows[wageRows.size - 13]
-        val wageYoY = ((latestWage.value - yearAgoWage.value) / yearAgoWage.value) * 100.0
-
-        // Calculate CPI YoY
-        val latestCpi = cpiRows[cpiRows.size - 1]
-        val yearAgoCpi = cpiRows[cpiRows.size - 13]
-        val cpiYoY = ((latestCpi.value - yearAgoCpi.value) / yearAgoCpi.value) * 100.0
-
-        // "Real Wage Growth" calculation (Spread)
-        val spread = wageYoY - cpiYoY
+        // Shared with MetricPopupController's "wages" popup — one formula (TICKET-03).
+        val spreadRows = SeriesMath.realWageGrowthSpread(wageRows, cpiRows)
+        if (spreadRows.isEmpty()) return
+        val spread = spreadRows[spreadRows.size - 1].value
 
         // Display the calculated difference as the main value (TICKET-19)
         tvWageYoYValue.text = NumberFormatUtil.percent(spread)

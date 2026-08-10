@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Design branch 2a, direction 1d: category block header. Draggable via the
+     handle to reorder the whole category block (moves its slots with it). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingStart="@dimen/space_md"
+    android:paddingEnd="@dimen/space_lg"
+    android:paddingTop="@dimen/space_md"
+    android:paddingBottom="@dimen/space_xs">
+
+    <TextView
+        android:id="@+id/dragHandleHeader"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:gravity="center"
+        android:text="@string/drag_handle_glyph"
+        android:textColor="@color/gold_ink"
+        android:textSize="@dimen/text_body" />
+
+    <TextView
+        android:id="@+id/tvEditCardsHeaderTitle"
+        style="@style/MetricGroupHeader"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginBottom="0dp"
+        android:layout_marginStart="@dimen/space_xs" />
+
+</LinearLayout>

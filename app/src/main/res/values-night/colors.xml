@@ -49,6 +49,15 @@
 
     <color name="fab_ring">#2A3142</color>
 
+    <!-- Metric popup sheet surfaces — the navy sheet the popup has always used.
+         These are the night half of a flipping pair; see values/colors.xml. -->
+    <color name="sheet_surface">#1a1a2e</color>
+    <color name="sheet_card">#1F2633</color>
+    <color name="sheet_divider">#2A3342</color>
+    <color name="sheet_text_primary">#ffffff</color>
+    <color name="sheet_text_secondary">#8A9AB5</color>
+    <color name="sheet_accent">#c9a84c</color>
+
     <!-- Status signal palette. Badge cards are navy in both themes, so these keep
          their day values; declared here so the resource is theme-complete and badges
          re-theme correctly under values-night. -->

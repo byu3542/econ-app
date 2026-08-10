@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Design branch 2a, direction 1d: fixed (non-draggable) hero row at the top
+     of Edit Cards — there's only one hero, so nothing to reorder, but it can
+     still be swapped for any indicator. -->
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="@dimen/space_lg"
+    android:layout_marginTop="@dimen/space_md"
+    android:layout_marginBottom="@dimen/space_md"
+    app:cardCornerRadius="@dimen/radius_card_kpi"
+    app:cardElevation="1dp"
+    app:cardBackgroundColor="@color/surface_card">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:minHeight="56dp"
+        android:paddingHorizontal="@dimen/space_md">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvEditCardsHeroTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/edit_dashboard_hero_title"
+                android:textColor="@color/text_navy"
+                android:textSize="@dimen/text_body"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvEditCardsHeroName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_hairline"
+                android:textColor="@color/text_secondary"
+                android:textSize="@dimen/text_caption" />
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/btnEditCardsHeroSwap"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minHeight="32dp"
+            android:gravity="center"
+            android:paddingHorizontal="@dimen/space_md"
+            android:paddingVertical="@dimen/space_xs"
+            android:background="@drawable/bg_pill_swap"
+            android:text="@string/edit_cards_swap"
+            android:textColor="@color/gold_ink"
+            android:textSize="@dimen/text_caption"
+            android:textStyle="bold"
+            android:clickable="true"
+            android:focusable="true" />
+
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

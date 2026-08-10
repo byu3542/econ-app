@@ -43,7 +43,6 @@ class EconomicViewModel(application: Application) : AndroidViewModel(application
     private val wageData = MutableLiveData<List<EconomicDataPoint>>()
     private val fedFundsData = MutableLiveData<List<EconomicDataPoint>>()
     private val ismPmiData = MutableLiveData<List<EconomicDataPoint>>()
-    private val fedFundsHistory = MutableLiveData<List<EconomicDataPoint>>()
     private val pceData = MutableLiveData<List<EconomicDataPoint>>()
     private val housingData = MutableLiveData<List<EconomicDataPoint>>()
     private val mbsMortgageData = MutableLiveData<List<EconomicDataPoint>>()
@@ -93,7 +92,6 @@ class EconomicViewModel(application: Application) : AndroidViewModel(application
     fun getWageData(): LiveData<List<EconomicDataPoint>> = wageData
     fun getFedFundsData(): LiveData<List<EconomicDataPoint>> = fedFundsData
     fun getIsmPmiData(): LiveData<List<EconomicDataPoint>> = ismPmiData
-    fun getFedFundsHistory(): LiveData<List<EconomicDataPoint>> = fedFundsHistory
     fun getPceData(): LiveData<List<EconomicDataPoint>> = pceData
     fun getHousingData(): LiveData<List<EconomicDataPoint>> = housingData
     fun getMbsMortgageData(): LiveData<List<EconomicDataPoint>> = mbsMortgageData
@@ -227,7 +225,23 @@ class EconomicViewModel(application: Application) : AndroidViewModel(application
         markRecovered(key)
     }
 
+    /**
+     * True once [fetchAllData] has run at least once for this ViewModel
+     * instance. The ViewModel survives an Activity recreate (theme toggle,
+     * rotation) via the normal ViewModelStore mechanism, so its LiveData
+     * already holds the current values across that recreate — callers use
+     * this to skip a redundant [fetchAllData] (see [MainActivity.onCreate]),
+     * which would otherwise re-run [primeFromCache]'s synchronous
+     * SharedPreferences reads and re-`postValue` the same data, forcing every
+     * observing chart/card to rebuild for nothing right as the new Activity
+     * is standing up — the main contributor to the multi-second freeze a
+     * theme switch used to cause.
+     */
+    private var hasFetchedOnce = false
+    fun hasFetchedOnce(): Boolean = hasFetchedOnce
+
     fun fetchAllData() {
+        hasFetchedOnce = true
         // Cache-first: paint the last known values before the network returns.
         primeFromCache()
         isLoading.postValue(true)
@@ -238,7 +252,7 @@ class EconomicViewModel(application: Application) : AndroidViewModel(application
         // the actual number of fetches — no hardcoded magic number to maintain.
         val fetchTasks: List<() -> Unit> = listOf(
             ::fetchTreasury, ::fetchGDP, ::fetchEmployment, ::fetchCPI, ::fetchWages,
-            ::fetchFedFunds, ::fetchFedFundsHistory, ::fetchTenYearHistory,
+            ::fetchFedFunds, ::fetchTenYearHistory,
             ::fetchTwoYearHistory, ::fetchThreeMonthHistory,
             ::fetchPCE, ::fetchHousing, ::fetchMbsMortgage,
             ::fetchSp500, ::fetchNasdaq, ::fetchVix,
@@ -290,18 +304,14 @@ class EconomicViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun fetchFedFunds() {
-        repository.fetchFredData(ApiConfig.FRED_FED_FUNDS, "Federal Funds Effective Rate", "24", null, "Interest Rates",
+        // Monthly, 60 points (5Y) — was "24"/daily (≈24 business days, ~1 month),
+        // which made every popup timeframe button (3M/6M/1Y/5Y) show the exact
+        // same handful of points since the whole series already fit in the
+        // shortest window. Matches the treasury-maturity histories' convention.
+        repository.fetchFredData(ApiConfig.FRED_FED_FUNDS, "Federal Funds Effective Rate", "60", "m", "Interest Rates",
             object : EconomicRepository.DataCallback<List<EconomicDataPoint>> {
                 override fun onSuccess(data: List<EconomicDataPoint>) { deliver(fedFundsData, CACHE_FED_FUNDS, data); checkAllDone() }
                 override fun onError(error: String) { errorMsg.postValue("Fed Funds: $error"); markFailed(CACHE_FED_FUNDS); checkAllDone() }
-            })
-    }
-
-    fun fetchFedFundsHistory() {
-        repository.fetchFredData(ApiConfig.FRED_FED_FUNDS, "Fed Funds History", "37", "m", "Interest Rates",
-            object : EconomicRepository.DataCallback<List<EconomicDataPoint>> {
-                override fun onSuccess(data: List<EconomicDataPoint>) { fedFundsHistory.postValue(data); checkAllDone() }
-                override fun onError(error: String) { errorMsg.postValue("Fed History: $error"); checkAllDone() }
             })
     }
 

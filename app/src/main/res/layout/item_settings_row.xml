@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:id="@+id/rowContent"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="?attr/selectableItemBackground"
+        android:paddingStart="@dimen/space_md"
+        android:paddingEnd="@dimen/space_md"
+        android:paddingTop="@dimen/space_sm"
+        android:paddingBottom="@dimen/space_sm">
+
+        <TextView
+            android:id="@+id/tvBadge"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginEnd="@dimen/space_md"
+            android:background="@drawable/bg_settings_badge"
+            android:gravity="center"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:fontFamily="sans-serif-medium"
+            android:includeFontPadding="false"
+            tools:text="Ap"/>
+
+        <TextView
+            android:id="@+id/tvRowTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="@dimen/text_body"
+            android:textColor="@color/text_navy"
+            tools:text="Appearance"/>
+
+        <TextView
+            android:id="@+id/tvRowSummary"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/space_sm"
+            android:layout_marginEnd="@dimen/space_xs"
+            android:maxWidth="150dp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:textSize="@dimen/text_secondary"
+            android:textColor="@color/text_secondary"
+            tools:text="Light · Haptics on"/>
+
+        <ImageView
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:src="@drawable/ic_chevron_right"
+            app:tint="@color/text_secondary"
+            android:contentDescription="@null"/>
+    </LinearLayout>
+
+    <View
+        android:id="@+id/rowDivider"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/divider_hairline_height"
+        android:layout_marginStart="56dp"
+        android:background="@drawable/divider_hairline_inset"/>
+
+</LinearLayout>

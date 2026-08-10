@@ -9,7 +9,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:paddingHorizontal="@dimen/space_xl"
-        android:paddingVertical="@dimen/space_xl"
+        android:paddingVertical="@dimen/space_row_compact"
         android:gravity="center_vertical">
 
         <TextView
@@ -21,6 +21,19 @@
             android:textColor="@color/text_navy"
             android:fontFamily="sans-serif"
             android:textSize="@dimen/text_body" />
+
+        <!-- Direction vs. prior reading, same ▲/▼ glyph + color as the Overview badges -->
+        <TextView
+            android:id="@+id/tvChange"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/space_md"
+            android:minWidth="52dp"
+            android:gravity="end"
+            android:text=""
+            android:textStyle="bold"
+            android:textSize="@dimen/text_caption"
+            android:fontFeatureSettings="tnum" />
 
         <LinearLayout
             android:layout_width="wrap_content"

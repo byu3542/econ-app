@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Design branch 2a, direction 1d: the small "Swap" chip on each Edit Cards
+     slot row — a quieter pill than bg_pill_navy since it sits inside a white
+     row rather than on the navy header. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="@color/divider_sand" />
+    <corners android:radius="@dimen/radius_pill" />
+</shape>

@@ -34,6 +34,10 @@
     <dimen name="space_3xl">28dp</dimen>
     <dimen name="space_4xl">32dp</dimen>
 
+    <!-- Yields table rows: ~30% shorter than the space_xl (20dp) default so
+         more maturities fit on screen without scrolling. -->
+    <dimen name="space_row_compact">14dp</dimen>
+
     <!-- Badge chrome (TICKET-05): one status-dot diameter everywhere -->
     <dimen name="dot_status">8dp</dimen>
 

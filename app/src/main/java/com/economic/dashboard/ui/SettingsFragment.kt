@@ -1,63 +1,83 @@
 package com.economic.dashboard.ui
 
 import android.Manifest
-import android.app.Dialog
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.ColorStateList
 import android.os.Build
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import android.widget.TextView
 
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
 
 import com.economic.dashboard.R
 import com.economic.dashboard.cache.CacheManager
+import com.economic.dashboard.databinding.FragmentSettingsBinding
 import com.economic.dashboard.news.NewsRepository
+import com.economic.dashboard.utils.EdgeToEdgeInsets
 import com.economic.dashboard.utils.SettingsManager
-import com.google.android.material.bottomsheet.BottomSheetBehavior
-import com.google.android.material.bottomsheet.BottomSheetDialog
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
+import com.google.android.material.card.MaterialCardView
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.switchmaterial.SwitchMaterial
 
 /**
- * Settings sheet opened from the gear icon in the header.
- * Every control reads its state from SettingsManager and writes back
- * immediately - there is no Save button. Consequential changes are
- * confirmed with a Snackbar anchored inside the sheet.
+ * Settings as a full-screen page (design 1b), opened from the gear icon in
+ * the header like any other tab — replacing the old bottom-sheet pattern.
+ * Two panes share one layout, toggled by visibility:
+ *   - list pane: grouped rows with live value summaries (SettingsList mock)
+ *   - detail pane: one section's controls at a time (SettingsDetail mock)
+ * Every control still reads/writes SettingsManager directly with no Save
+ * button, same as before.
  */
-class SettingsBottomSheet : BottomSheetDialogFragment() {
+class SettingsFragment : Fragment() {
+
+    private var binding: FragmentSettingsBinding? = null
+
+    /** Section id currently shown in the detail pane, or null when the list is showing. */
+    private var activeSection: String? = null
 
     private fun host(): MainActivity = requireActivity() as MainActivity
 
-    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        setStyle(STYLE_NORMAL, R.style.Theme_EconomicDashboard_BottomSheet24)
-        val dialog = super.onCreateDialog(savedInstanceState) as BottomSheetDialog
-        // Open fully expanded and skip the collapsed stop so a single
-        // swipe down dismisses the sheet instead of snapping halfway.
-        val behavior = dialog.behavior
-        behavior.state = BottomSheetBehavior.STATE_EXPANDED
-        behavior.skipCollapsed = true
-        return dialog
-    }
-
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.sheet_settings, container, false)
+    ): View {
+        val b = FragmentSettingsBinding.inflate(inflater, container, false)
+        binding = b
+        // MainActivity hides bottomNavWrapper while Settings is open, so these
+        // scroll views only need to clear the header (top) and the raw system
+        // gesture/nav-bar inset (bottom) — not the app's own bottom-nav height.
+        EdgeToEdgeInsets.applyTopInset(b.settingsListScroll)
+        EdgeToEdgeInsets.applyTopInset(b.settingsDetailScroll)
+        padForSystemBottomInset(b.settingsListScroll)
+        padForSystemBottomInset(b.settingsDetailScroll)
+        return b.root
+    }
+
+    private fun padForSystemBottomInset(scrollView: View) {
+        scrollView.setPadding(
+            scrollView.paddingLeft, scrollView.paddingTop, scrollView.paddingRight,
+            scrollView.paddingBottom + EdgeToEdgeInsets.getSystemBottomInsetPx()
+        )
+        (scrollView as? ViewGroup)?.clipToPadding = false
     }
 
     override fun onViewCreated(v: View, savedInstanceState: Bundle?) {
         super.onViewCreated(v, savedInstanceState)
+        val b = binding ?: return
+
         setupTheme(v)
         setupData(v)
         setupDefaultTab(v)
@@ -66,12 +86,177 @@ class SettingsBottomSheet : BottomSheetDialogFragment() {
         setupCharts(v)
         setupNotifications(v)
         setupAbout(v)
+
+        b.rowBackToList.setOnClickListener { showList() }
+        b.etSettingsSearch.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) { buildList() }
+        })
+
+        buildList()
     }
 
     override fun onResume() {
         super.onResume()
-        // The user may have flipped the OS notification permission and come back
         updateNotifBlockedBanner()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        binding = null
+    }
+
+    /** Consulted by MainActivity's back handler. Returns true if the press was
+     *  handled here (detail -> list); false means the caller should close Settings. */
+    fun handleBack(): Boolean {
+        if (activeSection != null) {
+            showList()
+            return true
+        }
+        return false
+    }
+
+    // -- List <-> detail navigation ------------------------------------------------
+
+    private fun showSection(id: String) {
+        val b = binding ?: return
+        activeSection = id
+        val meta = SECTIONS.first { it.id == id }
+        b.tvDetailTitle.text = getString(meta.titleRes)
+        for ((key, card) in detailCards(b)) card.visibility = if (key == id) View.VISIBLE else View.GONE
+        b.settingsListScroll.visibility = View.GONE
+        b.settingsDetailScroll.visibility = View.VISIBLE
+        b.settingsDetailScroll.scrollTo(0, 0)
+    }
+
+    private fun showList() {
+        val b = binding ?: return
+        activeSection = null
+        b.settingsDetailScroll.visibility = View.GONE
+        b.settingsListScroll.visibility = View.VISIBLE
+        buildList() // values may have changed while a section was open
+    }
+
+    private fun detailCards(b: FragmentSettingsBinding): Map<String, MaterialCardView> = mapOf(
+        "appearance" to b.cardAppearance,
+        "startup" to b.cardStartup,
+        "ai" to b.cardAi,
+        "data" to b.cardData,
+        "news" to b.cardNews,
+        "charts" to b.cardCharts,
+        "notifications" to b.cardNotifications,
+        "about" to b.cardAbout,
+    )
+
+    // -- List pane: grouped rows with live summaries -------------------------------
+
+    private fun buildList() {
+        val b = binding ?: return
+        b.llGroupFrequent.removeAllViews()
+        b.llGroupMore.removeAllViews()
+        b.llGroupAbout.removeAllViews()
+
+        val query = b.etSettingsSearch.text?.toString()?.trim()?.lowercase() ?: ""
+        val visible = SECTIONS.filter { query.isEmpty() || getString(it.titleRes).lowercase().contains(query) }
+
+        addRows(b.llGroupFrequent, visible.filter { it.group == Group.FREQUENT })
+        addRows(b.llGroupMore, visible.filter { it.group == Group.MORE })
+        addRows(b.llGroupAbout, visible.filter { it.group == Group.ABOUT })
+
+        val hasFrequent = visible.any { it.group == Group.FREQUENT }
+        val hasMore = visible.any { it.group == Group.MORE }
+        val hasAbout = visible.any { it.group == Group.ABOUT }
+        b.tvGroupFrequent.visibility = if (hasFrequent) View.VISIBLE else View.GONE
+        b.cardGroupFrequent.visibility = if (hasFrequent) View.VISIBLE else View.GONE
+        b.tvGroupMore.visibility = if (hasMore) View.VISIBLE else View.GONE
+        b.cardGroupMore.visibility = if (hasMore) View.VISIBLE else View.GONE
+        b.tvGroupAbout.visibility = if (hasAbout) View.VISIBLE else View.GONE
+        b.cardGroupAbout.visibility = if (hasAbout) View.VISIBLE else View.GONE
+    }
+
+    private fun addRows(container: LinearLayout, rows: List<SectionMeta>) {
+        val inflater = LayoutInflater.from(requireContext())
+        rows.forEachIndexed { i, meta ->
+            val row = inflater.inflate(R.layout.item_settings_row, container, false)
+            val tvBadge: TextView = row.findViewById(R.id.tvBadge)
+            val tvTitle: TextView = row.findViewById(R.id.tvRowTitle)
+            val tvSummary: TextView = row.findViewById(R.id.tvRowSummary)
+            val divider: View = row.findViewById(R.id.rowDivider)
+            val content: View = row.findViewById(R.id.rowContent)
+
+            tvBadge.text = meta.initials
+            val (bg, fg) = if (meta.group == Group.ABOUT)
+                Pair(R.color.tab_bg_warm_gray, R.color.text_secondary)
+            else
+                Pair(R.color.accent_purple_soft, R.color.accent_purple)
+            tvBadge.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), bg))
+            tvBadge.setTextColor(ContextCompat.getColor(requireContext(), fg))
+            tvTitle.text = getString(meta.titleRes)
+            tvSummary.text = summaryFor(meta.id)
+            divider.visibility = if (i == rows.lastIndex) View.GONE else View.VISIBLE
+            content.setOnClickListener { showSection(meta.id) }
+            container.addView(row)
+        }
+    }
+
+    private fun summaryFor(id: String): String {
+        val c = requireContext()
+        return when (id) {
+            "appearance" -> {
+                val themeLabel = when (SettingsManager.getNightMode(c)) {
+                    AppCompatDelegate.MODE_NIGHT_NO -> getString(R.string.theme_light)
+                    AppCompatDelegate.MODE_NIGHT_YES -> getString(R.string.theme_dark)
+                    else -> getString(R.string.theme_system)
+                }
+                val hapticsOn = SettingsManager.getBool(c, SettingsManager.KEY_HAPTICS, true)
+                getString(R.string.settings_summary_appearance, themeLabel, onOff(hapticsOn))
+            }
+            "startup" -> {
+                val labels = intArrayOf(R.string.tab_overview, R.string.tab_markets, R.string.tab_economy, R.string.tab_news)
+                getString(labels[SettingsManager.getDefaultTab(c).coerceIn(0, 3)])
+            }
+            "ai" -> {
+                val chipsOn = SettingsManager.getBool(c, SettingsManager.KEY_SMART_CHIPS, true)
+                val detailed = SettingsManager.getBool(c, SettingsManager.KEY_DETAILED_AI, false)
+                getString(
+                    R.string.settings_summary_ai,
+                    getString(if (chipsOn) R.string.settings_summary_ai_chips_on else R.string.settings_summary_ai_chips_off),
+                    getString(if (detailed) R.string.settings_summary_ai_detailed else R.string.settings_summary_ai_concise)
+                )
+            }
+            "data" -> getString(
+                if (SettingsManager.getBool(c, SettingsManager.KEY_REFRESH_ON_OPEN, false))
+                    R.string.settings_summary_data_on_open else R.string.settings_summary_data_manual
+            )
+            "news" -> getString(R.string.settings_summary_news, NEWS_KEYS.count { SettingsManager.getBool(c, it, true) })
+            "charts" -> getString(
+                R.string.settings_summary_charts,
+                onOff(SettingsManager.gridlinesEnabled(c)),
+                timeframeLabel(SettingsManager.getChartTimeframeMonths(c))
+            )
+            "notifications" -> getString(
+                R.string.settings_summary_notifications,
+                NOTIFY_KEYS.count { SettingsManager.getBool(c, it, false) }
+            )
+            "about" -> try {
+                val name = c.packageManager.getPackageInfo(c.packageName, 0).versionName
+                getString(R.string.about_version_label, name)
+            } catch (e: Exception) {
+                "Econ Monitor"
+            }
+            else -> ""
+        }
+    }
+
+    private fun onOff(v: Boolean) = getString(if (v) R.string.settings_summary_on else R.string.settings_summary_off)
+
+    private fun timeframeLabel(months: Int): String = when (months) {
+        3 -> getString(R.string.tf_3m)
+        6 -> getString(R.string.tf_6m)
+        12 -> getString(R.string.tf_1y)
+        24 -> getString(R.string.tf_2y)
+        else -> getString(R.string.tf_5y)
     }
 
     // -- Appearance -----------------------------------------------------------
@@ -90,7 +275,7 @@ class SettingsBottomSheet : BottomSheetDialogFragment() {
                 else if (checkedId == R.id.btnThemeDark) newMode = AppCompatDelegate.MODE_NIGHT_YES
                 if (newMode != SettingsManager.getNightMode(requireContext())) {
                     SettingsManager.setNightMode(requireContext(), newMode)
-                    // Recreates the activity with the new theme. The sheet is restored
+                    // Recreates the activity with the new theme. Settings is restored
                     // automatically afterwards, so the user can keep comparing themes.
                     AppCompatDelegate.setDefaultNightMode(newMode)
                 }
@@ -102,7 +287,7 @@ class SettingsBottomSheet : BottomSheetDialogFragment() {
         bindSwitch(v, R.id.switchColorblind, SettingsManager.KEY_COLORBLIND, false) {
             host().getViewModel().fetchAllData()
         }
-        bindSwitch(v, R.id.switchHaptics, SettingsManager.KEY_HAPTICS, true, null) // IOS-09
+        bindSwitch(v, R.id.switchHaptics, SettingsManager.KEY_HAPTICS, true, null)
     }
 
     // -- Data -----------------------------------------------------------------
@@ -111,7 +296,7 @@ class SettingsBottomSheet : BottomSheetDialogFragment() {
         val btnRefresh: MaterialButton = v.findViewById(R.id.btnRefreshNow)
         val btnClear: MaterialButton = v.findViewById(R.id.btnClearCache)
 
-        // Refresh runs inline: the sheet stays open and the button shows progress.
+        // Refresh runs inline: Settings stays open and the button shows progress.
         btnRefresh.setOnClickListener {
             val act = host()
             btnRefresh.isEnabled = false
@@ -158,7 +343,7 @@ class SettingsBottomSheet : BottomSheetDialogFragment() {
     private fun updateLastUpdated() {
         val v = view ?: return
         val tv: TextView = v.findViewById(R.id.tvLastUpdated)
-        val act = host() // capture now: safe if the sheet closes before the callback
+        val act = host() // capture now: safe if the fragment is torn down before the callback
         CacheManager.getStatus(act) { status ->
             act.runOnUiThread {
                 if (isAdded) tv.text = status.toDisplayString()
@@ -354,7 +539,7 @@ class SettingsBottomSheet : BottomSheetDialogFragment() {
 
     // -- Helpers ------------------------------------------------------------------------
 
-    /** Short confirmation shown inside the sheet after a consequential change. */
+    /** Short confirmation shown after a consequential change. */
     private fun snack(messageRes: Int) {
         val v = view ?: return
         Snackbar.make(v, messageRes, Snackbar.LENGTH_SHORT).show()
@@ -379,11 +564,26 @@ class SettingsBottomSheet : BottomSheetDialogFragment() {
         }
     }
 
+    // -- Section catalog ------------------------------------------------------------
+
+    private enum class Group { FREQUENT, MORE, ABOUT }
+
+    private data class SectionMeta(val id: String, val titleRes: Int, val initials: String, val group: Group)
+
     companion object {
-        /** Read as `SettingsBottomSheet.TAG` from MainActivity.java (still Java
-         *  until 11c), so this must be a `const val` — a plain `val` would need
-         *  `Companion.getTAG()`. */
-        const val TAG = "SettingsBottomSheet"
+        /** Fragment-manager tag, shared by MainActivity's open/close/back logic. */
+        const val TAG = "SettingsFragment"
+
+        private val SECTIONS = listOf(
+            SectionMeta("appearance", R.string.section_appearance, "Ap", Group.FREQUENT),
+            SectionMeta("startup", R.string.section_startup_tab, "St", Group.FREQUENT),
+            SectionMeta("ai", R.string.section_ai_analyst, "AI", Group.FREQUENT),
+            SectionMeta("data", R.string.section_data, "Da", Group.MORE),
+            SectionMeta("news", R.string.section_news_sources, "Ne", Group.MORE),
+            SectionMeta("charts", R.string.section_charts, "Ch", Group.MORE),
+            SectionMeta("notifications", R.string.section_notifications, "No", Group.MORE),
+            SectionMeta("about", R.string.section_about, "Ab", Group.ABOUT),
+        )
 
         private val NEWS_KEYS = arrayOf(
             SettingsManager.KEY_NEWS_GOV, SettingsManager.KEY_NEWS_MEDIA,
@@ -392,5 +592,9 @@ class SettingsBottomSheet : BottomSheetDialogFragment() {
         private val NEWS_SWITCH_IDS = intArrayOf(
             R.id.switchNewsGov, R.id.switchNewsMedia,
             R.id.switchNewsIntl, R.id.switchNewsResearch)
+
+        private val NOTIFY_KEYS = arrayOf(
+            SettingsManager.KEY_NOTIFY_BIG_MOVES, SettingsManager.KEY_NOTIFY_RELEASES,
+            SettingsManager.KEY_DAILY_BRIEF)
     }
 }
