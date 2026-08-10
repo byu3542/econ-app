@@ -193,7 +193,7 @@ separator change affects every tab, so check those three screens don't regress.
 
 1. The code changes above.
 2. `CHANGES_2026-07-27_sheet_and_largetitle.md` in the repo root **and** copied
-   to `C:\Users\kaaro\OneDrive\Documents\Claude\Projects\Android Econ Monitor App\`
+   to `C:\Android App\ProjectDocs\`
    (per `CLAUDE.md`), in the same style as the existing dated changes docs:
    root cause per defect, what shipped, anything scoped down and why, and an
    "Eyeball in Android Studio" checklist.

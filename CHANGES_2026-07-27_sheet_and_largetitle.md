@@ -206,7 +206,7 @@ rest of the masthead rather than fading like the bar's hairline does.
 
 `UX_DESIGN_LAWS.md` and `CLAUDE.md` are not present in the
 `EconomicDashboard` repo itself — both were found in
-`C:\Users\kaaro\OneDrive\Documents\Claude\Projects\Android Econ Monitor App\`
+`C:\Android App\ProjectDocs\`
 and consulted from there for this change (the Law 4 citation above).
 
 ## Final verification notes
