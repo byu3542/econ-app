@@ -56,7 +56,7 @@ class IndicatorPickerBottomSheet : BottomSheetDialogFragment() {
             val header = TextView(ctx)
             header.text = group
             header.setTextAppearance(android.R.style.TextAppearance_Small)
-            header.setTextColor(resolveColor(ctx, R.color.gold_muted))
+            header.setTextColor(resolveColor(ctx, R.color.text_secondary))
             header.textSize = 11f
             header.isAllCaps = true
             header.letterSpacing = 0.1f

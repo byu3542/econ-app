@@ -41,10 +41,7 @@ import com.economic.dashboard.models.EconomicDataPoint
 import com.economic.dashboard.utils.AppExecutors
 import com.economic.dashboard.utils.MotionUtil
 import com.economic.dashboard.views.SparklineView
-import io.noties.markwon.AbstractMarkwonPlugin
 import io.noties.markwon.Markwon
-import io.noties.markwon.MarkwonSpansFactory
-import org.commonmark.node.StrongEmphasis
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Collections
@@ -131,17 +128,11 @@ class ChatAdapter(
         return ViewHolder(v)
     }
 
-    /** Lazily builds Markwon; **bold** key figures render in gold ink. */
+    /** Lazily builds Markwon; **bold** key figures render as plain bold text
+     *  (TICKET-43 follow-up: gold ink on every bold span overloaded the accent). */
     private fun ensureMarkwon(ctx: Context) {
         if (markwon != null) return
-        val goldInk = ContextCompat.getColor(ctx, R.color.gold_ink)
-        markwon = Markwon.builder(ctx)
-            .usePlugin(object : AbstractMarkwonPlugin() {
-                override fun configureSpansFactory(builder: MarkwonSpansFactory.Builder) {
-                    builder.appendFactory(StrongEmphasis::class.java) { _, _ -> ForegroundColorSpan(goldInk) }
-                }
-            })
-            .build()
+        markwon = Markwon.builder(ctx).build()
     }
 
     private fun renderText(holder: ViewHolder, m: ChatMessage) {

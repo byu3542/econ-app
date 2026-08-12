@@ -72,7 +72,7 @@
                     android:layout_marginTop="@dimen/space_sm"
                     android:text="View history →"
                     android:textSize="@dimen/text_caption"
-                    android:textColor="@color/gold_muted"
+                    android:textColor="@color/text_on_navy_muted"
                     android:fontFamily="sans-serif" />
 
                 <!-- Shown only when the Fed Funds series fails to refresh; the

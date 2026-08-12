@@ -42,7 +42,6 @@
          from every badge) — still used for supporting copy on navy hero cards. -->
     <color name="text_on_navy_muted">#8CFFFFFF</color>
     <color name="text_on_navy_secondary">#A6FFFFFF</color>
-    <color name="gold_muted">#99C9A84C</color>
     <!-- Design branch 2a: indicator picker's checked-row tint -->
     <color name="bg_selected_row">#1FEFE6C9</color>
 

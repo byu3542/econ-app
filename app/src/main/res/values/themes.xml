@@ -312,7 +312,7 @@
     </style>
 
     <!-- ── Overview metric grouping (TICKET-05) ──────────────────────────── -->
-    <!-- Gold, all-caps label above each KPI cluster. -->
+    <!-- Neutral, all-caps label above each KPI cluster. -->
     <style name="MetricGroupHeader">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
@@ -320,7 +320,8 @@
         <item name="android:textStyle">bold</item>
         <item name="android:textAllCaps">true</item>
         <item name="android:letterSpacing">0.12</item>
-        <item name="android:textColor">@color/accent_gold</item>
+        <!-- TICKET-43 follow-up: neutral, so Card.Overline is the screen's only gold layer -->
+        <item name="android:textColor">@color/text_secondary</item>
         <item name="android:layout_marginBottom">@dimen/space_sm</item>
     </style>
 

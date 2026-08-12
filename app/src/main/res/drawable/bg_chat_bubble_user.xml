@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
     <solid android:color="@color/card_navy_badge" />
-    <stroke android:width="1dp" android:color="@color/gold_hairline" />
+    <stroke android:width="1dp" android:color="@color/header_hairline_neutral" />
     <corners
         android:topLeftRadius="18dp"
         android:topRightRadius="18dp"

@@ -56,7 +56,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="ECON ANALYST"
-                    android:textColor="@color/accent_gold"
+                    android:textColor="@color/card_white"
                     android:textSize="@dimen/text_body"
                     android:textStyle="bold"
                     android:textAllCaps="true"
@@ -94,11 +94,12 @@
 
     </LinearLayout>
 
-    <!-- Header divider -->
+    <!-- Header divider (TICKET-43 follow-up: neutral; gold in chat is identity
+         icon + send + sparklines only) -->
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="@color/accent_gold" />
+        android:background="@color/hairline_on_surface" />
 
     <!-- Quick-ask chip row -->
     <TextView
@@ -262,7 +263,7 @@
             android:layout_marginBottom="@dimen/space_md"
             android:text="↓ New reply"
             android:textSize="@dimen/text_secondary"
-            android:textColor="@color/accent_gold"
+            android:textColor="@color/card_white"
             android:background="@drawable/bg_pill_navy"
             android:paddingHorizontal="@dimen/space_lg"
             android:paddingVertical="@dimen/space_sm"
