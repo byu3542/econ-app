@@ -103,6 +103,20 @@ class DashboardFragment : Fragment() {
         bindViews(view)
         observeData()
 
+        // Fragment-result wiring for the edit-cards sheet: registered every time
+        // the view is (re)created, so a sheet that outlives a rotation or theme
+        // switch still delivers Done into a listener that exists. The old
+        // retained-lambda wiring lost the callback on recreation and Done
+        // silently discarded the user's edits.
+        parentFragmentManager.setFragmentResultListener(
+            EditCardsBottomSheet.REQUEST_KEY, viewLifecycleOwner
+        ) { _, result ->
+            val heroId = result.getString(EditCardsBottomSheet.KEY_RESULT_HERO_ID) ?: return@setFragmentResultListener
+            val slotIds = result.getStringArrayList(EditCardsBottomSheet.KEY_RESULT_SLOT_IDS) ?: return@setFragmentResultListener
+            val categoryOrder = result.getStringArrayList(EditCardsBottomSheet.KEY_RESULT_CATEGORY_ORDER) ?: return@setFragmentResultListener
+            onCardsSaved(heroId, slotIds, categoryOrder)
+        }
+
         // Cache-first paint: if we have a cached snapshot, reveal content
         // immediately and never show the skeleton — only a first-ever launch
         // (empty cache) waits on the shimmer.
@@ -219,20 +233,23 @@ class DashboardFragment : Fragment() {
             blocks.add(EditCardsBottomSheet.CategoryBlock(cat.key, cat.title, cat.catalogGroups, slots))
         }
 
-        EditCardsBottomSheet.show(parentFragmentManager, heroRow, blocks) { heroId, slotIds, categoryOrder ->
-            heroIndicatorId = heroId
-            context?.let { SettingsManager.setDashboardHero(it, heroId) }
-            refreshHeroLabel()
-            refreshHero()
+        EditCardsBottomSheet.show(parentFragmentManager, heroRow, blocks)
+    }
 
-            slotIndicatorIds.clear()
-            slotIndicatorIds.addAll(slotIds)
-            context?.let { SettingsManager.setDashboardSlots(it, slotIndicatorIds) }
-            refreshAllSlots()
+    /** Persists a Done from the edit-cards sheet (delivered via fragment result). */
+    private fun onCardsSaved(heroId: String, slotIds: List<String>, categoryOrder: List<String>) {
+        heroIndicatorId = heroId
+        context?.let { SettingsManager.setDashboardHero(it, heroId) }
+        refreshHeroLabel()
+        refreshHero()
 
-            context?.let { SettingsManager.setDashboardCategoryOrder(it, categoryOrder) }
-            view?.let { applyCategoryOrder(it) }
-        }
+        slotIndicatorIds.clear()
+        slotIndicatorIds.addAll(slotIds)
+        context?.let { SettingsManager.setDashboardSlots(it, slotIndicatorIds) }
+        refreshAllSlots()
+
+        context?.let { SettingsManager.setDashboardCategoryOrder(it, categoryOrder) }
+        view?.let { applyCategoryOrder(it) }
     }
 
     /** Wires the hero card's tap (same generic benchmark/data popup every other

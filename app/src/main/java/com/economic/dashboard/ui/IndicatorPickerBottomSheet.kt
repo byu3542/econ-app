@@ -24,13 +24,17 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
  */
 class IndicatorPickerBottomSheet : BottomSheetDialogFragment() {
 
-    fun interface Listener {
-        fun onIndicatorSelected(id: String)
-    }
-
     private var currentId: String? = null
     private var groupFilter: List<String>? = null
-    private var listener: Listener? = null
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        // Everything this sheet needs lives in arguments, so the restored
+        // instance filters and delivers exactly like the original — the old
+        // retained-field wiring left a recreated picker unfiltered and inert.
+        currentId = arguments?.getString(KEY_CURRENT_ID)
+        groupFilter = arguments?.getStringArrayList(KEY_GROUP_FILTER)
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -78,7 +82,14 @@ class IndicatorPickerBottomSheet : BottomSheetDialogFragment() {
                     if (selected) resolveColor(ctx, R.color.bg_selected_row) else android.graphics.Color.TRANSPARENT
                 )
                 row.setOnClickListener {
-                    listener?.onIndicatorSelected(ind.id)
+                    val result = Bundle()
+                    result.putString(KEY_SELECTED_ID, ind.id)
+                    // Echo the target back so the caller knows which slot this
+                    // selection is for even after both sheets were recreated.
+                    result.putString(KEY_TARGET_KIND, arguments?.getString(KEY_TARGET_KIND))
+                    result.putString(KEY_TARGET_CAT, arguments?.getString(KEY_TARGET_CAT))
+                    result.putInt(KEY_TARGET_SLOT, arguments?.getInt(KEY_TARGET_SLOT, -1) ?: -1)
+                    parentFragmentManager.setFragmentResult(REQUEST_KEY, result)
                     dismissAllowingStateLoss()
                 }
                 container.addView(row)
@@ -95,15 +106,30 @@ class IndicatorPickerBottomSheet : BottomSheetDialogFragment() {
     companion object {
         const val TAG = "IndicatorPickerBottomSheet"
 
+        /** Fragment-result contract with the caller (EditCardsBottomSheet). */
+        const val REQUEST_KEY = "indicator_picker_result"
+        const val KEY_SELECTED_ID = "selected_id"
+        const val KEY_TARGET_KIND = "target_kind"
+        const val KEY_TARGET_CAT = "target_cat"
+        const val KEY_TARGET_SLOT = "target_slot"
+
+        private const val KEY_CURRENT_ID = "current_id"
+        private const val KEY_GROUP_FILTER = "group_filter"
+
         @JvmStatic
         fun show(
             fm: androidx.fragment.app.FragmentManager, currentId: String?,
-            groupFilter: List<String>? = null, listener: Listener
+            groupFilter: List<String>? = null,
+            targetKind: String, targetCatKey: String?, targetPhysicalIndex: Int
         ) {
             val sheet = IndicatorPickerBottomSheet()
-            sheet.currentId = currentId
-            sheet.groupFilter = groupFilter
-            sheet.listener = listener
+            val args = Bundle()
+            args.putString(KEY_CURRENT_ID, currentId)
+            if (groupFilter != null) args.putStringArrayList(KEY_GROUP_FILTER, ArrayList(groupFilter))
+            args.putString(KEY_TARGET_KIND, targetKind)
+            args.putString(KEY_TARGET_CAT, targetCatKey)
+            args.putInt(KEY_TARGET_SLOT, targetPhysicalIndex)
+            sheet.arguments = args
             sheet.show(fm, TAG)
         }
     }
