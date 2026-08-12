@@ -67,6 +67,36 @@ object SeriesMath {
     }
 
     /**
+     * 30-Yr mortgage rate minus 10Y Treasury spread. Pairs each weekly mortgage
+     * print with the most recent daily Treasury close on or before that date
+     * (the two series never share exact dates). Extracted from HousingFragment's
+     * computeSpreadRows (P6 TICKET-35) so the Housing spread badge and the
+     * "mortgagespread" popup compute the series from exactly one formula.
+     * Both inputs are date-sorted, pre-filtered single series.
+     */
+    @JvmStatic
+    fun mortgageMinusTenYearSpread(
+        mortgageRows: List<EconomicDataPoint>, treasuryRows: List<EconomicDataPoint>
+    ): List<EconomicDataPoint> {
+        val out = ArrayList<EconomicDataPoint>()
+        if (mortgageRows.isEmpty() || treasuryRows.isEmpty()) return out
+        var tIdx = 0
+        var lastTreasury: EconomicDataPoint? = null
+        for (m in mortgageRows) {
+            while (tIdx < treasuryRows.size && treasuryRows[tIdx].date.compareTo(m.date) <= 0) {
+                lastTreasury = treasuryRows[tIdx]
+                tIdx++
+            }
+            val lt = lastTreasury
+            if (lt != null) {
+                out.add(EconomicDataPoint("Calculated", "Housing", "Mortgage-10Y Spread",
+                    m.date, m.value - lt.value, "%"))
+            }
+        }
+        return out
+    }
+
+    /**
      * Real wage growth spread, point for point: wage YoY % minus CPI YoY %, matched by
      * date. Both [wageRows] and [cpiRows] are raw (non-YoY) date-sorted series — this
      * runs [yoyPercentSeries] on each internally.

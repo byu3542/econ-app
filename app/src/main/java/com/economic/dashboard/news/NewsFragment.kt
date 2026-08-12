@@ -12,6 +12,9 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.economic.dashboard.R
 import com.economic.dashboard.databinding.FragmentNewsBinding
 import com.economic.dashboard.utils.EdgeToEdgeInsets
+import com.economic.dashboard.utils.MotionUtil
+import com.economic.dashboard.utils.NumberFormatUtil
+import com.facebook.shimmer.ShimmerFrameLayout
 
 class NewsFragment : Fragment() {
 
@@ -51,8 +54,13 @@ class NewsFragment : Fragment() {
         recycler.layoutManager = LinearLayoutManager(requireContext())
         recycler.adapter = newsAdapter
 
-        // ─── Progress / Error views ──────────────────────────────────────────────
-        val progressBar = b.progressNews
+        // ─── Skeleton / Error views ──────────────────────────────────────────────
+        // P6 TICKET-36: list-shaped shimmer instead of the old ProgressBar; static
+        // placeholder (shimmer stopped) when system animations are off.
+        val skeletonView = b.skeletonNews.root
+        if (!MotionUtil.animationsEnabled(requireContext())) {
+            (skeletonView as? ShimmerFrameLayout)?.stopShimmer()
+        }
         val tvError = b.textNewsError
         b.btnNewsRetry.setOnClickListener {
             b.errorContainer.visibility = View.GONE
@@ -91,16 +99,16 @@ class NewsFragment : Fragment() {
             val empty = items == null || items.isEmpty()
             recycler.visibility = if (empty) View.GONE else View.VISIBLE
             b.emptyContainer.visibility = if (empty) View.VISIBLE else View.GONE
-            if (!empty) {
-                b.textNewsMeta.text = getString(R.string.news_meta, items.size, "just now")
-            }
+            // P6 TICKET-36: updateMeta reads the fresh fetch time — loadNews always
+            // stamps lastFetchMillis before posting the list, so no separate
+            // lastFetchMillis observer is needed.
+            if (!empty) updateMeta(items.size)
         }
 
         viewModel.getIsLoading().observe(viewLifecycleOwner) { loading ->
             val hasData = newsAdapter.itemCount > 0
-            // Show ProgressBar only on initial load (no data yet)
-            progressBar.visibility = if (loading && !hasData) View.VISIBLE else View.GONE
-            b.textNewsLoading.visibility = if (loading && !hasData) View.VISIBLE else View.GONE
+            // Show the skeleton only on initial load (no data yet)
+            skeletonView.visibility = if (loading && !hasData) View.VISIBLE else View.GONE
             if (loading && !hasData) b.emptyContainer.visibility = View.GONE
             // Stop swipe refresh indicator when done
             if (!loading) swipeRefresh.isRefreshing = false
@@ -114,13 +122,22 @@ class NewsFragment : Fragment() {
                 if (hasError && newsAdapter.itemCount == 0) View.VISIBLE else View.GONE
             if (hasError && newsAdapter.itemCount == 0) {
                 b.emptyContainer.visibility = View.GONE
-                b.textNewsLoading.visibility = View.GONE
+                skeletonView.visibility = View.GONE
             }
             if (hasError) tvError.text = error
         }
 
         // ─── Initial load ────────────────────────────────────────────────────────
         viewModel.loadNews(false)
+    }
+
+    /** P6 TICKET-36: "N stories · Updated Aug 11, 9:38 AM ET" from the real fetch time. */
+    private fun updateMeta(count: Int) {
+        val b = binding ?: return
+        val fetched = viewModel.getLastFetchMillis().value
+        val stamp = if (fetched != null && fetched > 0)
+            NumberFormatUtil.asOf(fetched).removePrefix("As of ") else "—"
+        b.textNewsMeta.text = getString(R.string.news_meta, count, stamp)
     }
 
     override fun onDestroyView() {

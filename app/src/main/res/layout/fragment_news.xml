@@ -200,22 +200,13 @@
 
             </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
-            <ProgressBar
-                android:id="@+id/progress_news"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:visibility="gone" />
-
-            <TextView
-                android:id="@+id/text_news_loading"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_marginTop="56dp"
-                android:text="@string/news_loading"
-                android:textColor="@color/text_secondary"
-                android:textSize="@dimen/text_secondary"
+            <!-- P6 TICKET-36: list-shaped shimmer replaces the old ProgressBar +
+                 loading text on first load, matching every other data screen. -->
+            <include
+                android:id="@+id/skeleton_news"
+                layout="@layout/view_news_skeleton"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
                 android:visibility="gone" />
 
             <LinearLayout

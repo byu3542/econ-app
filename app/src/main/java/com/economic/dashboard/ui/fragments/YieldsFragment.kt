@@ -16,6 +16,7 @@ import com.economic.dashboard.analyst.AskAnalyst
 import com.economic.dashboard.databinding.FragmentYieldsBinding
 import com.economic.dashboard.models.EconomicDataPoint
 import com.economic.dashboard.ui.EconomicViewModel
+import com.economic.dashboard.ui.MetricPopupController
 import com.economic.dashboard.ui.views.SkeletonController
 import com.economic.dashboard.utils.ChartHelper
 import com.economic.dashboard.utils.DeltaFormatter
@@ -89,6 +90,13 @@ class YieldsFragment : Fragment() {
         setupTreasuryRow(row30Y, "30 Year")
         applyZebra()
 
+        // P6 TICKET-35: single-chart screen — the 10Y row (the screen's headline
+        // maturity, and the only one with a fetched history series) opens the
+        // shared "yield10y" popup + Add-alert on any tap.
+        row10Y.setOnClickListener {
+            MetricPopupController.show(requireContext(), viewModel, "yield10y")
+        }
+
         viewModel.getTreasuryData().observe(viewLifecycleOwner) { data ->
             if (data != null) {
                 buildYieldCurveChart(data); updateTreasury(data)
@@ -97,6 +105,10 @@ class YieldsFragment : Fragment() {
         }
     }
 
+    // P6 TICKET-38: this chart plots the *maturity curve* (x = 1M…30Y maturities,
+    // one point per tenor, latest date only) — not a time series. A timeframe
+    // selector doesn't apply, so its absence here is deliberate, mirroring the
+    // P4 crosshair exclusion for the same reason.
     private fun buildYieldCurveChart(data: List<EconomicDataPoint>) {
         var latestDate: String? = null
         for (p in data)

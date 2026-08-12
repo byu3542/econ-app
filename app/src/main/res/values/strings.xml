@@ -153,7 +153,6 @@
     <string name="news_updated">News feed updated</string>
     <string name="news_subtitle">The latest stories shaping the economy</string>
     <string name="news_meta">%1$d stories  ·  Updated %2$s</string>
-    <string name="news_loading">Loading the latest stories…</string>
     <string name="news_empty_title">No stories found</string>
     <string name="news_empty_subtitle">Try another topic or refresh the feed.</string>
     <string name="news_clear_filter">Clear filter</string>

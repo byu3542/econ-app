@@ -232,7 +232,9 @@ class InflationFragment : Fragment() {
             return
         }
 
-        // Shared with WagesFragment and MetricPopupController's "wages" popup — one formula (TICKET-03).
+        // Shared with MetricPopupController's "wages" popup — one formula (TICKET-03).
+        // (WagesFragment, the formula's other historical caller, was removed as an
+        // orphaned screen in P6 TICKET-40.)
         val spreadRows = SeriesMath.realWageGrowthSpread(wRows, cRows)
         if (spreadRows.isEmpty()) return
         val spread = spreadRows[spreadRows.size - 1].value

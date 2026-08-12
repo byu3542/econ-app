@@ -41,16 +41,60 @@ class EditCardsBottomSheet : BottomSheetDialogFragment() {
         @JvmField val slots: MutableList<SlotRow>
     )
 
-    fun interface Listener {
-        /** [slotIds] is 6 ids in fixed physical slot order; [categoryOrder]
-         *  is the final category-block order (keys), for cluster ordering. */
-        fun onCardsSaved(heroId: String, slotIds: List<String>, categoryOrder: List<String>)
-    }
-
     private var hero: HeroRow? = null
     private var categories: MutableList<CategoryBlock> = ArrayList()
-    private var listener: Listener? = null
     private var adapter: RowAdapter? = null
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        // In-progress edits (saved instance state) win over the launch args, so
+        // a rotated sheet keeps uncommitted swaps/reorders instead of resetting.
+        readState(savedInstanceState ?: arguments)
+
+        // Picker results survive recreation because both sides are re-created by
+        // the FragmentManager and this listener is re-registered here — the old
+        // retained-lambda wiring silently dropped the selection after rotation.
+        childFragmentManager.setFragmentResultListener(
+            IndicatorPickerBottomSheet.REQUEST_KEY, this
+        ) { _, result ->
+            val id = result.getString(IndicatorPickerBottomSheet.KEY_SELECTED_ID) ?: return@setFragmentResultListener
+            when (result.getString(IndicatorPickerBottomSheet.KEY_TARGET_KIND)) {
+                TARGET_HERO -> hero?.indicatorId = id
+                TARGET_SLOT -> {
+                    val catKey = result.getString(IndicatorPickerBottomSheet.KEY_TARGET_CAT)
+                    val physicalIndex = result.getInt(IndicatorPickerBottomSheet.KEY_TARGET_SLOT, -1)
+                    val cat = categories.firstOrNull { it.key == catKey }
+                    cat?.slots?.firstOrNull { it.physicalIndex == physicalIndex }?.indicatorId = id
+                }
+            }
+            adapter?.refresh()
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        writeState(outState, hero, categories)
+    }
+
+    private fun readState(state: Bundle?) {
+        state ?: return
+        val heroTitle = state.getString(KEY_HERO_TITLE) ?: return
+        val heroId = state.getString(KEY_HERO_ID) ?: return
+        hero = HeroRow(heroTitle, heroId)
+
+        val keys = state.getStringArrayList(KEY_CAT_KEYS) ?: return
+        val titles = state.getStringArrayList(KEY_CAT_TITLES) ?: return
+        val out = ArrayList<CategoryBlock>(keys.size)
+        for (i in keys.indices) {
+            val groups = state.getStringArrayList(KEY_CAT_GROUPS_PREFIX + i) ?: ArrayList()
+            val slotIdx = state.getIntArray(KEY_CAT_SLOT_IDX_PREFIX + i) ?: IntArray(0)
+            val slotIds = state.getStringArrayList(KEY_CAT_SLOT_IDS_PREFIX + i) ?: ArrayList()
+            val slots = ArrayList<SlotRow>(slotIdx.size)
+            for (s in slotIdx.indices) slots.add(SlotRow(slotIdx[s], slotIds.getOrElse(s) { "" }))
+            out.add(CategoryBlock(keys[i], titles.getOrElse(i) { "" }, groups, slots))
+        }
+        categories = out
+    }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         setStyle(STYLE_NORMAL, R.style.Theme_EconomicDashboard_BottomSheet24)
@@ -92,17 +136,17 @@ class EditCardsBottomSheet : BottomSheetDialogFragment() {
 
     private fun openHeroPicker() {
         val h = hero ?: return
-        IndicatorPickerBottomSheet.show(childFragmentManager, h.indicatorId, null) { id ->
-            h.indicatorId = id
-            adapter?.refresh()
-        }
+        IndicatorPickerBottomSheet.show(
+            childFragmentManager, h.indicatorId, null,
+            targetKind = TARGET_HERO, targetCatKey = null, targetPhysicalIndex = -1
+        )
     }
 
     private fun openSlotPicker(cat: CategoryBlock, slot: SlotRow) {
-        IndicatorPickerBottomSheet.show(childFragmentManager, slot.indicatorId, cat.catalogGroups) { id ->
-            slot.indicatorId = id
-            adapter?.refresh()
-        }
+        IndicatorPickerBottomSheet.show(
+            childFragmentManager, slot.indicatorId, cat.catalogGroups,
+            targetKind = TARGET_SLOT, targetCatKey = cat.key, targetPhysicalIndex = slot.physicalIndex
+        )
     }
 
     private fun commitAndDismiss() {
@@ -121,25 +165,68 @@ class EditCardsBottomSheet : BottomSheetDialogFragment() {
         val out = ArrayList<String>(6)
         for (id in slotIds) out.add(id ?: "")
 
-        listener?.onCardsSaved(h.indicatorId, out, order)
+        val result = Bundle()
+        result.putString(KEY_RESULT_HERO_ID, h.indicatorId)
+        result.putStringArrayList(KEY_RESULT_SLOT_IDS, out)
+        result.putStringArrayList(KEY_RESULT_CATEGORY_ORDER, order)
+        parentFragmentManager.setFragmentResult(REQUEST_KEY, result)
         dismissAllowingStateLoss()
     }
 
     companion object {
         const val TAG = "EditCardsBottomSheet"
 
+        /** Fragment-result contract with the caller (DashboardFragment). */
+        const val REQUEST_KEY = "edit_cards_result"
+        const val KEY_RESULT_HERO_ID = "hero_id"
+        /** 6 ids in fixed physical slot order. */
+        const val KEY_RESULT_SLOT_IDS = "slot_ids"
+        /** Final category-block order (keys), for cluster ordering. */
+        const val KEY_RESULT_CATEGORY_ORDER = "category_order"
+
+        /** Picker target routing (also echoed back in the picker's result). */
+        const val TARGET_HERO = "hero"
+        const val TARGET_SLOT = "slot"
+
+        private const val KEY_HERO_TITLE = "hero_title"
+        private const val KEY_HERO_ID = "hero_indicator_id"
+        private const val KEY_CAT_KEYS = "cat_keys"
+        private const val KEY_CAT_TITLES = "cat_titles"
+        private const val KEY_CAT_GROUPS_PREFIX = "cat_groups_"
+        private const val KEY_CAT_SLOT_IDX_PREFIX = "cat_slot_idx_"
+        private const val KEY_CAT_SLOT_IDS_PREFIX = "cat_slot_ids_"
+
         @JvmStatic
         fun show(
             fm: androidx.fragment.app.FragmentManager,
             hero: HeroRow,
-            categories: List<CategoryBlock>,
-            listener: Listener
+            categories: List<CategoryBlock>
         ) {
             val sheet = EditCardsBottomSheet()
-            sheet.hero = hero
-            sheet.categories = categories.toMutableList()
-            sheet.listener = listener
+            val args = Bundle()
+            writeState(args, hero, categories.toMutableList())
+            sheet.arguments = args
             sheet.show(fm, TAG)
+        }
+
+        /** Flattens hero + blocks into [out] — the classes aren't Parcelable, but
+         *  every field is a String/Int/list of those, so parallel arrays suffice. */
+        private fun writeState(out: Bundle, hero: HeroRow?, categories: List<CategoryBlock>) {
+            hero ?: return
+            out.putString(KEY_HERO_TITLE, hero.title)
+            out.putString(KEY_HERO_ID, hero.indicatorId)
+            val keys = ArrayList<String>(categories.size)
+            val titles = ArrayList<String>(categories.size)
+            for (i in categories.indices) {
+                val cat = categories[i]
+                keys.add(cat.key)
+                titles.add(cat.title)
+                out.putStringArrayList(KEY_CAT_GROUPS_PREFIX + i, ArrayList(cat.catalogGroups))
+                out.putIntArray(KEY_CAT_SLOT_IDX_PREFIX + i, IntArray(cat.slots.size) { cat.slots[it].physicalIndex })
+                out.putStringArrayList(KEY_CAT_SLOT_IDS_PREFIX + i, ArrayList(cat.slots.map { it.indicatorId }))
+            }
+            out.putStringArrayList(KEY_CAT_KEYS, keys)
+            out.putStringArrayList(KEY_CAT_TITLES, titles)
         }
     }
 }

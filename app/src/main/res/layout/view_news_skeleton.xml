@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  P6 TICKET-36: list-shaped loading skeleton for the News screen — the same
+  shimmer treatment view_chart_skeleton.xml gives the chart screens, shaped as
+  headline rows instead of chart cards. Shown only on first load (no data yet);
+  NewsFragment stops the shimmer when system animations are off.
+-->
+<com.facebook.shimmer.ShimmerFrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    app:shimmer_auto_start="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="@dimen/space_lg">
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="88dp"
+            android:layout_marginBottom="@dimen/space_md"
+            android:background="@drawable/bg_skeleton_block" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="88dp"
+            android:layout_marginBottom="@dimen/space_md"
+            android:background="@drawable/bg_skeleton_block" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="88dp"
+            android:layout_marginBottom="@dimen/space_md"
+            android:background="@drawable/bg_skeleton_block" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="88dp"
+            android:background="@drawable/bg_skeleton_block" />
+
+    </LinearLayout>
+
+</com.facebook.shimmer.ShimmerFrameLayout>
