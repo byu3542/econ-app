@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.text.Editable
+import android.util.Log
 import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
@@ -809,13 +810,27 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
             // API can serve it from cache after the first round instead of
             // re-billing it every time (TICKET-E / review F5/Q14).
             val systemBlocks = JSONArray()
+            // Known limitation (AI Law 18): tools + fixed measure well under
+            // Haiku 4.5's 4,096-token minimum cacheable prefix, so on the fast
+            // model THIS breakpoint alone is decorative — under-minimum
+            // prefixes fail silently. It still serves Sonnet (1,024 minimum).
             systemBlocks.put(JSONObject()
                 .put("type", "text")
                 .put("text", systemPrompt.fixed)
                 .put("cache_control", JSONObject().put("type", "ephemeral")))
+            // Second breakpoint on the turn-volatile block (TICKET-P2-1). The
+            // same SystemPromptParts object is reused for every round of one
+            // tool loop, and the data snapshot / history / news it carries are
+            // byte-stable between refreshes — so rounds 2..MAX_TOOL_DEPTH and
+            // back-to-back turns read tools+fixed+rest from cache instead of
+            // re-billing the largest part of the prompt. The combined prefix
+            // also clears Haiku's 4,096 floor, which the fixed block alone
+            // cannot. Verify with usage.cache_read_input_tokens (logged in
+            // handleStreamedResponse), never by assuming.
             systemBlocks.put(JSONObject()
                 .put("type", "text")
-                .put("text", systemPrompt.rest))
+                .put("text", systemPrompt.rest)
+                .put("cache_control", JSONObject().put("type", "ephemeral")))
             body.put("system", systemBlocks)
             body.put("messages", messages)
             // Always send tools: the API rejects a request whose message history
@@ -971,7 +986,20 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
             try { evt = JSONObject(payload) }
             catch (malformed: Exception) { continue } // keep-alives / non-JSON lines like "[DONE]"
             val type = evt.optString("type")
-            if ("content_block_start" == type) {
+            if ("message_start" == type) {
+                // AI Law 18 verification hook (TICKET-P2-1): cache behavior is
+                // invisible without this — under-minimum prefixes fail with no
+                // error, so the only ground truth is the usage block. Expect
+                // cache_read > 0 on round 2+ of a tool loop and on repeat turns
+                // within the 5-minute TTL; persistent zeros mean a silent
+                // invalidator or a prefix below the model's floor.
+                val usage = evt.optJSONObject("message")?.optJSONObject("usage")
+                if (usage != null) Log.d(TAG, "usage: model=" + chooseModel(st, depth) +
+                    " depth=" + depth +
+                    " input=" + usage.optInt("input_tokens") +
+                    " cache_read=" + usage.optInt("cache_read_input_tokens") +
+                    " cache_write=" + usage.optInt("cache_creation_input_tokens"))
+            } else if ("content_block_start" == type) {
                 val block = evt.optJSONObject("content_block")
                 if (block != null && "tool_use" == block.optString("type")) {
                     val tb = ToolUseBlock()
