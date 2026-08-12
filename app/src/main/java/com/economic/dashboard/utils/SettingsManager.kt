@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatDelegate
 import com.economic.dashboard.alerts.AlertRule
+import com.economic.dashboard.ui.EconomicViewModel
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 
@@ -60,6 +61,11 @@ object SettingsManager {
     /** TICKET-24: user-configured metric threshold alerts, stored as a JSON
         array of [AlertRule]. */
     @JvmField val KEY_ALERT_RULES = "alert_rules"
+
+    /** Schema version of the persisted [KEY_ALERT_RULES] evaluation state;
+        bumped when a series' alert units change so [getAlertRules] can reset
+        stale lastState/lastValue exactly once. Unset = 1 (pre-unit-fix). */
+    @JvmField val KEY_ALERT_SCHEMA_VERSION = "alert_schema_version"
 
     /** TICKET-25: watchlist (ordered, comma-separated metric keys) + one-time
         onboarding flag. An empty/missing watchlist means "use the default". */
@@ -186,17 +192,49 @@ object SettingsManager {
     private val alertGson = Gson()
     private val alertListType = object : TypeToken<List<AlertRule>>() {}.type
 
+    /** Current [KEY_ALERT_SCHEMA_VERSION]. v2: "pce" evaluates Core PCE YoY %
+        (was the raw index level) and "wages" the real-wage-growth spread in pp
+        (was nominal $/hour) — see [com.economic.dashboard.alerts.AlertValues]. */
+    private const val ALERT_SCHEMA_VERSION = 2
+
     /** All saved alert rules; never null. */
     @JvmStatic
     fun getAlertRules(c: Context): List<AlertRule> {
         val json = getString(c, KEY_ALERT_RULES, null)
-        if (json.isNullOrEmpty()) return ArrayList()
-        return try {
-            val rules: List<AlertRule>? = alertGson.fromJson(json, alertListType)
-            rules ?: ArrayList()
+        val rules: List<AlertRule> = if (json.isNullOrEmpty()) {
+            ArrayList()
+        } else try {
+            val parsed: List<AlertRule>? = alertGson.fromJson(json, alertListType)
+            parsed ?: ArrayList()
         } catch (e: Exception) {
             ArrayList()
         }
+        migrateAlertEvalState(c, rules)
+        return rules
+    }
+
+    /**
+     * One-time evaluation-state reset for rules whose series changed alert
+     * units at schema v2 (see [ALERT_SCHEMA_VERSION]). Old-unit lastState=true
+     * would swallow the first legitimate crossing in the new units (the
+     * evaluator fires on crossings only), and an old-unit lastValue would fire
+     * one spurious "changed" notification. Every load path funnels through
+     * [getAlertRules], and the stored version stamp keeps this idempotent.
+     */
+    private fun migrateAlertEvalState(c: Context, rules: List<AlertRule>) {
+        if (getInt(c, KEY_ALERT_SCHEMA_VERSION, 1) >= ALERT_SCHEMA_VERSION) return
+        var dirty = false
+        for (r in rules) {
+            if (r.seriesKey == EconomicViewModel.KEY_PCE || r.seriesKey == EconomicViewModel.KEY_WAGES) {
+                if (r.lastState || r.lastValue != null) {
+                    r.lastState = false
+                    r.lastValue = null
+                    dirty = true
+                }
+            }
+        }
+        if (dirty) saveAlertRules(c, rules)
+        setInt(c, KEY_ALERT_SCHEMA_VERSION, ALERT_SCHEMA_VERSION)
     }
 
     /** Overwrites the stored rule list. */

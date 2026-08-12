@@ -75,6 +75,9 @@ class DashboardFragment : Fragment() {
     private var tvCacheAsOf: TextView? = null
     private var skeletonHidden = false
     private var wasLoading = false
+    // Last failed-series set from the ViewModel, kept so the hero retry chip
+    // can re-fetch exactly the fed-funds key(s) that failed (review finding 8).
+    private var lastFailedSeries: Set<String> = emptySet()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -139,9 +142,15 @@ class DashboardFragment : Fragment() {
         // to refresh, without blanking the cards that succeeded.
         viewModel.getFailedSeries().observe(viewLifecycleOwner) { failed ->
             val f: Set<String> = failed ?: emptySet()
+            lastFailedSeries = f
             for (i in slotCards.indices) toggleRetry(slotCards[i], slotIndicatorIds[i], f)
-            // Hero reads the daily series (review finding 8) — retry keys off it.
-            toggleHeroRetry(f.contains(EconomicViewModel.CACHE_FED_FUNDS_DAILY) && heroIndicatorId == "fedfunds")
+            // The hero paints from the daily series, but the metric popup's 5Y
+            // history and the CACHE_FED_FUNDS alert basis read the monthly one —
+            // so the chip appears when EITHER key fails (review finding 8).
+            toggleHeroRetry(
+                (f.contains(EconomicViewModel.CACHE_FED_FUNDS_DAILY) ||
+                    f.contains(EconomicViewModel.CACHE_FED_FUNDS)) && heroIndicatorId == "fedfunds"
+            )
         }
 
         // TICKET-25: rank the Overview clusters by the user's watchlist (or,
@@ -199,7 +208,15 @@ class DashboardFragment : Fragment() {
         tvFedFundsHeroDate = v.findViewById(R.id.tvFedFundsHeroDate)
         tvFedFundsRetry = v.findViewById(R.id.tvFedFundsRetry)
         tvFedFundsRetry?.setOnClickListener {
-            viewModel.retrySeries(EconomicViewModel.CACHE_FED_FUNDS_DAILY)
+            // Retry whichever fed-funds key(s) failed — retrySeries is per-key
+            // and counter-balanced, so one tap can safely re-fetch both.
+            val f = lastFailedSeries
+            if (f.contains(EconomicViewModel.CACHE_FED_FUNDS_DAILY)) {
+                viewModel.retrySeries(EconomicViewModel.CACHE_FED_FUNDS_DAILY)
+            }
+            if (f.contains(EconomicViewModel.CACHE_FED_FUNDS)) {
+                viewModel.retrySeries(EconomicViewModel.CACHE_FED_FUNDS)
+            }
         }
 
         updateNextFomcLabel()
@@ -630,7 +647,10 @@ class DashboardFragment : Fragment() {
         /** Maps a customizable-dashboard indicator id to the CACHE_ key its data
          *  arrives under, for retry-chip wiring. Indicators without a cache key
          *  (corepce/wages/housing/sp500/nasdaq) never show a retry chip today —
-         *  those series don't yet report per-series refresh failures. */
+         *  those series don't yet report per-series refresh failures.
+         *  Note: the map holds ONE key per indicator, so a fedfunds GRID slot's
+         *  chip only covers the daily series; the monthly CACHE_FED_FUNDS
+         *  failure is covered by the hero chip (review finding 8). */
         private val INDICATOR_CACHE_KEY = mapOf(
             "fedfunds" to EconomicViewModel.CACHE_FED_FUNDS_DAILY,
             "gdp" to EconomicViewModel.CACHE_GDP,

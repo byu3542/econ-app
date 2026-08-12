@@ -14,8 +14,9 @@ class NewsViewModel(application: Application) : AndroidViewModel(application) {
     private val isLoading = MutableLiveData(false)
     // Nullable payload: loadNews() clears the previous error with setValue(null).
     private val errorMessage = MutableLiveData<String?>()
-    // P6 TICKET-36: epoch millis of the last successful feed load — the real
-    // freshness behind the header's "Updated …" label (was a hardcoded string).
+    // P6 TICKET-36: epoch millis of the repository's last genuine feed fetch
+    // (mirrors NewsRepository.getLastFetchTimestamp(), unchanged on cache hits) —
+    // the real freshness behind the header's "Updated …" label.
     private val lastFetchMillis = MutableLiveData<Long?>()
 
     private val executor = Executors.newSingleThreadExecutor()
@@ -38,7 +39,10 @@ class NewsViewModel(application: Application) : AndroidViewModel(application) {
                 // fetchAllFeeds returns a non-null List (Kotlin, batch 8), so the
                 // original's null fallback is statically dead.
                 fullList = repository.fetchAllFeeds(forceRefresh)
-                lastFetchMillis.postValue(System.currentTimeMillis())
+                // Use the repository's timestamp, not the call time: a cache hit
+                // returns without a network fetch, and re-stamping here would make
+                // the "Updated" label lie about freshness.
+                lastFetchMillis.postValue(repository.getLastFetchTimestamp())
                 postFilteredList()
             } catch (e: Exception) {
                 errorMessage.postValue("Failed to load news. Check your connection.")

@@ -102,6 +102,28 @@ class AlertValuesTest {
         assertEquals(4.6 - 5.1, fullBuild()[EconomicViewModel.ALERT_SPREAD_3M]!!, 1e-9)
     }
 
+    @Test
+    fun mortgageSpreadMirrorsPopupFormula() {
+        // The "mortgagespread" popup pairs each weekly mortgage print with the
+        // most recent daily 10Y close ON OR BEFORE it — the dates never align.
+        // Staggered fixture: the latest print (2026-07-09, 6.72) must pair with
+        // the 2026-07-08 close (4.40), not the earlier 07-01 close or the
+        // later 07-10 one. Hand-computed: 6.72 − 4.40 = 2.32.
+        val built = AlertValues.build(
+            fedFunds = null, gdp = null, employment = null, cpi = null, vix = null,
+            mbsMortgage = listOf(
+                row("30-Yr Mortgage Rate", "2026-07-02", 6.80),
+                row("30-Yr Mortgage Rate", "2026-07-09", 6.72)),
+            wages = null, pce = null, housing = null, sp500 = null, nasdaq = null,
+            baaSpread = null, hySpread = null,
+            treasury = listOf(
+                row("10 Year", "2026-07-01", 4.50),
+                row("10 Year", "2026-07-08", 4.40),
+                row("10 Year", "2026-07-10", 4.60)),
+            spread2y = null)
+        assertEquals(2.32, built[EconomicViewModel.ALERT_MORTGAGE_SPREAD]!!, 1e-9)
+    }
+
     // ── absent/short series stay absent (Postel: no zeros, no throws) ───────
 
     @Test
