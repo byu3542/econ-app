@@ -56,23 +56,33 @@ android {
 // ── Badge regression guard (R2-TICKET-10) ────────────────────────────────────
 // Fails `gradlew check` if a status badge is styled anywhere other than
 // @style/Badge.Status + layout/view_status_badge.xml. See scripts/check_badges.sh
-// for what it catches and why. Skipped automatically if bash isn't on PATH, so a
-// plain Windows box without Git Bash still builds.
+// for what it catches and why.
+//
+// This gate does NOT skip itself when bash is missing. It used to, via an onlyIf
+// probe — and combined with CRLF line endings in the script, that meant the gate
+// reported success for months without running a single check. A gate that skips
+// itself when its interpreter is absent is worse than no gate: it reports green.
+// If this fails with "requires bash", install Git for Windows.
+// Changed 2026-08-12, agent-autonomy plan U3.
 tasks.register('checkBadges', Exec) {
     group = 'verification'
     description = 'Fails if a status badge is styled outside @style/Badge.Status.'
     workingDir rootProject.projectDir
     commandLine 'bash', 'scripts/check_badges.sh'
-    // Don't break the build on machines with no bash; the CI/dev box that has it
-    // still enforces the rule.
+    // A non-zero exit from the script fails the build. That is the point.
     ignoreExitValue = false
-    onlyIf {
+    doFirst {
+        def ok = false
         try {
-            def probe = new ProcessBuilder('bash', '-c', 'exit 0').start()
-            probe.waitFor() == 0
+            ok = new ProcessBuilder('bash', '-c', 'exit 0').start().waitFor() == 0
         } catch (Exception ignored) {
-            logger.lifecycle('checkBadges: bash not found, skipping badge guard.')
-            false
+            ok = false
+        }
+        if (!ok) {
+            throw new GradleException(
+                'checkBadges requires bash on PATH. Install Git for Windows, or run ' +
+                'gradlew from Git Bash. This gate is not allowed to skip itself — ' +
+                'see the comment above.')
         }
     }
 }
