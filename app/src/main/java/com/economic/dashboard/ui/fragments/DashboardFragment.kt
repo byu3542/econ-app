@@ -9,6 +9,8 @@ import android.view.animation.Animation
 import android.widget.LinearLayout
 import android.widget.TextView
 
+import androidx.core.view.ViewCompat
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat.AccessibilityActionCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
@@ -280,16 +282,33 @@ class DashboardFragment : Fragment() {
         label?.text = DashboardIndicatorCatalog.label(heroIndicatorId)
 
         val hero = cardFedFundsHero ?: return
+        // TICKET-45: loading fallback until refreshHero() has data to speak —
+        // same ", loading" state the slots announce (review finding 4).
+        hero.contentDescription = DashboardIndicatorCatalog.label(heroIndicatorId) + ", loading"
         if (MetricPopupRegistry.byId(heroIndicatorId) != null) {
             hero.setOnClickListener { v2 ->
                 v2.performHapticFeedback(android.view.HapticFeedbackConstants.CONTEXT_CLICK)
                 val ctx = context ?: return@setOnClickListener
                 MetricPopupController.show(ctx, viewModel, heroIndicatorId)
             }
+            // TICKET-45 (review): the grouped description replaces child-text
+            // aggregation, which used to carry "View history →" — name the tap
+            // action so its purpose stays spoken (review finding 3).
+            ViewCompat.replaceAccessibilityAction(
+                hero, AccessibilityActionCompat.ACTION_CLICK,
+                getString(R.string.a11y_view_details), null
+            )
         } else {
             hero.setOnClickListener(null)
+            ViewCompat.replaceAccessibilityAction(
+                hero, AccessibilityActionCompat.ACTION_CLICK, null, null
+            )
         }
         AskAnalyst.wireCardLongPress(hero, requireActivity(), DashboardIndicatorCatalog.label(heroIndicatorId))
+        ViewCompat.replaceAccessibilityAction(
+            hero, AccessibilityActionCompat.ACTION_LONG_CLICK,
+            getString(R.string.a11y_ask_analyst), null
+        )
     }
 
     // ── TICKET-25 / direction 1d: category cluster order ────────────────────
@@ -517,15 +536,41 @@ class DashboardFragment : Fragment() {
                 val ctx = context ?: return@setOnClickListener
                 MetricPopupController.show(ctx, viewModel, id)
             }
+            // TICKET-45 (review): name the tap so TalkBack says "Double-tap to
+            // view benchmarks and history" instead of the bare stock hint.
+            ViewCompat.replaceAccessibilityAction(
+                card, AccessibilityActionCompat.ACTION_CLICK,
+                getString(R.string.a11y_view_details), null
+            )
         } else {
             card.setOnClickListener(null)
+            ViewCompat.replaceAccessibilityAction(
+                card, AccessibilityActionCompat.ACTION_CLICK, null, null
+            )
         }
+        ViewCompat.replaceAccessibilityAction(
+            card, AccessibilityActionCompat.ACTION_LONG_CLICK,
+            getString(R.string.a11y_ask_analyst), null
+        )
 
         val display = DashboardIndicatorCatalog.resolve(id, viewModel)
         val statusBadge: View? = card.findViewById(R.id.statusBadge)
         if (display == null) {
-            // No data yet — leave the skeleton pulse running.
+            // No data yet — first load, or an Edit Cards swap to a series that
+            // hasn't resolved. Reset the previous indicator's bind (value,
+            // delta, sparkline, date) so the card doesn't keep stale pixels
+            // under the new label, and restart the skeleton pulse that
+            // setCardValue() cleared on the earlier bind (review finding 1).
+            val tvValue: TextView? = card.findViewById(R.id.tvMetricValue)
+            if (tvValue != null) {
+                tvValue.text = "—"
+                if (tvValue.animation == null) startSkeleton(card)
+            }
+            card.findViewById<TextView>(R.id.tvMetricDelta)?.visibility = View.GONE
+            card.findViewById<SparklineView>(R.id.sparkline)?.visibility = View.GONE
+            setCardDate(card, "")
             statusBadge?.visibility = View.GONE
+            card.contentDescription = (meta?.label ?: id) + ", loading"
             return
         }
         setCardValue(card, display.value)
@@ -538,10 +583,44 @@ class DashboardFragment : Fragment() {
         } else {
             statusBadge?.visibility = View.GONE
         }
+        // TICKET-45: one grouped TalkBack node per card, built from the same
+        // formatted strings the card displays so speech can't diverge from
+        // pixels. The retry chip stays its own focusable node (it's clickable).
+        card.contentDescription = buildCardDescription(meta?.label ?: id, display)
+    }
+
+    /** "<indicator>, <value>, up/down <delta>, <status word>, <date>" — parts
+     *  omitted exactly when their visual counterpart is hidden. */
+    private fun buildCardDescription(
+        label: String, display: DashboardIndicatorCatalog.SlotDisplay
+    ): String {
+        val sb = StringBuilder(label).append(", ").append(display.value)
+        val delta = display.delta
+        // Same visibility condition as applyDelta(): no chip, no spoken delta.
+        if (delta != null && Math.abs(delta) > 1e-9) {
+            sb.append(", ").append(DeltaFormatter.spoken(delta, display.deltaFmt))
+        }
+        val word = display.tier?.word
+        if (word != null && word.isNotEmpty()) sb.append(", ").append(word)
+        if (display.date.isNotEmpty()) sb.append(", ").append(display.date)
+        return sb.toString()
     }
 
     private fun refreshHero() {
-        val display = DashboardIndicatorCatalog.resolve(heroIndicatorId, viewModel) ?: return
+        val display = DashboardIndicatorCatalog.resolve(heroIndicatorId, viewModel)
+        if (display == null) {
+            // No data for the current hero indicator — first load, or a hero
+            // swap to a series that hasn't resolved. Clear the previous
+            // indicator's pixels (value, delta chip, cycle line, date) so
+            // label, pixels, and speech agree (review finding 2).
+            tvFedFundsHeroValue?.text = "—"
+            changeFedFunds?.visibility = View.GONE
+            tvFedFundsHeroCycle?.visibility = View.GONE
+            tvFedFundsHeroDate?.visibility = View.GONE
+            cardFedFundsHero?.contentDescription =
+                DashboardIndicatorCatalog.label(heroIndicatorId) + ", loading"
+            return
+        }
         val heroValue = tvFedFundsHeroValue
         if (heroValue != null) {
             // TICKET-27: roll the hero value up/down on refresh.
@@ -580,6 +659,26 @@ class DashboardFragment : Fragment() {
             heroDate.visibility = View.VISIBLE
         } else if (heroIndicatorId == "fedfunds") {
             updateNextFomcLabel()
+        }
+
+        // TICKET-45: grouped TalkBack description, assembled last so it reads
+        // the same cycle/date text the hero ended up showing. The retry chip
+        // keeps its own focusable node.
+        cardFedFundsHero?.contentDescription = buildString {
+            append(DashboardIndicatorCatalog.label(heroIndicatorId))
+            append(", ").append(display.value)
+            val delta = display.delta
+            if (delta != null && Math.abs(delta) > 1e-9) {
+                append(", ").append(DeltaFormatter.spoken(delta, display.deltaFmt))
+            }
+            val cycleTv = tvFedFundsHeroCycle
+            if (cycleTv != null && cycleTv.visibility == View.VISIBLE && cycleTv.text.isNotEmpty()) {
+                append(", ").append(cycleTv.text)
+            }
+            val dateTv = tvFedFundsHeroDate
+            if (dateTv != null && dateTv.visibility == View.VISIBLE && dateTv.text.isNotEmpty()) {
+                append(", ").append(dateTv.text)
+            }
         }
     }
 
