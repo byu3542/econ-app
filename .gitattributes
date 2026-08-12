@@ -23,3 +23,11 @@
 *.jar binary
 *.keystore binary
 *.apk binary
+
+# Hooks have no extension but MUST be LF — same CRLF failure class that
+# silenced check_badges.sh for months, aimed at the commit gate itself.
+.githooks/* text eol=lf
+
+# Gate scripts and hook config stay LF so they run identically everywhere.
+*.py text eol=lf
+.claude/settings.json text eol=lf

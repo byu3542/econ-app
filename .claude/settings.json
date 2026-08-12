@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "deny": [
+      "Write(./app/src/test/**)",
+      "Edit(./app/src/test/**)",
+      "Write(./.claude/**)",
+      "Edit(./.claude/**)",
+      "Write(./.githooks/**)",
+      "Edit(./.githooks/**)",
+      "Write(./scripts/check_badges.sh)",
+      "Edit(./scripts/check_badges.sh)",
+      "Write(./scripts/diff_gates.py)",
+      "Edit(./scripts/diff_gates.py)",
+      "Write(./scripts/merge_gate.py)",
+      "Edit(./scripts/merge_gate.py)",
+      "Write(./scripts/.test_baseline)",
+      "Edit(./scripts/.test_baseline)",
+      "Write(./local.properties)",
+      "Edit(./local.properties)",
+      "Write(./.gitattributes)",
+      "Edit(./.gitattributes)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(git commit --amend*)",
+      "Bash(git rebase*)",
+      "Bash(git reset --hard*)",
+      "Bash(git clean -fdx*)",
+      "Bash(git add -A*)",
+      "Bash(git add .*)",
+      "Bash(chmod *)"
+    ],
+    "ask": [
+      "Bash(git merge*)",
+      "Bash(git push*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/deny_paths.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/stop_gate.py\"",
+            "timeout": 960
+          }
+        ]
+      }
+    ]
+  }
+}

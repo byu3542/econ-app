@@ -21,3 +21,12 @@ app/build/
 # Local shortcuts / tool caches
 *.lnk
 proxy/.wrangler/
+
+# Agent gate runtime artifacts (agent-autonomy plan, U4/U6).
+# The hook configuration itself IS versioned — only its output is ignored.
+.claude/gate.log
+.claude/.gate_cache.json
+
+# Python bytecode from the gate scripts
+__pycache__/
+*.pyc
