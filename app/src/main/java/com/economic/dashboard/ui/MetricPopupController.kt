@@ -68,7 +68,7 @@ object MetricPopupController {
         if (primaryThumb != null && segBenchmarks != null && segData != null) {
             val navy = ContextCompat.getColor(ctx, R.color.header_navy)
             val secondaryText = ContextCompat.getColor(ctx, R.color.text_secondary)
-            BinarySwitch.attach(primaryThumb, segBenchmarks, segData, "benchmarks", navy, secondaryText) { tag ->
+            BinarySwitch.attach(primaryThumb, segData, segBenchmarks, "data", navy, secondaryText) { tag ->
                 if (paneStack is android.view.ViewGroup) {
                     TransitionManager.beginDelayedTransition(paneStack, Fade())
                 }
@@ -86,7 +86,7 @@ object MetricPopupController {
         if (secondaryThumb != null && segTable != null && segGraph != null) {
             val gold = ContextCompat.getColor(ctx, R.color.sheet_accent)
             val slate = ContextCompat.getColor(ctx, R.color.sheet_text_secondary)
-            BinarySwitch.attach(secondaryThumb, segTable, segGraph, "graph", gold, slate) { tag ->
+            BinarySwitch.attach(secondaryThumb, segGraph, segTable, "graph", gold, slate) { tag ->
                 if (dataPaneStack is android.view.ViewGroup) {
                     TransitionManager.beginDelayedTransition(dataPaneStack, Fade())
                 }

@@ -43,10 +43,10 @@ object BinarySwitch {
             if (animate) {
                 SegmentedControl.slideTo(thumb, t)
             } else {
-                // Not a plain post {} — e.g. the TABLE/GRAPH switch lives inside
-                // the DATA pane, which is still GONE when this first runs, so
-                // t.width is 0 on the first layout pass. See
-                // SegmentedControl.snapToWhenReady for why that matters.
+                // Not a plain post {} — attach() runs while the freshly inflated
+                // sheet content hasn't had a layout pass yet, so t.width is 0
+                // (and the GRAPH/TABLE switch's pane may not even be visible).
+                // See SegmentedControl.snapToWhenReady for why that matters.
                 SegmentedControl.snapToWhenReady(thumb, thumb, t)
             }
         }

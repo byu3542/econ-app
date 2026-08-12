@@ -34,7 +34,8 @@
         android:textSize="@dimen/text_secondary"
         android:gravity="center" />
 
-    <!-- Primary switch: BENCHMARKS / DATA — full-width, filled (mockup 1c). -->
+    <!-- Primary switch: DATA / BENCHMARKS — full-width, filled (mockup 1c).
+         DATA sits left and is the default-active segment. -->
     <FrameLayout
         android:id="@+id/switchPrimaryRoot"
         android:layout_width="match_parent"
@@ -62,19 +63,6 @@
             android:baselineAligned="false">
 
             <TextView
-                android:id="@+id/tvSegBenchmarks"
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_weight="1"
-                android:tag="benchmarks"
-                android:gravity="center"
-                android:text="@string/str_seg_benchmarks"
-                android:textSize="@dimen/text_caption"
-                android:textStyle="bold"
-                android:clickable="true"
-                android:focusable="true" />
-
-            <TextView
                 android:id="@+id/tvSegData"
                 android:layout_width="0dp"
                 android:layout_height="48dp"
@@ -82,6 +70,19 @@
                 android:tag="data"
                 android:gravity="center"
                 android:text="@string/str_seg_data"
+                android:textSize="@dimen/text_caption"
+                android:textStyle="bold"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <TextView
+                android:id="@+id/tvSegBenchmarks"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:tag="benchmarks"
+                android:gravity="center"
+                android:text="@string/str_seg_benchmarks"
                 android:textSize="@dimen/text_caption"
                 android:textStyle="bold"
                 android:clickable="true"
@@ -102,11 +103,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-    <!-- BENCHMARKS pane: tier rows inflated at runtime -->
+    <!-- BENCHMARKS pane: tier rows inflated at runtime. Starts invisible —
+         DATA is the default-active pane. -->
     <FrameLayout
         android:id="@+id/paneBenchmarks"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:visibility="invisible"
+        android:importantForAccessibility="noHideDescendants">
 
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
@@ -125,15 +129,13 @@
         </androidx.cardview.widget.CardView>
     </FrameLayout>
 
-    <!-- DATA pane: secondary TABLE/GRAPH switch (visually subordinate) → the
-         existing 3M/6M/1Y/5Y timeframe row → table or chart. -->
+    <!-- DATA pane (default-active): secondary GRAPH/TABLE switch (visually
+         subordinate) → the existing 3M/6M/1Y/5Y timeframe row → chart or table. -->
     <LinearLayout
         android:id="@+id/paneData"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:visibility="invisible"
-        android:importantForAccessibility="noHideDescendants">
+        android:orientation="vertical">
 
         <FrameLayout
             android:id="@+id/switchSecondaryRoot"
@@ -162,19 +164,6 @@
                 android:baselineAligned="false">
 
                 <TextView
-                    android:id="@+id/tvSegTable"
-                    android:layout_width="0dp"
-                    android:layout_height="36dp"
-                    android:layout_weight="1"
-                    android:tag="table"
-                    android:gravity="center"
-                    android:text="@string/str_seg_table"
-                    android:textSize="@dimen/text_caption"
-                    android:textStyle="bold"
-                    android:clickable="true"
-                    android:focusable="true" />
-
-                <TextView
                     android:id="@+id/tvSegGraph"
                     android:layout_width="0dp"
                     android:layout_height="36dp"
@@ -182,6 +171,19 @@
                     android:tag="graph"
                     android:gravity="center"
                     android:text="@string/str_seg_graph"
+                    android:textSize="@dimen/text_caption"
+                    android:textStyle="bold"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+                <TextView
+                    android:id="@+id/tvSegTable"
+                    android:layout_width="0dp"
+                    android:layout_height="36dp"
+                    android:layout_weight="1"
+                    android:tag="table"
+                    android:gravity="center"
+                    android:text="@string/str_seg_table"
                     android:textSize="@dimen/text_caption"
                     android:textStyle="bold"
                     android:clickable="true"
