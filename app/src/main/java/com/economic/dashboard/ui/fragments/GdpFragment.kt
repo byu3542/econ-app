@@ -25,6 +25,7 @@ import com.economic.dashboard.utils.ChartHelper
 import com.economic.dashboard.utils.EdgeToEdgeInsets
 import com.economic.dashboard.utils.NumberFormatUtil
 import com.economic.dashboard.utils.RetryChip
+import com.economic.dashboard.utils.SeriesMath
 import com.economic.dashboard.utils.TimeframeSelector
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.components.XAxis
@@ -129,11 +130,7 @@ class GdpFragment : Fragment() {
         val gdpRows = EconomicViewModel.filterBySeries(data, "Gross domestic product")
         if (gdpRows.isEmpty()) return
 
-        var sum = 0.0
-        var count = 0
-        val startIndex = Math.max(0, gdpRows.size - 4)
-        for (i in startIndex until gdpRows.size) { sum += gdpRows[i].value; count++ }
-        val rollingAvg = if (count > 0) sum / count else 0.0
+        val rollingAvg = SeriesMath.trailingAverage(gdpRows, 4)
 
         tvGdpLatest.text = NumberFormatUtil.percent(rollingAvg) // TICKET-19
         tvGdpDesc.text = ""

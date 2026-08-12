@@ -41,6 +41,7 @@ import com.economic.dashboard.ui.views.PressFeedback
 import com.economic.dashboard.utils.AppExecutors
 import com.economic.dashboard.utils.EdgeToEdgeInsets
 import com.economic.dashboard.utils.HapticUtil
+import com.economic.dashboard.utils.SeriesMath
 import com.economic.dashboard.utils.SettingsManager
 import com.economic.dashboard.workers.DailyBriefWorker
 
@@ -468,11 +469,13 @@ class MainActivity : AppCompatActivity() {
                     val rows = if (l != null)
                         EconomicViewModel.filterBySeries(l, "CPI-U All Items") else null
                     if (rows != null && rows.size >= 13) {
-                        val base = rows[rows.size - 13].value
-                        if (Math.abs(base) > 1e-9) {
-                            val yoy = ((rows[rows.size - 1].value - base) / base) * 100.0
+                        // SeriesMath skips a point when its 12-months-ago base is ~0, so
+                        // only report when the derived series still reaches the latest row —
+                        // preserving the old ""-on-zero-base behavior.
+                        val latest = SeriesMath.yoyPercentSeries(rows).lastOrNull()
+                        if (latest != null && latest.date == rows[rows.size - 1].date) {
                             return String.format(Locale.US, "CPI inflation %.2f%% YoY (%s)",
-                                yoy, rows[rows.size - 1].date)
+                                latest.value, latest.date)
                         }
                     }
                     return ""

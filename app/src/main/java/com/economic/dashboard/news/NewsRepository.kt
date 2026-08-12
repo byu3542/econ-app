@@ -183,7 +183,11 @@ class NewsRepository private constructor() {
             val now = System.currentTimeMillis()
             if (cachedItemsList != null && (now - cacheTimestamp) < CACHE_DURATION_MS) return
         }
-        Executors.newSingleThreadExecutor().execute { fetchAllFeeds(false) }
+        // shutdown() lets the already-submitted task finish, then ends the worker
+        // thread instead of leaking it (one per call, from every Activity recreate).
+        val executor = Executors.newSingleThreadExecutor()
+        executor.execute { fetchAllFeeds(false) }
+        executor.shutdown()
     }
 
     companion object {

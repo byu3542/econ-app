@@ -176,16 +176,13 @@ class InflationFragment : Fragment() {
     private fun updatePceCard(pceData: List<EconomicDataPoint>) {
         val rows = EconomicViewModel.filterBySeries(pceData, "PCE Price Index")
         if (rows.size < 13) return
-        val latest = rows[rows.size - 1].value
-        val yearAgo = rows[rows.size - 13].value
-        val yoy = ((latest - yearAgo) / yearAgo) * 100.0
+        val yoy = SeriesMath.yoyPercentSeries(rows).last().value
         tvPceValue.text = NumberFormatUtil.percent(yoy) // TICKET-19
 
         val coreRows = EconomicViewModel.filterBySeries(pceData, "Core PCE Price Index")
         var coreLabel = ""
         if (coreRows.size >= 13) {
-            val coreYoy = ((coreRows[coreRows.size - 1].value - coreRows[coreRows.size - 13].value)
-                / coreRows[coreRows.size - 13].value) * 100.0
+            val coreYoy = SeriesMath.yoyPercentSeries(coreRows).last().value
             coreLabel = "Core: " + NumberFormatUtil.percent(coreYoy) // TICKET-19
         }
         tvPcePercentile.text = coreLabel
@@ -199,8 +196,7 @@ class InflationFragment : Fragment() {
         val rows = EconomicViewModel.filterBySeries(cpiData, "CPI-U All Items")
         if (rows.size < 13) return
         val latest = rows[rows.size - 1].value
-        val yearAgo = rows[rows.size - 13].value
-        val yoy = ((latest - yearAgo) / yearAgo) * 100.0
+        val yoy = SeriesMath.yoyPercentSeries(rows).last().value
         tvCpiYoYValue.text = NumberFormatUtil.percent(yoy) // TICKET-19
 
         val result = Benchmarks.cpiYoY(yoy)

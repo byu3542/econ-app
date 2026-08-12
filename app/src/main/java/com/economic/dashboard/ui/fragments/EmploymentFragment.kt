@@ -25,6 +25,7 @@ import com.economic.dashboard.utils.ChartHelper
 import com.economic.dashboard.utils.EdgeToEdgeInsets
 import com.economic.dashboard.utils.NumberFormatUtil
 import com.economic.dashboard.utils.RetryChip
+import com.economic.dashboard.utils.SeriesMath
 import com.economic.dashboard.utils.TimeframeSelector
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.components.LimitLine
@@ -162,10 +163,8 @@ class EmploymentFragment : Fragment() {
         val rows = EconomicViewModel.filterBySeries(data, "Unemployment Rate")
         if (rows.isEmpty()) return
         val currentRate = rows[rows.size - 1].value
-        var low = Double.MAX_VALUE
-        val startIndex = Math.max(0, rows.size - 12)
-        for (i in startIndex until rows.size) low = Math.min(low, rows[i].value)
-        val riseFromLow = currentRate - low
+        val riseFromLow = SeriesMath.riseFromTrailingLow(rows, 12)
+        val low = currentRate - riseFromLow
 
         tvUnempValue.text = NumberFormatUtil.percent(currentRate, 1) // TICKET-19
         tvUnempLowInfo.text = "12-month low: " + NumberFormatUtil.percent(low, 1) +
