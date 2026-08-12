@@ -254,6 +254,14 @@ class MainActivity : AppCompatActivity() {
     private fun openSettings() {
         if (isSettingsShowing()) return
         loadFragment(SettingsFragment(), SettingsFragment.TAG)
+        applySettingsChrome()
+    }
+
+    /** Header/nav chrome for the full-screen Settings page — split out of
+     *  [openSettings] because an Activity recreate (theme switch, rotation)
+     *  restores the fragment via the FragmentManager without running
+     *  openSettings(), so [setupBottomNav] re-applies the chrome alone. */
+    private fun applySettingsChrome() {
         resetHeaderCompactAlwaysVisible()
         binding.tvHeaderCompactTitle.text = getString(R.string.settings)
         currentScreenLabel = getString(R.string.settings)
@@ -533,10 +541,19 @@ class MainActivity : AppCompatActivity() {
     fun navigateToTab(tabKey: String) {
         val sheet = supportFragmentManager.findFragmentByTag(AiAnalystBottomSheet.TAG)
         if (sheet is AiAnalystBottomSheet && sheet.isAdded) sheet.dismiss()
-        if ("markets" == tabKey) binding.bottomNav.selectedItemId = R.id.nav_markets
-        else if ("economy" == tabKey) binding.bottomNav.selectedItemId = R.id.nav_economy
-        else if ("news" == tabKey) binding.bottomNav.selectedItemId = R.id.navigation_news
-        else binding.bottomNav.selectedItemId = R.id.nav_overview
+        val targetId =
+            if ("markets" == tabKey) R.id.nav_markets
+            else if ("economy" == tabKey) R.id.nav_economy
+            else if ("news" == tabKey) R.id.navigation_news
+            else R.id.nav_overview
+        if (binding.bottomNav.selectedItemId == targetId) {
+            // Already on the target tab, so the item-selected listener won't
+            // fire — but Settings may be covering it; close it explicitly or
+            // the navigation is silently dropped with Settings left on screen.
+            if (isSettingsShowing()) closeSettings()
+        } else {
+            binding.bottomNav.selectedItemId = targetId
+        }
     }
 
     // ── Header ───────────────────────────────────────────────────────────────
@@ -554,7 +571,17 @@ class MainActivity : AppCompatActivity() {
     // ── Navigation ───────────────────────────────────────────────────────────
 
     private fun setupBottomNav() {
-        loadFragment(DashboardFragment(), "overview")
+        // On an Activity recreate with Settings open, the FragmentManager has
+        // already restored SettingsFragment into fragmentContainer — but the
+        // "overview" tag is absent (Settings replaced it), so loadFragment's
+        // early-return wouldn't trigger and this unconditional load would
+        // clobber the restored Settings with a fresh Dashboard. Keep Settings
+        // and re-apply its chrome instead; closeSettings() restores the tab.
+        if (isSettingsShowing()) {
+            applySettingsChrome()
+        } else {
+            loadFragment(DashboardFragment(), "overview")
+        }
 
         binding.bottomNav.post {
             val itemWidth = binding.bottomNav.width / 5
@@ -572,7 +599,13 @@ class MainActivity : AppCompatActivity() {
                 // Center slot (nav_ai_placeholder) is disabled — the floating
                 // fabAiAnalyst button handles the AI Analyst instead.
                 loadFragmentForNavId(id)
-                resetSettingsGearIcon() // in case a tab was tapped while Settings was open
+                // A tab selected while Settings was open must fully restore the
+                // normal chrome, not just the gear icon — programmatic switches
+                // (share intent, analyst metric tap) left the nav bar and FAB
+                // GONE with no way back. Unconditional: any tab tap shows them.
+                resetSettingsGearIcon()
+                binding.bottomNavWrapper.visibility = View.VISIBLE
+                binding.fabAiAnalyst.visibility = View.VISIBLE
                 if (id == R.id.navigation_news) {
                     markNewsSeen(); clearNewsBadge() // opening News clears the unread badge
                 }

@@ -275,8 +275,9 @@ class SettingsFragment : Fragment() {
                 else if (checkedId == R.id.btnThemeDark) newMode = AppCompatDelegate.MODE_NIGHT_YES
                 if (newMode != SettingsManager.getNightMode(requireContext())) {
                     SettingsManager.setNightMode(requireContext(), newMode)
-                    // Recreates the activity with the new theme. Settings is restored
-                    // automatically afterwards, so the user can keep comparing themes.
+                    // Recreates the activity with the new theme. MainActivity's
+                    // setupBottomNav keeps the restored Settings on screen (and
+                    // re-applies its chrome), so the user can keep comparing themes.
                     AppCompatDelegate.setDefaultNightMode(newMode)
                 }
             }
