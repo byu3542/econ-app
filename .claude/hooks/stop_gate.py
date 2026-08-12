@@ -117,13 +117,33 @@ def main() -> int:
     failures = []
 
     # --- os_check: cheap, always run ----------------------------------------
+    # A4 (stale-evidence streak) is reported but NEVER blocks the turn. Aaron's
+    # settled decision (plan R11/KTD5): the evidence gate stays a warning — and
+    # A4 measures the state of the OS's evidence base, which no single turn can
+    # fix. Wiring it as a hard Stop-block made every agent turn in this repo
+    # unfinishable until Aaron files a usage note; the U8 dry-run agent hit
+    # exactly that, correctly refused to falsify an idea.md to clear it, and
+    # escalated. This is the fix it proposed.
     checker = econ_os / "scripts" / "os_check.py"
     if checker.is_file():
         code, out = run([sys.executable, str(checker), "--root", str(econ_os),
-                         "--dash-root", str(repo)], econ_os, OS_CHECK_TIMEOUT)
-        if code != 0:
-            failures.append(f"os_check: {first_failure_line(out)}")
-        log(repo, f"os_check exit={code}")
+                         "--dash-root", str(repo), "--json"],
+                        econ_os, OS_CHECK_TIMEOUT)
+        hard, warn = [], []
+        try:
+            for r in json.loads(out):
+                if r.get("status") == "fail":
+                    (warn if r.get("id") == "A4" else hard).append(r)
+        except (json.JSONDecodeError, TypeError):
+            if code != 0:      # unparseable AND red — treat as a hard failure
+                hard.append({"id": "?", "findings": [first_failure_line(out)]})
+        for r in hard:
+            first = (r.get("findings") or ["(no detail)"])[0]
+            failures.append(f"os_check {r['id']}: {first}")
+        for r in warn:
+            first = (r.get("findings") or ["(no detail)"])[0]
+            log(repo, f"os_check WARN (non-blocking) {r['id']}: {first}")
+        log(repo, f"os_check exit={code} hard={len(hard)} warn={len(warn)}")
     else:
         log(repo, f"os_check SKIPPED (not found at {checker})")
 
