@@ -312,14 +312,7 @@ object HistoricalDataRepository {
             ids.add(e.remoteId)
         }
 
-        val currentYear = Calendar.getInstance().get(Calendar.YEAR)
-        val startYear = currentYear - ApiConfig.BLS_HISTORY_YEARS.toInt()
-
-        val requestBody = HashMap<String, Any>()
-        requestBody["seriesid"] = ids
-        requestBody["startyear"] = startYear.toString()
-        requestBody["endyear"] = currentYear.toString()
-        requestBody["registrationkey"] = ApiConfig.BLS_API_KEY
+        val requestBody = buildBlsRequestBody(ids)
 
         val call = RetrofitClient.getBlsService().getBlsData(requestBody)
         val response = call.execute()
@@ -349,9 +342,7 @@ object HistoricalDataRepository {
                     if (value == null || !isValidValue(value)) continue
 
                     try {
-                        val month = period.substring(1).toInt()
-                        val date = dp.year + "-" +
-                            String.format(Locale.US, "%02d", month) + "-01"
+                        val date = blsPeriodToDate(dp.year, period)
                         rows.add(
                             EconomicHistoryEntry(
                                 entry.id, entry.chartLabel, entry.category,
@@ -385,13 +376,8 @@ object HistoricalDataRepository {
         successCount: AtomicInteger
     ) {
         val currentYear = Calendar.getInstance().get(Calendar.YEAR)
-        // Build comma-separated year list for the past 3 years
-        // (extra year ensures we capture full 8 quarters near year boundaries)
-        val years = StringBuilder()
-        for (y in currentYear - 2..currentYear) {
-            if (years.isNotEmpty()) years.append(",")
-            years.append(y)
-        }
+        // Past 3 years (extra year ensures we capture full 8 quarters near year boundaries)
+        val years = buildYearsCsv(currentYear - 2, currentYear)
 
         val params = HashMap<String, String>()
         params["UserID"] = ApiConfig.BEA_API_KEY
@@ -399,7 +385,7 @@ object HistoricalDataRepository {
         params["DatasetName"] = ApiConfig.BEA_DATASET
         params["TableName"] = entry.remoteId
         params["Frequency"] = entry.frequency ?: ApiConfig.BEA_FREQUENCY
-        params["Year"] = years.toString()
+        params["Year"] = years
         params["ResultFormat"] = "JSON"
 
         val call = RetrofitClient.getBeaService().getBeaData(params)
@@ -473,7 +459,4 @@ object HistoricalDataRepository {
         }
         return parts[0] + "-" + month + "-01"
     }
-
-    private fun isValidValue(value: String?): Boolean =
-        value != null && value.isNotEmpty() && value != "." && !value.equals("ND", ignoreCase = true)
 }

@@ -2,10 +2,7 @@ package com.economic.dashboard.workers
 
 import android.content.Context
 import android.util.Log
-import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ListenableWorker.Result
-import androidx.work.PeriodicWorkRequest
-import androidx.work.WorkManager
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.economic.dashboard.analyst.HistoricalContextBuilder
@@ -27,7 +24,6 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
 import java.text.SimpleDateFormat
-import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
@@ -157,22 +153,7 @@ class DailyBriefWorker(context: Context, params: WorkerParameters) : Worker(cont
         @JvmStatic
         fun scheduleDaily(context: Context) {
             try {
-                val next = Calendar.getInstance()
-                next.set(Calendar.HOUR_OF_DAY, 7)
-                next.set(Calendar.MINUTE, 30)
-                next.set(Calendar.SECOND, 0)
-                if (next.timeInMillis <= System.currentTimeMillis())
-                    next.add(Calendar.DAY_OF_YEAR, 1)
-                val delayMinutes = (next.timeInMillis - System.currentTimeMillis()) / 60000L
-
-                val request = PeriodicWorkRequest.Builder(
-                    DailyBriefWorker::class.java, 1, TimeUnit.DAYS
-                )
-                    .setInitialDelay(delayMinutes, TimeUnit.MINUTES)
-                    .build()
-                WorkManager.getInstance(context).enqueueUniquePeriodicWork(
-                    WORK_ID, ExistingPeriodicWorkPolicy.KEEP, request
-                )
+                scheduleDailyAt(context, DailyBriefWorker::class.java, WORK_ID, 7, 30)
             } catch (e: Exception) {
                 Log.w(TAG, "Failed to schedule daily brief: " + e.message)
             }

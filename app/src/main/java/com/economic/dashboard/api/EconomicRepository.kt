@@ -12,7 +12,6 @@ import org.xmlpull.v1.XmlPullParser
 import java.io.IOException
 import java.io.StringReader
 import java.util.Calendar
-import java.util.Locale
 
 class EconomicRepository {
 
@@ -43,15 +42,7 @@ class EconomicRepository {
     ) {
         AppExecutors.networkIO().execute {
             try {
-                val params = HashMap<String, String>()
-                params["series_id"] = seriesId
-                params["api_key"] = ApiConfig.FRED_API_KEY
-                params["file_type"] = "json"
-                params["sort_order"] = "desc"
-                params["limit"] = limit
-                if (frequency != null) {
-                    params["frequency"] = frequency
-                }
+                val params = buildFredParams(seriesId, limit, frequency)
 
                 val call = RetrofitClient.getFredService().getFredData(params)
                 val response = call.execute()
@@ -158,13 +149,7 @@ class EconomicRepository {
         seriesId: String, seriesName: String,
         limit: String, frequency: String?, category: String
     ): List<EconomicDataPoint> {
-        val params = HashMap<String, String>()
-        params["series_id"] = seriesId
-        params["api_key"] = ApiConfig.FRED_API_KEY
-        params["file_type"] = "json"
-        params["sort_order"] = "desc"
-        params["limit"] = limit
-        if (frequency != null) params["frequency"] = frequency
+        val params = buildFredParams(seriesId, limit, frequency)
 
         val call = RetrofitClient.getFredService().getFredData(params)
         val response = call.execute()
@@ -223,11 +208,7 @@ class EconomicRepository {
         AppExecutors.networkIO().execute {
             try {
                 val currentYear = Calendar.getInstance().get(Calendar.YEAR)
-                val yearsBuilder = StringBuilder()
-                for (y in currentYear - 10..currentYear) {
-                    if (yearsBuilder.isNotEmpty()) yearsBuilder.append(",")
-                    yearsBuilder.append(y)
-                }
+                val yearsCsv = buildYearsCsv(currentYear - 10, currentYear)
 
                 val params = HashMap<String, String>()
                 params["UserID"] = ApiConfig.BEA_API_KEY
@@ -235,7 +216,7 @@ class EconomicRepository {
                 params["DatasetName"] = ApiConfig.BEA_DATASET
                 params["TableName"] = ApiConfig.BEA_TABLE
                 params["Frequency"] = ApiConfig.BEA_FREQUENCY
-                params["Year"] = yearsBuilder.toString()
+                params["Year"] = yearsCsv
                 params["ResultFormat"] = "JSON"
 
                 val call = RetrofitClient.getBeaService().getBeaData(params)
@@ -349,14 +330,7 @@ class EconomicRepository {
     ) {
         AppExecutors.networkIO().execute {
             try {
-                val currentYear = Calendar.getInstance().get(Calendar.YEAR)
-                val startYear = currentYear - ApiConfig.BLS_HISTORY_YEARS.toInt()
-
-                val body = HashMap<String, Any>()
-                body["seriesid"] = seriesIds
-                body["startyear"] = startYear.toString()
-                body["endyear"] = currentYear.toString()
-                body["registrationkey"] = ApiConfig.BLS_API_KEY
+                val body = buildBlsRequestBody(seriesIds)
 
                 val call = RetrofitClient.getBlsService().getBlsData(body)
                 val response = call.execute()
@@ -397,10 +371,7 @@ class EconomicRepository {
                                 val value = dp.value
                                 try {
                                     if (period != null && period.startsWith("M") && value != null && isValidValue(value)) {
-                                        val month = period.substring(1).toInt()
-                                        val date = dp.year + "-" +
-                                            String.format(Locale.US, "%02d", month) +
-                                            "-01"
+                                        val date = blsPeriodToDate(dp.year, period)
                                         results.add(EconomicDataPoint("BLS", category, seriesName, date, value.toDouble(), unit))
                                     }
                                 } catch (ignored: NumberFormatException) {}
@@ -553,8 +524,16 @@ class EconomicRepository {
         return if (rawDate.length >= 10) rawDate.substring(0, 10) else rawDate
     }
 
-    private fun isValidValue(value: String?): Boolean =
-        value != null && value.isNotEmpty() && value != "." && !value.equals("ND", ignoreCase = true)
+    private fun buildFredParams(seriesId: String, limit: String, frequency: String?): HashMap<String, String> {
+        val params = HashMap<String, String>()
+        params["series_id"] = seriesId
+        params["api_key"] = ApiConfig.FRED_API_KEY
+        params["file_type"] = "json"
+        params["sort_order"] = "desc"
+        params["limit"] = limit
+        if (frequency != null) params["frequency"] = frequency
+        return params
+    }
 
     companion object {
         private const val TAG = "EconomicRepository"

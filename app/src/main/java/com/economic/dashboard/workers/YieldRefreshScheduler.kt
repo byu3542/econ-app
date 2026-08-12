@@ -117,16 +117,7 @@ object YieldRefreshScheduler {
         val mstZone = ZoneId.of("America/Denver")
         val now = ZonedDateTime.now(mstZone)
 
-        // Target time: 2:30 PM (14:30)
-        val targetTime = LocalTime.of(14, 30)
-
-        // Create ZonedDateTime for today at 2:30 PM MST
-        val targetToday = now.toLocalDate()
-            .atTime(targetTime)
-            .atZone(mstZone)
-
-        // If 2:30 PM has already passed today, schedule for tomorrow
-        val nextRefreshTime = if (targetToday.isAfter(now)) targetToday else targetToday.plusDays(1)
+        val nextRefreshTime = nextRefreshZonedDateTime(now)
 
         // Calculate delay in milliseconds
         val delayMillis = nextRefreshTime.toInstant().toEpochMilli() -
@@ -148,11 +139,18 @@ object YieldRefreshScheduler {
     fun getNextRefreshTimestamp(): Long {
         val mstZone = ZoneId.of("America/Denver")
         val now = ZonedDateTime.now(mstZone)
-        val targetTime = LocalTime.of(14, 30)
+        return nextRefreshZonedDateTime(now).toInstant().toEpochMilli()
+    }
+
+    /**
+     * Next 2:30 PM in [now]'s zone: today's 2:30 PM if still ahead, else
+     * tomorrow's. The one copy of the target-time rule — both public
+     * entry points above derive from this.
+     */
+    private fun nextRefreshZonedDateTime(now: ZonedDateTime): ZonedDateTime {
         val targetToday = now.toLocalDate()
-            .atTime(targetTime)
-            .atZone(mstZone)
-        val nextRefresh = if (targetToday.isAfter(now)) targetToday else targetToday.plusDays(1)
-        return nextRefresh.toInstant().toEpochMilli()
+            .atTime(LocalTime.of(14, 30))
+            .atZone(now.zone)
+        return if (targetToday.isAfter(now)) targetToday else targetToday.plusDays(1)
     }
 }
