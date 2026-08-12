@@ -606,8 +606,20 @@ class MainActivity : AppCompatActivity() {
         // and re-apply its chrome instead; closeSettings() restores the tab.
         if (isSettingsShowing()) {
             applySettingsChrome()
-        } else {
+        } else if (freshLaunch) {
             loadFragment(DashboardFragment(), "overview")
+        } else {
+            // Recreate (rotation, theme switch, process death): BottomNavigationView
+            // restores its own selectedItemId from the view hierarchy's state, which
+            // lands AFTER onCreate — reading it here would still give the menu
+            // default, and the unconditional Dashboard load above clobbered whatever
+            // tab the user was on while the nav kept highlighting it. post{} runs
+            // after the whole launch transaction (onCreate → onStart →
+            // onRestoreInstanceState → onResume), the same ordering sizeNavIndicator()
+            // below already relies on to park the indicator under the restored tab.
+            // loadFragment() early-returns on a matching tag, so the FragmentManager's
+            // own restored fragment is kept rather than replaced with a blank one.
+            binding.bottomNav.post { loadFragmentForNavId(binding.bottomNav.selectedItemId) }
         }
 
         binding.bottomNav.post {
