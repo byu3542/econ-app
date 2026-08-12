@@ -19,6 +19,7 @@ import com.economic.dashboard.models.EconomicDataPoint
 import com.economic.dashboard.ui.BenchmarkStyle
 import com.economic.dashboard.ui.Benchmarks
 import com.economic.dashboard.ui.EconomicViewModel
+import com.economic.dashboard.ui.MetricPopupController
 import com.economic.dashboard.ui.views.PressFeedback
 import com.economic.dashboard.ui.views.SkeletonController
 import com.economic.dashboard.utils.ChartHelper
@@ -109,9 +110,11 @@ class StocksFragment : Fragment() {
         val tfSel: LinearLayout? = view.findViewById(R.id.timeframeSelector)
         TimeframeSelector.attach(tfSel, "stocks") { buildSwappableChart() }
 
-        cardSp500.setOnClickListener { activeCard = "sp500"; setActiveCard("sp500"); buildSwappableChart() }
-        cardNasdaq.setOnClickListener { activeCard = "nasdaq"; setActiveCard("nasdaq"); buildSwappableChart() }
-        cardVix.setOnClickListener { activeCard = "vix"; setActiveCard("vix"); buildSwappableChart() }
+        // P6 TICKET-35: tap an inactive card to swap the chart (existing behavior);
+        // tap the already-active card to open its metric popup + Add-alert.
+        cardSp500.setOnClickListener { onCardTap("sp500") }
+        cardNasdaq.setOnClickListener { onCardTap("nasdaq") }
+        cardVix.setOnClickListener { onCardTap("vix") }
         PressFeedback.attach(cardSp500)
         PressFeedback.attach(cardNasdaq)
         PressFeedback.attach(cardVix)
@@ -163,6 +166,15 @@ class StocksFragment : Fragment() {
         tvVixValue.text = NumberFormatUtil.indexPoints(latest, 1) // TICKET-19
         val result = Benchmarks.vix(latest)
         BenchmarkStyle.applyBadge(statusVix, requireContext(), result)
+    }
+
+    // P6 TICKET-35: card ids here double as MetricPopupRegistry ids.
+    private fun onCardTap(which: String) {
+        if (activeCard == which) {
+            MetricPopupController.show(requireContext(), viewModel, which)
+        } else {
+            activeCard = which; setActiveCard(which); buildSwappableChart()
+        }
     }
 
     private fun setActiveCard(which: String) {
@@ -227,6 +239,9 @@ class StocksFragment : Fragment() {
         val ds = LineDataSet(entries, seriesName)
         ChartHelper.styleLineSeries(ds, Color.parseColor(lineColor)) // IOS-07
         swappableChart.setData(LineData(ds)); swappableChart.animateX(500); swappableChart.invalidate()
+        // P6 TICKET-37: TalkBack announces the visible series, not the static XML label.
+        swappableChart.contentDescription =
+            seriesName + " trend, " + NumberFormatUtil.number(rows[rows.size - 1].value, 0)
     }
 
     private fun styleChart(chart: LineChart) {

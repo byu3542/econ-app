@@ -320,6 +320,106 @@ object MetricPopupRegistry {
                 BenchmarkBand("BARELY AHEAD", "0.0pp to +1.0pp spread", Tier.WATCH),
                 BenchmarkBand("HEALTHY", "+1.0pp or more spread", Tier.GOOD)
             )
+        ),
+        // P6 TICKET-35: the ids below are not DashboardIndicatorCatalog slots —
+        // they exist so the leaf screens' secondary cards popup too. Literal titles
+        // (wages precedent); every grade call reuses the exact cutoffs its screen
+        // badge already applies (Benchmarks — TICKET-03), never a new cutoff.
+        "baa" to MetricPopupSpec(
+            id = "baa",
+            title = "BAA CORPORATE SPREAD",
+            alertSeriesKey = EconomicViewModel.KEY_BAA,
+            valueFmt = "%.2f%%",
+            deltaFmt = "%.2f",
+            goodWhenDown = true,
+            chartId = "popup_baa",
+            history = { vm ->
+                EconomicViewModel.filterBySeries(vm.getBaaSpreadData().value, "BAA Corporate Spread")
+            },
+            // Same cutoffs BondsFragment's BAA badge already uses.
+            grade = { rows -> rows.lastOrNull()?.let { Benchmarks.bondSpread(it.value, 2.5, 3.5) } },
+            bands = listOf(
+                BenchmarkBand("HEALTHY", "Below 2.5%", Tier.GOOD),
+                BenchmarkBand("ELEVATED", "2.5% – 3.5%", Tier.ELEVATED),
+                BenchmarkBand("DISTRESS", "3.5% or higher", Tier.ALERT)
+            )
+        ),
+        "hy" to MetricPopupSpec(
+            id = "hy",
+            title = "HIGH YIELD SPREAD",
+            alertSeriesKey = EconomicViewModel.KEY_HY,
+            valueFmt = "%.2f%%",
+            deltaFmt = "%.2f",
+            goodWhenDown = true,
+            chartId = "popup_hy",
+            history = { vm ->
+                EconomicViewModel.filterBySeries(vm.getHySpreadData().value, "High Yield Spread")
+            },
+            // Same cutoffs BondsFragment's HY badge already uses.
+            grade = { rows -> rows.lastOrNull()?.let { Benchmarks.bondSpread(it.value, 5.0, 8.0) } },
+            bands = listOf(
+                BenchmarkBand("HEALTHY", "Below 5.0%", Tier.GOOD),
+                BenchmarkBand("ELEVATED", "5.0% – 8.0%", Tier.ELEVATED),
+                BenchmarkBand("DISTRESS", "8.0% or higher", Tier.ALERT)
+            )
+        ),
+        "spread2y" to MetricPopupSpec(
+            id = "spread2y",
+            title = "10Y-2Y SPREAD",
+            alertSeriesKey = EconomicViewModel.ALERT_SPREAD_2Y,
+            valueFmt = "%.2f%%",
+            deltaFmt = "%.2f",
+            goodWhenDown = false,
+            chartId = "popup_spread2y",
+            history = { vm -> vm.getCalculatedSpreadData().value ?: emptyList() },
+            // Same grader SpreadsFragment's 10Y-2Y badge already uses.
+            grade = { rows -> rows.lastOrNull()?.let { Benchmarks.spread10y2y(it.value) } },
+            bands = listOf(
+                BenchmarkBand("HEALTHY", "0.50% or higher", Tier.GOOD),
+                BenchmarkBand("FLATTENING", "0.00% – 0.50%", Tier.WATCH),
+                BenchmarkBand("INVERTING", "-0.50% – 0.00%", Tier.ELEVATED),
+                BenchmarkBand("INVERTED", "Below -0.50%", Tier.ALERT)
+            )
+        ),
+        "mortgagespread" to MetricPopupSpec(
+            id = "mortgagespread",
+            title = "MORTGAGE - 10Y SPREAD",
+            alertSeriesKey = EconomicViewModel.ALERT_MORTGAGE_SPREAD,
+            valueFmt = "%.2f%%",
+            deltaFmt = "%.2f",
+            goodWhenDown = true,
+            chartId = "popup_mortgagespread",
+            history = { vm ->
+                SeriesMath.mortgageMinusTenYearSpread(
+                    EconomicViewModel.filterBySeries(vm.getMbsMortgageData().value, "30-Yr Mortgage Rate"),
+                    EconomicViewModel.filterBySeries(vm.getTreasuryData().value, "10 Year"))
+            },
+            // Same grader HousingFragment's spread badge already uses.
+            grade = { rows -> rows.lastOrNull()?.let { Benchmarks.mortgageSpread(it.value) } },
+            bands = listOf(
+                BenchmarkBand("HEALTHY", "Below 2.2%", Tier.GOOD),
+                BenchmarkBand("WIDE", "2.2% – 2.8%", Tier.ELEVATED),
+                BenchmarkBand("VERY WIDE", "2.8% or higher", Tier.ALERT)
+            )
+        ),
+        "labor" to MetricPopupSpec(
+            id = "labor",
+            title = "LABOR FORCE PARTICIPATION",
+            alertSeriesKey = EconomicViewModel.KEY_LABOR,
+            valueFmt = "%.1f%%",
+            deltaFmt = "%.1f",
+            goodWhenDown = false,
+            chartId = "popup_labor",
+            history = { vm ->
+                EconomicViewModel.filterBySeries(vm.getEmploymentData().value, "Labor Force Participation Rate")
+            },
+            // Same cutoffs EmploymentFragment's labor badge already uses.
+            grade = { rows -> rows.lastOrNull()?.let { Benchmarks.laborForce(it.value) } },
+            bands = listOf(
+                BenchmarkBand("HEALTHY", "63.3% or higher", Tier.GOOD),
+                BenchmarkBand("DECLINING", "62.0% – 63.3%", Tier.ELEVATED),
+                BenchmarkBand("CRITICAL", "Below 62.0%", Tier.ALERT)
+            )
         )
     )
 

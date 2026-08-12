@@ -19,11 +19,13 @@ import com.economic.dashboard.models.EconomicDataPoint
 import com.economic.dashboard.ui.BenchmarkStyle
 import com.economic.dashboard.ui.Benchmarks
 import com.economic.dashboard.ui.EconomicViewModel
+import com.economic.dashboard.ui.MetricPopupController
 import com.economic.dashboard.ui.views.SkeletonController
 import com.economic.dashboard.utils.ChartHelper
 import com.economic.dashboard.utils.EdgeToEdgeInsets
 import com.economic.dashboard.utils.NumberFormatUtil
 import com.economic.dashboard.utils.RetryChip
+import com.economic.dashboard.utils.SeriesMath
 import com.economic.dashboard.utils.TimeframeSelector
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.components.Legend
@@ -147,22 +149,13 @@ class HousingFragment : Fragment() {
             currentMbsData?.let { buildMbsMortgageChart(it) }
         }
 
-        // Badge tap listeners
-        badgeMortgage.setOnClickListener {
-            activeBadge = "mortgage"
-            setActiveBadge("mortgage")
-            buildSwappableChart()
-        }
-        badge10Y.setOnClickListener {
-            activeBadge = "tenYear"
-            setActiveBadge("tenYear")
-            buildSwappableChart()
-        }
-        badgeSpread.setOnClickListener {
-            activeBadge = "spread"
-            setActiveBadge("spread")
-            buildSwappableChart()
-        }
+        // Badge tap listeners — P6 TICKET-35: tap inactive = swap chart (existing),
+        // tap active = metric popup ("tenYear" shares the 10Y "yield10y" popup;
+        // "spread" gets its own "mortgagespread" popup — it is the mortgage-10Y
+        // spread, a different metric from the Overview's 10Y-3M curve spread).
+        badgeMortgage.setOnClickListener { onBadgeTap("mortgage") }
+        badge10Y.setOnClickListener { onBadgeTap("tenYear") }
+        badgeSpread.setOnClickListener { onBadgeTap("spread") }
 
         // Set default active badge
         setActiveBadge("mortgage")
@@ -349,30 +342,28 @@ class HousingFragment : Fragment() {
      * Treasury data covers the current year, so the spread series is YTD only.
      */
     private fun computeSpreadRows(): List<EconomicDataPoint> {
-        val result = ArrayList<EconomicDataPoint>()
         val mbs = currentMbsData
         val treasury = currentTreasuryData
-        if (mbs == null || treasury == null) return result
-        val mortgageRows = EconomicViewModel.filterBySeries(mbs, "30-Yr Mortgage Rate")
-        val treasuryRows = EconomicViewModel.filterBySeries(treasury, "10 Year")
-        if (mortgageRows.isEmpty() || treasuryRows.isEmpty()) return result
+        if (mbs == null || treasury == null) return ArrayList()
+        // P6 TICKET-35: formula lives in SeriesMath so the "mortgagespread" popup
+        // and this badge can never drift apart.
+        return SeriesMath.mortgageMinusTenYearSpread(
+            EconomicViewModel.filterBySeries(mbs, "30-Yr Mortgage Rate"),
+            EconomicViewModel.filterBySeries(treasury, "10 Year"))
+    }
 
-        var tIdx = 0
-        var lastTreasury: EconomicDataPoint? = null
-        for (m in mortgageRows) {
-            while (tIdx < treasuryRows.size
-                && treasuryRows[tIdx].date.compareTo(m.date) <= 0
-            ) {
-                lastTreasury = treasuryRows[tIdx]
-                tIdx++
+    // P6 TICKET-35: badge id → MetricPopupRegistry id.
+    private fun onBadgeTap(which: String) {
+        if (activeBadge == which) {
+            val popupId = when (which) {
+                "tenYear" -> "yield10y"
+                "spread" -> "mortgagespread"
+                else -> "mortgage"
             }
-            val lt = lastTreasury
-            if (lt != null) {
-                result.add(EconomicDataPoint("Calculated", "Housing", "Mortgage-10Y Spread",
-                    m.date, m.value - lt.value, "%"))
-            }
+            MetricPopupController.show(requireContext(), viewModel, popupId)
+        } else {
+            activeBadge = which; setActiveBadge(which); buildSwappableChart()
         }
-        return result
     }
 
     private fun setActiveBadge(which: String) {
@@ -512,6 +503,9 @@ class HousingFragment : Fragment() {
         chartSwappable.setData(LineData(ds))
         chartSwappable.animateX(500)
         chartSwappable.invalidate()
+        // P6 TICKET-37: TalkBack announces the visible series, not the static XML label.
+        chartSwappable.contentDescription = seriesLabel + " trend, " +
+            NumberFormatUtil.percent(rows[rows.size - 1].value, if (twoDecimals) 2 else 1)
     }
 
     // ── MBS & Mortgage Dual-Axis Chart ─────────────────────────────────────────

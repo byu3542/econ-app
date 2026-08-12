@@ -19,6 +19,7 @@ import com.economic.dashboard.models.EconomicDataPoint
 import com.economic.dashboard.ui.BenchmarkStyle
 import com.economic.dashboard.ui.Benchmarks
 import com.economic.dashboard.ui.EconomicViewModel
+import com.economic.dashboard.ui.MetricPopupController
 import com.economic.dashboard.ui.views.PressFeedback
 import com.economic.dashboard.ui.views.SkeletonController
 import com.economic.dashboard.utils.ChartHelper
@@ -92,8 +93,9 @@ class BondsFragment : Fragment() {
         val tfSel: LinearLayout? = view.findViewById(R.id.timeframeSelector)
         TimeframeSelector.attach(tfSel, "bonds") { buildSwappableChart() }
 
-        cardBaa.setOnClickListener { activeCard = "baa"; setActiveCard("baa"); buildSwappableChart() }
-        cardHy.setOnClickListener { activeCard = "hy"; setActiveCard("hy"); buildSwappableChart() }
+        // P6 TICKET-35: tap inactive = swap chart (existing), tap active = metric popup.
+        cardBaa.setOnClickListener { onCardTap("baa") }
+        cardHy.setOnClickListener { onCardTap("hy") }
         PressFeedback.attach(cardBaa)
         PressFeedback.attach(cardHy)
         setActiveCard("baa")
@@ -128,6 +130,15 @@ class BondsFragment : Fragment() {
         tvHyValue.text = NumberFormatUtil.percent(latest) // TICKET-19
         val result = Benchmarks.bondSpread(latest, 5.0, 8.0)
         BenchmarkStyle.applyBadge(statusHy, requireContext(), result)
+    }
+
+    // P6 TICKET-35: card ids here double as MetricPopupRegistry ids.
+    private fun onCardTap(which: String) {
+        if (activeCard == which) {
+            MetricPopupController.show(requireContext(), viewModel, which)
+        } else {
+            activeCard = which; setActiveCard(which); buildSwappableChart()
+        }
     }
 
     private fun setActiveCard(which: String) {
@@ -169,6 +180,9 @@ class BondsFragment : Fragment() {
         val ds = LineDataSet(entries, seriesName)
         ChartHelper.styleLineSeries(ds, Color.parseColor(lineColor)) // IOS-07
         swappableChart.setData(LineData(ds)); swappableChart.animateX(500); swappableChart.invalidate()
+        // P6 TICKET-37: TalkBack announces the visible series, not the static XML label.
+        swappableChart.contentDescription =
+            seriesName + " trend, " + NumberFormatUtil.percent(rows[rows.size - 1].value)
     }
 
     private fun styleChart(chart: LineChart) {

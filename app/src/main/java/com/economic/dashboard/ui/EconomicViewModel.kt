@@ -12,6 +12,7 @@ import com.economic.dashboard.api.ApiConfig
 import com.economic.dashboard.api.EconomicRepository
 import com.economic.dashboard.cache.DashboardDataCache
 import com.economic.dashboard.models.EconomicDataPoint
+import com.economic.dashboard.utils.SeriesMath
 import com.economic.dashboard.utils.SettingsManager
 
 import java.text.ParseException
@@ -300,6 +301,15 @@ class EconomicViewModel(application: Application) : AndroidViewModel(application
         putIfPresent(latest, KEY_BAA, latestOf(baaSpreadData.value, "BAA Corporate Spread"))
         putIfPresent(latest, KEY_HY, latestOf(hySpreadData.value, "High Yield Spread"))
         putIfPresent(latest, ALERT_SPREAD_3M, latestOf(calculatedSpread3MData.value))
+        // P6 TICKET-35: keys the leaf-screen popups' Add-alert rows target but the
+        // map never carried — without these, saved rules on 10Y / 10Y-2Y / labor
+        // participation would never fire.
+        putIfPresent(latest, CACHE_TREASURY, latestOf(treasuryData.value, "10 Year"))
+        putIfPresent(latest, ALERT_SPREAD_2Y, latestOf(calculatedSpreadData.value))
+        putIfPresent(latest, KEY_LABOR, latestOf(employmentData.value, "Labor Force Participation Rate"))
+        putIfPresent(latest, ALERT_MORTGAGE_SPREAD, latestOf(SeriesMath.mortgageMinusTenYearSpread(
+            filterBySeries(mbsMortgageData.value, "30-Yr Mortgage Rate"),
+            filterBySeries(treasuryData.value, "10 Year"))))
         ThresholdAlertEvaluator.evaluate(getApplication<Application>(), latest)
     }
 
@@ -520,9 +530,14 @@ class EconomicViewModel(application: Application) : AndroidViewModel(application
         const val KEY_NASDAQ = "nasdaq"
         const val KEY_BAA = "baa_spread"
         const val KEY_HY = "hy_spread"
+        const val KEY_LABOR = "labor_force"
         // TICKET-24: alert-only key for the computed 10Y-3M spread (not a fetched
         // series — derived from the Treasury maturity histories).
         const val ALERT_SPREAD_3M = "spread_10y3m"
+        // P6 TICKET-35: alert-only keys for the computed 10Y-2Y spread and the
+        // Housing mortgage-10Y spread.
+        const val ALERT_SPREAD_2Y = "spread_10y2y"
+        const val ALERT_MORTGAGE_SPREAD = "mortgage_spread"
 
         private fun putIfPresent(map: MutableMap<String, Double>, key: String, v: Double?) {
             if (v != null) map[key] = v

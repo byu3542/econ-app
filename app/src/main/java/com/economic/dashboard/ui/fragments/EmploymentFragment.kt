@@ -19,6 +19,7 @@ import com.economic.dashboard.models.EconomicDataPoint
 import com.economic.dashboard.ui.BenchmarkStyle
 import com.economic.dashboard.ui.Benchmarks
 import com.economic.dashboard.ui.EconomicViewModel
+import com.economic.dashboard.ui.MetricPopupController
 import com.economic.dashboard.ui.views.SkeletonController
 import com.economic.dashboard.utils.ChartHelper
 import com.economic.dashboard.utils.EdgeToEdgeInsets
@@ -110,12 +111,9 @@ class EmploymentFragment : Fragment() {
         tvLaborValue = b.tvLaborValue
         statusLabor = b.statusLabor.root
 
-        cardUnemploymentStatus.setOnClickListener {
-            activeCard = "unemployment"; setActiveCard("unemployment"); buildSwappableChart()
-        }
-        cardLaborParticipation.setOnClickListener {
-            activeCard = "labor"; setActiveCard("labor"); buildSwappableChart()
-        }
+        // P6 TICKET-35: tap inactive = swap chart (existing), tap active = metric popup.
+        cardUnemploymentStatus.setOnClickListener { onCardTap("unemployment") }
+        cardLaborParticipation.setOnClickListener { onCardTap("labor") }
 
         setActiveCard("unemployment")
 
@@ -128,6 +126,15 @@ class EmploymentFragment : Fragment() {
                 buildSwappableChart()
                 if (::skeleton.isInitialized) skeleton.reveal()
             }
+        }
+    }
+
+    // P6 TICKET-35: card ids here double as MetricPopupRegistry ids.
+    private fun onCardTap(which: String) {
+        if (activeCard == which) {
+            MetricPopupController.show(requireContext(), viewModel, which)
+        } else {
+            activeCard = which; setActiveCard(which); buildSwappableChart()
         }
     }
 
@@ -216,6 +223,9 @@ class EmploymentFragment : Fragment() {
         val ds = LineDataSet(entries, series)
         ChartHelper.styleLineSeries(ds, Color.parseColor(hexColor)) // IOS-07
         chart.setData(LineData(ds)); chart.animateX(500); chart.invalidate()
+        // P6 TICKET-37: TalkBack announces the visible series, not the static XML label.
+        chart.contentDescription =
+            series + " trend, " + NumberFormatUtil.percent(rows[rows.size - 1].value, 1)
     }
 
     private fun styleChart(chart: LineChart) {

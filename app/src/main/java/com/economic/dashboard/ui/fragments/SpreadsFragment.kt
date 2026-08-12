@@ -19,6 +19,7 @@ import com.economic.dashboard.models.EconomicDataPoint
 import com.economic.dashboard.ui.BenchmarkStyle
 import com.economic.dashboard.ui.Benchmarks
 import com.economic.dashboard.ui.EconomicViewModel
+import com.economic.dashboard.ui.MetricPopupController
 import com.economic.dashboard.ui.views.PressFeedback
 import com.economic.dashboard.ui.views.SkeletonController
 import com.economic.dashboard.utils.ChartHelper
@@ -102,8 +103,9 @@ class SpreadsFragment : Fragment() {
         tvSpread3MValue = b.tvSpread3MValue
         statusSpread3M = b.statusSpread3M.root
 
-        cardSpreadYoY.setOnClickListener { activeCard = "yoy"; setActiveCard("yoy"); buildSwappableChart() }
-        cardSpread3M.setOnClickListener { activeCard = "3m"; setActiveCard("3m"); buildSwappableChart() }
+        // P6 TICKET-35: tap inactive = swap chart (existing), tap active = metric popup.
+        cardSpreadYoY.setOnClickListener { onCardTap("yoy") }
+        cardSpread3M.setOnClickListener { onCardTap("3m") }
         PressFeedback.attach(cardSpreadYoY)
         PressFeedback.attach(cardSpread3M)
         setActiveCard("yoy")
@@ -137,6 +139,17 @@ class SpreadsFragment : Fragment() {
             // Shared 3M/10Y grader (same as Overview) + distinct RECOVERING/FLATTENING tiers (TICKET-03/06)
             val result = if (is3M) Benchmarks.spread3m10y(spread) else Benchmarks.spread10y2y(spread)
             BenchmarkStyle.applyBadge(badgeRow, requireContext(), result)
+        }
+    }
+
+    // P6 TICKET-35: the "yoy" card is the 10Y-2Y spread ("spread2y" popup);
+    // the "3m" card shares the Overview's 10Y-3M "spread" popup.
+    private fun onCardTap(which: String) {
+        if (activeCard == which) {
+            MetricPopupController.show(
+                requireContext(), viewModel, if ("3m" == which) "spread" else "spread2y")
+        } else {
+            activeCard = which; setActiveCard(which); buildSwappableChart()
         }
     }
 
@@ -174,6 +187,9 @@ class SpreadsFragment : Fragment() {
         val ds = LineDataSet(entries, label)
         ChartHelper.styleLineSeries(ds, Color.parseColor(lineColor)) // IOS-07
         swappableChart.setData(LineData(ds)); swappableChart.animateX(500); swappableChart.invalidate()
+        // P6 TICKET-37: TalkBack announces the visible series, not the static XML label.
+        swappableChart.contentDescription =
+            label + ", " + NumberFormatUtil.percent(data[data.size - 1].value)
     }
 
     private fun styleChart(chart: LineChart) {
