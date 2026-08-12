@@ -223,7 +223,7 @@ class ChatAdapter(
         var months = 24
         try {
             val monthsGroup = matcher.group(2) ?: throw NumberFormatException("no group 2")
-            months = maxOf(1, minOf(24, monthsGroup.toInt()))
+            months = monthsGroup.toInt().coerceIn(1, 24)
         } catch (ignored: Exception) {
         }
 

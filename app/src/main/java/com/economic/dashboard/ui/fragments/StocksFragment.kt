@@ -153,7 +153,7 @@ class StocksFragment : Fragment() {
         val rows = rowsFor(data, "S&P 500 Index")
         if (rows.isEmpty()) return
         val latest = rows[rows.size - 1].value
-        tvSp500Value.text = formatValueWithK(latest)
+        tvSp500Value.text = NumberFormatUtil.number(latest, 0) // TICKET-19
         val result = Benchmarks.stockLevel(latest, 3500.0, 4000.0)
         BenchmarkStyle.applyBadge(statusSp500, requireContext(), result)
     }
@@ -162,7 +162,7 @@ class StocksFragment : Fragment() {
         val rows = rowsFor(data, "Nasdaq Composite Index")
         if (rows.isEmpty()) return
         val latest = rows[rows.size - 1].value
-        tvNasdaqValue.text = formatValueWithK(latest)
+        tvNasdaqValue.text = NumberFormatUtil.number(latest, 0) // TICKET-19
         val result = Benchmarks.stockLevel(latest, 10000.0, 12000.0)
         BenchmarkStyle.applyBadge(statusNasdaq, requireContext(), result)
     }
@@ -256,12 +256,6 @@ class StocksFragment : Fragment() {
         ChartHelper.addLimitLine(chart, 12f, "Low Vol", "#6FA97A"); ChartHelper.addLimitLine(chart, 20f, "Normal", "#5B8DB8")
         ChartHelper.addLimitLine(chart, 30f, "Elevated", "#D98E4F"); ChartHelper.addLimitLine(chart, 50f, "Extreme", "#C75B4E")
         chart.axisLeft.setDrawLimitLinesBehindData(true)
-    }
-
-    private fun formatValueWithK(value: Double): String {
-        // TICKET-19: route index levels through NumberFormatUtil for thousands
-        // separators consistent with the rest of the app (e.g. "5,900").
-        return NumberFormatUtil.number(value, 0)
     }
 
     override fun onDestroyView() {

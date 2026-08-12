@@ -32,20 +32,6 @@ interface TreasuryYieldDao {
     fun getAllYields(): LiveData<List<TreasuryYield>>
 
     /**
-     * Retrieve the most recent cache timestamp across all records.
-     * Used to check if cache is stale (> 24 hours old).
-     */
-    @Query("SELECT MAX(cachedAtMillis) FROM treasury_yields")
-    fun getLastCacheTime(): LiveData<Long>
-
-    /**
-     * Get count of cached records.
-     * Useful for checking if cache is empty.
-     */
-    @Query("SELECT COUNT(*) FROM treasury_yields")
-    fun getCacheCount(): LiveData<Int>
-
-    /**
      * Synchronous version of getAllYields for use in background threads.
      * Use this in Worker tasks and background services.
      */
@@ -53,8 +39,8 @@ interface TreasuryYieldDao {
     fun getAllYieldsSync(): List<TreasuryYield>
 
     /**
-     * Synchronous version of getLastCacheTime for background operations.
-     * Returns 0 if no data exists.
+     * Most recent cache timestamp across all records, for the staleness check.
+     * Synchronous — background threads only. Returns 0 if no data exists.
      */
     @Query("SELECT MAX(cachedAtMillis) FROM treasury_yields")
     fun getLastCacheTimeSync(): Long

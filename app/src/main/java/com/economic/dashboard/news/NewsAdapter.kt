@@ -211,7 +211,7 @@ class NewsAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             tvSource.text = source?.uppercase(Locale.US) ?: ""
             tvTimeAgo.text = formatTimeAgo(item.pubDateMillis)
             tvHeadline.text = item.title
-            val tag = item.tag ?: "GENERAL"
+            val tag = item.tag ?: NewsConstants.TAG_GENERAL
             tvTag.text = tag
             setTagColor(tvTag, tag)
             setImpactBarColor(impactBar, item.impactLevel)
@@ -315,31 +315,31 @@ class NewsAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             val bgColor: Int
             val textColor: Int
             when (tag) {
-                "FED" -> {
+                NewsConstants.TAG_FED -> {
                     bgColor = if (night) 0x2E8fa3c8.toInt() else 0x140f1729.toInt()
                     textColor = if (night) 0xFFB9C6E0.toInt() else 0xFF0f1729.toInt()
                 }
-                "INFLATION" -> {
+                NewsConstants.TAG_INFLATION -> {
                     bgColor = 0x18f0a500.toInt()
                     textColor = if (night) 0xFFF0B23E.toInt() else 0xFFa06000.toInt()
                 }
-                "JOBS" -> {
+                NewsConstants.TAG_JOBS -> {
                     bgColor = 0x1822c55e.toInt()
                     textColor = if (night) 0xFF6EE7A0.toInt() else 0xFF166534.toInt()
                 }
-                "YIELDS" -> {
+                NewsConstants.TAG_YIELDS -> {
                     bgColor = 0x1ec9a84c.toInt()
                     textColor = if (night) 0xFFDDBE6B.toInt() else 0xFF7a5a10.toInt()
                 }
-                "ECONOMY" -> {
+                NewsConstants.TAG_ECONOMY -> {
                     bgColor = 0x183b82f6.toInt()
                     textColor = if (night) 0xFF8FB8F8.toInt() else 0xFF1e40af.toInt()
                 }
-                "RESEARCH" -> {
+                NewsConstants.TAG_RESEARCH -> {
                     bgColor = 0x186366f1.toInt()
                     textColor = if (night) 0xFFA5A8F5.toInt() else 0xFF3730a3.toInt()
                 }
-                "HOUSING" -> {
+                NewsConstants.TAG_HOUSING -> {
                     bgColor = 0x1806b6d4.toInt()
                     textColor = if (night) 0xFF67D9EE.toInt() else 0xFF0e7490.toInt()
                 }

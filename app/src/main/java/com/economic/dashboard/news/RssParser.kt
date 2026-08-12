@@ -62,16 +62,14 @@ class RssParser {
         parser: XmlPullParser, feedUrl: String,
         sourceName: String, impactLevel: Int
     ): List<NewsItem> {
-        // Detect format by scanning for the root element
-        var isAtom = false
+        // Advance past the root element (RSS <rss>/<channel> or Atom <feed>) —
+        // item detection below is format-generic, so the format itself isn't kept.
         var eventType = parser.eventType
         outer@ while (eventType != XmlPullParser.END_DOCUMENT) {
             if (eventType == XmlPullParser.START_TAG) {
                 val name = parser.name
-                if (name.equals("feed", ignoreCase = true)) {
-                    isAtom = true
-                    break@outer
-                } else if (name.equals("rss", ignoreCase = true)
+                if (name.equals("feed", ignoreCase = true)
+                    || name.equals("rss", ignoreCase = true)
                     || name.equals("channel", ignoreCase = true)
                 ) {
                     break@outer
@@ -80,13 +78,12 @@ class RssParser {
             eventType = parser.next()
         }
 
-        return parseItems(parser, feedUrl, sourceName, impactLevel, isAtom)
+        return parseItems(parser, feedUrl, sourceName, impactLevel)
     }
 
     private fun parseItems(
         parser: XmlPullParser, feedUrl: String,
-        sourceName: String, impactLevel: Int,
-        isAtom: Boolean
+        sourceName: String, impactLevel: Int
     ): List<NewsItem> {
         val items = ArrayList<NewsItem>()
         var inItem = false
@@ -241,7 +238,7 @@ class RssParser {
     private fun tagArticle(item: NewsItem) {
         val title = item.title
         if (title == null) {
-            item.tag = "GENERAL"
+            item.tag = NewsConstants.TAG_GENERAL
             return
         }
 
@@ -259,7 +256,7 @@ class RssParser {
             || feedUrl.contains("bis.org")
             || feedUrl.contains("oecd.org")
         ) {
-            item.tag = "RESEARCH"
+            item.tag = NewsConstants.TAG_RESEARCH
             return
         }
 
@@ -273,14 +270,14 @@ class RssParser {
                 "reserve requirement", "quantitative", "balance sheet",
                 "open market", "beige book", "fed chair", "jefferson",
                 "waller", "kugler", "barkin", "daly", "bostic")) {
-            item.tag = "FED"
+            item.tag = NewsConstants.TAG_FED
         } else if (containsAny(lower,
                 "cpi", "inflation", "consumer price", "pce",
                 "price index", "deflation", "core inflation",
                 "producer price", "ppi", "import price", "export price",
                 "price level", "inflationary", "disinflation",
                 "cost of living", "purchasing power")) {
-            item.tag = "INFLATION"
+            item.tag = NewsConstants.TAG_INFLATION
         } else if (containsAny(lower,
                 "unemployment", "jobs", "payroll", "nonfarm",
                 "labor market", "jobless claims", "employment",
@@ -289,14 +286,14 @@ class RssParser {
                 "initial claims", "continued claims", "workforce",
                 "participation rate", "labor department",
                 "occupational", "wages", "earnings")) {
-            item.tag = "JOBS"
+            item.tag = NewsConstants.TAG_JOBS
         } else if (containsAny(lower,
                 "treasury", "yield", "bond", "10-year", "2-year",
                 "yield curve", "spread", "t-bill", "note auction",
                 "bond market", "debt auction", "coupon rate",
                 "fixed income", "maturity", "3-month", "30-year",
                 "securities", "tbill", "tnote", "tbond")) {
-            item.tag = "YIELDS"
+            item.tag = NewsConstants.TAG_YIELDS
         } else if (containsAny(lower,
                 "housing", "home sale", "home price", "mortgage",
                 "real estate", "foreclosure", "housing start",
@@ -306,7 +303,7 @@ class RssParser {
                 "freddie mac", "fannie mae", "30-year mortgage",
                 "rental market", "rent inflation", "home affordability",
                 "case-shiller", "hpi", "zillow")) {
-            item.tag = "HOUSING"
+            item.tag = NewsConstants.TAG_HOUSING
         } else if (containsAny(lower,
                 "gdp", "recession", "growth", "economic", "economy",
                 "fiscal", "deficit", "debt ceiling", "gross domestic",
@@ -315,36 +312,36 @@ class RssParser {
                 "retail sales", "industrial production", "capacity",
                 "leading indicators", "business cycle", "expansion",
                 "contraction", "output", "productivity")) {
-            item.tag = "ECONOMY"
+            item.tag = NewsConstants.TAG_ECONOMY
         } else {
-            item.tag = "GENERAL"
+            item.tag = NewsConstants.TAG_GENERAL
         }
 
         // 3. Source URL/name fallback when no keyword matched
-        if (item.tag == "GENERAL") {
+        if (item.tag == NewsConstants.TAG_GENERAL) {
             val s = item.source?.lowercase(Locale.US) ?: ""
 
             if (feedUrl.contains("federalreserve.gov")
                 || s.contains("federal reserve") || s.contains("fed speech")
                 || s.contains("fed testimony")
             ) {
-                item.tag = "FED"
+                item.tag = NewsConstants.TAG_FED
             } else if (feedUrl.contains("bls.gov") || s.contains("bls")) {
-                item.tag = "JOBS"
+                item.tag = NewsConstants.TAG_JOBS
             } else if (feedUrl.contains("bea.gov") || s.contains("bea")) {
-                item.tag = "ECONOMY"
+                item.tag = NewsConstants.TAG_ECONOMY
             } else if (feedUrl.contains("treasury.gov") || s.contains("treasury")) {
-                item.tag = "YIELDS"
+                item.tag = NewsConstants.TAG_YIELDS
             } else if (feedUrl.contains("cbo.gov") || s.contains("cbo")) {
-                item.tag = "ECONOMY"
+                item.tag = NewsConstants.TAG_ECONOMY
             } else if (feedUrl.contains("census.gov") || s.contains("census")) {
-                item.tag = "ECONOMY"
+                item.tag = NewsConstants.TAG_ECONOMY
             } else if (feedUrl.contains("fdic.gov") || s.contains("fdic")) {
-                item.tag = "FED"
+                item.tag = NewsConstants.TAG_FED
             } else if (feedUrl.contains("nar.realtor") || feedUrl.contains("nahb.org")
                 || feedUrl.contains("freddiemac.com") || feedUrl.contains("fanniemae.com")
             ) {
-                item.tag = "HOUSING"
+                item.tag = NewsConstants.TAG_HOUSING
             }
             // Reuters, MarketWatch, CNBC, Yahoo, Investopedia, AP → stay GENERAL
         }

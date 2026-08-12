@@ -5,6 +5,7 @@ import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.ColorUtils
 
 import com.economic.dashboard.R
 
@@ -249,8 +250,8 @@ object ChartHelper {
         ds.setDrawCircles(false)
         ds.setDrawValues(false)
         ds.setDrawFilled(true)
-        val top = (color and 0x00FFFFFF.toInt()) or 0x2E000000.toInt()    // ~18% alpha
-        val bottom = color and 0x00FFFFFF.toInt()                        // fully transparent
+        val top = ColorUtils.setAlphaComponent(color, 0x2E)    // ~18% alpha
+        val bottom = ColorUtils.setAlphaComponent(color, 0x00) // fully transparent
         ds.setFillDrawable(
             GradientDrawable(
                 GradientDrawable.Orientation.TOP_BOTTOM,

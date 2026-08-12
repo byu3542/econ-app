@@ -359,7 +359,7 @@ class SettingsFragment : Fragment() {
         val ids = intArrayOf(R.id.chipTabOverview, R.id.chipTabMarkets,
             R.id.chipTabEconomy, R.id.chipTabNews)
         val tab = SettingsManager.getDefaultTab(requireContext())
-        cg.check(ids[Math.max(0, Math.min(3, tab))])
+        cg.check(ids[tab.coerceIn(0, 3)])
 
         cg.setOnCheckedStateChangeListener { _, checkedIds ->
             if (!checkedIds.isEmpty()) {
@@ -439,7 +439,7 @@ class SettingsFragment : Fragment() {
         val tg: MaterialButtonToggleGroup = v.findViewById(R.id.tgDecimals)
         val ids = intArrayOf(R.id.btnDec1, R.id.btnDec2, R.id.btnDec3)
         val decimals = SettingsManager.getChartDecimals(requireContext())
-        tg.check(ids[Math.max(1, Math.min(3, decimals)) - 1])
+        tg.check(ids[decimals.coerceIn(1, 3) - 1])
 
         tg.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (isChecked) {

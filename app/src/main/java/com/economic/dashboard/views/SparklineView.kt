@@ -8,6 +8,7 @@ import android.graphics.Path
 import android.graphics.Shader
 import android.util.AttributeSet
 import android.view.View
+import androidx.core.graphics.ColorUtils
 
 /**
  * Lightweight inline sparkline for AI Analyst chat bubbles — renders a
@@ -90,8 +91,10 @@ class SparklineView @JvmOverloads constructor(
 
         linePaint.color = lineColor
         if (fillEnabled)
+            // Second color stays literal transparent black: deriving it from
+            // lineColor's RGB would change the gradient's interpolation.
             fillPaint.shader = LinearGradient(0f, 0f, 0f, h,
-                (lineColor and 0x00FFFFFF.toInt()) or 0x33000000.toInt(), 0x00000000,
+                ColorUtils.setAlphaComponent(lineColor, 0x33), 0x00000000,
                 Shader.TileMode.CLAMP)
 
         linePath.reset(); fillPath.reset()

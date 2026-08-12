@@ -2,10 +2,7 @@ package com.economic.dashboard.api
 
 import android.util.Log
 import android.util.Xml
-import com.economic.dashboard.models.BeaResponse
-import com.economic.dashboard.models.BlsResponse
 import com.economic.dashboard.models.EconomicDataPoint
-import com.economic.dashboard.models.FredResponse
 import com.economic.dashboard.utils.AppExecutors
 import okhttp3.Request
 import org.xmlpull.v1.XmlPullParser

@@ -269,16 +269,24 @@ object SettingsManager {
     @JvmField
     val DEFAULT_WATCHLIST = arrayOf("gdp", "spread_10y3m", "cpi", "employment", "mbs_mortgage", "vix")
 
+    /** Split a stored CSV into trimmed, non-empty entries (empty list for null/blank input). */
+    private fun parseCsvList(csv: String?): List<String> {
+        val out = ArrayList<String>()
+        if (!csv.isNullOrEmpty()) {
+            for (k in csv.split(",")) {
+                val t = k.trim()
+                if (t.isNotEmpty()) out.add(t)
+            }
+        }
+        return out
+    }
+
     /** Ordered metric keys the user cares about most; falls back to the default. */
     @JvmStatic
     fun getWatchlist(c: Context): List<String> {
         val csv = getString(c, KEY_WATCHLIST, null)
         if (csv == null || csv.trim().isEmpty()) return ArrayList(DEFAULT_WATCHLIST.toList())
-        val out = ArrayList<String>()
-        for (k in csv.split(",")) {
-            val t = k.trim()
-            if (t.isNotEmpty()) out.add(t)
-        }
+        val out = parseCsvList(csv)
         return if (out.isEmpty()) ArrayList(DEFAULT_WATCHLIST.toList()) else out
     }
 
@@ -289,12 +297,7 @@ object SettingsManager {
             setString(c, KEY_WATCHLIST, "")
             return
         }
-        val sb = StringBuilder()
-        for (k in keys) {
-            if (sb.isNotEmpty()) sb.append(',')
-            sb.append(k)
-        }
-        setString(c, KEY_WATCHLIST, sb.toString())
+        setString(c, KEY_WATCHLIST, keys.joinToString(","))
     }
 
     @JvmStatic
@@ -323,13 +326,7 @@ object SettingsManager {
     @JvmStatic
     fun getDashboardSlots(c: Context): List<String> {
         val csv = getString(c, KEY_DASHBOARD_SLOTS, null)
-        val out = ArrayList<String>()
-        if (!csv.isNullOrEmpty()) {
-            for (k in csv.split(",")) {
-                val t = k.trim()
-                if (t.isNotEmpty()) out.add(t)
-            }
-        }
+        val out = ArrayList(parseCsvList(csv))
         var i = 0
         while (out.size < 6) {
             out.add(DEFAULT_DASHBOARD_SLOTS[i % DEFAULT_DASHBOARD_SLOTS.size])
@@ -349,11 +346,7 @@ object SettingsManager {
     fun getDashboardCategoryOrder(c: Context): List<String>? {
         val csv = getString(c, KEY_DASHBOARD_CATEGORY_ORDER, null)
         if (csv.isNullOrEmpty()) return null
-        val out = ArrayList<String>()
-        for (k in csv.split(",")) {
-            val t = k.trim()
-            if (t.isNotEmpty()) out.add(t)
-        }
+        val out = parseCsvList(csv)
         return if (out.isEmpty()) null else out
     }
 

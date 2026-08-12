@@ -83,13 +83,13 @@ class NewsFragment : Fragment() {
             } else {
                 val id = checkedIds[0]
                 if (id == R.id.chip_all) viewModel.setFilter(null)
-                else if (id == R.id.chip_fed) viewModel.setFilter("FED")
-                else if (id == R.id.chip_inflation) viewModel.setFilter("INFLATION")
-                else if (id == R.id.chip_jobs) viewModel.setFilter("JOBS")
-                else if (id == R.id.chip_yields) viewModel.setFilter("YIELDS")
-                else if (id == R.id.chip_economy) viewModel.setFilter("ECONOMY")
-                else if (id == R.id.chip_research) viewModel.setFilter("RESEARCH")
-                else if (id == R.id.chip_housing) viewModel.setFilter("HOUSING")
+                else if (id == R.id.chip_fed) viewModel.setFilter(NewsConstants.TAG_FED)
+                else if (id == R.id.chip_inflation) viewModel.setFilter(NewsConstants.TAG_INFLATION)
+                else if (id == R.id.chip_jobs) viewModel.setFilter(NewsConstants.TAG_JOBS)
+                else if (id == R.id.chip_yields) viewModel.setFilter(NewsConstants.TAG_YIELDS)
+                else if (id == R.id.chip_economy) viewModel.setFilter(NewsConstants.TAG_ECONOMY)
+                else if (id == R.id.chip_research) viewModel.setFilter(NewsConstants.TAG_RESEARCH)
+                else if (id == R.id.chip_housing) viewModel.setFilter(NewsConstants.TAG_HOUSING)
             }
         }
 

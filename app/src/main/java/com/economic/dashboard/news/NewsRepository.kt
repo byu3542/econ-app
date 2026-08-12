@@ -68,10 +68,8 @@ class NewsRepository private constructor() {
 
         val futures = ArrayList<Future<List<NewsItem>>>()
         for (feed in NewsConstants.RSS_FEEDS) {
-            if (!categoryEnabled(feed[2])) continue // user disabled this category
-            val url = feed[0]
-            val name = feed[1]
-            futures.add(executor.submit(Callable { RssParser().parse(url, name) }))
+            if (!categoryEnabled(feed.categoryKey)) continue // user disabled this category
+            futures.add(executor.submit(Callable { RssParser().parse(feed.url, feed.name) }))
         }
 
         val all = ArrayList<NewsItem>()
@@ -153,10 +151,7 @@ class NewsRepository private constructor() {
     @Synchronized
     fun getUnreadCount(sinceMillis: Long): Int {
         val items = cachedItemsList ?: return 0
-        var n = 0
-        for (item in items)
-            if (item.pubDateMillis > sinceMillis) n++
-        return n
+        return items.count { it.pubDateMillis > sinceMillis }
     }
 
     /**

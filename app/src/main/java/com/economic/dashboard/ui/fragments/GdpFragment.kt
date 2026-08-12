@@ -116,10 +116,6 @@ class GdpFragment : Fragment() {
         viewModel.getLatestQuarterGdp().observe(viewLifecycleOwner) { value ->
             if (value != null) tvGdpLatestQuarterValue.text = value
         }
-        viewModel.getLatestQuarterLabel().observe(viewLifecycleOwner) { label ->
-            if (label != null) tvGdpLatestQuarterLabel.text = ""
-        }
-
         cardGdpStatus.setOnClickListener { showGdpBenchmarks() }
     }
 

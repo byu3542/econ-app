@@ -17,7 +17,7 @@ import com.economic.dashboard.utils.AppExecutors
  * Repository for Treasury Yield data with local caching.
  *
  * Cache Logic:
- * 1. On app open, check cache age via getLastCacheTime()
+ * 1. On app open, check cache age via getLastCacheTimeSync()
  * 2. If cache < 24 hours old, return cached data (no API call)
  * 3. If cache >= 24 hours old or missing, call fetchFromAPI() and update cache
  */

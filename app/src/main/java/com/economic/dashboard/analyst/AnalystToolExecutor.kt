@@ -162,7 +162,7 @@ object AnalystToolExecutor {
 
     private fun getSeries(ctx: Context, input: JSONObject): String {
         val seriesId = input.optString("series_id", "")
-        val months = Math.max(1, Math.min(24, input.optInt("months", 24)))
+        val months = input.optInt("months", 24).coerceIn(1, 24)
 
         for (s in SERIES_IDS)
             if (s == seriesId) return getCachedSeries(ctx, seriesId, months)
@@ -336,7 +336,7 @@ object AnalystToolExecutor {
 
     private fun getHeadlines(input: JSONObject): String {
         val topic = input.optString("topic", "").lowercase(Locale.US).trim()
-        val count = Math.max(1, Math.min(25, input.optInt("count", 10)))
+        val count = input.optInt("count", 10).coerceIn(1, 25)
 
         val items: List<NewsItem> = NewsRepository.getInstance().cachedItems
         if (items.isEmpty())
