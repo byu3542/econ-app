@@ -357,13 +357,43 @@ private class RowAdapter(
                 true
             }
             from is EditCardsRow.Header && to is EditCardsRow.Header && from.categoryIndex != to.categoryIndex -> {
-                val block = categories.removeAt(from.categoryIndex)
-                categories.add(to.categoryIndex, block)
-                rebuildRows()
-                notifyDataSetChanged()
+                moveCategoryBlock(from.categoryIndex, to.categoryIndex)
                 true
             }
             else -> false
+        }
+    }
+
+    /**
+     * Moves a whole category block (header + slots) past its neighbor using
+     * per-row [notifyItemMoved] calls only. A [notifyDataSetChanged] here would
+     * detach the dragged ViewHolder and cancel the gesture mid-drag — the user
+     * had to re-grab the handle for every single position. The dragged holder
+     * itself is never rebound; [RowDragCallback.clearView] does the full rebind
+     * once the gesture ends.
+     */
+    private fun moveCategoryBlock(fromCi: Int, toCi: Int) {
+        // Flat row start positions before mutation (hero occupies row 0).
+        val start = IntArray(categories.size)
+        var pos = if (hero != null) 1 else 0
+        for (ci in categories.indices) {
+            start[ci] = pos
+            pos += 1 + categories[ci].slots.size
+        }
+        val movedSize = 1 + categories[fromCi].slots.size
+        val otherSize = 1 + categories[toCi].slots.size
+
+        val block = categories.removeAt(fromCi)
+        categories.add(toCi, block)
+        rebuildRows()
+
+        if (fromCi < toCi) {
+            // Dragged block moves down: walk each neighbor row up in front of it.
+            for (i in 0 until otherSize) notifyItemMoved(start[toCi] + i, start[fromCi] + i)
+        } else {
+            // Dragged block moves up: walk each neighbor row down past it.
+            val regionEnd = start[toCi] + movedSize + otherSize - 1
+            repeat(otherSize) { notifyItemMoved(start[toCi], regionEnd) }
         }
     }
 }
@@ -379,6 +409,12 @@ private class RowDragCallback(private val adapter: RowAdapter) :
     override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) { /* no swipe action */ }
 
     override fun isLongPressDragEnabled(): Boolean = false
+
+    /** Gesture over — now the full rebind is safe (it would cancel a live drag). */
+    override fun clearView(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder) {
+        super.clearView(recyclerView, viewHolder)
+        adapter.refresh()
+    }
 
     /** Same-type only, so a drag never straddles a header/slot boundary mid-gesture. */
     override fun canDropOver(
