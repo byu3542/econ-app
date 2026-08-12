@@ -452,10 +452,10 @@ private class RowAdapter(
         val ctx = handle.context
         val upId = if (!canUp) View.NO_ID else ViewCompat.addAccessibilityAction(
             handle, ctx.getString(R.string.a11y_move_up, name)
-        ) { _, _ -> onAccessibilityMove(position(), up = true) }
+        ) { _, _ -> onAccessibilityMove(position(), up = true, handle, name) }
         val downId = if (!canDown) View.NO_ID else ViewCompat.addAccessibilityAction(
             handle, ctx.getString(R.string.a11y_move_down, name)
-        ) { _, _ -> onAccessibilityMove(position(), up = false) }
+        ) { _, _ -> onAccessibilityMove(position(), up = false, handle, name) }
         return Pair(upId, downId)
     }
 
@@ -466,7 +466,7 @@ private class RowAdapter(
      * blocks — so an accessibility move can never produce an order a drag
      * couldn't, and writeState/onSaveInstanceState round-trip identically.
      */
-    private fun onAccessibilityMove(position: Int, up: Boolean): Boolean {
+    private fun onAccessibilityMove(position: Int, up: Boolean, handle: View, name: String): Boolean {
         val moved = when (val row = rows.getOrNull(position)) {
             is EditCardsRow.Slot -> onDrag(position, if (up) position - 1 else position + 1)
             is EditCardsRow.Header -> {
@@ -477,7 +477,18 @@ private class RowAdapter(
         }
         // No gesture ends on this path, so clearView never fires — do its full
         // rebind here to keep row indices and action bounds current.
-        if (moved) refresh()
+        if (moved) {
+            refresh()
+            // Review finding: the rebind is silent and accessibility focus stays
+            // at the old position (now the swapped-in neighbor), so confirm what
+            // moved by name — a repeat activation on the wrong row then at least
+            // announces the neighbor's name, not a phantom success.
+            handle.announceForAccessibility(
+                handle.context.getString(
+                    if (up) R.string.a11y_moved_up else R.string.a11y_moved_down, name
+                )
+            )
+        }
         return moved
     }
 }

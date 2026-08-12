@@ -20,16 +20,18 @@
         android:minHeight="52dp"
         android:paddingEnd="@dimen/space_md">
 
-        <!-- TICKET-42: 48dp touch target via the same negative-margin trick as
-             activity_main's btnSettings — the view overflows its old 40dp box
-             by 4dp per side, so the glyph and the row's layout don't move.
+        <!-- TICKET-42: 48dp touch target. The row has no start padding, so the
+             8dp of extra width overflows toward the END only (review finding:
+             a start overflow would fall outside the CardView where touches
+             can't land, leaving an effective 44dp). The glyph drifts 4dp right
+             of its old center — imperceptible next to a dead touch band.
              contentDescription is set in EditCardsBottomSheet (names the
              slot's indicator). -->
         <TextView
             android:id="@+id/dragHandleSlot"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:layout_marginHorizontal="-4dp"
+            android:layout_marginEnd="-8dp"
             android:gravity="center"
             android:text="@string/drag_handle_glyph"
             android:textColor="@color/text_muted"
