@@ -343,8 +343,11 @@ private class RowAdapter(
     /**
      * Called by [RowDragCallback.onMove]. Slot rows may only swap with another
      * slot in the SAME category (a category's slot count/order never leaks
-     * into a neighboring category); header rows swap whole category blocks.
-     * Returns false — leaving the drag a no-op — for any other combination.
+     * into a neighboring category); header rows swap whole ADJACENT category
+     * blocks — [moveCategoryBlock]'s walk math assumes the two blocks touch,
+     * and a fast fling can hand this a header 2+ categories away. Returning
+     * false leaves the drag a no-op; ItemTouchHelper re-delivers against the
+     * intermediate neighbor as the gesture settles.
      */
     fun onDrag(fromPos: Int, toPos: Int): Boolean {
         val from = rows.getOrNull(fromPos) ?: return false
@@ -356,7 +359,8 @@ private class RowAdapter(
                 notifyItemMoved(fromPos, toPos)
                 true
             }
-            from is EditCardsRow.Header && to is EditCardsRow.Header && from.categoryIndex != to.categoryIndex -> {
+            from is EditCardsRow.Header && to is EditCardsRow.Header &&
+                Math.abs(from.categoryIndex - to.categoryIndex) == 1 -> {
                 moveCategoryBlock(from.categoryIndex, to.categoryIndex)
                 true
             }

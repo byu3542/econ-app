@@ -19,6 +19,7 @@ import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.doOnLayout
 import androidx.fragment.app.Fragment
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import androidx.lifecycle.ViewModelProvider
@@ -207,7 +208,11 @@ class MainActivity : AppCompatActivity() {
                 AiAnalystBottomSheet().show(supportFragmentManager, AiAnalystBottomSheet.TAG)
             }
         }
-        binding.btnSettings.setOnClickListener { openSettings() }
+        // Don't clobber the back-chevron handler applySettingsChrome() just
+        // bound when setupBottomNav() kept a restored Settings — rebinding to
+        // openSettings() here would leave the chevron dead (openSettings
+        // early-returns while Settings is showing).
+        if (!isSettingsShowing()) binding.btnSettings.setOnClickListener { openSettings() }
         observeViewModel()
         // Skip on a theme-toggle/rotation recreate: the ViewModel survives
         // those (ViewModelStore), so its LiveData already holds the current
@@ -285,6 +290,9 @@ class MainActivity : AppCompatActivity() {
         resetSettingsGearIcon()
         binding.bottomNavWrapper.visibility = View.VISIBLE
         binding.fabAiAnalyst.visibility = View.VISIBLE
+        // If this recreate started inside Settings, the nav was GONE during
+        // setupBottomNav() and the indicator was never sized (width was 0).
+        binding.bottomNav.doOnLayout { sizeNavIndicator() }
     }
 
     /** Gear icon back to its normal look + action. Idempotent — also called
@@ -570,6 +578,22 @@ class MainActivity : AppCompatActivity() {
 
     // ── Navigation ───────────────────────────────────────────────────────────
 
+    /** Sizes the active-tab indicator and parks it under the selected tab,
+     *  from the nav's CURRENT width. Re-runnable because that width is 0
+     *  until the nav has been laid out visible — a recreate straight into a
+     *  restored Settings reaches [setupBottomNav] with the nav still GONE,
+     *  so sizing must happen again once the nav shows (see [closeSettings]
+     *  and the zero-width branch in the nav listener). No-op while 0. */
+    private fun sizeNavIndicator() {
+        val itemWidth = binding.bottomNav.width / 5
+        if (itemWidth == 0) return
+        binding.navActiveIndicator.layoutParams.width = (itemWidth * 0.6f).toInt()
+        binding.navActiveIndicator.requestLayout()
+        val (index, _) = fragmentIndexAndTitle(binding.bottomNav.selectedItemId)
+        binding.navActiveIndicator.translationX =
+            (index * itemWidth + (itemWidth * 0.2f).toInt()).toFloat()
+    }
+
     private fun setupBottomNav() {
         // On an Activity recreate with Settings open, the FragmentManager has
         // already restored SettingsFragment into fragmentContainer — but the
@@ -584,13 +608,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.bottomNav.post {
-            val itemWidth = binding.bottomNav.width / 5
-            val indWidth = (itemWidth * 0.6f).toInt()
-            val indOffset = (itemWidth * 0.2f).toInt()
-
-            binding.navActiveIndicator.layoutParams.width = indWidth
-            binding.navActiveIndicator.requestLayout()
-            binding.navActiveIndicator.translationX = indOffset.toFloat()
+            sizeNavIndicator()
 
             binding.bottomNav.setOnItemSelectedListener { item ->
                 val id = item.itemId
@@ -614,11 +632,20 @@ class MainActivity : AppCompatActivity() {
                 binding.tvHeaderCompactTitle.text = title
                 currentScreenLabel = title
 
-                binding.navActiveIndicator.animate()
-                    .translationX((index * itemWidth + indOffset).toFloat())
-                    .setDuration(200)
-                    .setInterpolator(FastOutSlowInInterpolator())
-                    .start()
+                // Width is read at tap time, not captured at setup: when
+                // setupBottomNav() ran with the nav GONE (recreate straight
+                // into a restored Settings) the captured width was 0, which
+                // would pin the indicator at width 0 / x=0 forever.
+                val itemWidth = binding.bottomNav.width / 5
+                if (itemWidth == 0) {
+                    binding.bottomNav.doOnLayout { sizeNavIndicator() }
+                } else {
+                    binding.navActiveIndicator.animate()
+                        .translationX((index * itemWidth + (itemWidth * 0.2f).toInt()).toFloat())
+                        .setDuration(200)
+                        .setInterpolator(FastOutSlowInInterpolator())
+                        .start()
+                }
 
                 true
             }
