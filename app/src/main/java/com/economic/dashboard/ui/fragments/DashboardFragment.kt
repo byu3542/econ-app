@@ -140,7 +140,8 @@ class DashboardFragment : Fragment() {
         viewModel.getFailedSeries().observe(viewLifecycleOwner) { failed ->
             val f: Set<String> = failed ?: emptySet()
             for (i in slotCards.indices) toggleRetry(slotCards[i], slotIndicatorIds[i], f)
-            toggleHeroRetry(f.contains(EconomicViewModel.CACHE_FED_FUNDS) && heroIndicatorId == "fedfunds")
+            // Hero reads the daily series (review finding 8) — retry keys off it.
+            toggleHeroRetry(f.contains(EconomicViewModel.CACHE_FED_FUNDS_DAILY) && heroIndicatorId == "fedfunds")
         }
 
         // TICKET-25: rank the Overview clusters by the user's watchlist (or,
@@ -198,7 +199,7 @@ class DashboardFragment : Fragment() {
         tvFedFundsHeroDate = v.findViewById(R.id.tvFedFundsHeroDate)
         tvFedFundsRetry = v.findViewById(R.id.tvFedFundsRetry)
         tvFedFundsRetry?.setOnClickListener {
-            viewModel.retrySeries(EconomicViewModel.CACHE_FED_FUNDS)
+            viewModel.retrySeries(EconomicViewModel.CACHE_FED_FUNDS_DAILY)
         }
 
         updateNextFomcLabel()
@@ -458,6 +459,7 @@ class DashboardFragment : Fragment() {
     private fun observeData() {
         viewModel.getTreasuryData().observe(viewLifecycleOwner) { data -> if (data != null) onDataTick() }
         viewModel.getFedFundsData().observe(viewLifecycleOwner) { data -> if (data != null) onDataTick() }
+        viewModel.getFedFundsDailyData().observe(viewLifecycleOwner) { data -> if (data != null) onDataTick() }
         viewModel.getEmploymentData().observe(viewLifecycleOwner) { data -> if (data != null) onDataTick() }
         viewModel.getCpiData().observe(viewLifecycleOwner) { data -> if (data != null) onDataTick() }
         viewModel.getGdpData().observe(viewLifecycleOwner) { data -> if (data != null) onDataTick() }
@@ -630,7 +632,7 @@ class DashboardFragment : Fragment() {
          *  (corepce/wages/housing/sp500/nasdaq) never show a retry chip today —
          *  those series don't yet report per-series refresh failures. */
         private val INDICATOR_CACHE_KEY = mapOf(
-            "fedfunds" to EconomicViewModel.CACHE_FED_FUNDS,
+            "fedfunds" to EconomicViewModel.CACHE_FED_FUNDS_DAILY,
             "gdp" to EconomicViewModel.CACHE_GDP,
             "cpi" to EconomicViewModel.CACHE_CPI,
             "unemployment" to EconomicViewModel.CACHE_EMPLOYMENT,

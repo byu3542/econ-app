@@ -86,7 +86,11 @@ object DashboardIndicatorCatalog {
     // ── Per-indicator resolvers ─────────────────────────────────────────────
 
     private fun fedFunds(vm: EconomicViewModel): SlotDisplay? {
-        val rows = EconomicViewModel.filterBySeries(vm.getFedFundsData().value, "Federal Funds Effective Rate")
+        // Review finding 8 (R10/KD2): headline reads the daily series — a
+        // mid-month FOMC move shows the post-move rate, not the month's blend —
+        // with the monthly series as fallback until the daily fetch lands.
+        var rows = EconomicViewModel.filterBySeries(vm.getFedFundsDailyData().value, "Federal Funds Effective Rate")
+        if (rows.isEmpty()) rows = EconomicViewModel.filterBySeries(vm.getFedFundsData().value, "Federal Funds Effective Rate")
         if (rows.isEmpty()) return null
         val current = rows[rows.size - 1].value
         val delta = if (rows.size >= 2) current - rows[rows.size - 2].value else null

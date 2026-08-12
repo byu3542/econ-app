@@ -43,6 +43,11 @@ class EconomicViewModel(application: Application) : AndroidViewModel(application
     private val cpiData = MutableLiveData<List<EconomicDataPoint>>()
     private val wageData = MutableLiveData<List<EconomicDataPoint>>()
     private val fedFundsData = MutableLiveData<List<EconomicDataPoint>>()
+    // Review finding 8 (R10/KD2): the hero headline reads this small daily
+    // series (latest close + day-over-day delta); the monthly fedFundsData
+    // above stays the popup's 5Y history. Display-only — alert evaluation
+    // keeps the monthly series the popup shows (KTD7).
+    private val fedFundsDailyData = MutableLiveData<List<EconomicDataPoint>>()
     private val ismPmiData = MutableLiveData<List<EconomicDataPoint>>()
     private val pceData = MutableLiveData<List<EconomicDataPoint>>()
     private val housingData = MutableLiveData<List<EconomicDataPoint>>()
@@ -92,6 +97,7 @@ class EconomicViewModel(application: Application) : AndroidViewModel(application
     fun getCpiData(): LiveData<List<EconomicDataPoint>> = cpiData
     fun getWageData(): LiveData<List<EconomicDataPoint>> = wageData
     fun getFedFundsData(): LiveData<List<EconomicDataPoint>> = fedFundsData
+    fun getFedFundsDailyData(): LiveData<List<EconomicDataPoint>> = fedFundsDailyData
     fun getIsmPmiData(): LiveData<List<EconomicDataPoint>> = ismPmiData
     fun getPceData(): LiveData<List<EconomicDataPoint>> = pceData
     fun getHousingData(): LiveData<List<EconomicDataPoint>> = housingData
@@ -142,6 +148,7 @@ class EconomicViewModel(application: Application) : AndroidViewModel(application
         when (key) {
             CACHE_TREASURY -> fetchTreasury()
             CACHE_FED_FUNDS -> fetchFedFunds()
+            CACHE_FED_FUNDS_DAILY -> fetchFedFundsDaily()
             CACHE_EMPLOYMENT -> fetchEmployment()
             CACHE_CPI -> fetchCPI()
             CACHE_GDP -> fetchGDP()
@@ -168,6 +175,7 @@ class EconomicViewModel(application: Application) : AndroidViewModel(application
         if (!DashboardDataCache.hasAny(ctx)) return
         postCached(treasuryData, CACHE_TREASURY)
         postCached(fedFundsData, CACHE_FED_FUNDS)
+        postCached(fedFundsDailyData, CACHE_FED_FUNDS_DAILY)
         postCached(employmentData, CACHE_EMPLOYMENT)
         postCached(cpiData, CACHE_CPI)
         postCached(gdpData, CACHE_GDP)
@@ -253,7 +261,7 @@ class EconomicViewModel(application: Application) : AndroidViewModel(application
         // the actual number of fetches — no hardcoded magic number to maintain.
         val fetchTasks: List<() -> Unit> = listOf(
             ::fetchTreasury, ::fetchGDP, ::fetchEmployment, ::fetchCPI, ::fetchWages,
-            ::fetchFedFunds, ::fetchTenYearHistory,
+            ::fetchFedFunds, ::fetchFedFundsDaily, ::fetchTenYearHistory,
             ::fetchTwoYearHistory, ::fetchThreeMonthHistory,
             ::fetchPCE, ::fetchHousing, ::fetchMbsMortgage,
             ::fetchSp500, ::fetchNasdaq, ::fetchVix,
@@ -317,6 +325,17 @@ class EconomicViewModel(application: Application) : AndroidViewModel(application
             object : EconomicRepository.DataCallback<List<EconomicDataPoint>> {
                 override fun onSuccess(data: List<EconomicDataPoint>) { deliver(fedFundsData, CACHE_FED_FUNDS, data); checkAllDone() }
                 override fun onError(error: String) { errorMsg.postValue("Fed Funds: $error"); markFailed(CACHE_FED_FUNDS); checkAllDone() }
+            })
+    }
+
+    /** Review finding 8 (R10): small native-cadence (daily) fetch for the hero
+     *  headline — `frequency = null` omits the param so FRED serves daily DFF.
+     *  ~30 points ≈ one month of closes, enough for latest + day-over-day. */
+    fun fetchFedFundsDaily() {
+        repository.fetchFredData(ApiConfig.FRED_FED_FUNDS, "Federal Funds Effective Rate", "30", null, "Interest Rates",
+            object : EconomicRepository.DataCallback<List<EconomicDataPoint>> {
+                override fun onSuccess(data: List<EconomicDataPoint>) { deliver(fedFundsDailyData, CACHE_FED_FUNDS_DAILY, data); checkAllDone() }
+                override fun onError(error: String) { errorMsg.postValue("Fed Funds daily: $error"); markFailed(CACHE_FED_FUNDS_DAILY); checkAllDone() }
             })
     }
 
@@ -510,6 +529,9 @@ class EconomicViewModel(application: Application) : AndroidViewModel(application
         //    EconomicViewModel.CACHE_FED_FUNDS, and const emits a real static field.
         const val CACHE_TREASURY = "treasury"
         const val CACHE_FED_FUNDS = "fed_funds"
+        // Review finding 8: hero's daily series, cached/retried independently
+        // of the monthly popup history above.
+        const val CACHE_FED_FUNDS_DAILY = "fed_funds_daily"
         const val CACHE_EMPLOYMENT = "employment"
         const val CACHE_CPI = "cpi"
         const val CACHE_GDP = "gdp"
