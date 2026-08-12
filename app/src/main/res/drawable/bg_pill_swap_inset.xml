@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- TICKET-42: bg_pill_swap wrapped in an inset so the Swap chip can grow to a
+     48dp touch target while still drawing the same 32dp pill (8dp shaved off
+     the top and bottom of the view's bounds). -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/bg_pill_swap"
+    android:insetTop="8dp"
+    android:insetBottom="8dp" />

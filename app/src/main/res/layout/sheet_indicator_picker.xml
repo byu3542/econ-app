@@ -27,12 +27,19 @@
             android:textSize="@dimen/text_title"
             android:textStyle="bold" />
 
+        <!-- TICKET-42: labeled for TalkBack (the ✕ glyph reads as nothing), and
+             48dp touch target via the same negative-margin trick as
+             activity_main's btnSettings — the extra 4dp per side overflows
+             into the header's own padding, so the header's height and the
+             glyph's position don't move. -->
         <TextView
             android:id="@+id/btnPickerClose"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_margin="-4dp"
             android:gravity="center"
             android:text="@string/close_glyph"
+            android:contentDescription="@string/a11y_close"
             android:textColor="@color/text_secondary"
             android:textSize="@dimen/text_title"
             android:clickable="true"

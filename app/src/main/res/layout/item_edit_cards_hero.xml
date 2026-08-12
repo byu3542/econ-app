@@ -46,17 +46,20 @@
 
         </LinearLayout>
 
+        <!-- TICKET-42: 48dp touch target — the view grows to 48dp inside the
+             56dp row while bg_pill_swap_inset keeps the drawn pill at its old
+             32dp height. contentDescription set in EditCardsBottomSheet. -->
         <TextView
             android:id="@+id/btnEditCardsHeroSwap"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:minHeight="32dp"
+            android:minHeight="48dp"
             android:gravity="center"
             android:paddingHorizontal="@dimen/space_md"
             android:paddingVertical="@dimen/space_xs"
-            android:background="@drawable/bg_pill_swap"
+            android:background="@drawable/bg_pill_swap_inset"
             android:text="@string/edit_cards_swap"
-            android:textColor="@color/gold_ink"
+            android:textColor="@color/text_navy"
             android:textSize="@dimen/text_caption"
             android:textStyle="bold"
             android:clickable="true"

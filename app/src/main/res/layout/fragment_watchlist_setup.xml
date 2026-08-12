@@ -60,42 +60,42 @@
         android:minHeight="48dp" android:layout_marginTop="@dimen/space_md"
         android:text="@string/watchlist_gdp"
         android:textColor="@color/card_white" android:textSize="@dimen/text_body"
-        android:buttonTint="@color/accent_gold" />
+        android:buttonTint="@color/checkbox_gold_checked" />
 
     <CheckBox android:id="@+id/cbSpread"
         android:layout_width="match_parent" android:layout_height="wrap_content"
         android:minHeight="48dp"
         android:text="@string/watchlist_spread"
         android:textColor="@color/card_white" android:textSize="@dimen/text_body"
-        android:buttonTint="@color/accent_gold" />
+        android:buttonTint="@color/checkbox_gold_checked" />
 
     <CheckBox android:id="@+id/cbCpi"
         android:layout_width="match_parent" android:layout_height="wrap_content"
         android:minHeight="48dp"
         android:text="@string/watchlist_cpi"
         android:textColor="@color/card_white" android:textSize="@dimen/text_body"
-        android:buttonTint="@color/accent_gold" />
+        android:buttonTint="@color/checkbox_gold_checked" />
 
     <CheckBox android:id="@+id/cbUnemployment"
         android:layout_width="match_parent" android:layout_height="wrap_content"
         android:minHeight="48dp"
         android:text="@string/watchlist_unemployment"
         android:textColor="@color/card_white" android:textSize="@dimen/text_body"
-        android:buttonTint="@color/accent_gold" />
+        android:buttonTint="@color/checkbox_gold_checked" />
 
     <CheckBox android:id="@+id/cbMortgage"
         android:layout_width="match_parent" android:layout_height="wrap_content"
         android:minHeight="48dp"
         android:text="@string/watchlist_mortgage"
         android:textColor="@color/card_white" android:textSize="@dimen/text_body"
-        android:buttonTint="@color/accent_gold" />
+        android:buttonTint="@color/checkbox_gold_checked" />
 
     <CheckBox android:id="@+id/cbVix"
         android:layout_width="match_parent" android:layout_height="wrap_content"
         android:minHeight="48dp"
         android:text="@string/watchlist_vix"
         android:textColor="@color/card_white" android:textSize="@dimen/text_body"
-        android:buttonTint="@color/accent_gold" />
+        android:buttonTint="@color/checkbox_gold_checked" />
 
     <!-- Actions -->
     <LinearLayout

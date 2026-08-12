@@ -11,13 +11,20 @@
     android:paddingTop="@dimen/space_md"
     android:paddingBottom="@dimen/space_xs">
 
+    <!-- TICKET-42: 48dp touch target via the same negative-margin trick as
+         activity_main's btnSettings — the view overflows its old 32dp box by
+         8dp per side (mostly into the row's own padding; 4dp clips past the
+         bottom edge), so the glyph and the row's layout don't move.
+         contentDescription is set in EditCardsBottomSheet (names the
+         category). -->
     <TextView
         android:id="@+id/dragHandleHeader"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_margin="-8dp"
         android:gravity="center"
         android:text="@string/drag_handle_glyph"
-        android:textColor="@color/gold_ink"
+        android:textColor="@color/text_muted"
         android:textSize="@dimen/text_body" />
 
     <TextView

@@ -37,6 +37,9 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
 
+                <!-- TICKET-43: neutral, not gold — a gold label repeated on every
+                     row of the feed breaks the 10% accent budget; only the hero
+                     card's source keeps gold. -->
                 <TextView
                     android:id="@+id/tv_row_source"
                     android:layout_width="0dp"
@@ -45,7 +48,7 @@
                     android:textSize="@dimen/text_caption"
                     android:textStyle="bold"
                     android:textAllCaps="true"
-                    android:textColor="@color/accent_gold" />
+                    android:textColor="@color/text_slate" />
 
                 <TextView
                     android:id="@+id/tv_row_time"

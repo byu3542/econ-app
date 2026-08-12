@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 
+import androidx.core.view.ViewCompat
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -252,12 +253,18 @@ private class HeroVH(view: View) : RecyclerView.ViewHolder(view) {
 private class HeaderVH(view: View) : RecyclerView.ViewHolder(view) {
     val handle: View = view.findViewById(R.id.dragHandleHeader)
     val title: TextView = view.findViewById(R.id.tvEditCardsHeaderTitle)
+    // P7 TICKET-42: this holder's current Move up/down custom-action ids —
+    // tracked so a rebind replaces them instead of stacking duplicates.
+    var moveUpActionId = View.NO_ID
+    var moveDownActionId = View.NO_ID
 }
 
 private class SlotVH(view: View) : RecyclerView.ViewHolder(view) {
     val handle: View = view.findViewById(R.id.dragHandleSlot)
     val name: TextView = view.findViewById(R.id.tvEditCardsSlotName)
     val swap: View = view.findViewById(R.id.btnEditCardsSwap)
+    var moveUpActionId = View.NO_ID
+    var moveDownActionId = View.NO_ID
 }
 
 /**
@@ -314,13 +321,27 @@ private class RowAdapter(
             is EditCardsRow.Hero -> {
                 val h = hero ?: return
                 val vh = holder as HeroVH
-                vh.name.text = DashboardIndicatorCatalog.label(h.indicatorId)
+                val label = DashboardIndicatorCatalog.label(h.indicatorId)
+                vh.name.text = label
+                // P7 TICKET-42: TalkBack names the target, not a bare "Swap".
+                vh.swap.contentDescription = vh.swap.context.getString(R.string.a11y_swap, label)
                 vh.swap.setOnClickListener { onSwapHero() }
             }
             is EditCardsRow.Header -> {
                 val cat = categories[row.categoryIndex]
                 val vh = holder as HeaderVH
                 vh.title.text = cat.title
+                // P7 TICKET-42: label the handle and offer Move up/down custom
+                // actions — the TalkBack path into the same moves dragging does.
+                vh.handle.contentDescription =
+                    vh.handle.context.getString(R.string.a11y_reorder_category, cat.title)
+                val ids = replaceMoveActions(
+                    vh.handle, cat.title, vh.moveUpActionId, vh.moveDownActionId,
+                    canUp = row.categoryIndex > 0,
+                    canDown = row.categoryIndex < categories.size - 1
+                ) { vh.bindingAdapterPosition }
+                vh.moveUpActionId = ids.first
+                vh.moveDownActionId = ids.second
                 vh.handle.setOnTouchListener { _, event ->
                     if (event.actionMasked == MotionEvent.ACTION_DOWN) touchHelper?.startDrag(vh)
                     false
@@ -330,7 +351,19 @@ private class RowAdapter(
                 val cat = categories[row.categoryIndex]
                 val slot = cat.slots[row.slotIndex]
                 val vh = holder as SlotVH
-                vh.name.text = DashboardIndicatorCatalog.label(slot.indicatorId)
+                val label = DashboardIndicatorCatalog.label(slot.indicatorId)
+                vh.name.text = label
+                // P7 TICKET-42: name + role on both affordances ("Reorder S&P
+                // 500", "Swap S&P 500") plus Move up/down custom actions.
+                vh.handle.contentDescription = vh.handle.context.getString(R.string.a11y_reorder, label)
+                vh.swap.contentDescription = vh.swap.context.getString(R.string.a11y_swap, label)
+                val ids = replaceMoveActions(
+                    vh.handle, label, vh.moveUpActionId, vh.moveDownActionId,
+                    canUp = row.slotIndex > 0,
+                    canDown = row.slotIndex < cat.slots.size - 1
+                ) { vh.bindingAdapterPosition }
+                vh.moveUpActionId = ids.first
+                vh.moveDownActionId = ids.second
                 vh.handle.setOnTouchListener { _, event ->
                     if (event.actionMasked == MotionEvent.ACTION_DOWN) touchHelper?.startDrag(vh)
                     false
@@ -399,6 +432,53 @@ private class RowAdapter(
             val regionEnd = start[toCi] + movedSize + otherSize - 1
             repeat(otherSize) { notifyItemMoved(start[toCi], regionEnd) }
         }
+    }
+
+    /**
+     * P7 TICKET-42: swaps in this bind's "Move up"/"Move down" TalkBack custom
+     * actions and returns their ids. The ids from the holder's previous bind
+     * are removed first — recycled holders would otherwise stack duplicate
+     * menu entries until the framework's action-id pool ran dry. An action is
+     * only added where the equivalent drag could land, so the first movable
+     * row offers no "Move up" and the last no "Move down" (every mutation
+     * ends in [refresh], so bind-time bounds stay true).
+     */
+    private fun replaceMoveActions(
+        handle: View, name: String, oldUpId: Int, oldDownId: Int,
+        canUp: Boolean, canDown: Boolean, position: () -> Int
+    ): Pair<Int, Int> {
+        if (oldUpId != View.NO_ID) ViewCompat.removeAccessibilityAction(handle, oldUpId)
+        if (oldDownId != View.NO_ID) ViewCompat.removeAccessibilityAction(handle, oldDownId)
+        val ctx = handle.context
+        val upId = if (!canUp) View.NO_ID else ViewCompat.addAccessibilityAction(
+            handle, ctx.getString(R.string.a11y_move_up, name)
+        ) { _, _ -> onAccessibilityMove(position(), up = true) }
+        val downId = if (!canDown) View.NO_ID else ViewCompat.addAccessibilityAction(
+            handle, ctx.getString(R.string.a11y_move_down, name)
+        ) { _, _ -> onAccessibilityMove(position(), up = false) }
+        return Pair(upId, downId)
+    }
+
+    /**
+     * P7 TICKET-42: the non-drag path into reordering. Funnels through the
+     * exact mutations the drag path uses — [onDrag] for slots (which enforces
+     * the same-category rule) and [moveCategoryBlock] for whole category
+     * blocks — so an accessibility move can never produce an order a drag
+     * couldn't, and writeState/onSaveInstanceState round-trip identically.
+     */
+    private fun onAccessibilityMove(position: Int, up: Boolean): Boolean {
+        val moved = when (val row = rows.getOrNull(position)) {
+            is EditCardsRow.Slot -> onDrag(position, if (up) position - 1 else position + 1)
+            is EditCardsRow.Header -> {
+                val toCi = row.categoryIndex + if (up) -1 else 1
+                if (toCi in categories.indices) { moveCategoryBlock(row.categoryIndex, toCi); true } else false
+            }
+            else -> false
+        }
+        // No gesture ends on this path, so clearView never fires — do its full
+        // rebind here to keep row indices and action bounds current.
+        if (moved) refresh()
+        return moved
     }
 }
 

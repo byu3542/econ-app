@@ -78,6 +78,11 @@ class IndicatorPickerBottomSheet : BottomSheetDialogFragment() {
                 tvLabel?.text = ind.label
                 val selected = ind.id == currentId
                 tvCheck?.visibility = if (selected) View.VISIBLE else View.INVISIBLE
+                // P7 TICKET-42: the row announces its label + selection state;
+                // the ✓ glyph itself is decorative (importantForAccessibility
+                // ="no" in the row layout).
+                row.contentDescription =
+                    if (selected) getString(R.string.a11y_indicator_selected, ind.label) else ind.label
                 row.setBackgroundColor(
                     if (selected) resolveColor(ctx, R.color.bg_selected_row) else android.graphics.Color.TRANSPARENT
                 )
