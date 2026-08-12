@@ -7,12 +7,12 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 
+import com.economic.dashboard.alerts.AlertValues
 import com.economic.dashboard.alerts.ThresholdAlertEvaluator
 import com.economic.dashboard.api.ApiConfig
 import com.economic.dashboard.api.EconomicRepository
 import com.economic.dashboard.cache.DashboardDataCache
 import com.economic.dashboard.models.EconomicDataPoint
-import com.economic.dashboard.utils.SeriesMath
 import com.economic.dashboard.utils.SettingsManager
 
 import java.text.ParseException
@@ -284,32 +284,27 @@ class EconomicViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    /** TICKET-24: latest value per series key → threshold rule evaluation. */
+    /** TICKET-24: latest value per series key → threshold rule evaluation.
+     *  The key → value contract lives in [AlertValues.build] (pure, JVM-tested)
+     *  so every popup alertSeriesKey is guaranteed a value in popup-displayed
+     *  units; this method only supplies the LiveData snapshots. */
     private fun evaluateAlertRules() {
-        val latest = HashMap<String, Double>()
-        putIfPresent(latest, CACHE_FED_FUNDS, latestOf(fedFundsData.value, "Federal Funds Effective Rate"))
-        putIfPresent(latest, CACHE_GDP, latestOf(gdpData.value, "Gross domestic product"))
-        putIfPresent(latest, CACHE_EMPLOYMENT, latestOf(employmentData.value, "Unemployment Rate"))
-        putIfPresent(latest, CACHE_CPI, cpiYoyOf(cpiData.value)) // CPI = YoY %
-        putIfPresent(latest, CACHE_VIX, latestOf(vixData.value, "VIX Volatility Index"))
-        putIfPresent(latest, CACHE_MBS, latestOf(mbsMortgageData.value, "30-Yr Mortgage Rate"))
-        putIfPresent(latest, KEY_WAGES, latestOf(wageData.value, "Average Hourly Earnings - Private"))
-        putIfPresent(latest, KEY_PCE, latestOf(pceData.value, "PCE Price Index"))
-        putIfPresent(latest, KEY_HOUSING, latestOf(housingData.value, "Housing Starts"))
-        putIfPresent(latest, KEY_SP500, latestOf(sp500Data.value, "S&P 500 Index"))
-        putIfPresent(latest, KEY_NASDAQ, latestOf(nasdaqData.value, "Nasdaq Composite Index"))
-        putIfPresent(latest, KEY_BAA, latestOf(baaSpreadData.value, "BAA Corporate Spread"))
-        putIfPresent(latest, KEY_HY, latestOf(hySpreadData.value, "High Yield Spread"))
-        putIfPresent(latest, ALERT_SPREAD_3M, latestOf(calculatedSpread3MData.value))
-        // P6 TICKET-35: keys the leaf-screen popups' Add-alert rows target but the
-        // map never carried — without these, saved rules on 10Y / 10Y-2Y / labor
-        // participation would never fire.
-        putIfPresent(latest, CACHE_TREASURY, latestOf(treasuryData.value, "10 Year"))
-        putIfPresent(latest, ALERT_SPREAD_2Y, latestOf(calculatedSpreadData.value))
-        putIfPresent(latest, KEY_LABOR, latestOf(employmentData.value, "Labor Force Participation Rate"))
-        putIfPresent(latest, ALERT_MORTGAGE_SPREAD, latestOf(SeriesMath.mortgageMinusTenYearSpread(
-            filterBySeries(mbsMortgageData.value, "30-Yr Mortgage Rate"),
-            filterBySeries(treasuryData.value, "10 Year"))))
+        val latest = AlertValues.build(
+            fedFunds = fedFundsData.value,
+            gdp = gdpData.value,
+            employment = employmentData.value,
+            cpi = cpiData.value,
+            vix = vixData.value,
+            mbsMortgage = mbsMortgageData.value,
+            wages = wageData.value,
+            pce = pceData.value,
+            housing = housingData.value,
+            sp500 = sp500Data.value,
+            nasdaq = nasdaqData.value,
+            baaSpread = baaSpreadData.value,
+            hySpread = hySpreadData.value,
+            treasury = treasuryData.value,
+            spread2y = calculatedSpreadData.value)
         ThresholdAlertEvaluator.evaluate(getApplication<Application>(), latest)
     }
 
@@ -539,38 +534,8 @@ class EconomicViewModel(application: Application) : AndroidViewModel(application
         const val ALERT_SPREAD_2Y = "spread_10y2y"
         const val ALERT_MORTGAGE_SPREAD = "mortgage_spread"
 
-        private fun putIfPresent(map: MutableMap<String, Double>, key: String, v: Double?) {
-            if (v != null) map[key] = v
-        }
-
-        // ── Latest-value helpers (TICKET-24 alert-rule evaluation) ───────────────
-
-        /** Latest numeric value of a series list, or null if absent/empty. */
-        private fun latestOf(rows: List<EconomicDataPoint>?): Double? {
-            if (rows == null || rows.isEmpty()) return null
-            return rows[rows.size - 1].value
-        }
-
-        /** Latest value of one named series inside a (possibly multi-series) list. */
-        private fun latestOf(rows: List<EconomicDataPoint>?, seriesName: String): Double? {
-            if (rows == null || rows.isEmpty()) return null
-            return latestOf(filterBySeries(rows, seriesName))
-        }
-
-        /** CPI YoY % from a monthly index series (needs ≥13 rows), or null. */
-        private fun yoyOf(rows: List<EconomicDataPoint>?): Double? {
-            if (rows == null || rows.size < 13) return null
-            val latest = rows[rows.size - 1].value
-            val base = rows[rows.size - 13].value
-            if (base == 0.0) return null
-            return ((latest - base) / base) * 100.0
-        }
-
-        /** CPI YoY % from the CPI-U series within a multi-series CPI list. */
-        private fun cpiYoyOf(rows: List<EconomicDataPoint>?): Double? {
-            if (rows == null || rows.isEmpty()) return null
-            return yoyOf(filterBySeries(rows, "CPI-U All Items"))
-        }
+        // Latest-value/YoY helpers formerly here moved to alerts/AlertValues.kt
+        // (review fix): the alert key → value contract is now pure and JVM-tested.
 
         @JvmStatic
         fun getLatest(data: List<EconomicDataPoint>?, series: String): EconomicDataPoint? {
