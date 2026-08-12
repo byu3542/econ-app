@@ -28,8 +28,6 @@ import com.economic.dashboard.utils.NumberFormatUtil
 import com.economic.dashboard.utils.RetryChip
 import com.economic.dashboard.utils.TimeframeSelector
 import com.github.mikephil.charting.charts.LineChart
-import com.github.mikephil.charting.components.LimitLine
-import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
@@ -87,7 +85,7 @@ class BondsFragment : Fragment() {
         AskAnalyst.attachChartExplain(
             swappableChart, requireActivity(), "corporate bond spreads (BAA and high-yield) over time")
 
-        styleChart(swappableChart); ChartHelper.declutterDark(swappableChart); ChartHelper.attachCrosshair(swappableChart); addAllBenchmarks(swappableChart) // TICKET-23
+        ChartHelper.styleNavyChart(swappableChart); ChartHelper.declutterDark(swappableChart); ChartHelper.attachCrosshair(swappableChart); addAllBenchmarks(swappableChart) // TICKET-23
 
         // TICKET-11: inline range switcher redraws the active bond-spread series.
         val tfSel: LinearLayout? = view.findViewById(R.id.timeframeSelector)
@@ -185,37 +183,11 @@ class BondsFragment : Fragment() {
             seriesName + " trend, " + NumberFormatUtil.percent(rows[rows.size - 1].value)
     }
 
-    private fun styleChart(chart: LineChart) {
-        val grid = Color.argb(0x14, 0xFF, 0xFF, 0xFF)
-        chart.setBackgroundColor(Color.parseColor("#1C2236")); chart.setDrawGridBackground(false)
-        chart.setDrawBorders(false); chart.setTouchEnabled(true); chart.setDragEnabled(true)
-        chart.setScaleEnabled(true); chart.setPinchZoom(true); chart.description.setEnabled(false)
-        chart.setNoDataText("Loading data..."); chart.setExtraBottomOffset(8f)
-        val x = chart.xAxis
-        x.setPosition(XAxis.XAxisPosition.BOTTOM); x.setTextColor(Color.parseColor("#5A6A8A")); x.setTextSize(9f)
-        x.setDrawGridLines(true); x.setGridColor(grid); x.setLabelRotationAngle(-45f)
-        x.setGranularity(1f); x.setLabelCount(6, false); x.setAvoidFirstLastClipping(true)
-        val y = chart.axisLeft
-        y.setTextColor(Color.parseColor("#8899BB")); y.setTextSize(10f); y.setDrawGridLines(true); y.setGridColor(grid)
-        chart.axisRight.setEnabled(false)
-    }
-
     private fun addAllBenchmarks(chart: LineChart) {
-        addLine(chart, 1.5f, "BAA Tight", "#6FA97A"); addLine(chart, 2.5f, "BAA Normal", "#5B8DB8")
-        addLine(chart, 3.5f, "BAA Elevated", "#D98E4F"); addLine(chart, 3f, "HY Tight", "#6FA97A")
-        addLine(chart, 5f, "HY Normal", "#5B8DB8"); addLine(chart, 8f, "HY Elevated", "#D98E4F")
+        ChartHelper.addLimitLine(chart, 1.5f, "BAA Tight", "#6FA97A"); ChartHelper.addLimitLine(chart, 2.5f, "BAA Normal", "#5B8DB8")
+        ChartHelper.addLimitLine(chart, 3.5f, "BAA Elevated", "#D98E4F"); ChartHelper.addLimitLine(chart, 3f, "HY Tight", "#6FA97A")
+        ChartHelper.addLimitLine(chart, 5f, "HY Normal", "#5B8DB8"); ChartHelper.addLimitLine(chart, 8f, "HY Elevated", "#D98E4F")
         chart.axisLeft.setDrawLimitLinesBehindData(true)
-    }
-
-    private fun addLine(chart: LineChart, value: Float, label: String, color: String) {
-        val l = LimitLine(value, label)
-        // Explicit setters on MPAndroidChart throughout (migration lesson 12) —
-        // the library cannot be built against here, so accessor pairs are never
-        // assumed. Property syntax is used only for getter-only reads like
-        // chart.xAxis / chart.axisLeft.
-        l.setLineColor(Color.parseColor(color)); l.setLineWidth(1f)
-        l.setTextColor(Color.parseColor(color)); l.setTextSize(9f); l.enableDashedLine(8f, 4f, 0f)
-        chart.axisLeft.addLimitLine(l)
     }
 
     override fun onDestroyView() {

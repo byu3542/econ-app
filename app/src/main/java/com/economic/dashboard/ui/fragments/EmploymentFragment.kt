@@ -28,8 +28,6 @@ import com.economic.dashboard.utils.RetryChip
 import com.economic.dashboard.utils.SeriesMath
 import com.economic.dashboard.utils.TimeframeSelector
 import com.github.mikephil.charting.charts.LineChart
-import com.github.mikephil.charting.components.LimitLine
-import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
@@ -84,7 +82,7 @@ class EmploymentFragment : Fragment() {
             swappableChart, requireActivity(), "U.S. employment data (unemployment rate and related labor series)")
         tvChartTitle = b.tvChartTitle
 
-        styleChart(swappableChart)
+        ChartHelper.styleNavyChart(swappableChart)
         ChartHelper.declutterDark(swappableChart)
         ChartHelper.attachCrosshair(swappableChart) // TICKET-23
         addEmploymentLimitLines(swappableChart)
@@ -186,20 +184,13 @@ class EmploymentFragment : Fragment() {
     }
 
     private fun addEmploymentLimitLines(chart: LineChart) {
-        addLine(chart, 4.5f, "Healthy ≤4.5%", "#6FA97A")
-        addLine(chart, 5.5f, "Elevated 5.5%", "#D98E4F")
-        addLine(chart, 7.0f, "Recession 7.0%", "#C75B4E")
-        addLine(chart, 63.3f, "Pre-COVID 63.3%", "#6FA97A")
-        addLine(chart, 62.0f, "Declining 62.0%", "#D98E4F")
-        addLine(chart, 61.0f, "Critical 61.0%", "#C75B4E")
+        ChartHelper.addLimitLine(chart, 4.5f, "Healthy ≤4.5%", "#6FA97A")
+        ChartHelper.addLimitLine(chart, 5.5f, "Elevated 5.5%", "#D98E4F")
+        ChartHelper.addLimitLine(chart, 7.0f, "Recession 7.0%", "#C75B4E")
+        ChartHelper.addLimitLine(chart, 63.3f, "Pre-COVID 63.3%", "#6FA97A")
+        ChartHelper.addLimitLine(chart, 62.0f, "Declining 62.0%", "#D98E4F")
+        ChartHelper.addLimitLine(chart, 61.0f, "Critical 61.0%", "#C75B4E")
         chart.axisLeft.setDrawLimitLinesBehindData(true)
-    }
-
-    private fun addLine(chart: LineChart, value: Float, label: String, color: String) {
-        val l = LimitLine(value, label)
-        l.setLineColor(Color.parseColor(color)); l.setLineWidth(1f)
-        l.setTextColor(Color.parseColor(color)); l.setTextSize(9f); l.enableDashedLine(8f, 4f, 0f)
-        chart.axisLeft.addLimitLine(l)
     }
 
     private fun buildChart(data: List<EconomicDataPoint>, series: String, chart: LineChart, hexColor: String) {
@@ -225,21 +216,6 @@ class EmploymentFragment : Fragment() {
         // P6 TICKET-37: TalkBack announces the visible series, not the static XML label.
         chart.contentDescription =
             series + " trend, " + NumberFormatUtil.percent(rows[rows.size - 1].value, 1)
-    }
-
-    private fun styleChart(chart: LineChart) {
-        val grid = Color.argb(0x14, 0xFF, 0xFF, 0xFF)
-        chart.setBackgroundColor(Color.parseColor("#1C2236")); chart.setDrawGridBackground(false)
-        chart.setDrawBorders(false); chart.setTouchEnabled(true); chart.setDragEnabled(true)
-        chart.setScaleEnabled(true); chart.setPinchZoom(true); chart.description.setEnabled(false)
-        chart.setNoDataText("Loading data..."); chart.setExtraBottomOffset(8f)
-        val x = chart.xAxis
-        x.setPosition(XAxis.XAxisPosition.BOTTOM); x.setTextColor(Color.parseColor("#5A6A8A")); x.setTextSize(9f)
-        x.setDrawGridLines(true); x.setGridColor(grid); x.setLabelRotationAngle(-45f)
-        x.setGranularity(1f); x.setLabelCount(6, false); x.setAvoidFirstLastClipping(true)
-        val y = chart.axisLeft
-        y.setTextColor(Color.parseColor("#8899BB")); y.setTextSize(10f); y.setDrawGridLines(true); y.setGridColor(grid)
-        chart.axisRight.setEnabled(false)
     }
 
     override fun onDestroyView() {

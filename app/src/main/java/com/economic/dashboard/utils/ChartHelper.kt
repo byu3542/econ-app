@@ -12,6 +12,7 @@ import android.widget.TextView
 
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.components.Legend
+import com.github.mikephil.charting.components.LimitLine
 import com.github.mikephil.charting.components.MarkerView
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.components.YAxis
@@ -114,6 +115,53 @@ object ChartHelper {
         chart.setExtraLeftOffset(10f)
         chart.setExtraTopOffset(20f)
         chart.setExtraRightOffset(20f)
+    }
+
+    /**
+     * The dark-navy base style the per-tab fragments used to each carry as a
+     * private `styleChart` — one copy here so a style change is single-point.
+     * The three per-site variants are parameters: `noDataText` (Stocks:
+     * "Loading…", Yields: "Loading yield data…"), `noDataTextColor`
+     * (Yields only), and `xAxisLineToGrid` (Stocks only, tints the x axis
+     * line to the grid color).
+     */
+    @JvmStatic
+    fun styleNavyChart(
+        chart: LineChart,
+        noDataText: String = "Loading data...",
+        noDataTextColor: Int? = null,
+        xAxisLineToGrid: Boolean = false
+    ) {
+        val grid = Color.argb(0x14, 0xFF, 0xFF, 0xFF)
+        chart.setBackgroundColor(Color.parseColor("#1C2236")); chart.setDrawGridBackground(false)
+        chart.setDrawBorders(false); chart.setTouchEnabled(true); chart.setDragEnabled(true)
+        chart.setScaleEnabled(true); chart.setPinchZoom(true); chart.description.setEnabled(false)
+        chart.setNoDataText(noDataText)
+        if (noDataTextColor != null) chart.setNoDataTextColor(noDataTextColor)
+        chart.setExtraBottomOffset(8f)
+        val x = chart.xAxis
+        x.setPosition(XAxis.XAxisPosition.BOTTOM); x.setTextColor(Color.parseColor("#5A6A8A")); x.setTextSize(9f)
+        x.setDrawGridLines(true); x.setGridColor(grid)
+        if (xAxisLineToGrid) x.setAxisLineColor(grid)
+        x.setLabelRotationAngle(-45f)
+        x.setGranularity(1f); x.setLabelCount(6, false); x.setAvoidFirstLastClipping(true)
+        val y = chart.axisLeft
+        y.setTextColor(Color.parseColor("#8899BB")); y.setTextSize(10f); y.setDrawGridLines(true); y.setGridColor(grid)
+        chart.axisRight.setEnabled(false)
+    }
+
+    /**
+     * Dashed benchmark LimitLine, the body the fragments used to duplicate as
+     * a private `addLine`. Explicit setters on MPAndroidChart throughout
+     * (migration lesson 12) — the library cannot be built against here, so
+     * accessor pairs are never assumed.
+     */
+    @JvmStatic
+    fun addLimitLine(chart: LineChart, value: Float, label: String, color: String) {
+        val l = LimitLine(value, label)
+        l.setLineColor(Color.parseColor(color)); l.setLineWidth(1f)
+        l.setTextColor(Color.parseColor(color)); l.setTextSize(9f); l.enableDashedLine(8f, 4f, 0f)
+        chart.axisLeft.addLimitLine(l)
     }
 
     /**

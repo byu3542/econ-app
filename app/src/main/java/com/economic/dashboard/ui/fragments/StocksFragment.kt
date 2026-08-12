@@ -28,8 +28,6 @@ import com.economic.dashboard.utils.NumberFormatUtil
 import com.economic.dashboard.utils.RetryChip
 import com.economic.dashboard.utils.TimeframeSelector
 import com.github.mikephil.charting.charts.LineChart
-import com.github.mikephil.charting.components.LimitLine
-import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
@@ -101,7 +99,7 @@ class StocksFragment : Fragment() {
             swappableChart, requireActivity(), "stock market indices (S&P 500, Nasdaq, VIX)")
         tvChartTitle = b.tvChartTitle
 
-        styleChart(swappableChart)
+        ChartHelper.styleNavyChart(swappableChart, noDataText = "Loading…", xAxisLineToGrid = true)
         ChartHelper.declutterDark(swappableChart)
         ChartHelper.attachCrosshair(swappableChart) // TICKET-23
         addVixBenchmarks(swappableChart)
@@ -244,32 +242,10 @@ class StocksFragment : Fragment() {
             seriesName + " trend, " + NumberFormatUtil.number(rows[rows.size - 1].value, 0)
     }
 
-    private fun styleChart(chart: LineChart) {
-        val darkBg = Color.parseColor("#1C2236")
-        val grid = Color.argb(0x14, 0xFF, 0xFF, 0xFF)
-        chart.setBackgroundColor(darkBg); chart.setDrawGridBackground(false); chart.setDrawBorders(false)
-        chart.setTouchEnabled(true); chart.setDragEnabled(true); chart.setScaleEnabled(true); chart.setPinchZoom(true)
-        chart.description.setEnabled(false); chart.setNoDataText("Loading…"); chart.setExtraBottomOffset(8f)
-        val x = chart.xAxis
-        x.setPosition(XAxis.XAxisPosition.BOTTOM); x.setTextColor(Color.parseColor("#5A6A8A")); x.setTextSize(9f)
-        x.setDrawGridLines(true); x.setGridColor(grid); x.setAxisLineColor(grid)
-        x.setLabelRotationAngle(-45f); x.setGranularity(1f); x.setLabelCount(6, false); x.setAvoidFirstLastClipping(true)
-        val y = chart.axisLeft
-        y.setTextColor(Color.parseColor("#8899BB")); y.setTextSize(10f); y.setDrawGridLines(true); y.setGridColor(grid)
-        chart.axisRight.setEnabled(false)
-    }
-
     private fun addVixBenchmarks(chart: LineChart) {
-        addLine(chart, 12f, "Low Vol", "#6FA97A"); addLine(chart, 20f, "Normal", "#5B8DB8")
-        addLine(chart, 30f, "Elevated", "#D98E4F"); addLine(chart, 50f, "Extreme", "#C75B4E")
+        ChartHelper.addLimitLine(chart, 12f, "Low Vol", "#6FA97A"); ChartHelper.addLimitLine(chart, 20f, "Normal", "#5B8DB8")
+        ChartHelper.addLimitLine(chart, 30f, "Elevated", "#D98E4F"); ChartHelper.addLimitLine(chart, 50f, "Extreme", "#C75B4E")
         chart.axisLeft.setDrawLimitLinesBehindData(true)
-    }
-
-    private fun addLine(chart: LineChart, value: Float, label: String, color: String) {
-        val l = LimitLine(value, label)
-        l.setLineColor(Color.parseColor(color)); l.setLineWidth(1f)
-        l.setTextColor(Color.parseColor(color)); l.setTextSize(9f); l.enableDashedLine(8f, 4f, 0f)
-        chart.axisLeft.addLimitLine(l)
     }
 
     private fun formatValueWithK(value: Double): String {

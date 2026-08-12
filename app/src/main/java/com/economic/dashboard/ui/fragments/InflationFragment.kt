@@ -31,7 +31,6 @@ import com.economic.dashboard.utils.SettingsManager
 import com.economic.dashboard.utils.TimeframeSelector
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.components.LimitLine
-import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
@@ -115,8 +114,8 @@ class InflationFragment : Fragment() {
         AskAnalyst.attachChartExplain(
             chartComparison, requireActivity(), "a comparison of inflation measures")
 
-        styleChart(chartPceCpi)
-        styleChart(chartComparison)
+        ChartHelper.styleNavyChart(chartPceCpi)
+        ChartHelper.styleNavyChart(chartComparison)
         // TICKET-07/08: thin gridlines + label each line at its right end
         // instead of a detached legend.
         ChartHelper.declutterDark(chartPceCpi)
@@ -361,21 +360,6 @@ class InflationFragment : Fragment() {
         elevated.setTextColor(Color.parseColor("#D98E4F")); elevated.setTextSize(9f); elevated.enableDashedLine(8f, 4f, 0f)
         chart.axisLeft.addLimitLine(target); chart.axisLeft.addLimitLine(elevated)
         chart.axisLeft.setDrawLimitLinesBehindData(true)
-    }
-
-    private fun styleChart(chart: LineChart) {
-        val grid = Color.argb(0x14, 0xFF, 0xFF, 0xFF)
-        chart.setBackgroundColor(Color.parseColor("#1C2236")); chart.setDrawGridBackground(false)
-        chart.setDrawBorders(false); chart.setTouchEnabled(true); chart.setDragEnabled(true)
-        chart.setScaleEnabled(true); chart.setPinchZoom(true); chart.description.setEnabled(false)
-        chart.setNoDataText("Loading data..."); chart.setExtraBottomOffset(8f)
-        val x = chart.xAxis
-        x.setPosition(XAxis.XAxisPosition.BOTTOM); x.setTextColor(Color.parseColor("#5A6A8A")); x.setTextSize(9f)
-        x.setDrawGridLines(true); x.setGridColor(grid); x.setLabelRotationAngle(-45f)
-        x.setGranularity(1f); x.setLabelCount(6, false); x.setAvoidFirstLastClipping(true)
-        val y = chart.axisLeft
-        y.setTextColor(Color.parseColor("#8899BB")); y.setTextSize(10f); y.setDrawGridLines(true); y.setGridColor(grid)
-        chart.axisRight.setEnabled(false)
     }
 
     override fun onDestroyView() {

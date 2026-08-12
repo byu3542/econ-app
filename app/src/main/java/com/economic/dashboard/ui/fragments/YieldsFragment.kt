@@ -24,7 +24,6 @@ import com.economic.dashboard.utils.EdgeToEdgeInsets
 import com.economic.dashboard.utils.NumberFormatUtil
 import com.economic.dashboard.utils.RetryChip
 import com.github.mikephil.charting.charts.LineChart
-import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
@@ -68,7 +67,8 @@ class YieldsFragment : Fragment() {
         yieldCurveChart = b.yieldCurveChart
         AskAnalyst.attachChartExplain(
             yieldCurveChart, requireActivity(), "the current Treasury yield curve across maturities")
-        styleChart(yieldCurveChart)
+        ChartHelper.styleNavyChart(yieldCurveChart, noDataText = "Loading yield data…",
+            noDataTextColor = Color.parseColor("#8899BB"))
         ChartHelper.declutterDark(yieldCurveChart)
         yieldCurveChart.axisLeft.setValueFormatter(object : ValueFormatter() {
             override fun getFormattedValue(value: Float): String {
@@ -191,23 +191,6 @@ class YieldsFragment : Fragment() {
             if (dateView != null) dateView.text = ""
             if (changeView != null) changeView.text = ""
         }
-    }
-
-    private fun styleChart(chart: LineChart) {
-        val grid = Color.argb(0x14, 0xFF, 0xFF, 0xFF)
-        chart.setBackgroundColor(Color.parseColor("#1C2236")); chart.setDrawGridBackground(false)
-        chart.setDrawBorders(false); chart.setTouchEnabled(true); chart.setDragEnabled(true)
-        chart.setScaleEnabled(true); chart.setPinchZoom(true); chart.description.setEnabled(false)
-        chart.setNoDataText("Loading yield data…")
-        chart.setNoDataTextColor(Color.parseColor("#8899BB"))
-        chart.setExtraBottomOffset(8f)
-        val x = chart.xAxis
-        x.setPosition(XAxis.XAxisPosition.BOTTOM); x.setTextColor(Color.parseColor("#5A6A8A")); x.setTextSize(9f)
-        x.setDrawGridLines(true); x.setGridColor(grid); x.setLabelRotationAngle(-45f)
-        x.setGranularity(1f); x.setLabelCount(6, false); x.setAvoidFirstLastClipping(true)
-        val y = chart.axisLeft
-        y.setTextColor(Color.parseColor("#8899BB")); y.setTextSize(10f); y.setDrawGridLines(true); y.setGridColor(grid)
-        chart.axisRight.setEnabled(false)
     }
 
     override fun onDestroyView() {
