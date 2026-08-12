@@ -64,26 +64,46 @@ android {
 // itself when its interpreter is absent is worse than no gate: it reports green.
 // If this fails with "requires bash", install Git for Windows.
 // Changed 2026-08-12, agent-autonomy plan U3.
+// Resolve bash once, at configuration time: PATH first, then the standard Git
+// for Windows install locations. Relying on PATH alone makes the gate
+// environment-dependent — a Windows PowerShell session, a scheduled task, or a
+// CI runner each have a different PATH, and "bash wasn't on PATH" is precisely
+// how this gate came to skip itself silently. One process spawn plus at most
+// three file checks.
+def bashPath = null
+try {
+    if (new ProcessBuilder('bash', '-c', 'exit 0').start().waitFor() == 0) {
+        bashPath = 'bash'
+    }
+} catch (Exception ignored) {
+    // not on PATH; fall through to the known locations
+}
+if (bashPath == null) {
+    for (candidate in ['C:/Program Files/Git/bin/bash.exe',
+                       'C:/Program Files/Git/usr/bin/bash.exe',
+                       'C:/Program Files (x86)/Git/bin/bash.exe']) {
+        if (new File(candidate).exists()) { bashPath = candidate; break }
+    }
+}
+
 tasks.register('checkBadges', Exec) {
     group = 'verification'
     description = 'Fails if a status badge is styled outside @style/Badge.Status.'
     workingDir rootProject.projectDir
-    commandLine 'bash', 'scripts/check_badges.sh'
+    commandLine bashPath ?: 'bash', 'scripts/check_badges.sh'
     // A non-zero exit from the script fails the build. That is the point.
     ignoreExitValue = false
     doFirst {
-        def ok = false
-        try {
-            ok = new ProcessBuilder('bash', '-c', 'exit 0').start().waitFor() == 0
-        } catch (Exception ignored) {
-            ok = false
-        }
-        if (!ok) {
+        if (bashPath == null) {
             throw new GradleException(
-                'checkBadges requires bash on PATH. Install Git for Windows, or run ' +
-                'gradlew from Git Bash. This gate is not allowed to skip itself — ' +
-                'see the comment above.')
+                'checkBadges could not find bash. Looked on PATH and in:\n' +
+                '  C:/Program Files/Git/bin/bash.exe\n' +
+                '  C:/Program Files/Git/usr/bin/bash.exe\n' +
+                '  C:/Program Files (x86)/Git/bin/bash.exe\n' +
+                'Install Git for Windows, or run gradlew from Git Bash. This gate ' +
+                'is not allowed to skip itself — see the comment above.')
         }
+        logger.lifecycle("checkBadges: using bash at ${bashPath}")
     }
 }
 
