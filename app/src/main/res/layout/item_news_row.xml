@@ -39,7 +39,10 @@
 
                 <!-- TICKET-43: neutral, not gold — a gold label repeated on every
                      row of the feed breaks the 10% accent budget; only the hero
-                     card's source keeps gold. -->
+                     card's source keeps gold. TICKET-44: text_secondary, not
+                     text_slate — this label sits on the theme-flipping
+                     surface_card, and slate only clears 4.5:1 on the navy badge
+                     surfaces it was made for. -->
                 <TextView
                     android:id="@+id/tv_row_source"
                     android:layout_width="0dp"
@@ -48,7 +51,7 @@
                     android:textSize="@dimen/text_caption"
                     android:textStyle="bold"
                     android:textAllCaps="true"
-                    android:textColor="@color/text_slate" />
+                    android:textColor="@color/text_secondary" />
 
                 <TextView
                     android:id="@+id/tv_row_time"
