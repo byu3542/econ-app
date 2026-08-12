@@ -197,7 +197,7 @@ class InflationFragment : Fragment() {
     private var cachedCpiSource: List<EconomicDataPoint>? = null
     private var cachedCpiRows: List<EconomicDataPoint> = ArrayList()
 
-    private fun cpiRows(cpiData: List<EconomicDataPoint>): List<EconomicDataPoint> {
+    private fun cpiRowsFor(cpiData: List<EconomicDataPoint>): List<EconomicDataPoint> {
         if (cachedCpiSource !== cpiData) {
             cachedCpiSource = cpiData
             cachedCpiRows = EconomicViewModel.filterBySeries(cpiData, "CPI-U All Items")
@@ -206,7 +206,7 @@ class InflationFragment : Fragment() {
     }
 
     private fun updateCpiCard(cpiData: List<EconomicDataPoint>) {
-        val rows = cpiRows(cpiData)
+        val rows = cpiRowsFor(cpiData)
         if (rows.size < 13) return
         val latest = rows[rows.size - 1].value
         val yoy = SeriesMath.yoyPercentSeries(rows).last().value
@@ -234,7 +234,7 @@ class InflationFragment : Fragment() {
         }
 
         val wRows = EconomicViewModel.filterBySeries(wageData, "Average Hourly Earnings - Private")
-        val cRows = cpiRows(cpiData)
+        val cRows = cpiRowsFor(cpiData)
         if (wRows.size < 13 || cRows.size < 13) {
             Log.w(DIAG, "skipped — hourly=${wRows.size}, cpi=${cRows.size} (need 13 each); " +
                 "series in wage payload=${wageData.map { it.series }.distinct()}")
@@ -258,7 +258,7 @@ class InflationFragment : Fragment() {
     private fun buildPceCpiChart(pceData: List<EconomicDataPoint>?, cpiData: List<EconomicDataPoint>?) {
         if (pceData == null || cpiData == null || !::chartPceCpi.isInitialized) return
         val pceRows = EconomicViewModel.filterBySeries(pceData, "PCE Price Index")
-        val cpiRows = cpiRows(cpiData)
+        val cpiRows = cpiRowsFor(cpiData)
         if (pceRows.size < 13 || cpiRows.size < 13) return
 
         val pceEntries = ArrayList<Entry>()
@@ -304,7 +304,7 @@ class InflationFragment : Fragment() {
         val pceData = viewModel.getPceData().getValue()
         if (cpiData == null || wageData == null || !::chartComparison.isInitialized) return
 
-        var cpiRows = cpiRows(cpiData)
+        var cpiRows = cpiRowsFor(cpiData)
         val wageRows = EconomicViewModel.filterBySeries(wageData, "Average Hourly Earnings - Private")
         val pceRows: List<EconomicDataPoint> = if (pceData != null)
             EconomicViewModel.filterBySeries(pceData, "PCE Price Index")
