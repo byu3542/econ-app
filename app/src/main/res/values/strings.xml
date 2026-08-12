@@ -99,6 +99,10 @@
     <string name="a11y_moved_up">Moved %1$s up</string>
     <string name="a11y_moved_down">Moved %1$s down</string>
     <string name="a11y_indicator_selected">%1$s, currently selected</string>
+    <!-- TICKET-45: purpose labels for the Overview cards' tap/long-press, spoken
+         as "Double-tap to …" / "double-tap and hold to …" — lowercase verb phrases. -->
+    <string name="a11y_view_details">view benchmarks and history</string>
+    <string name="a11y_ask_analyst">ask the AI analyst</string>
     <string name="refresh_failed">Refresh failed — check your connection</string>
     <string name="refresh_on_open">Refresh data when the app opens</string>
     <string name="refresh_on_open_sub">Uses more data and may take longer to load</string>
