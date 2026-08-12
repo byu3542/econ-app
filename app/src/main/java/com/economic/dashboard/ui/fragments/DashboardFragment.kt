@@ -280,6 +280,8 @@ class DashboardFragment : Fragment() {
         label?.text = DashboardIndicatorCatalog.label(heroIndicatorId)
 
         val hero = cardFedFundsHero ?: return
+        // TICKET-45: label-only fallback until refreshHero() has data to speak.
+        hero.contentDescription = DashboardIndicatorCatalog.label(heroIndicatorId)
         if (MetricPopupRegistry.byId(heroIndicatorId) != null) {
             hero.setOnClickListener { v2 ->
                 v2.performHapticFeedback(android.view.HapticFeedbackConstants.CONTEXT_CLICK)
@@ -526,6 +528,7 @@ class DashboardFragment : Fragment() {
         if (display == null) {
             // No data yet — leave the skeleton pulse running.
             statusBadge?.visibility = View.GONE
+            card.contentDescription = (meta?.label ?: id) + ", loading"
             return
         }
         setCardValue(card, display.value)
@@ -538,6 +541,27 @@ class DashboardFragment : Fragment() {
         } else {
             statusBadge?.visibility = View.GONE
         }
+        // TICKET-45: one grouped TalkBack node per card, built from the same
+        // formatted strings the card displays so speech can't diverge from
+        // pixels. The retry chip stays its own focusable node (it's clickable).
+        card.contentDescription = buildCardDescription(meta?.label ?: id, display)
+    }
+
+    /** "<indicator>, <value>, up/down <delta>, <status word>, <date>" — parts
+     *  omitted exactly when their visual counterpart is hidden. */
+    private fun buildCardDescription(
+        label: String, display: DashboardIndicatorCatalog.SlotDisplay
+    ): String {
+        val sb = StringBuilder(label).append(", ").append(display.value)
+        val delta = display.delta
+        // Same visibility condition as applyDelta(): no chip, no spoken delta.
+        if (delta != null && Math.abs(delta) > 1e-9) {
+            sb.append(", ").append(DeltaFormatter.spoken(delta, display.deltaFmt))
+        }
+        val word = display.tier?.word
+        if (word != null && word.isNotEmpty()) sb.append(", ").append(word)
+        if (display.date.isNotEmpty()) sb.append(", ").append(display.date)
+        return sb.toString()
     }
 
     private fun refreshHero() {
@@ -580,6 +604,26 @@ class DashboardFragment : Fragment() {
             heroDate.visibility = View.VISIBLE
         } else if (heroIndicatorId == "fedfunds") {
             updateNextFomcLabel()
+        }
+
+        // TICKET-45: grouped TalkBack description, assembled last so it reads
+        // the same cycle/date text the hero ended up showing. The retry chip
+        // keeps its own focusable node.
+        cardFedFundsHero?.contentDescription = buildString {
+            append(DashboardIndicatorCatalog.label(heroIndicatorId))
+            append(", ").append(display.value)
+            val delta = display.delta
+            if (delta != null && Math.abs(delta) > 1e-9) {
+                append(", ").append(DeltaFormatter.spoken(delta, display.deltaFmt))
+            }
+            val cycleTv = tvFedFundsHeroCycle
+            if (cycleTv != null && cycleTv.visibility == View.VISIBLE && cycleTv.text.isNotEmpty()) {
+                append(", ").append(cycleTv.text)
+            }
+            val dateTv = tvFedFundsHeroDate
+            if (dateTv != null && dateTv.visibility == View.VISIBLE && dateTv.text.isNotEmpty()) {
+                append(", ").append(dateTv.text)
+            }
         }
     }
 

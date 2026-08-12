@@ -43,6 +43,23 @@ object DeltaFormatter {
             String.format(java.util.Locale.US, numberFmt, Math.abs(delta))
 
     /**
+     * TalkBack-friendly delta phrase, e.g. "up 0.20%" / "down 0.1 percentage points".
+     * The visual label's ▲/▼ glyph and true-minus sign read badly (or not at all)
+     * under a screen reader, so speech carries direction as a word instead.
+     */
+    @JvmStatic
+    fun spoken(delta: Double, numberFmt: String): String {
+        val word = when {
+            delta > 0 -> "up"
+            delta < 0 -> "down"
+            else -> return "unchanged"
+        }
+        val amount = String.format(java.util.Locale.US, numberFmt, Math.abs(delta))
+            .replace("pp", " percentage points")
+        return "$word $amount"
+    }
+
+    /**
      * The color to tint the delta label.
      *
      * @param goodWhenDown true for metrics where a decrease is favorable
