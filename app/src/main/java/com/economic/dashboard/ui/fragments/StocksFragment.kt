@@ -139,8 +139,18 @@ class StocksFragment : Fragment() {
         }
     }
 
+    // Same tick filters the active series twice (card + chart); cache per
+    // source list, identity-keyed — see EmploymentFragment.rowsFor.
+    private var filterSource: List<EconomicDataPoint>? = null
+    private val filterCache = HashMap<String, List<EconomicDataPoint>>()
+
+    private fun rowsFor(data: List<EconomicDataPoint>, series: String): List<EconomicDataPoint> {
+        if (filterSource !== data) { filterSource = data; filterCache.clear() }
+        return filterCache.getOrPut(series) { EconomicViewModel.filterBySeries(data, series) }
+    }
+
     private fun updateSp500Card(data: List<EconomicDataPoint>) {
-        val rows = EconomicViewModel.filterBySeries(data, "S&P 500 Index")
+        val rows = rowsFor(data, "S&P 500 Index")
         if (rows.isEmpty()) return
         val latest = rows[rows.size - 1].value
         tvSp500Value.text = formatValueWithK(latest)
@@ -149,7 +159,7 @@ class StocksFragment : Fragment() {
     }
 
     private fun updateNasdaqCard(data: List<EconomicDataPoint>) {
-        val rows = EconomicViewModel.filterBySeries(data, "Nasdaq Composite Index")
+        val rows = rowsFor(data, "Nasdaq Composite Index")
         if (rows.isEmpty()) return
         val latest = rows[rows.size - 1].value
         tvNasdaqValue.text = formatValueWithK(latest)
@@ -158,7 +168,7 @@ class StocksFragment : Fragment() {
     }
 
     private fun updateVixCard(data: List<EconomicDataPoint>) {
-        val rows = EconomicViewModel.filterBySeries(data, "VIX Volatility Index")
+        val rows = rowsFor(data, "VIX Volatility Index")
         if (rows.isEmpty()) return
         val latest = rows[rows.size - 1].value
         tvVixValue.text = NumberFormatUtil.indexPoints(latest, 1) // TICKET-19
@@ -217,7 +227,7 @@ class StocksFragment : Fragment() {
             }
         }
         if (data == null) return
-        var rows = EconomicViewModel.filterBySeries(data, seriesName)
+        var rows = rowsFor(data, seriesName)
         if (rows.isEmpty()) return
         rows = EconomicViewModel.filterByTimeframe(requireContext(), rows, "stocks")
         val entries = ArrayList<Entry>()

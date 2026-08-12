@@ -13,6 +13,9 @@ import com.economic.dashboard.models.EconomicHistoryEntry
  * (Use executor, WorkManager, or a plain new Thread, consistent with this project's
  * existing EconomicRepository pattern.)
  */
+/** Result row for [EconomicHistoryDao.getLastCacheTimesPerSeries]. */
+data class SeriesCacheTime(val seriesId: String, val maxTime: Long)
+
 @Dao
 interface EconomicHistoryDao {
 
@@ -47,6 +50,15 @@ interface EconomicHistoryDao {
      */
     @Query("SELECT COALESCE(MAX(cachedAtMillis), 0) FROM economic_history WHERE seriesId = :seriesId")
     fun getLastCacheTimeForSeries(seriesId: String): Long
+
+    /**
+     * Newest cachedAtMillis per series in one query — the batched form of
+     * [getLastCacheTimeForSeries] for the per-launch staleness sweep over the
+     * whole catalog (series absent from the table are simply absent here;
+     * callers default them to 0).
+     */
+    @Query("SELECT seriesId, MAX(cachedAtMillis) AS maxTime FROM economic_history GROUP BY seriesId")
+    fun getLastCacheTimesPerSeries(): List<SeriesCacheTime>
 
     /**
      * Total number of cached rows across all series.

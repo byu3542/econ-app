@@ -52,23 +52,32 @@ object HistoricalContextBuilder {
             val dao = YieldDatabase.getInstance(context).economicHistoryDao()
             if (dao.getCount() == 0) return ""
 
+            // Each of these five series feeds both its summary line below AND
+            // the FULL SERIES DETAIL section — fetch once, format twice
+            // (build() runs on every sheet open; this halves its Room queries).
+            val tenY = dao.getSeriesSync(HistoricalDataRepository.SERIES_10Y_TREASURY)
+            val twoY = dao.getSeriesSync(HistoricalDataRepository.SERIES_2Y_TREASURY)
+            val threeM = dao.getSeriesSync(HistoricalDataRepository.SERIES_3M_TREASURY)
+            val mortgage = dao.getSeriesSync(HistoricalDataRepository.SERIES_MORTGAGE30)
+            val unemployment = dao.getSeriesSync(HistoricalDataRepository.SERIES_UNEMPLOYMENT)
+
             val sb = StringBuilder()
             sb.append("\n\nHISTORICAL TRENDS — 2-Year Window\n")
             sb.append("──────────────────────────────────\n")
 
             // ── Treasury yields ───────────────────────────────────────────────
             sb.append("TREASURY YIELDS (weekly FRED data)\n")
-            appendYieldLine(sb, dao, HistoricalDataRepository.SERIES_10Y_TREASURY, "10Y")
-            appendYieldLine(sb, dao, HistoricalDataRepository.SERIES_2Y_TREASURY, "2Y ")
-            appendYieldLine(sb, dao, HistoricalDataRepository.SERIES_3M_TREASURY, "3M ")
+            appendYieldLine(sb, tenY, "10Y")
+            appendYieldLine(sb, twoY, "2Y ")
+            appendYieldLine(sb, threeM, "3M ")
 
             // ── Mortgage rates ────────────────────────────────────────────────
             sb.append("\nMORTGAGE RATES (weekly FRED data)\n")
-            appendYieldLine(sb, dao, HistoricalDataRepository.SERIES_MORTGAGE30, "30-Yr Fixed")
+            appendYieldLine(sb, mortgage, "30-Yr Fixed")
 
             // ── Unemployment rate ─────────────────────────────────────────────
             sb.append("\nUNEMPLOYMENT RATE (monthly BLS data)\n")
-            appendUnemploymentBlock(sb, dao)
+            appendUnemploymentBlock(sb, unemployment)
 
             // ── GDP growth ────────────────────────────────────────────────────
             sb.append("\nGDP GROWTH — QoQ Annualized % (BEA quarterly)\n")
@@ -79,11 +88,11 @@ object HistoricalContextBuilder {
             // can answer questions like "what was the 10Y yield last September?"
             sb.append("\nFULL SERIES DETAIL — month-by-month, 24-month window")
             sb.append(" (weekly series show the last reading of each month)\n")
-            appendMonthlySeries(sb, dao, HistoricalDataRepository.SERIES_10Y_TREASURY, "10Y Treasury %")
-            appendMonthlySeries(sb, dao, HistoricalDataRepository.SERIES_2Y_TREASURY, "2Y Treasury %")
-            appendMonthlySeries(sb, dao, HistoricalDataRepository.SERIES_3M_TREASURY, "3M T-Bill %")
-            appendMonthlySeries(sb, dao, HistoricalDataRepository.SERIES_MORTGAGE30, "30-Yr Mortgage %")
-            appendMonthlySeries(sb, dao, HistoricalDataRepository.SERIES_UNEMPLOYMENT, "Unemployment %")
+            appendMonthlySeries(sb, tenY, "10Y Treasury %")
+            appendMonthlySeries(sb, twoY, "2Y Treasury %")
+            appendMonthlySeries(sb, threeM, "3M T-Bill %")
+            appendMonthlySeries(sb, mortgage, "30-Yr Mortgage %")
+            appendMonthlySeries(sb, unemployment, "Unemployment %")
 
             return sb.toString()
 
@@ -99,10 +108,8 @@ object HistoricalContextBuilder {
 
     /** Formats one yield/rate line: label, range, avg, latest, trend arrow. */
     private fun appendYieldLine(
-        sb: StringBuilder, dao: EconomicHistoryDao,
-        seriesId: String, label: String
+        sb: StringBuilder, rows: List<EconomicHistoryEntry>, label: String
     ) {
-        val rows: List<EconomicHistoryEntry> = dao.getSeriesSync(seriesId)
         if (rows.isEmpty()) {
             sb.append("  ").append(label).append(": Unavailable\n")
             return
@@ -129,9 +136,7 @@ object HistoricalContextBuilder {
     }
 
     /** Formats the unemployment block (similar to yield line but no %). */
-    private fun appendUnemploymentBlock(sb: StringBuilder, dao: EconomicHistoryDao) {
-        val rows: List<EconomicHistoryEntry> =
-            dao.getSeriesSync(HistoricalDataRepository.SERIES_UNEMPLOYMENT)
+    private fun appendUnemploymentBlock(sb: StringBuilder, rows: List<EconomicHistoryEntry>) {
         if (rows.isEmpty()) {
             sb.append("  Unavailable\n")
             return
@@ -191,10 +196,8 @@ object HistoricalContextBuilder {
      * Rows arrive sorted ASC by date, so the last value seen for a month wins.
      */
     private fun appendMonthlySeries(
-        sb: StringBuilder, dao: EconomicHistoryDao,
-        seriesId: String, label: String
+        sb: StringBuilder, rows: List<EconomicHistoryEntry>, label: String
     ) {
-        val rows: List<EconomicHistoryEntry> = dao.getSeriesSync(seriesId)
         if (rows.isEmpty()) return
 
         // LinkedHashMap preserves chronological order; later rows overwrite

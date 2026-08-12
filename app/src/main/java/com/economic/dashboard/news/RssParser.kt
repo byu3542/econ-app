@@ -218,10 +218,15 @@ class RssParser {
 
     // ─── Date parsing ────────────────────────────────────────────────────────────
 
+    // Compiled once per parser instance (one instance per feed, confined to a
+    // single background thread) instead of one new SimpleDateFormat per format
+    // attempt per item. SimpleDateFormat isn't thread-safe — keep these
+    // instance-level, never companion-level.
+    private val dateFormatters = DATE_FORMATS.map { SimpleDateFormat(it, Locale.US) }
+
     private fun parsePubDate(dateStr: String): Long {
-        for (format in DATE_FORMATS) {
+        for (sdf in dateFormatters) {
             try {
-                val sdf = SimpleDateFormat(format, Locale.US)
                 val d = sdf.parse(dateStr)
                 if (d != null) return d.time
             } catch (ignored: ParseException) {

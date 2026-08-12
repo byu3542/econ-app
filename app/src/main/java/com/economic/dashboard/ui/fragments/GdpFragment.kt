@@ -106,7 +106,10 @@ class GdpFragment : Fragment() {
 
         viewModel.getGdpData().observe(viewLifecycleOwner) { data ->
             if (data != null) {
-                lastGdpData = data; buildGdpChart(data); updateGdpIndicator(data); updateLatestQuarterStatus(data)
+                lastGdpData = data
+                // One filter pass shared by chart, indicator and quarter badge.
+                val gdpRows = EconomicViewModel.filterBySeries(data, "Gross domestic product")
+                buildGdpChart(data, gdpRows); updateGdpIndicator(gdpRows); updateLatestQuarterStatus(gdpRows)
                 if (::skeleton.isInitialized) skeleton.reveal()
             }
         }
@@ -125,8 +128,7 @@ class GdpFragment : Fragment() {
         MetricPopupController.show(ctx, viewModel, "gdp")
     }
 
-    private fun updateGdpIndicator(data: List<EconomicDataPoint>) {
-        val gdpRows = EconomicViewModel.filterBySeries(data, "Gross domestic product")
+    private fun updateGdpIndicator(gdpRows: List<EconomicDataPoint>) {
         if (gdpRows.isEmpty()) return
 
         val rollingAvg = SeriesMath.trailingAverage(gdpRows, 4)
@@ -141,8 +143,7 @@ class GdpFragment : Fragment() {
         BenchmarkStyle.applyBadge(statusGdp, requireContext(), result)
     }
 
-    private fun updateLatestQuarterStatus(data: List<EconomicDataPoint>) {
-        val gdpRows = EconomicViewModel.filterBySeries(data, "Gross domestic product")
+    private fun updateLatestQuarterStatus(gdpRows: List<EconomicDataPoint>) {
         if (gdpRows.isEmpty()) return
         val latestValue = gdpRows[gdpRows.size - 1].value
 
@@ -150,8 +151,9 @@ class GdpFragment : Fragment() {
         BenchmarkStyle.applyBadge(statusGdpLatestQuarter, requireContext(), result)
     }
 
-    private fun buildGdpChart(data: List<EconomicDataPoint>) {
-        var gdpRows = EconomicViewModel.filterBySeries(data, "Gross domestic product")
+    private fun buildGdpChart(data: List<EconomicDataPoint>, gdpRowsPrecomputed: List<EconomicDataPoint>? = null) {
+        var gdpRows = gdpRowsPrecomputed
+            ?: EconomicViewModel.filterBySeries(data, "Gross domestic product")
         if (gdpRows.isEmpty() && !data.isEmpty())
             gdpRows = EconomicViewModel.filterBySeries(data, data[0].series)
         if (gdpRows.isEmpty()) return

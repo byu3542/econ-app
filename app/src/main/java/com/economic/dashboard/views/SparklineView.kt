@@ -56,10 +56,23 @@ class SparklineView @JvmOverloads constructor(
 
     fun setFillEnabled(enabled: Boolean) { fillEnabled = enabled; invalidate() }
 
+    // min/max/range are pure derived state of `values` — computed once per
+    // setData rather than on every onDraw (this view lives in recycled rows,
+    // which redraw far more often than they rebind).
+    private var minVal = 0f
+    private var rangeVal = 1f
+
     fun setData(data: List<Double>?) {
         if (data == null || data.size < 2) { values = null; invalidate(); return }
         val v = FloatArray(data.size)
         for (i in data.indices) v[i] = data[i].toFloat()
+        var min = Float.MAX_VALUE
+        var max = -Float.MAX_VALUE
+        for (f in v) { if (f < min) min = f; if (f > max) max = f }
+        var range = max - min
+        if (range < 1e-6f) range = 1f
+        minVal = min
+        rangeVal = range
         values = v
         invalidate()
     }
@@ -72,11 +85,8 @@ class SparklineView @JvmOverloads constructor(
         val w = width.toFloat()
         val h = height.toFloat()
         val padY = h * 0.12f
-        var min = Float.MAX_VALUE
-        var max = -Float.MAX_VALUE
-        for (v in vals) { if (v < min) min = v; if (v > max) max = v }
-        var range = max - min
-        if (range < 1e-6f) range = 1f
+        val min = minVal
+        val range = rangeVal
 
         linePaint.color = lineColor
         if (fillEnabled)

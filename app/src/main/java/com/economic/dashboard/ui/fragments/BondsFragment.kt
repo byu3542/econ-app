@@ -112,8 +112,18 @@ class BondsFragment : Fragment() {
         }
     }
 
+    // Same tick filters the active series twice (card + chart); cache per
+    // source list, identity-keyed — see EmploymentFragment.rowsFor.
+    private var filterSource: List<EconomicDataPoint>? = null
+    private val filterCache = HashMap<String, List<EconomicDataPoint>>()
+
+    private fun rowsFor(data: List<EconomicDataPoint>, series: String): List<EconomicDataPoint> {
+        if (filterSource !== data) { filterSource = data; filterCache.clear() }
+        return filterCache.getOrPut(series) { EconomicViewModel.filterBySeries(data, series) }
+    }
+
     private fun updateBaaCard(data: List<EconomicDataPoint>) {
-        val rows = EconomicViewModel.filterBySeries(data, "BAA Corporate Spread")
+        val rows = rowsFor(data, "BAA Corporate Spread")
         if (rows.isEmpty()) return
         val latest = rows[rows.size - 1].value
         tvBaaValue.text = NumberFormatUtil.percent(latest) // TICKET-19
@@ -122,7 +132,7 @@ class BondsFragment : Fragment() {
     }
 
     private fun updateHyCard(data: List<EconomicDataPoint>) {
-        val rows = EconomicViewModel.filterBySeries(data, "High Yield Spread")
+        val rows = rowsFor(data, "High Yield Spread")
         if (rows.isEmpty()) return
         val latest = rows[rows.size - 1].value
         tvHyValue.text = NumberFormatUtil.percent(latest) // TICKET-19
@@ -156,7 +166,7 @@ class BondsFragment : Fragment() {
         if ("hy" == activeCard) { data = currentHyData; seriesName = "High Yield Spread"; lineColor = "#F57C00" }
         else { data = currentBaaData; seriesName = "BAA Corporate Spread"; lineColor = "#1976D2" }
         if (data == null) return
-        var rows = EconomicViewModel.filterBySeries(data, seriesName)
+        var rows = rowsFor(data, seriesName)
         if (rows.isEmpty()) return
         rows = EconomicViewModel.filterByTimeframe(requireContext(), rows, "bonds")
         val entries = ArrayList<Entry>()

@@ -130,8 +130,9 @@ class EconomicViewModel(application: Application) : AndroidViewModel(application
     }
 
     private fun markFailed(key: String) {
-        failed.add(key)
-        failedSeries.postValue(HashSet(failed))
+        // Same already-changed guard as markRecovered: an outage re-failing the
+        // same series shouldn't re-fire every retry-chip observer per refresh.
+        if (failed.add(key)) failedSeries.postValue(HashSet(failed))
     }
 
     private fun markRecovered(key: String) {
@@ -221,7 +222,11 @@ class EconomicViewModel(application: Application) : AndroidViewModel(application
 
     private fun postCached(live: MutableLiveData<List<EconomicDataPoint>>, key: String) {
         val cached = DashboardDataCache.load(getApplication<Application>(), key)
-        if (cached != null && !cached.isEmpty()) live.postValue(cached)
+        // Skip the repost when the snapshot equals what's already displayed
+        // (structural equality — EconomicDataPoint is a data class): a manual
+        // refresh otherwise rebuilds every chart for unchanged data. Cold
+        // launch is unaffected (live.value is null there).
+        if (cached != null && !cached.isEmpty() && live.value != cached) live.postValue(cached)
     }
 
     /** Posts fresh data to LiveData and writes it back to the snapshot cache. */

@@ -105,21 +105,28 @@ object HistoricalDataRepository {
                 val dao = YieldDatabase.getInstance(context).economicHistoryDao()
                 val now = System.currentTimeMillis()
 
+                val entries = EconomicSeriesRegistry.fetchableEntries()
+                // One GROUP BY query instead of one MAX() round trip per catalog
+                // entry (~26 on every app launch); missing series default to 0
+                // exactly as getLastCacheTimeForSeries did.
+                val lastBySeries = HashMap<String, Long>()
+                for (t in dao.getLastCacheTimesPerSeries()) lastBySeries[t.seriesId] = t.maxTime
+
                 val stale = ArrayList<Entry>()
-                for (e in EconomicSeriesRegistry.fetchableEntries()) {
-                    val last = dao.getLastCacheTimeForSeries(e.id)
+                for (e in entries) {
+                    val last = lastBySeries[e.id] ?: 0L
                     if (isSeriesStale(e.tier, last, now)) stale.add(e)
                 }
 
                 if (stale.isEmpty()) {
-                    Log.d(TAG, "All " + EconomicSeriesRegistry.fetchableEntries().size +
+                    Log.d(TAG, "All " + entries.size +
                         " catalog series are fresh. Skipping refresh.")
                     callback?.onComplete(false)
                     return@execute
                 }
 
                 Log.d(TAG, "Refreshing " + stale.size + " stale series of " +
-                    EconomicSeriesRegistry.fetchableEntries().size + " catalogued.")
+                    entries.size + " catalogued.")
                 fetchEntries(dao, stale, now, callback)
             } catch (e: Exception) {
                 Log.e(TAG, "refreshIfStale error", e)

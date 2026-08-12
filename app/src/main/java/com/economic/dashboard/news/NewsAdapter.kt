@@ -51,10 +51,11 @@ class NewsAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             }
             if (heroIndex >= 0) rows.add(Row(VIEW_TYPE_HERO, items[heroIndex], null))
             var lastBucket: String? = null
+            val todayStart = todayStartMillis() // same for every row of this render
             for (i in items.indices) {
                 if (i == heroIndex) continue
                 val item = items[i]
-                val bucket = bucketFor(item.pubDateMillis)
+                val bucket = bucketFor(item.pubDateMillis, todayStart)
                 if (bucket != lastBucket) {
                     rows.add(Row(VIEW_TYPE_HEADER, null, bucket))
                     lastBucket = bucket
@@ -248,13 +249,17 @@ class NewsAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             return source.trim().equals("MarketWatch", ignoreCase = true)
         }
 
-        private fun bucketFor(millis: Long): String {
+        /** Midnight of "today" — computed once per submitList render, not per row. */
+        private fun todayStartMillis(): Long {
             val cal = Calendar.getInstance()
             cal.set(Calendar.HOUR_OF_DAY, 0)
             cal.set(Calendar.MINUTE, 0)
             cal.set(Calendar.SECOND, 0)
             cal.set(Calendar.MILLISECOND, 0)
-            val todayStart = cal.timeInMillis
+            return cal.timeInMillis
+        }
+
+        private fun bucketFor(millis: Long, todayStart: Long): String {
             if (millis >= todayStart) return "Today"
             if (millis >= todayStart - 86_400_000L) return "Yesterday"
             if (millis >= todayStart - 6 * 86_400_000L) return "This week"

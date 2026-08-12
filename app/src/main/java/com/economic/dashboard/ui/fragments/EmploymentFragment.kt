@@ -146,6 +146,17 @@ class EmploymentFragment : Fragment() {
         tvChartTitle.text = if ("labor" == which) "Labor Participation Trends" else "Unemployment Trends"
     }
 
+    // The active series gets filtered by both its status card and the chart on
+    // every tick; filterBySeries scans+sorts per call, so cache per source list
+    // (identity-keyed — each LiveData emission is a new reference).
+    private var filterSource: List<EconomicDataPoint>? = null
+    private val filterCache = HashMap<String, List<EconomicDataPoint>>()
+
+    private fun rowsFor(data: List<EconomicDataPoint>, series: String): List<EconomicDataPoint> {
+        if (filterSource !== data) { filterSource = data; filterCache.clear() }
+        return filterCache.getOrPut(series) { EconomicViewModel.filterBySeries(data, series) }
+    }
+
     private fun buildSwappableChart() {
         if (!::swappableChart.isInitialized) return
         val data: List<EconomicDataPoint>?
@@ -158,7 +169,7 @@ class EmploymentFragment : Fragment() {
     }
 
     private fun calculateUnemploymentStatus(data: List<EconomicDataPoint>) {
-        val rows = EconomicViewModel.filterBySeries(data, "Unemployment Rate")
+        val rows = rowsFor(data, "Unemployment Rate")
         if (rows.isEmpty()) return
         val currentRate = rows[rows.size - 1].value
         val riseFromLow = SeriesMath.riseFromTrailingLow(rows, 12)
@@ -175,7 +186,7 @@ class EmploymentFragment : Fragment() {
     }
 
     private fun calculateLaborParticipationStatus(data: List<EconomicDataPoint>) {
-        val rows = EconomicViewModel.filterBySeries(data, "Labor Force Participation Rate")
+        val rows = rowsFor(data, "Labor Force Participation Rate")
         if (rows.isEmpty()) return
         val currentRate = rows[rows.size - 1].value
         tvLaborValue.text = NumberFormatUtil.percent(currentRate, 1) // TICKET-19
@@ -194,7 +205,7 @@ class EmploymentFragment : Fragment() {
     }
 
     private fun buildChart(data: List<EconomicDataPoint>, series: String, chart: LineChart, hexColor: String) {
-        var rows = EconomicViewModel.filterBySeries(data, series)
+        var rows = rowsFor(data, series)
         if (rows.isEmpty()) return
         rows = EconomicViewModel.filterByTimeframe(requireContext(), rows, "employment")
         val entries = ArrayList<Entry>()

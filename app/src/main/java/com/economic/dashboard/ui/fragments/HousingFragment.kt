@@ -249,8 +249,11 @@ class HousingFragment : Fragment() {
         viewModel.getMbsMortgageData().observe(viewLifecycleOwner) { mbsData ->
             if (mbsData != null) {
                 currentMbsData = mbsData
-                updateBadges()
-                buildSwappableChart()
+                // Spread series is pure function of the two cached fields —
+                // compute once per tick, share between badge and chart.
+                val spread = computeSpreadRows()
+                updateBadges(spread)
+                buildSwappableChart(spread)
                 buildMbsMortgageChart(mbsData)
                 if (::skeleton.isInitialized) skeleton.reveal()
             }
@@ -260,8 +263,9 @@ class HousingFragment : Fragment() {
         viewModel.getTreasuryData().observe(viewLifecycleOwner) { treasury ->
             if (treasury != null) {
                 currentTreasuryData = treasury
-                updateBadges()
-                buildSwappableChart()
+                val spread = computeSpreadRows()
+                updateBadges(spread)
+                buildSwappableChart(spread)
             }
         }
     }
@@ -301,7 +305,7 @@ class HousingFragment : Fragment() {
 
     // ── Rate Badges ── (10Y T-Rate + Spread pull from the Yields-tab treasury data)
 
-    private fun updateBadges() {
+    private fun updateBadges(spreadRowsPrecomputed: List<EconomicDataPoint>) {
         // 30-Yr Mortgage Rate
         val mbs = currentMbsData
         if (mbs != null) {
@@ -327,7 +331,7 @@ class HousingFragment : Fragment() {
         }
 
         // Spread: 30-Yr Mortgage Rate minus 10Y Treasury (long-run norm ~1.7%)
-        val spreadRows = computeSpreadRows()
+        val spreadRows = spreadRowsPrecomputed
         if (!spreadRows.isEmpty()) {
             val v = spreadRows[spreadRows.size - 1].value
             tvBadgeSpreadValue.text = NumberFormatUtil.percent(v) // TICKET-19
@@ -428,7 +432,7 @@ class HousingFragment : Fragment() {
         legend.setEnabled(false) // single-line chart, no legend needed
     }
 
-    private fun buildSwappableChart() {
+    private fun buildSwappableChart(spreadRowsPrecomputed: List<EconomicDataPoint>? = null) {
         if (!::chartSwappable.isInitialized) return
 
         val seriesLabel: String
@@ -444,7 +448,7 @@ class HousingFragment : Fragment() {
                 lineColor = "#C9A84C"
             }
             "spread" -> {
-                rows = computeSpreadRows()
+                rows = spreadRowsPrecomputed ?: computeSpreadRows()
                 seriesLabel = "Mortgage-10Y Spread"
                 lineColor = "#BBBBBB"
                 twoDecimals = true
