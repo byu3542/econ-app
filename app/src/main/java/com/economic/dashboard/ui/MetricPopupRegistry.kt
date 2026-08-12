@@ -38,7 +38,15 @@ object MetricPopupRegistry {
         /** Oldest-first history of exactly the series this popup grades/plots. */
         @JvmField val history: (EconomicViewModel) -> List<EconomicDataPoint>,
         @JvmField val grade: (List<EconomicDataPoint>) -> Benchmarks.Result?,
-        @JvmField val bands: List<BenchmarkBand>
+        @JvmField val bands: List<BenchmarkBand>,
+        /**
+         * P9 TICKET-47: what this popup actually grades, when that differs from
+         * the headline print of the underlying series — a year-over-year change,
+         * or a spread. Shown in the add-alert dialog's context caption so a
+         * threshold is typed against the right quantity. Null where the popup
+         * plots the series as published (the majority).
+         */
+        @JvmField val quantityNote: String? = null
     )
 
     val SPECS: Map<String, MetricPopupSpec> = mapOf(
@@ -61,7 +69,8 @@ object MetricPopupRegistry {
                 BenchmarkBand("CAUTION", "2.5% – 3.5%", Tier.WATCH),
                 BenchmarkBand("ELEVATED", "3.5% – 6.0%", Tier.ELEVATED),
                 BenchmarkBand("CRITICAL", "6.0%+", Tier.ALERT)
-            )
+            ),
+            quantityNote = "year-over-year change"
         ),
         "housing" to MetricPopupSpec(
             id = "housing",
@@ -127,7 +136,8 @@ object MetricPopupRegistry {
                 BenchmarkBand("FLATTENING", "-0.50% – 0.00%", Tier.ELEVATED),
                 BenchmarkBand("INVERTED", "-1.50% – -0.50%", Tier.ALERT),
                 BenchmarkBand("DEEP INVERSION", "Below -1.50%", Tier.ALERT_DEEP)
-            )
+            ),
+            quantityNote = "10Y minus 3M"
         ),
         "unemployment" to MetricPopupSpec(
             id = "unemployment",
@@ -254,7 +264,8 @@ object MetricPopupRegistry {
                 BenchmarkBand("CAUTION", "2.5% – 3.5%", Tier.WATCH),
                 BenchmarkBand("ELEVATED", "3.5% – 6.0%", Tier.ELEVATED),
                 BenchmarkBand("CRITICAL", "6.0%+", Tier.ALERT)
-            )
+            ),
+            quantityNote = "year-over-year change"
         ),
         "sp500" to MetricPopupSpec(
             id = "sp500",
@@ -319,7 +330,8 @@ object MetricPopupRegistry {
                 BenchmarkBand("LOSING GROUND", "-2.0pp to 0.0pp spread", Tier.ELEVATED),
                 BenchmarkBand("BARELY AHEAD", "0.0pp to +1.0pp spread", Tier.WATCH),
                 BenchmarkBand("HEALTHY", "+1.0pp or more spread", Tier.GOOD)
-            )
+            ),
+            quantityNote = "wage growth minus CPI"
         ),
         // P6 TICKET-35: the ids below are not DashboardIndicatorCatalog slots —
         // they exist so the leaf screens' secondary cards popup too. Literal titles
@@ -379,7 +391,8 @@ object MetricPopupRegistry {
                 BenchmarkBand("FLATTENING", "0.00% – 0.50%", Tier.WATCH),
                 BenchmarkBand("INVERTING", "-0.50% – 0.00%", Tier.ELEVATED),
                 BenchmarkBand("INVERTED", "Below -0.50%", Tier.ALERT)
-            )
+            ),
+            quantityNote = "10Y minus 2Y"
         ),
         "mortgagespread" to MetricPopupSpec(
             id = "mortgagespread",
@@ -400,7 +413,8 @@ object MetricPopupRegistry {
                 BenchmarkBand("HEALTHY", "Below 2.2%", Tier.GOOD),
                 BenchmarkBand("WIDE", "2.2% – 2.8%", Tier.ELEVATED),
                 BenchmarkBand("VERY WIDE", "2.8% or higher", Tier.ALERT)
-            )
+            ),
+            quantityNote = "30-yr mortgage minus 10Y"
         ),
         "labor" to MetricPopupSpec(
             id = "labor",

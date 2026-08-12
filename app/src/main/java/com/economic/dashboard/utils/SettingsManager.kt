@@ -243,14 +243,51 @@ object SettingsManager {
         setString(c, KEY_ALERT_RULES, alertGson.toJson(rules ?: ArrayList<AlertRule>(), alertListType))
     }
 
-    /** Appends one rule. */
+    /**
+     * Appends one rule unless an identical one is already stored.
+     *
+     * P9 TICKET-51: identity is (seriesKey, op, threshold). A duplicate used to
+     * be appended silently, which meant two notifications per crossing and two
+     * identical lines in the add-alert dialog. On a match the **stored** rule is
+     * kept rather than replaced: its `lastState`/`lastValue` latch encodes where
+     * the series already is, and re-arming it would either swallow the next
+     * crossing or fire a spurious one (see
+     * econ-os docs/solutions/logic-errors/alert-evaluator-raw-vs-popup-displayed-units.md).
+     *
+     * @return true if the rule was stored, false if an identical one existed.
+     */
     @JvmStatic
-    fun addAlertRule(c: Context, rule: AlertRule?) {
-        if (rule == null) return
+    fun addAlertRule(c: Context, rule: AlertRule?): Boolean {
+        if (rule == null) return false
         val rules = getAlertRules(c).toMutableList()
+        if (rules.any { sameRule(it, rule) }) return false
         rules.add(rule)
         saveAlertRules(c, rules)
+        return true
     }
+
+    /**
+     * Removes a single rule (P9 TICKET-53). [removeAlertRulesFor] remains the
+     * bulk path. Undo is handled by passing the removed instance back to
+     * [addAlertRule] — it still carries its evaluation state, so restoring it
+     * restores the latch too.
+     *
+     * @return true if a matching rule was found and removed.
+     */
+    @JvmStatic
+    fun removeAlertRule(c: Context, rule: AlertRule?): Boolean {
+        if (rule == null) return false
+        val rules = getAlertRules(c).toMutableList()
+        val idx = rules.indexOfFirst { sameRule(it, rule) }
+        if (idx < 0) return false
+        rules.removeAt(idx)
+        saveAlertRules(c, rules)
+        return true
+    }
+
+    /** Rule identity for add/remove: same series, same operator, same threshold. */
+    private fun sameRule(a: AlertRule, b: AlertRule): Boolean =
+        a.seriesKey == b.seriesKey && a.op == b.op && a.threshold == b.threshold
 
     /** Removes every rule for the given series key. Returns how many were removed. */
     @JvmStatic

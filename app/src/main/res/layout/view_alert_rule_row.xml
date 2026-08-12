@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- P9 TICKET-53: one saved alert rule + its own delete control, inside the
+     add-alert dialog. Replaces the all-or-nothing "Remove this metric's
+     alerts" line. The row itself is not focusable — the rule text and the
+     delete button are the two TalkBack stops, and the delete button carries a
+     description naming the rule it removes (bound in code). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:minHeight="48dp">
+
+    <TextView
+        android:id="@+id/tvRuleText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text=""
+        android:textColor="@color/text_navy"
+        android:textSize="@dimen/text_secondary" />
+
+    <TextView
+        android:id="@+id/btnDeleteRule"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:gravity="center"
+        android:text="✕"
+        android:textColor="@color/error_text"
+        android:textSize="@dimen/text_body"
+        android:textStyle="bold"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?attr/selectableItemBackgroundBorderless" />
+</LinearLayout>

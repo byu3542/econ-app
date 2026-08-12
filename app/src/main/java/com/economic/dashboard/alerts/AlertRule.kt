@@ -52,20 +52,44 @@ class AlertRule {
     }
 
     /**
-     * Short human description, e.g. "Fed Funds &gt; 4.50".
+     * Short human description, e.g. "Fed Funds &gt; 4.50%".
+     *
+     * P9 TICKET-47: the threshold is formatted, never string-concatenated from
+     * the raw `Double` (which rendered "4.5" and "4.0"). [valueFmt] is the
+     * owning popup's `MetricPopupSpec.valueFmt`, so the description carries the
+     * same unit and precision the popup displays; without it the fallback is
+     * the same two-decimal grouped form `NumberFormatUtil.number(v, 2)`
+     * produces. Formatting is done here with `String.format` rather than
+     * through `NumberFormatUtil` on purpose: this class is deliberately
+     * framework-free (it is constructed in JVM tests alongside [AlertValues]),
+     * and that utility carries an Android type in its signature.
      *
      * Return type is nullable because the Java returned a bare `label` on the
      * default branch, and `label` can be null. The one caller
-     * (`MetricBottomSheet`) passes it to `StringBuilder.append`, which renders
-     * null as "null" — preserved rather than "fixed" to "".
+     * (`MetricBottomSheet`) renders null as "null" — preserved rather than
+     * "fixed" to "".
      */
-    fun describe(): String? {
+    @JvmOverloads
+    fun describe(valueFmt: String? = null): String? {
+        val t = formatThreshold(valueFmt)
         return when (op ?: "") {
-            OP_ABOVE -> label + " > " + threshold
-            OP_BELOW -> label + " < " + threshold
-            OP_CHANGE -> label + " changes"
+            OP_ABOVE -> "$label > $t"
+            OP_BELOW -> "$label < $t"
+            OP_CHANGE -> "$label changes"
             else -> label
         }
+    }
+
+    private fun formatThreshold(valueFmt: String?): String {
+        if (valueFmt != null) {
+            try {
+                return String.format(java.util.Locale.US, valueFmt, threshold)
+            } catch (e: java.util.IllegalFormatException) {
+                // Fall through to the plain form — a malformed spec format must
+                // not take out the dialog that lists the rule.
+            }
+        }
+        return String.format(java.util.Locale.US, "%,.2f", threshold)
     }
 
     companion object {

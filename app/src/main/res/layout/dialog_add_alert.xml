@@ -1,21 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- TICKET-24: content for the "Add alert" dialog. Shown in a standard
-     AlertDialog (light surface), launched from a metric's bottom sheet. -->
+     AlertDialog (light surface), launched from a metric's bottom sheet.
+
+     P9 TICKET-46..53: the metric name moved to the dialog's own title (so
+     TalkBack announces it on open), the bare EditText became a
+     TextInputLayout (it owns the inline error slot and the unit suffix), a
+     context caption sits above the field, and the single bulk-remove line
+     became one row per existing rule (view_alert_rule_row.xml). No dialog
+     theme is set here on purpose — that is TICKET-54's design call. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:padding="@dimen/space_xl">
-
-    <TextView
-        android:id="@+id/tvAlertMetricName"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text=""
-        android:textColor="@color/text_navy"
-        android:textSize="@dimen/text_body"
-        android:textStyle="bold"
-        android:layout_marginBottom="@dimen/space_md" />
 
     <RadioGroup
         android:id="@+id/rgAlertOp"
@@ -23,62 +21,81 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
+        <!-- match_parent, not wrap_content: a row-width target means the tap
+             lands wherever the finger does, not only on the label glyphs. -->
         <RadioButton
             android:id="@+id/rbAbove"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:minHeight="48dp"
+            android:paddingVertical="@dimen/space_xs"
             android:checked="true"
             android:text="@string/alert_op_above" />
 
         <RadioButton
             android:id="@+id/rbBelow"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:minHeight="48dp"
+            android:paddingVertical="@dimen/space_xs"
             android:text="@string/alert_op_below" />
 
         <RadioButton
             android:id="@+id/rbChange"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:minHeight="48dp"
+            android:paddingVertical="@dimen/space_xs"
             android:text="@string/alert_op_change" />
     </RadioGroup>
 
-    <EditText
-        android:id="@+id/etAlertThreshold"
+    <!-- Bound in MetricBottomSheet.showAddAlertDialog from the popup's own
+         spec: the value, its format, and (for derived series) which quantity
+         is actually being watched. Hidden when the popup passes no context. -->
+    <TextView
+        android:id="@+id/tvAlertContext"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="48dp"
         android:layout_marginTop="@dimen/space_sm"
-        android:inputType="numberDecimal|numberSigned"
-        android:hint="@string/alert_threshold_hint"
-        android:importantForAutofill="no" />
+        android:text=""
+        android:textColor="@color/text_secondary"
+        android:textSize="@dimen/text_secondary"
+        android:visibility="gone" />
 
-    <!-- Existing rules for this metric + a way to remove them -->
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilAlertThreshold"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_sm"
+        android:hint="@string/alert_threshold_hint"
+        app:errorEnabled="true">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etAlertThreshold"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:inputType="numberDecimal|numberSigned"
+            android:imeOptions="actionDone"
+            android:importantForAutofill="no" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- Existing rules for this metric, one row each with its own delete. -->
     <TextView
         android:id="@+id/tvExistingAlerts"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/space_md"
-        android:text=""
-        android:textColor="@color/text_muted"
+        android:text="@string/alert_existing_header"
+        android:textColor="@color/text_secondary"
         android:textSize="@dimen/text_secondary"
         android:visibility="gone" />
 
-    <TextView
-        android:id="@+id/btnRemoveAlerts"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:id="@+id/alertRuleList"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="48dp"
-        android:gravity="center_vertical"
-        android:layout_marginTop="@dimen/space_xs"
-        android:text="@string/remove_alerts"
-        android:textColor="@color/delta_bad"
-        android:textSize="@dimen/text_secondary"
-        android:textStyle="bold"
-        android:clickable="true"
-        android:focusable="true"
+        android:orientation="vertical"
         android:visibility="gone" />
 </LinearLayout>

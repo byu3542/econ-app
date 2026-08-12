@@ -26,6 +26,8 @@ import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.formatter.ValueFormatter
+import java.text.ParseException
+import java.text.SimpleDateFormat
 import java.util.Locale
 
 /**
@@ -39,13 +41,21 @@ object MetricPopupController {
     @JvmStatic
     fun show(ctx: Context, vm: EconomicViewModel, id: String) {
         val spec = MetricPopupRegistry.byId(id) ?: return
+
+        // History is resolved before the sheet is shown because the add-alert
+        // dialog's caption is built from it (P9 TICKET-47): the value it quotes
+        // has to be the last point of *this* lambda — the same series, in the
+        // same units, that AlertValues.build will evaluate the rule against.
+        val fullHistory = spec.history(vm)
         val content = MetricBottomSheet.show(
-            ctx, R.layout.sheet_metric_generic_content, spec.alertSeriesKey, spec.title)
+            ctx, R.layout.sheet_metric_generic_content, spec.alertSeriesKey, spec.title,
+            MetricBottomSheet.AlertContext(
+                spec.valueFmt, fullHistory.lastOrNull()?.value,
+                spec.quantityNote, cadenceOf(fullHistory)))
         if (content !is LinearLayout) return
 
         content.findViewById<TextView>(R.id.tvPopupTitle)?.text = spec.title
 
-        val fullHistory = spec.history(vm)
         val gradeResult = spec.grade(fullHistory)
         bindSubtitle(content.findViewById<TextView>(R.id.tvPopupSubtitle), ctx, spec, fullHistory, gradeResult)
         bindBands(content.findViewById<LinearLayout>(R.id.benchmarkBandContainer), ctx, spec, gradeResult)
@@ -233,4 +243,47 @@ object MetricPopupController {
 
     private fun dpToPx(ctx: Context, dp: Int): Int =
         Math.round(dp * ctx.resources.displayMetrics.density)
+
+    /**
+     * P9 TICKET-48: how often this series prints, inferred from the spacing of
+     * its own most recent observations rather than from a per-metric constant —
+     * a constant would be one more thing to keep in sync with the registry, and
+     * the dates are already the authority. Feeds the "Notify on any change"
+     * caption, which otherwise reads as "constant pings" on a monthly series.
+     *
+     * Returns null when the series is too short or the spacing is unrecognizable;
+     * the caller then says the generic thing rather than guessing a cadence.
+     */
+    private fun cadenceOf(rows: List<EconomicDataPoint>): String? {
+        if (rows.size < 3) return null
+        val fmt = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+        val gaps = ArrayList<Long>()
+        var i = rows.size - 1
+        while (i > 0 && gaps.size < 5) {
+            val older = parseDay(fmt, rows[i - 1].date)
+            val newer = parseDay(fmt, rows[i].date)
+            if (older != null && newer != null && newer > older) {
+                gaps.add((newer - older) / 86_400_000L)
+            }
+            i--
+        }
+        if (gaps.isEmpty()) return null
+        gaps.sort()
+        return when (gaps[gaps.size / 2]) {
+            in 0..3 -> "daily"
+            in 4..10 -> "weekly"
+            in 11..45 -> "monthly"
+            in 46..130 -> "quarterly"
+            else -> null
+        }
+    }
+
+    private fun parseDay(fmt: SimpleDateFormat, date: String?): Long? {
+        if (date == null || date.length < 10) return null
+        return try {
+            fmt.parse(date.substring(0, 10))?.time
+        } catch (e: ParseException) {
+            null
+        }
+    }
 }

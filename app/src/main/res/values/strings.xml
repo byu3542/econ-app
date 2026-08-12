@@ -60,9 +60,20 @@
     <string name="alert_op_below">Notify when it falls below…</string>
     <string name="alert_op_change">Notify on any change</string>
     <string name="alert_threshold_hint">Threshold (e.g. 4.5)</string>
-    <string name="remove_alerts">Remove this metric\'s alerts</string>
-    <string name="alert_saved">Alert saved</string>
-    <string name="alerts_removed">Alerts removed</string>
+    <!-- P9 TICKET-46..53: add-alert dialog rework -->
+    <string name="alert_save">Save alert</string>
+    <string name="alert_err_empty">Enter a number, e.g. 4.5</string>
+    <string name="alert_err_nan">Numbers only — e.g. 4.5, not 4.5%</string>
+    <string name="alert_err_duplicate">You already have this alert</string>
+    <string name="alert_context_value">Currently %1$s</string>
+    <string name="alert_context_value_note">Currently %1$s · %2$s</string>
+    <string name="alert_cadence_known">Fires once per release (%1$s)</string>
+    <string name="alert_cadence_unknown">Fires whenever this value changes</string>
+    <string name="alert_existing_header">Your alerts for this metric</string>
+    <string name="alert_delete_cd">Remove alert: %1$s</string>
+    <string name="alert_saved_fmt">Alert set: %1$s</string>
+    <string name="alert_removed_one">Alert removed</string>
+    <string name="alert_undo">Undo</string>
     <!-- TICKET-25: watchlist onboarding -->
     <string name="watchlist_title">What do you watch?</string>
     <string name="watchlist_subtitle">Pick the metrics you care about — your Overview will show them first. Tap in your order of importance.</string>
