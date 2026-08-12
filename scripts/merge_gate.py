@@ -104,20 +104,23 @@ def gate_g7(repo: Path, base: str) -> Gate:
         findings.append("not on a branch (detached HEAD)")
     elif branch == "main":
         findings.append("HEAD is main — work must arrive on a branch and merge in")
-    code, out, _ = _git(repo, "reflog", "--format=%gs", "-40")
+    # Scope the reflog scan to THIS run: walk newest-first and stop at the
+    # first entry whose commit IS the base. The first version matched base[:7]
+    # against %gs — but %gs is the human subject line and contains no shas, so
+    # the scope never engaged and amends from long before the run bled in.
+    # Found live by the U8 dry-run agent as a G7 false positive.
+    code, out, _ = _git(repo, "reflog", "--format=%H %gs", "-40")
     if code == 0:
-        base_seen = False
         for entry in out.splitlines():
-            if base[:7] in entry:
-                base_seen = True
-            low = entry.lower()
+            sha, _, subject = entry.partition(" ")
+            if sha.startswith(base) or base.startswith(sha):
+                break                      # reached the run's starting point
+            low = subject.lower()
             for marker, label in (("commit (amend)", "amend"),
                                   ("rebase", "rebase"),
                                   ("reset: moving", "hard reset")):
                 if marker in low:
-                    findings.append(f"reflog shows a {label} in this run: {entry[:90]}")
-            if base_seen:
-                break
+                    findings.append(f"reflog shows a {label} in this run: {subject[:90]}")
     return Gate("G7", "on a branch; no force/amend/rebase",
                 "fail" if findings else "pass", findings)
 

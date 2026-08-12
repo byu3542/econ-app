@@ -132,6 +132,25 @@ class TestG7(RepoCase):
         g7 = next(g for g in gates if g.id == "G7")
         self.assertEqual(g7.status, "fail")
 
+    def test_amend_BEFORE_base_does_not_fail_g7(self):
+        # The dry-run agent hit this as a false positive: an amend that happened
+        # before the run's base commit must not count against this run.
+        git(self.repo, "checkout", "-q", "main")
+        (self.repo / "pre.txt").write_text("x", encoding="utf-8")
+        git(self.repo, "add", "pre.txt")
+        git(self.repo, "commit", "-q", "-m", "pre-run work")
+        git(self.repo, "commit", "-q", "--amend", "-m", "pre-run work, amended")
+        self.base = git(self.repo, "rev-parse", "HEAD")
+        git(self.repo, "checkout", "-q", "-B", "work2")
+        self.write("app/src/main/java/com/economic/dashboard/ui/Foo.kt",
+                   "package com.economic.dashboard.ui\nclass Foo { fun z() {} }\n")
+        git(self.repo, "add", "app/src/main/java/com/economic/dashboard/ui/Foo.kt")
+        git(self.repo, "commit", "-q", "-m", "clean work after the amend")
+        head = git(self.repo, "rev-parse", "HEAD")
+        gates, ok = merge_gate.run_gates(self.repo, self.base, head, self.plan)
+        g7 = next(g for g in gates if g.id == "G7")
+        self.assertEqual(g7.status, "pass", g7.findings)
+
     def test_amend_in_reflog_fails(self):
         self.commit_change()
         git(self.repo, "commit", "-q", "--amend", "-m", "sneaky rewrite")
