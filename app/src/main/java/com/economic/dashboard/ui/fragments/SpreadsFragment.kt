@@ -93,12 +93,15 @@ class SpreadsFragment : Fragment() {
 
         cardSpreadYoY = b.cardSpreadYoY
         AskAnalyst.wireCardLongPress(
-            cardSpreadYoY, requireActivity(), "the 10Y-2Y Treasury spread")
+            // null: the spread is DGS10 minus DGS2 — no catalogued series holds
+            // it, and injecting either leg alone would have the model compare a
+            // spread against a yield.
+            cardSpreadYoY, requireActivity(), "the 10Y-2Y Treasury spread", null)
         tvSpreadValue = b.tvSpreadValue
         statusSpread2Y = b.statusSpread2Y.root
         cardSpread3M = b.cardSpread3M
         AskAnalyst.wireCardLongPress(
-            cardSpread3M, requireActivity(), "the 10Y-3M Treasury spread")
+            cardSpread3M, requireActivity(), "the 10Y-3M Treasury spread", null)
         tvSpread3MValue = b.tvSpread3MValue
         statusSpread3M = b.statusSpread3M.root
 

@@ -27,22 +27,37 @@ object DashboardIndicatorCatalog {
 
     val GROUP_ORDER = listOf(GROUP_GROWTH, GROUP_INFLATION, GROUP_HOUSING, GROUP_MARKETS)
 
-    class IndicatorMeta(@JvmField val id: String, @JvmField val label: String, @JvmField val group: String)
+    /**
+     * [seriesId] is the [com.economic.dashboard.analyst.EconomicSeriesRegistry]
+     * id whose history backs this slot, or null when the slot shows a value no
+     * single catalogued series carries (the 10Y-3M spread is computed from two).
+     * It is what a card long-press names to the Analyst, so a null here means
+     * "answer from the on-screen values alone" — never a wrong series.
+     */
+    class IndicatorMeta(
+        @JvmField val id: String,
+        @JvmField val label: String,
+        @JvmField val group: String,
+        @JvmField val seriesId: String?
+    )
 
     val ALL: List<IndicatorMeta> = listOf(
-        IndicatorMeta("fedfunds", "FED FUNDS RATE", GROUP_GROWTH),
-        IndicatorMeta("gdp", "GDP GROWTH", GROUP_GROWTH),
-        IndicatorMeta("yield10y", "10Y TREASURY YIELD", GROUP_GROWTH),
-        IndicatorMeta("spread", "10Y-3M SPREAD", GROUP_GROWTH),
-        IndicatorMeta("cpi", "CPI-U YOY", GROUP_INFLATION),
-        IndicatorMeta("corepce", "CORE PCE INDEX", GROUP_INFLATION),
-        IndicatorMeta("unemployment", "UNEMPLOYMENT", GROUP_INFLATION),
-        IndicatorMeta("wages", "AVG HOURLY EARNINGS", GROUP_INFLATION),
-        IndicatorMeta("mortgage", "30 YEAR MORTGAGE", GROUP_HOUSING),
-        IndicatorMeta("housing", "HOUSING STARTS", GROUP_HOUSING),
-        IndicatorMeta("vix", "VIX INDEX", GROUP_MARKETS),
-        IndicatorMeta("sp500", "S&P 500", GROUP_MARKETS),
-        IndicatorMeta("nasdaq", "NASDAQ COMPOSITE", GROUP_MARKETS)
+        IndicatorMeta("fedfunds", "FED FUNDS RATE", GROUP_GROWTH, "DFF"),
+        IndicatorMeta("gdp", "GDP GROWTH", GROUP_GROWTH, "GDP_BEA_T10101"),
+        IndicatorMeta("yield10y", "10Y TREASURY YIELD", GROUP_GROWTH, "DGS10"),
+        // Derived from DGS10 and DGS3MO — no single series holds the spread.
+        IndicatorMeta("spread", "10Y-3M SPREAD", GROUP_GROWTH, null),
+        // Card shows YoY percent; the CPI series is index levels, and get_series
+        // pre-computes the YoY line for exactly these index-level ids.
+        IndicatorMeta("cpi", "CPI-U YOY", GROUP_INFLATION, "CPI"),
+        IndicatorMeta("corepce", "CORE PCE INDEX", GROUP_INFLATION, "CORE_PCE"),
+        IndicatorMeta("unemployment", "UNEMPLOYMENT", GROUP_INFLATION, "LNS14000000"),
+        IndicatorMeta("wages", "AVG HOURLY EARNINGS", GROUP_INFLATION, "WAGES"),
+        IndicatorMeta("mortgage", "30 YEAR MORTGAGE", GROUP_HOUSING, "MORTGAGE30US"),
+        IndicatorMeta("housing", "HOUSING STARTS", GROUP_HOUSING, "HOUSING_STARTS"),
+        IndicatorMeta("vix", "VIX INDEX", GROUP_MARKETS, "VIX"),
+        IndicatorMeta("sp500", "S&P 500", GROUP_MARKETS, "SP500"),
+        IndicatorMeta("nasdaq", "NASDAQ COMPOSITE", GROUP_MARKETS, "NASDAQ")
     )
 
     @JvmStatic
@@ -50,6 +65,10 @@ object DashboardIndicatorCatalog {
 
     @JvmStatic
     fun label(id: String?): String = byId(id)?.label ?: "—"
+
+    /** Registry series id backing this indicator, or null when it is derived. */
+    @JvmStatic
+    fun seriesId(id: String?): String? = byId(id)?.seriesId
 
     /** What a slot/hero card needs to paint itself for one indicator. */
     class SlotDisplay(

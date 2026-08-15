@@ -76,9 +76,9 @@ class BondsFragment : Fragment() {
 
         cardBaa = b.cardBaa; cardHy = b.cardHy
         AskAnalyst.wireCardLongPress(
-            cardBaa, requireActivity(), "the BAA corporate bond spread")
+            cardBaa, requireActivity(), "the BAA corporate bond spread", "BAA_SPREAD")
         AskAnalyst.wireCardLongPress(
-            cardHy, requireActivity(), "the high-yield bond spread")
+            cardHy, requireActivity(), "the high-yield bond spread", "HY_SPREAD")
         tvBaaValue = b.tvBaaValue; tvHyValue = b.tvHyValue
         statusBaa = b.statusBaa.root; statusHy = b.statusHy.root
         swappableChart = b.swappableChart; tvChartTitle = b.tvChartTitle

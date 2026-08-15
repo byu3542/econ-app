@@ -67,9 +67,21 @@ object AskAnalyst {
      * harvest its on-screen text at press time and hand it to the model inline.
      * A model that's been given the number has no reason to announce a lookup —
      * this closes the "it says it'll fetch data then ends" path at its source.
+     *
+     * @param seriesId the [EconomicSeriesRegistry] id backing this card, named
+     *   in the screen context so any get_series call the turn makes pulls the
+     *   pressed metric's own history — or null when the card shows a derived
+     *   value no single catalogued series carries (the Treasury spreads).
+     *   Deliberately a required parameter with no default: an earlier revision
+     *   resolved the series by matching tokens in [label], and replayed against
+     *   the app's 27 real card labels 7 resolved wrongly — four to nothing, and
+     *   both Treasury spread cards silently to DGS10, so a card showing a
+     *   spread was answered with 10-Year yield levels.
      */
     @JvmStatic
-    fun wireCardLongPress(card: View?, activity: FragmentActivity?, label: String) {
+    fun wireCardLongPress(
+        card: View?, activity: FragmentActivity?, label: String, seriesId: String?
+    ) {
         if (card == null || activity == null) return
         card.setOnLongClickListener { v ->
             val menu = PopupMenu(v.context, v)
@@ -92,6 +104,7 @@ object AskAnalyst {
                         query = "What does the current reading for " + label +
                             " on the dashboard mean?"
                     }
+                    context += pressedSeriesBlock(seriesId)
                     openWithQuery(activity, query, context, true)
                     return@setOnMenuItemClickListener true
                 }
@@ -100,6 +113,29 @@ object AskAnalyst {
             menu.show()
             true
         }
+    }
+
+    /**
+     * Names the pressed card's series so a get_series call in this turn pulls
+     * the metric the user actually pressed, instead of one the model infers
+     * from the card's wording.
+     *
+     * Returns an empty block when the id is null or is not in the registry:
+     * an unresolved card falls back to the on-screen values plus the system
+     * prompt's honesty rule, which reads as unhelpful rather than as
+     * confidently wrong. That trade is the point — the guessing version this
+     * replaced injected the wrong series without ever saying so.
+     */
+    private fun pressedSeriesBlock(seriesId: String?): String {
+        if (seriesId == null || seriesId.isEmpty())
+            return "\nPRESSED METRIC: This card's value is derived from more than one " +
+                "series, so no single get_series id backs it. Answer from the on-screen " +
+                "values above and say plainly what you don't have — do not pull one leg " +
+                "of it and describe that as the card's number.\n"
+        val entry = EconomicSeriesRegistry.byId(seriesId) ?: return ""
+        return "\nPRESSED METRIC: The card is backed by series_id \"" + entry.id + "\" (" +
+            entry.chartLabel + "). If this turn needs its history, call get_series with " +
+            "exactly that id — never infer a series from the card's label.\n"
     }
 
     /**

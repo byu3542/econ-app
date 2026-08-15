@@ -81,10 +81,11 @@ class GdpFragment : Fragment() {
         statusGdp = b.statusGdp.root
         cardGdpStatus = b.cardGdpStatus
         AskAnalyst.wireCardLongPress(
-            cardGdpStatus, requireActivity(), "GDP growth")
+            cardGdpStatus, requireActivity(), "GDP growth", "GDP_BEA_T10101")
         cardGdpLatestQuarter = b.cardGdpLatestQuarter
         AskAnalyst.wireCardLongPress(
-            cardGdpLatestQuarter, requireActivity(), "the latest quarter GDP reading")
+            cardGdpLatestQuarter, requireActivity(), "the latest quarter GDP reading",
+            "GDP_BEA_T10101")
         tvGdpLatestQuarterValue = b.tvGdpLatestQuarterValue
         tvGdpLatestQuarterLabel = b.tvGdpLatestQuarterLabel
         statusGdpLatestQuarter = b.statusGdpLatestQuarter.root

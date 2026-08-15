@@ -89,21 +89,23 @@ class InflationFragment : Fragment() {
 
         cardPceStatus = b.cardPceStatus
         AskAnalyst.wireCardLongPress(
-            cardPceStatus, requireActivity(), "PCE inflation")
+            cardPceStatus, requireActivity(), "PCE inflation", "PCE")
         tvPceValue = b.tvPceValue
         tvPcePercentile = b.tvPcePercentile
         statusPce = b.statusPce.root
 
         cardCpiYoY = b.cardCpiYoY
         AskAnalyst.wireCardLongPress(
-            cardCpiYoY, requireActivity(), "CPI inflation (YoY)")
+            cardCpiYoY, requireActivity(), "CPI inflation (YoY)", "CPI")
         tvCpiYoYValue = b.tvCpiYoYValue
         tvCpiPercentile = b.tvCpiPercentile
         statusCpi = b.statusCpi.root
 
         cardWageYoY = b.cardWageYoY
         AskAnalyst.wireCardLongPress(
-            cardWageYoY, requireActivity(), "wage growth vs inflation")
+            // The card's subject is wage growth; inflation is the comparison it
+            // draws, and HistoricalContextBuilder already carries CPI.
+            cardWageYoY, requireActivity(), "wage growth vs inflation", "WAGES")
         tvWageYoYValue = b.tvWageYoYValue
         statusWage = b.statusWage.root
 

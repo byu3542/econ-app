@@ -304,7 +304,11 @@ class DashboardFragment : Fragment() {
                 hero, AccessibilityActionCompat.ACTION_CLICK, null, null
             )
         }
-        AskAnalyst.wireCardLongPress(hero, requireActivity(), DashboardIndicatorCatalog.label(heroIndicatorId))
+        AskAnalyst.wireCardLongPress(
+            hero, requireActivity(),
+            DashboardIndicatorCatalog.label(heroIndicatorId),
+            DashboardIndicatorCatalog.seriesId(heroIndicatorId)
+        )
         ViewCompat.replaceAccessibilityAction(
             hero, AccessibilityActionCompat.ACTION_LONG_CLICK,
             getString(R.string.a11y_ask_analyst), null
@@ -525,7 +529,7 @@ class DashboardFragment : Fragment() {
         val id = slotIndicatorIds[index]
         val meta = DashboardIndicatorCatalog.byId(id)
         setupCardLabel(card, meta?.label ?: "—", labelLines = if ((meta?.label?.length ?: 0) > 12) 2 else 1)
-        AskAnalyst.wireCardLongPress(card, requireActivity(), meta?.label ?: id)
+        AskAnalyst.wireCardLongPress(card, requireActivity(), meta?.label ?: id, meta?.seriesId)
 
         // Tap → status/benchmark detail, for every indicator with an authored
         // MetricPopupRegistry spec (mockup 1c). Everything else has no popup

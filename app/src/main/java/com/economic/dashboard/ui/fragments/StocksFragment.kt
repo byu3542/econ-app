@@ -81,13 +81,13 @@ class StocksFragment : Fragment() {
 
         cardSp500 = b.cardSp500
         AskAnalyst.wireCardLongPress(
-            cardSp500, requireActivity(), "the S&P 500 index")
+            cardSp500, requireActivity(), "the S&P 500 index", "SP500")
         cardNasdaq = b.cardNasdaq
         AskAnalyst.wireCardLongPress(
-            cardNasdaq, requireActivity(), "the Nasdaq index")
+            cardNasdaq, requireActivity(), "the Nasdaq index", "NASDAQ")
         cardVix = b.cardVix
         AskAnalyst.wireCardLongPress(
-            cardVix, requireActivity(), "the VIX volatility index")
+            cardVix, requireActivity(), "the VIX volatility index", "VIX")
         tvSp500Value = b.tvSp500Value
         tvNasdaqValue = b.tvNasdaqValue
         tvVixValue = b.tvVixValue

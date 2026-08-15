@@ -99,14 +99,14 @@ class EmploymentFragment : Fragment() {
 
         cardUnemploymentStatus = b.cardUnemploymentStatus
         AskAnalyst.wireCardLongPress(
-            cardUnemploymentStatus, requireActivity(), "the unemployment rate")
+            cardUnemploymentStatus, requireActivity(), "the unemployment rate", "LNS14000000")
         tvUnempValue = b.tvUnempValue
         tvUnempLowInfo = b.tvUnempLowInfo
         statusUnemp = b.statusUnemp.root
 
         cardLaborParticipation = b.cardLaborParticipation
         AskAnalyst.wireCardLongPress(
-            cardLaborParticipation, requireActivity(), "labor force participation")
+            cardLaborParticipation, requireActivity(), "labor force participation", "LNS11300000")
         tvLaborValue = b.tvLaborValue
         statusLabor = b.statusLabor.root
 
