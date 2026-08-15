@@ -859,6 +859,23 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
             // cap in handleStreamedResponse keeps this from looping.
             val chartOnly = depth >= MAX_TOOL_DEPTH - 1
             body.put("tools", AnalystToolExecutor.buildToolsJson(chartOnly))
+            // TICKET-P2-6 (AI Laws 2, 1): on the first round of a tool-likely
+            // turn, force the tool call structurally. tool_choice "any"
+            // prefills the assistant turn, so the model emits NO prose before
+            // its tool_use blocks — "Let me pull the history…" never exists to
+            // be guarded against. Depth-0 only: later rounds have the data in
+            // context, and forcing more tools there recreates the free-round
+            // hazard P2-2 capped. Full tools stay offered, so the model may
+            // satisfy the force with render_chart instead of a data fetch —
+            // accepted and MEASURED (see the forced-round log in
+            // handleStreamedResponse) before any widening; the chart ack round
+            // continues on "auto" and can still fetch. Cache: our breakpoints
+            // sit on tools+system, ahead of the messages, so a per-round
+            // tool_choice difference should not touch the prefix cache —
+            // verify via cache_read_input_tokens, never assume (AI Law 18).
+            val forcedRound = depth == 0 && looksToolLikely(committedQuery)
+            if (forcedRound)
+                body.put("tool_choice", JSONObject().put("type", "any"))
 
             // Calls the proxy (see proxy/README.md) — the Anthropic key stays
             // server-side and is never shipped inside the APK.
@@ -1086,6 +1103,18 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
             var hasDataTool = false
             for (tb in toolBlocks.values)
                 if (AnalystToolExecutor.RENDER_CHART != tb.name) hasDataTool = true
+            // TICKET-P2-6 (R4): on a forced round, record which tools satisfied
+            // the force. This is the measurement behind two decisions this loop
+            // deliberately did not make: whether the model dodges the force by
+            // charting instead of fetching, and whether "any" is safe to widen.
+            if (depth == 0 && looksToolLikely(committedQuery)) {
+                val names = StringBuilder()
+                for (tb in toolBlocks.values) {
+                    if (names.length > 0) names.append(",")
+                    names.append(tb.name)
+                }
+                Log.d(TAG, "forced_round satisfied by: $names")
+            }
             val mayContinue =
                 if (hasDataTool) depth < MAX_TOOL_DEPTH - 1
                 else st.chartRounds < MAX_CHART_ROUNDS
@@ -1139,8 +1168,13 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
                 // announcement ("Let me pull the history…"), drop it from the
                 // displayed reply — the real answer follows. Genuinely analytical
                 // lead-ins are kept. (The API still sees the original text above.)
-                if (isLookupAnnouncementOnly(roundText))
+                if (isLookupAnnouncementOnly(roundText)) {
+                    // TICKET-P2-6 (R3): greppable fire log — the acceptance is a
+                    // MEASURED drop in this guard's fire rate, and a silent
+                    // guard can't be measured. Same tag at all three sites.
+                    Log.d(TAG, "law1_guard fired: tool-round lead-in dropped (depth=$depth)")
                     st.acc.setLength(roundStart)
+                }
                 // Paragraph break so the next round's text doesn't run into this one.
                 if (st.acc.length > 0) st.acc.append("\n\n")
                 // AI Law 11: a tool round can take a few seconds — show an honest
@@ -1179,6 +1213,8 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
         ) {
             val roundText = st.acc.substring(roundStart)
             if (isLookupAnnouncementOnly(roundText)) {
+                // TICKET-P2-6 (R3): same greppable tag as the other two sites.
+                Log.d(TAG, "law1_guard fired: announce-then-stop, auto-continuing (depth=$depth)")
                 messages.put(JSONObject().put("role", "assistant").put("content", roundText))
                 messages.put(JSONObject().put("role", "user").put("content",
                     "You said you would look that up but did not call a tool. Call the " +
@@ -1204,7 +1240,11 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
         // AI Law 1 fallback for rounds the auto-continue guard can't reach
         // (e.g. the forced-text final round): drop a trailing lookup
         // announcement when real content precedes it.
-        val finalText = stripDanglingAnnouncement(st.acc.toString())
+        val accText = st.acc.toString()
+        val finalText = stripDanglingAnnouncement(accText)
+        // TICKET-P2-6 (R3): same greppable tag as the other two sites.
+        if (finalText != accText)
+            Log.d(TAG, "law1_guard fired: dangling announcement stripped at finalize")
         if (finalText.isEmpty()) {
             if (call != null && call.isCanceled()) {
                 runOnUi {
