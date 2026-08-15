@@ -16,4 +16,15 @@ class ChatMessage @JvmOverloads constructor(
 
     /** Attached image preview (vision messages). Transient — not persisted to Room. */
     var imageBitmap: Bitmap? = null
+
+    /**
+     * Charts the analyst asked for via `render_chart`, in the order it asked
+     * (TICKET-P2-2). A list, not a single optional chart: one tool call per
+     * chart makes several natural where one inline tag did not.
+     *
+     * Unlike [imageBitmap] this IS persisted — see ChatMessageEntity.charts.
+     * The old tag rode inside [text], so surviving a restart used to be free;
+     * a typed list does not get that for free.
+     */
+    var charts: List<ChatChart> = emptyList()
 }

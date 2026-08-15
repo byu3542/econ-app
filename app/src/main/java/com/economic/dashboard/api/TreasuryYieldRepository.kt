@@ -123,7 +123,7 @@ class TreasuryYieldRepository(context: Context) {
      * treasury_yields is a snapshot table — updateCache() clears it on every
      * refresh, so it only ever holds the latest ~30 days. economic_history is
      * an accumulating cache the AI Analyst queries uniformly (get_series,
-     * [CHART:...]) alongside FRED/BLS/BEA series; without this mirror the yield
+     * render_chart) alongside FRED/BLS/BEA series; without this mirror the yield
      * curve would be the one dataset the Analyst could not reach through its
      * normal path. There is no extra network call — both writes come from the
      * single XML response fetchTreasuryRates() already downloaded, which is why

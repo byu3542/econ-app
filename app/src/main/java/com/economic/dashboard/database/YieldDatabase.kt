@@ -23,6 +23,14 @@ import com.economic.dashboard.models.TreasuryYield
  *       version lets destructive fallback recreate the table cleanly. All tables
  *       are re-fetchable API caches, so no real data is lost.)
  * v5 → added chat_messages table (AI Analyst conversation persistence)
+ * v6 → added chat_messages.charts (TICKET-P2-2: the analyst's render_chart
+ *      calls, as JSON, so charts survive a restart now that they no longer ride
+ *      inside the message text as a [CHART:...] tag)
+ *
+ * Every migration here is load-bearing in a way the destructive fallback below
+ * hides: a MISSING or wrong migration does not crash, it silently wipes. The
+ * other tables are re-fetchable API caches, but chat_messages is the one table
+ * holding data that cannot be re-downloaded — the user's conversation.
  *
  * Note: the `news_articles` table (NewsArticle) is retained in the schema but has
  * no DAO — the NewsAPI path that populated it was never wired up and was removed
@@ -32,7 +40,7 @@ import com.economic.dashboard.models.TreasuryYield
  */
 @Database(
     entities = [TreasuryYield::class, NewsArticle::class, EconomicHistoryEntry::class, ChatMessageEntity::class],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 abstract class YieldDatabase : RoomDatabase() {
@@ -111,6 +119,18 @@ abstract class YieldDatabase : RoomDatabase() {
             }
         }
 
+        // ── Migration: v5 → v6 ───────────────────────────────────────────────────
+        // TICKET-P2-2. ALTER TABLE ADD COLUMN preserves existing rows, which is
+        // the entire point: chat history is the one thing in this database that
+        // cannot be re-fetched. Nullable with no DEFAULT, matching the entity —
+        // a DEFAULT clause the entity doesn't declare is exactly what broke the
+        // v2→v3 migration's identity hash and forced the v4 rebuild.
+        private val MIGRATION_5_6: Migration = object : Migration(5, 6) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE `chat_messages` ADD COLUMN `charts` TEXT")
+            }
+        }
+
         // ── Singleton factory ─────────────────────────────────────────────────────
 
         @JvmStatic
@@ -120,7 +140,7 @@ abstract class YieldDatabase : RoomDatabase() {
                 YieldDatabase::class.java,
                 "yield_database"
             )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_4_5)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_4_5, MIGRATION_5_6)
                 // Safety net: if migration path is still missing, wipe and rebuild.
                 // All data is re-fetched from APIs so no data loss in practice.
                 .fallbackToDestructiveMigration()

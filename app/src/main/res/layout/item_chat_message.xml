@@ -61,21 +61,14 @@
             android:contentDescription="Attached image"
             android:visibility="gone" />
 
-        <!-- Inline sparkline rendered from a [CHART:...] tag -->
-        <com.economic.dashboard.views.SparklineView
-            android:id="@+id/sparklineChart"
+        <!-- TICKET-P2-2: charts the analyst asked for via render_chart. One
+             view_chat_chart row per call, so a reply can carry several — the
+             old [CHART:...] tag could only ever address one. -->
+        <LinearLayout
+            android:id="@+id/llChartContainer"
             android:layout_width="match_parent"
-            android:layout_height="72dp"
-            android:layout_marginTop="@dimen/space_sm"
-            android:visibility="gone" />
-
-        <TextView
-            android:id="@+id/tvChartCaption"
-            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/space_xs"
-            android:textColor="@color/text_muted"
-            android:textSize="@dimen/text_caption"
+            android:orientation="vertical"
             android:visibility="gone" />
 
         <!-- Explicit retry affordance for error bubbles -->

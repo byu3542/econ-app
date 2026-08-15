@@ -24,7 +24,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.economic.dashboard.R
 import com.economic.dashboard.analyst.AnalystToolExecutor
 import com.economic.dashboard.analyst.DerivedMetricsBuilder
-import com.economic.dashboard.analyst.EconomicSeriesRegistry
 import com.economic.dashboard.analyst.HistoricalContextBuilder
 import com.economic.dashboard.analyst.ModelConfig
 import com.economic.dashboard.analyst.NewsContextBuilder
@@ -32,6 +31,7 @@ import com.economic.dashboard.analyst.ReleaseCalendar
 import com.economic.dashboard.api.ApiConfig
 import com.economic.dashboard.cache.DashboardDataCache
 import com.economic.dashboard.databinding.DialogAiChatBinding
+import com.economic.dashboard.models.ChatChart
 import com.economic.dashboard.models.ChatMessage
 import com.economic.dashboard.models.EconomicDataPoint
 import com.economic.dashboard.news.NewsItem
@@ -628,6 +628,15 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
          *  sendTurn() invocation and tool-loop round. Capped at
          *  MAX_RETRIES_PER_TURN. */
         @JvmField var retryAttempts = 0
+        /** TICKET-P2-2: charts rendered so far this turn, in call order. Set on
+         *  the streaming bubble as each render_chart lands, and carried onto
+         *  the persisted message in finalizeTurn(). */
+        @JvmField val charts = ArrayList<ChatChart>()
+        /** Rounds this turn continued purely to acknowledge render_chart calls.
+         *  Those rounds are exempt from MAX_TOOL_DEPTH (a rendering directive
+         *  is not a data lookup — R4/KTD2), so without their own cap the model
+         *  could loop forever on free chart rounds. Capped at MAX_CHART_ROUNDS. */
+        @JvmField var chartRounds = 0
     }
 
     private fun queryClaude(userQuery: String, rv: RecyclerView) {
@@ -720,7 +729,7 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
         val lengthRule = if (conciseGesture)
             "This question came from a one-tap gesture on a card or chart. Keep the " +
                 "reply to 60-90 words. Lead with the answer in the first sentence. Skip " +
-                "news, upcoming releases, and chart tags unless directly relevant. "
+                "news, upcoming releases, and charts unless directly relevant. "
         else if (SettingsManager.getBool(requireContext(), SettingsManager.KEY_DETAILED_AI, false))
             "Detailed analysis is welcome — up to roughly 500 words when the question warrants it. "
         else
@@ -762,11 +771,12 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
             "'let me pull...'. If a tool returns 'Invalid series_id', 'No cached data', or " +
             "'No data loaded', do not retry the same call — say plainly what isn't " +
             "available and answer from the snapshot instead.\n\n" +
-            "INLINE CHARTS: When a visual trend would genuinely help, you may include AT " +
-            "MOST ONE chart tag on its own line, formatted exactly [CHART:SERIES_ID:<N>M] " +
-            "where SERIES_ID is one of " + EconomicSeriesRegistry.allIds().joinToString(", ") + " " +
-            "and N is months of history (1-24). Example: [CHART:DGS10:24M]. " +
-            "The app renders it as a small chart in your reply.\n\n" +
+            "INLINE CHARTS: When a visual trend would genuinely help, call the " +
+            "render_chart tool and the app draws the chart inside your reply — one call " +
+            "per chart, several charts are fine when you are comparing series. It renders " +
+            "for the user and returns no data to you, so never wait on it for numbers, " +
+            "never mention the tool or the chart mechanics in your prose, and never write " +
+            "any chart markup or tag into your text.\n\n" +
             "FORMATTING RULES: Do NOT use markdown headers (##, ###, or # prefix). " +
             "Do NOT use bullet lists with dashes or asterisks. " +
             "Use short paragraphs and bold text (**word**) only for key figures or labels. " +
@@ -836,12 +846,19 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
             // Always send tools: the API rejects a request whose message history
             // contains tool_use/tool_result blocks but has no tools parameter,
             // which used to 400 on the final round of a tool loop.
-            body.put("tools", AnalystToolExecutor.buildToolsJson())
-            // Final allowed round: force a text answer. Without this the model
-            // could stop for yet another tool call at the cap, leaving a dangling
-            // "Let me fetch..." as the visible reply.
-            if (depth >= MAX_TOOL_DEPTH - 1)
-                body.put("tool_choice", JSONObject().put("type", "none"))
+            //
+            // Final allowed round (TICKET-P2-2 / R5): data lookups are done, but
+            // a chart should still be reachable — the answer that most wants a
+            // chart is the one that just fetched history. tool_choice has no
+            // allowlist form (auto/any/tool/none; "tool" would FORCE a chart),
+            // so the narrowing happens in the tools array itself: render_chart
+            // alone, tool_choice left at auto. Replaces the old blanket
+            // tool_choice:none, which also silenced charts. Costs a cache miss
+            // on this one round (tools head the cached prefix) — accepted,
+            // it's the round with the least reusable context. The chart-round
+            // cap in handleStreamedResponse keeps this from looping.
+            val chartOnly = depth >= MAX_TOOL_DEPTH - 1
+            body.put("tools", AnalystToolExecutor.buildToolsJson(chartOnly))
 
             // Calls the proxy (see proxy/README.md) — the Anthropic key stays
             // server-side and is never shipped inside the APK.
@@ -1058,11 +1075,22 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
             throw IOException("The stream ended before the response finished.")
 
         // ── Tool round-trip: run tools on-device, then continue the turn ──────
-        if ("tool_use" == stopReason && !toolBlocks.isEmpty() && depth < MAX_TOOL_DEPTH - 1
-            && !call.isCanceled()
-        ) {
+        // TICKET-P2-2: render_chart is a rendering directive, not a data lookup,
+        // so a round whose only tool calls are charts does NOT consume the
+        // MAX_TOOL_DEPTH budget (R4/KTD2) — sharing it would make get_series +
+        // get_headlines + a chart unrepresentable and silently drop charts on
+        // exactly the data-heavy questions that most deserve one. Chart-only
+        // rounds have their own cap (MAX_CHART_ROUNDS) instead, because a round
+        // that costs no depth would otherwise be a free infinite loop.
+        if ("tool_use" == stopReason && !toolBlocks.isEmpty() && !call.isCanceled()) {
+            var hasDataTool = false
+            for (tb in toolBlocks.values)
+                if (AnalystToolExecutor.RENDER_CHART != tb.name) hasDataTool = true
+            val mayContinue =
+                if (hasDataTool) depth < MAX_TOOL_DEPTH - 1
+                else st.chartRounds < MAX_CHART_ROUNDS
             val appCtx = appContext
-            if (appCtx != null) {
+            if (appCtx != null && mayContinue) {
                 val assistantContent = JSONArray()
                 // Only THIS round's text — resending the whole accumulated reply
                 // made the model see itself repeating and re-announce tool calls.
@@ -1070,6 +1098,7 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
                 if (!roundText.trim().isEmpty())
                     assistantContent.put(JSONObject().put("type", "text").put("text", roundText))
                 val toolResults = JSONArray()
+                var chartsChanged = false
                 for (tb in toolBlocks.values) {
                     var input: JSONObject
                     try { input = JSONObject(tb.inputJson.toString()) }
@@ -1077,7 +1106,18 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
                     assistantContent.put(JSONObject()
                         .put("type", "tool_use").put("id", tb.id)
                         .put("name", tb.name).put("input", input))
-                    val result = AnalystToolExecutor.execute(appCtx, tb.name, input)
+                    val result: String
+                    if (AnalystToolExecutor.RENDER_CHART == tb.name) {
+                        // Intercepted (not routed through execute()) so the
+                        // resolved ChatChart survives — the app draws from its
+                        // own store; the tool_result is only an acknowledgement.
+                        val outcome = AnalystToolExecutor.renderChart(input)
+                        val chart = outcome.chart
+                        if (chart != null) { st.charts.add(chart); chartsChanged = true }
+                        result = outcome.message
+                    } else {
+                        result = AnalystToolExecutor.execute(appCtx, tb.name, input)
+                    }
                     toolResults.put(JSONObject()
                         .put("type", "tool_result")
                         .put("tool_use_id", tb.id)
@@ -1085,6 +1125,16 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
                 }
                 messages.put(JSONObject().put("role", "assistant").put("content", assistantContent))
                 messages.put(JSONObject().put("role", "user").put("content", toolResults))
+                // Draw new charts under the streaming bubble immediately — the
+                // prose keeps streaming around them (R12); an unknown series
+                // added nothing and degrades to text (R3).
+                if (chartsChanged) {
+                    val chartsSnapshot = ArrayList(st.charts)
+                    runOnUi {
+                        if (binding != null && st.streamIdx >= 0)
+                            chatAdapter().updateMessageCharts(st.streamIdx, chartsSnapshot)
+                    }
+                }
                 // AI Law 2: if this round's visible text was nothing but a lookup
                 // announcement ("Let me pull the history…"), drop it from the
                 // displayed reply — the real answer follows. Genuinely analytical
@@ -1097,13 +1147,20 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
                 // status instead of what looks like a hang. The next round's
                 // streamed text overwrites it. ChatAdapter renders the trailing
                 // status italic + subdued so "fetching" reads differently from
-                // "answering" (TICKET-6).
-                val statusText = st.acc.toString() + ChatAdapter.TOOL_STATUS
-                runOnUi {
-                    if (binding != null && st.streamIdx >= 0)
-                        chatAdapter().updateMessageText(st.streamIdx, statusText)
+                // "answering" (TICKET-6). Chart-only rounds skip it: nothing is
+                // being fetched, and the ack round is fast.
+                if (hasDataTool) {
+                    val statusText = st.acc.toString() + ChatAdapter.TOOL_STATUS
+                    runOnUi {
+                        if (binding != null && st.streamIdx >= 0)
+                            chatAdapter().updateMessageText(st.streamIdx, statusText)
+                    }
                 }
-                sendTurn(messages, systemPrompt, committedQuery, st, depth + 1)
+                if (!hasDataTool) st.chartRounds++
+                // Chart-only rounds re-enter at the SAME depth — the budget they
+                // are exempt from is the one this parameter carries.
+                sendTurn(messages, systemPrompt, committedQuery, st,
+                    if (hasDataTool) depth + 1 else depth)
                 return
             }
         }
@@ -1161,6 +1218,10 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
 
         commitToHistory(committedQuery, finalText)
         val persisted = ChatMessage(finalText, false)
+        // TICKET-P2-2: charts ride the persisted message, not the text — this
+        // is what puts them in Room (via ChatMessageEntity.charts) so they
+        // survive a restart, which the old in-text tag got for free.
+        persisted.charts = ArrayList(st.charts)
         runOnUi {
             requestFinished()
             // If no delta ever arrived on-screen (edge case), add the bubble now.
@@ -1170,6 +1231,7 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
             } else {
                 // Sync the bubble in case a dangling announcement was stripped.
                 chatAdapter().updateMessageText(st.streamIdx, finalText)
+                chatAdapter().updateMessageCharts(st.streamIdx, persisted.charts)
             }
             host().persistChatMessage(persisted)
             maybeScrollToBottom(false)
@@ -1250,13 +1312,19 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
 
         commitToHistory(committedQuery, st.acc.toString())
         val msg = ChatMessage(st.acc.toString(), false)
+        // Charts collected by earlier streamed rounds of this same turn still
+        // belong to the reply even when the final round came back as JSON.
+        msg.charts = ArrayList(st.charts)
         runOnUi {
             requestFinished()
             chatAdapter().removeTypingIndicator()
             // ChatMessage is Kotlin (batch 3), so `text` is a property here —
             // msg.getText() would not resolve from Kotlin.
-            if (st.streamIdx >= 0) chatAdapter().updateMessageText(st.streamIdx, msg.text)
-            else chatAdapter().addMessage(msg)
+            if (st.streamIdx >= 0) {
+                chatAdapter().updateMessageText(st.streamIdx, msg.text)
+                if (msg.charts.isNotEmpty())
+                    chatAdapter().updateMessageCharts(st.streamIdx, msg.charts)
+            } else chatAdapter().addMessage(msg)
             host().persistChatMessage(msg)
             maybeScrollToBottom(false)
         }
@@ -1480,6 +1548,13 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
 
         /** Max tool-call round-trips per user question. */
         private const val MAX_TOOL_DEPTH = 3
+
+        /** TICKET-P2-2: max continuation rounds whose only tool calls were
+         *  render_chart. Charts are exempt from MAX_TOOL_DEPTH (a rendering
+         *  directive, not a data lookup), so they need their own bound — without
+         *  one, depth-free rounds could loop indefinitely. Each such round can
+         *  carry several render_chart calls, so this caps rounds, not charts. */
+        private const val MAX_CHART_ROUNDS = 3
 
         /** Total automatic retries allowed for one user question, across every
          *  sendTurn() invocation and tool-loop round — not per-invocation. Without

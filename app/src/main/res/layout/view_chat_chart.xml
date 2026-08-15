@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- TICKET-P2-2: one chart inside an analyst bubble — a sparkline plus its
+     caption. Inflated once per render_chart call into llChartContainer, so a
+     reply can carry several. Replaces the single fixed sparkline the old
+     [CHART:...] tag could address. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <com.economic.dashboard.views.SparklineView
+        android:id="@+id/sparklineChart"
+        android:layout_width="match_parent"
+        android:layout_height="72dp"
+        android:layout_marginTop="@dimen/space_sm" />
+
+    <TextView
+        android:id="@+id/tvChartCaption"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_xs"
+        android:textColor="@color/text_muted"
+        android:textSize="@dimen/text_caption" />
+</LinearLayout>

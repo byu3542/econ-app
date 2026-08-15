@@ -24,7 +24,7 @@ import java.util.LinkedHashMap
  * pre-refactor source — this is a structural change, not a wording change.
  *
  * `id` is load-bearing and must never change: AnalystToolExecutor's tool enum,
- * ChatAdapter.SERIES_LABELS, the chat `[CHART:...]` tags, and the seriesId
+ * ChatAdapter.SERIES_LABELS, the render_chart tool enum, and the seriesId
  * column in economic_history all key off these exact strings. Several series
  * are therefore registered under an app-level alias (CPI, SP500, VIX, WAGES,
  * PCE, CORE_PCE, HOUSING_STARTS, HOME_SALES, BAA_SPREAD, HY_SPREAD) rather
@@ -195,7 +195,7 @@ object EconomicSeriesRegistry {
         // INTENTIONAL DUPLICATION: these eight maturities are already persisted
         // in the treasury_yields table. They are mirrored into economic_history
         // so the Analyst can query every series through one uniform path
-        // (get_series / [CHART:...]), instead of the curve being the one dataset
+        // (get_series / render_chart), instead of the curve being the one dataset
         // it cannot reach. There is NO extra network call — TreasuryYieldRepository
         // writes both tables from the single XML response it already fetches, so
         // HistoricalDataRepository deliberately skips ApiSource.TREASURY entries.

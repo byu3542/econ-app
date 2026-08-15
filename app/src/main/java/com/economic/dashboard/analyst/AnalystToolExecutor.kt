@@ -3,6 +3,7 @@ package com.economic.dashboard.analyst
 import android.content.Context
 
 import com.economic.dashboard.database.YieldDatabase
+import com.economic.dashboard.models.ChatChart
 import com.economic.dashboard.models.EconomicDataPoint
 import com.economic.dashboard.models.EconomicHistoryEntry
 import com.economic.dashboard.news.NewsItem
@@ -51,6 +52,10 @@ object AnalystToolExecutor {
     /** Max points emitted in one tool result before down-sampling kicks in. */
     private const val MAX_POINTS = 40
 
+    /** Tool name for the rendering directive (TICKET-P2-2). Named once because
+     *  AiAnalystBottomSheet has to branch on it in the stream handler. */
+    const val RENDER_CHART = "render_chart"
+
     /** Normalized (date, value) pair so the Room and live paths share a renderer. */
     private class Pt(@JvmField val date: String, @JvmField val value: Double)
 
@@ -85,8 +90,8 @@ object AnalystToolExecutor {
 
     /**
      * TICKET-2 (AI Law 13): read access for renderers (inline chat sparklines)
-     * so a [CHART:CPI:24M] tag draws from the same points the get_series tool
-     * serves. Returns null when no provider is wired or the series is empty.
+     * so a render_chart directive draws from the same points the get_series
+     * tool serves. Returns null when no provider is wired or the series is empty.
      */
     @JvmStatic
     fun getLiveSeriesPoints(seriesId: String): List<EconomicDataPoint>? {
@@ -94,10 +99,21 @@ object AnalystToolExecutor {
         return if (p != null) p.get(seriesId) else null
     }
 
-    /** JSON "tools" array for the Anthropic request body. */
+    /**
+     * JSON "tools" array for the Anthropic request body.
+     *
+     * @param chartOnly narrows the array to `render_chart` alone. Used on the
+     *   final allowed round (TICKET-P2-2 / R5): the API's `tool_choice` has no
+     *   allowlist form — `auto`, `any`, `tool`, `none` — and `{"type":"tool"}`
+     *   would *force* a chart every time. Narrowing `tools` is the only way to
+     *   say "a chart is still allowed here, a data lookup is not". It costs a
+     *   cache miss (tools sit at the front of the cached prefix), which is why
+     *   it fires only on the last round of a turn.
+     */
     @JvmStatic
+    @JvmOverloads
     @Throws(Exception::class)
-    fun buildToolsJson(): JSONArray {
+    fun buildToolsJson(chartOnly: Boolean = false): JSONArray {
         val tools = JSONArray()
 
         val seriesEnum = JSONArray()
@@ -114,6 +130,12 @@ object AnalystToolExecutor {
         val monthsParam = JSONObject()
             .put("type", "integer")
             .put("description", "How many months of history to return (1-24). Default 24.")
+
+        if (chartOnly) {
+            tools.put(renderChartTool(seriesEnum))
+            return tools
+        }
+
         tools.put(JSONObject()
             .put("name", "get_series")
             .put("description", "Fetch up to 24 months of historical data points for one " +
@@ -143,7 +165,80 @@ object AnalystToolExecutor {
                 .put("properties", JSONObject()
                     .put("topic", topicParam)
                     .put("count", countParam))))
+
+        tools.put(renderChartTool(seriesEnum))
         return tools
+    }
+
+    /**
+     * TICKET-P2-2: the rendering tool. Deliberately declared as a *directive*,
+     * not a data fetch — it returns no points. The app draws from its own store
+     * (AI Law 13), so a chart can never disagree with the numbers in the reply.
+     */
+    private fun renderChartTool(seriesEnum: JSONArray): JSONObject =
+        JSONObject()
+            .put("name", RENDER_CHART)
+            .put("description", "Draw a small trend chart inside your reply. Call this when a " +
+                "visual would genuinely help the user see a trend — it does NOT return data to " +
+                "you, it renders a chart in the app. Call it as many times as you have distinct " +
+                "trends worth showing, but do not chart something you are not discussing. " +
+                "Keep writing your answer normally; never describe the chart markup or name " +
+                "this tool in your prose.")
+            .put("input_schema", JSONObject()
+                .put("type", "object")
+                .put("properties", JSONObject()
+                    .put("series_id", JSONObject()
+                        .put("type", "string")
+                        .put("enum", seriesEnum)
+                        .put("description", "Which series to chart."))
+                    .put("months", JSONObject()
+                        .put("type", "integer")
+                        .put("description", "Months of history to show (1-24). Default 24.")))
+                .put("required", JSONArray().put("series_id")))
+
+    /** Outcome of a render_chart call: the chart to draw (or null), plus the
+     *  text that goes back to the model as the tool_result. */
+    class RenderChartOutcome(
+        @JvmField val chart: ChatChart?,
+        @JvmField val message: String
+    )
+
+    /**
+     * Resolves a model-supplied series id to its canonical registry id,
+     * **case-insensitively**, or null if there is no such series.
+     *
+     * The case-insensitivity is not politeness. A wrong-cased id ("dgs10")
+     * satisfies the enum loosely enough that the call completes with no API
+     * error, so this comparison is the only thing standing between a typo and a
+     * chart that silently never appears.
+     */
+    @JvmStatic
+    fun resolveSeriesId(raw: String?): String? {
+        val t = raw?.trim() ?: return null
+        if (t.isEmpty()) return null
+        for (id in EconomicSeriesRegistry.allIds())
+            if (id.equals(t, ignoreCase = true)) return id
+        return null
+    }
+
+    /**
+     * Validates a render_chart call. Anything unresolvable degrades to text:
+     * no chart is added and the model is told plainly, in the same
+     * do-not-retry wording [getSeries] uses (AI Law 16), so a bad id costs a
+     * sentence rather than a visible artifact or a retry loop.
+     */
+    @JvmStatic
+    fun renderChart(input: JSONObject): RenderChartOutcome {
+        val raw = input.optString("series_id", "")
+        val id = resolveSeriesId(raw)
+        if (id == null || !EconomicSeriesRegistry.chartLabels().containsKey(id))
+            return RenderChartOutcome(null,
+                "No chart was drawn: '" + raw + "' is not a series this app can chart. Do not " +
+                    "retry and do not mention the chart — just continue your answer in prose.")
+        val months = input.optInt("months", 24).coerceIn(1, 24)
+        return RenderChartOutcome(ChatChart(id, months),
+            "Chart rendered for " + id + " over the last " + months + " months. Continue your " +
+                "answer; do not restate the chart's points one by one.")
     }
 
     /** Runs one tool call; returns the text payload for the tool_result block. */
@@ -153,6 +248,11 @@ object AnalystToolExecutor {
             when (name) {
                 "get_series" -> getSeries(ctx, input)
                 "get_headlines" -> getHeadlines(input)
+                // The streamed path intercepts render_chart before here so it can
+                // keep the resolved ChatChart; this branch serves the non-streamed
+                // fallback in handleJsonResponse, where the chart is lost but the
+                // model still gets a coherent, non-retrying answer.
+                RENDER_CHART -> renderChart(input).message
                 else -> "Unknown tool: " + name
             }
         } catch (e: Exception) {

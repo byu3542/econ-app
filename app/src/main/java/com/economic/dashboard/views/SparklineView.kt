@@ -12,7 +12,7 @@ import androidx.core.graphics.ColorUtils
 
 /**
  * Lightweight inline sparkline for AI Analyst chat bubbles — renders a
- * [CHART:SERIES:WINDOW] tag as a small trend line without the weight of a
+ * render_chart tool call as a small trend line without the weight of a
  * full MPAndroidChart instance per recycled row.
  *
  * This view is declared in `card_kpi_badge.xml` and `item_chat_message.xml`, and

@@ -36,6 +36,7 @@ import com.economic.dashboard.R
 import com.economic.dashboard.analyst.AnalystToolExecutor
 import com.economic.dashboard.analyst.EconomicSeriesRegistry
 import com.economic.dashboard.database.YieldDatabase
+import com.economic.dashboard.models.ChatChart
 import com.economic.dashboard.models.ChatMessage
 import com.economic.dashboard.models.EconomicDataPoint
 import com.economic.dashboard.utils.AppExecutors
@@ -98,6 +99,14 @@ class ChatAdapter(
         if (index < 0 || index >= messages.size) return
         messages[index].text = text
         notifyItemChanged(index, PAYLOAD_TEXT)
+    }
+
+    /** TICKET-P2-2: a render_chart call landed for the streaming bubble — set
+     *  the typed chart list and redraw only the chart container. */
+    fun updateMessageCharts(index: Int, charts: List<ChatChart>) {
+        if (index < 0 || index >= messages.size) return
+        messages[index].charts = charts
+        notifyItemChanged(index, PAYLOAD_CHARTS)
     }
 
     fun getLastIndex(): Int = messages.size - 1
@@ -207,93 +216,141 @@ class ChatAdapter(
         if (any) tv.movementMethod = LinkMovementMethod.getInstance()
     }
 
-    /** Binds the inline sparkline if the analyst reply contains a chart tag. */
-    private fun bindSparkline(holder: ViewHolder, m: ChatMessage) {
-        val text = m.text
-        if (m.isUser || m.isError || m.isTyping || text == null) {
-            holder.hideSparkline(); return
+    /**
+     * TICKET-P2-2: binds the reply's charts — one row per render_chart call, in
+     * the order the analyst asked for them.
+     *
+     * Reads [ChatMessage.charts], never the message text. The old renderer
+     * regex-parsed a [CHART:...] tag out of the prose on every bind, which
+     * capped a reply at one chart and made the client a parser of model output.
+     */
+    private fun bindCharts(holder: ViewHolder, m: ChatMessage) {
+        val container = holder.llChartContainer
+        val charts = if (m.isUser || m.isError || m.isTyping) emptyList() else m.charts
+
+        // Invalidate any load still in flight for this holder. The old guard
+        // compared a cache key against a single SparklineView's `tag`, which
+        // cannot identify a *slot* once a bubble holds several charts — a fast
+        // scroll could paint one message's series under another's answer, and
+        // that reads as a data bug, not a UI bug. A per-bind token is the
+        // cheapest thing that can't confuse two rows.
+        holder.chartBindToken++
+        val token = holder.chartBindToken
+
+        if (charts.isEmpty()) {
+            container.visibility = View.GONE
+            container.removeAllViews()
+            return
         }
-        val matcher = CHART_TAG.matcher(text)
-        if (!matcher.find()) { holder.hideSparkline(); return }
+        container.visibility = View.VISIBLE
 
-        // group(1)/group(2) are non-optional in CHART_TAG's pattern, so a
-        // successful find() guarantees both — but fall back gracefully (matching
-        // the original's behavior of never crashing on this) rather than force-unwrap.
-        val seriesId = matcher.group(1)
-        var months = 24
-        try {
-            val monthsGroup = matcher.group(2) ?: throw NumberFormatException("no group 2")
-            months = monthsGroup.toInt().coerceIn(1, 24)
-        } catch (ignored: Exception) {
+        // Reuse rows rather than rebuilding: a streaming reply rebinds on every
+        // text delta, and re-inflating N charts each time would churn views for
+        // the whole answer.
+        while (container.childCount > charts.size)
+            container.removeViewAt(container.childCount - 1)
+        val inflater = LayoutInflater.from(container.context)
+        while (container.childCount < charts.size)
+            container.addView(inflater.inflate(R.layout.view_chat_chart, container, false))
+
+        for (i in charts.indices) {
+            val row = container.getChildAt(i)
+            bindOneChart(
+                row.findViewById(R.id.sparklineChart),
+                row.findViewById(R.id.tvChartCaption),
+                charts[i], holder, token
+            )
         }
+    }
 
-        val label = if (seriesId != null) SERIES_LABELS[seriesId] else null
-        if (label == null || seriesId == null) { holder.hideSparkline(); return }
+    private fun bindOneChart(
+        spark: SparklineView, caption: TextView,
+        chart: ChatChart, holder: ViewHolder, token: Long
+    ) {
+        // A series with no registry label still charts — the id is a worse
+        // caption than a name, but a silently missing chart is worse than both.
+        caption.text = String.format(
+            Locale.US, "%s — last %d months",
+            SERIES_LABELS[chart.seriesId] ?: chart.seriesId, chart.months
+        )
+        spark.setLineColor(ContextCompat.getColor(spark.context, R.color.gold_ink))
 
-        holder.sparkline.visibility = View.VISIBLE
-        holder.tvChartCaption.visibility = View.VISIBLE
-        holder.tvChartCaption.text = String.format(Locale.US, "%s — last %d months", label, months)
-        holder.sparkline.setLineColor(ContextCompat.getColor(holder.itemView.context, R.color.gold_ink))
-
-        val cacheKey = "$seriesId:$months"
+        val cacheKey = "${chart.seriesId}:${chart.months}"
         val cached: List<Double>?
         synchronized(seriesCache) { cached = seriesCache[cacheKey] }
-        if (cached != null) { holder.sparkline.setData(cached); return }
+        if (cached != null) { applyChartValues(spark, caption, cached); return }
 
-        holder.sparkline.tag = cacheKey
-        val appCtx = holder.itemView.context.applicationContext
-        val monthsFinal = months
+        val appCtx = spark.context.applicationContext
         AppExecutors.diskIO().execute {
-            val cal = Calendar.getInstance()
-            cal.add(Calendar.MONTH, -monthsFinal)
-            val cutoff = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(cal.time)
-            val values = ArrayList<Double>()
-            if (AnalystToolExecutor.LIVE_SERIES.containsKey(seriesId)) {
-                // TICKET-2 (AI Law 13): live ViewModel-backed series chart from
-                // the same provider the get_series tool reads, so analysis and
-                // visualization cover the same metrics. LiveData.getValue() is
-                // safe off the main thread. The Room path below is untouched.
+            val values = loadSeriesValues(appCtx, chart.seriesId, chart.months)
+            synchronized(seriesCache) { seriesCache[cacheKey] = values }
+            spark.post {
+                if (token == holder.chartBindToken) applyChartValues(spark, caption, values)
+            }
+        }
+    }
+
+    /** Fewer than two points can't draw a line — hide the row instead of
+     *  leaving an empty box under the answer (degrade to text, never to a
+     *  visible artifact). */
+    private fun applyChartValues(spark: SparklineView, caption: TextView, values: List<Double>) {
+        if (values.size >= 2) {
+            spark.visibility = View.VISIBLE
+            caption.visibility = View.VISIBLE
+            spark.setData(values)
+        } else {
+            spark.visibility = View.GONE
+            caption.visibility = View.GONE
+        }
+    }
+
+    /** Off-thread series load, shared by every chart row. Unchanged from the
+     *  tag-era renderer: same two sources, same order, so a chart still draws
+     *  the points get_series serves (AI Law 13). */
+    private fun loadSeriesValues(appCtx: Context, seriesId: String, months: Int): List<Double> {
+        val cal = Calendar.getInstance()
+        cal.add(Calendar.MONTH, -months)
+        val cutoff = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(cal.time)
+        val values = ArrayList<Double>()
+        if (AnalystToolExecutor.LIVE_SERIES.containsKey(seriesId)) {
+            // TICKET-2 (AI Law 13): live ViewModel-backed series chart from
+            // the same provider the get_series tool reads, so analysis and
+            // visualization cover the same metrics. LiveData.getValue() is
+            // safe off the main thread. The Room path below is untouched.
+            val pts: List<EconomicDataPoint>? = AnalystToolExecutor.getLiveSeriesPoints(seriesId)
+            if (pts != null) {
+                for (dp in pts) {
+                    val d = dp.date
+                    // "yyyy-MM" dates pad to a late day so the month survives
+                    // a lexicographic compare against the cutoff; unparseable
+                    // dates pass (matches AnalystToolExecutor.getLiveSeries).
+                    val norm = if (d.length == 7) "$d-28" else d
+                    if (norm.length < 10 || norm.compareTo(cutoff) >= 0) values.add(dp.value)
+                }
+            }
+        } else {
+            val rows = YieldDatabase.getInstance(appCtx).economicHistoryDao().getSeriesSync(seriesId)
+            for (row in rows) {
+                if (row.date.compareTo(cutoff) >= 0) values.add(row.value)
+            }
+            if (values.size < 2) {
+                // Cache-cold fallback (mirrors AnalystToolExecutor.getCachedSeries):
+                // every series is Room-backed since the 2026-07-30 cache
+                // expansion, but the catalog refresh is asynchronous, so on a
+                // first launch the table can still be empty while the dashboard
+                // already holds points in memory. Draw those rather than nothing.
                 val pts: List<EconomicDataPoint>? = AnalystToolExecutor.getLiveSeriesPoints(seriesId)
                 if (pts != null) {
+                    values.clear()
                     for (dp in pts) {
                         val d = dp.date
-                        // "yyyy-MM" dates pad to a late day so the month survives
-                        // a lexicographic compare against the cutoff; unparseable
-                        // dates pass (matches AnalystToolExecutor.getLiveSeries).
                         val norm = if (d.length == 7) "$d-28" else d
                         if (norm.length < 10 || norm.compareTo(cutoff) >= 0) values.add(dp.value)
                     }
                 }
-            } else {
-                val rows = YieldDatabase.getInstance(appCtx).economicHistoryDao().getSeriesSync(seriesId)
-                for (row in rows) {
-                    if (row.date.compareTo(cutoff) >= 0) values.add(row.value)
-                }
-                if (values.size < 2) {
-                    // Cache-cold fallback (mirrors AnalystToolExecutor.getCachedSeries):
-                    // every series is Room-backed since the 2026-07-30 cache
-                    // expansion, but the catalog refresh is asynchronous, so on a
-                    // first launch the table can still be empty while the dashboard
-                    // already holds points in memory. Draw those rather than nothing.
-                    val pts: List<EconomicDataPoint>? = AnalystToolExecutor.getLiveSeriesPoints(seriesId)
-                    if (pts != null) {
-                        values.clear()
-                        for (dp in pts) {
-                            val d = dp.date
-                            val norm = if (d.length == 7) "$d-28" else d
-                            if (norm.length < 10 || norm.compareTo(cutoff) >= 0) values.add(dp.value)
-                        }
-                    }
-                }
-            }
-            synchronized(seriesCache) { seriesCache[cacheKey] = values }
-            holder.sparkline.post {
-                // Guard against recycling: only draw if this row still wants this series
-                if (cacheKey == holder.sparkline.tag) {
-                    if (values.size >= 2) holder.sparkline.setData(values) else holder.hideSparkline()
-                }
             }
         }
+        return values
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int, payloads: List<Any>) {
@@ -301,7 +358,13 @@ class ChatAdapter(
             // Streaming update: swap the text only — no full rebind, no flicker.
             ensureMarkwon(holder.itemView.context)
             renderText(holder, messages[position])
-            bindSparkline(holder, messages[position])
+            bindCharts(holder, messages[position])
+            return
+        }
+        if (payloads.contains(PAYLOAD_CHARTS)) {
+            // A render_chart landed mid-stream: draw it without touching the
+            // text, so the prose keeps streaming uninterrupted.
+            bindCharts(holder, messages[position])
             return
         }
         super.onBindViewHolder(holder, position, payloads)
@@ -322,7 +385,7 @@ class ChatAdapter(
             renderText(holder, m)
         }
 
-        bindSparkline(holder, m)
+        bindCharts(holder, m)
 
         // Attached image (vision messages) — transient, shown only this session
         val bitmap = m.imageBitmap
@@ -556,19 +619,18 @@ class ChatAdapter(
         val tvSenderLabel: TextView = v.findViewById(R.id.tvSenderLabel)
         val tvTimestamp: TextView = v.findViewById(R.id.tvTimestamp)
         val tvRetry: TextView = v.findViewById(R.id.tvRetry)
-        val tvChartCaption: TextView = v.findViewById(R.id.tvChartCaption)
         val ivChatImage: ImageView = v.findViewById(R.id.ivChatImage)
-        val sparkline: SparklineView = v.findViewById(R.id.sparklineChart)
+        val llChartContainer: LinearLayout = v.findViewById(R.id.llChartContainer)
         val dot1: View = v.findViewById(R.id.dot1)
         val dot2: View = v.findViewById(R.id.dot2)
         val dot3: View = v.findViewById(R.id.dot3)
         val dotAnimators: MutableList<ObjectAnimator> = ArrayList()
 
-        fun hideSparkline() {
-            sparkline.visibility = View.GONE
-            tvChartCaption.visibility = View.GONE
-            sparkline.tag = null
-        }
+        /** Recycling guard for async chart loads (TICKET-P2-2): bumped on every
+         *  bindCharts, checked when a background load posts back. Replaces the
+         *  single-view `sparkline.tag` key, which couldn't name a slot once a
+         *  bubble held several charts. */
+        var chartBindToken: Long = 0
     }
 
     companion object {
@@ -580,10 +642,20 @@ class ChatAdapter(
         /** Partial-bind payload: only the message text changed (SSE streaming). */
         private val PAYLOAD_TEXT = Any()
 
+        /** Partial-bind payload: only the chart list changed (TICKET-P2-2). */
+        private val PAYLOAD_CHARTS = Any()
+
         /** Timestamps only render when the next message is at least this far away. */
         private const val TIME_GAP_MS = 15 * 60 * 1000L
 
-        /** Inline chart tag emitted by the model: [CHART:DGS10:24M] */
+        /**
+         * LEGACY (TICKET-P2-2): the model no longer emits [CHART:...] tags —
+         * charts arrive as render_chart tool calls and live in
+         * [ChatMessage.charts]. This pattern survives for one reason only:
+         * conversations persisted before the switch carry the tag inside their
+         * stored text, and without [stripChartTags] on the restore path they
+         * would render it literally. Sanitiser, not renderer.
+         */
         private val CHART_TAG: Pattern = Pattern.compile("\\[CHART:([A-Z0-9_]+):(\\d{1,2})M?\\]")
 
         /** Human labels for chart captions — derived from EconomicSeriesRegistry,
@@ -615,7 +687,9 @@ class ChatAdapter(
         /** Series data cache so recycled rows don't re-query Room. */
         private val seriesCache = HashMap<String, List<Double>>()
 
-        /** Removes [CHART:...] tags from the visible text (rendered separately). */
+        /** Removes legacy [CHART:...] tags from pre-P2-2 persisted text so old
+         *  conversations restore cleanly (see CHART_TAG). New replies never
+         *  contain the tag. */
         @JvmStatic
         fun stripChartTags(text: String?): String {
             if (text == null) return ""
