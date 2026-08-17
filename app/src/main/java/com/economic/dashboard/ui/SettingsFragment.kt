@@ -26,7 +26,9 @@ import com.economic.dashboard.databinding.FragmentSettingsBinding
 import com.economic.dashboard.news.NewsRepository
 import com.economic.dashboard.utils.EdgeToEdgeInsets
 import com.economic.dashboard.utils.SettingsManager
+import com.economic.dashboard.utils.markDestructive
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.chip.ChipGroup
@@ -319,7 +321,7 @@ class SettingsFragment : Fragment() {
 
         btnClear.setOnClickListener {
             val act = host()
-            AlertDialog.Builder(act)
+            MaterialAlertDialogBuilder(act)
                 .setTitle(R.string.clear_cache)
                 .setMessage(R.string.clear_cache_confirm)
                 .setPositiveButton(android.R.string.ok) { _, _ ->
@@ -334,6 +336,7 @@ class SettingsFragment : Fragment() {
                 }
                 .setNegativeButton(android.R.string.cancel, null)
                 .show()
+                .markDestructive()
         }
 
         bindSwitch(v, R.id.switchRefreshOnOpen, SettingsManager.KEY_REFRESH_ON_OPEN, false, null)
@@ -418,7 +421,7 @@ class SettingsFragment : Fragment() {
         bindSwitch(v, R.id.switchDetailedAi, SettingsManager.KEY_DETAILED_AI, false, null)
 
         v.findViewById<View>(R.id.btnClearChat).setOnClickListener {
-            AlertDialog.Builder(requireContext())
+            MaterialAlertDialogBuilder(requireContext())
                 .setTitle(R.string.clear_chat_title)
                 .setMessage(R.string.clear_chat_confirm)
                 .setPositiveButton(R.string.clear_chat_action) { _, _ ->
@@ -427,6 +430,7 @@ class SettingsFragment : Fragment() {
                 }
                 .setNegativeButton(android.R.string.cancel, null)
                 .show()
+                .markDestructive()
         }
     }
 

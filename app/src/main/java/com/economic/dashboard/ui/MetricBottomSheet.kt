@@ -22,6 +22,7 @@ import com.economic.dashboard.utils.EdgeToEdgeInsets
 import com.economic.dashboard.utils.SettingsManager
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
@@ -227,7 +228,7 @@ object MetricBottomSheet {
         val valueFmt = alertContext?.valueFmt
         til.suffixText = unitSuffix(valueFmt)
 
-        val alertDialog = AlertDialog.Builder(ctx)
+        val alertDialog = MaterialAlertDialogBuilder(ctx)
             .setTitle(seriesLabel)
             .setView(form)
             // Both listeners are null here on purpose: the positive one is bound

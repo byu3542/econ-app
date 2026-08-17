@@ -39,8 +39,10 @@ import com.economic.dashboard.news.NewsRepository
 import com.economic.dashboard.utils.AppExecutors
 import com.economic.dashboard.utils.ImageUtils
 import com.economic.dashboard.utils.SettingsManager
+import com.economic.dashboard.utils.markDestructive
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 import okhttp3.Call
 import okhttp3.Callback
@@ -359,12 +361,13 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
         btnClose?.setOnClickListener { dismiss() }
 
         b.btnClearChat.setOnClickListener {
-            AlertDialog.Builder(requireContext())
+            MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Clear conversation")
                 .setMessage("Delete the full chat history? This can't be undone.")
                 .setPositiveButton("Clear") { _, _ -> host().clearChatHistory() }
                 .setNegativeButton(android.R.string.cancel, null)
                 .show()
+                .markDestructive()
         }
 
         // ── Prefill / shared-image entry points ────────────────────────────────

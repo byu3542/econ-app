@@ -43,6 +43,8 @@ import com.economic.dashboard.utils.EdgeToEdgeInsets
 import com.economic.dashboard.utils.HapticUtil
 import com.economic.dashboard.utils.SeriesMath
 import com.economic.dashboard.utils.SettingsManager
+import com.economic.dashboard.utils.markDestructive
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.economic.dashboard.workers.DailyBriefWorker
 
 import com.google.android.material.snackbar.Snackbar
@@ -811,7 +813,7 @@ class MainActivity : AppCompatActivity() {
             return true
         }
         if (item.itemId == R.id.action_clear_cache) {
-            AlertDialog.Builder(this)
+            MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.clear_cache)
                 .setMessage(R.string.clear_cache_confirm)
                 .setPositiveButton(android.R.string.ok) { _, _ ->
@@ -825,6 +827,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 .setNegativeButton(android.R.string.cancel, null)
                 .show()
+                .markDestructive()
             return true
         }
         return super.onOptionsItemSelected(item)
