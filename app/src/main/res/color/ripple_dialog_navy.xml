@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- TICKET-54: dialog-button ripple. An opaque rippleColor paints a solid
+     wash that hides the label mid-press; Material's own text-button ripple is
+     alpha-modulated, so ours is too. References the token, so it follows the
+     DayNight flip with it. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:alpha="0.16" android:color="@color/text_navy" android:state_pressed="true" />
+    <item android:alpha="0.12" android:color="@color/text_navy" android:state_focused="true" />
+    <item android:alpha="0.08" android:color="@color/text_navy" android:state_hovered="true" />
+    <item android:alpha="0.12" android:color="@color/text_navy" />
+</selector>

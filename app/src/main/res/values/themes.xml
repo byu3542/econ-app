@@ -64,48 +64,68 @@
          it. Selection controls keep their gold tick. Every token referenced
          here has a night twin; text_muted and delta_bad are deliberately absent
          (TICKET-52 left their values alone for their other consumers).
+
+         Mechanism notes, learned the same way EconomicBottomSheetStyle24 did:
+         the dialog surface is backgroundTint on alertDialogStyle — NOT
+         android:background, which MaterialAlertDialogBuilder never reads
+         (R.styleable.MaterialAlertDialog carries only backgroundTint and the
+         four insets). The title slot is a WIDGET style that must keep
+         MaterialAlertDialog.MaterialComponents.Title.Text as its parent: the
+         mtrl_alert_dialog_title layout declares no layout params of its own,
+         so a text-appearance there crashes inflation. shapeAppearanceOverlay
+         lives on alertDialogStyle, not the theme, so the 16dp reaches the
+         dialog window and not every Material widget inflated inside it.
          Rationale: subprojects/ux-passes/DIALOG_THEME_DECISION_2026-08-17.md -->
     <style name="ShapeAppearance.Econ.Dialog" parent="">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">@dimen/radius_card_panel</item>
     </style>
 
+    <style name="MaterialAlertDialog.Econ" parent="MaterialAlertDialog.MaterialComponents">
+        <item name="backgroundTint">@color/surface_card</item>
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearance.Econ.Dialog</item>
+    </style>
+
+    <style name="MaterialAlertDialog.Econ.Title.Text" parent="MaterialAlertDialog.MaterialComponents.Title.Text">
+        <item name="android:textColor">@color/text_navy</item>
+    </style>
+
+    <style name="MaterialAlertDialog.Econ.Body.Text" parent="MaterialAlertDialog.MaterialComponents.Body.Text">
+        <item name="android:textColor">@color/text_secondary</item>
+    </style>
+
     <style name="Button.Econ.Dialog.Positive" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
         <item name="android:textColor">@color/text_navy</item>
-        <item name="rippleColor">@color/text_navy</item>
+        <item name="rippleColor">@color/ripple_dialog_navy</item>
         <item name="android:textAllCaps">false</item>
     </style>
 
     <style name="Button.Econ.Dialog.Negative" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
         <item name="android:textColor">@color/text_secondary</item>
-        <item name="rippleColor">@color/text_secondary</item>
+        <item name="rippleColor">@color/ripple_dialog_secondary</item>
         <item name="android:textAllCaps">false</item>
     </style>
 
-    <!-- Applied at the call site, not by the theme: only some dialogs are
-         destructive and a theme cannot know which (see the cache-clear and
-         clear-chat confirmations). -->
-    <style name="Button.Econ.Dialog.Destructive" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
-        <item name="android:textColor">@color/error_text</item>
-        <item name="rippleColor">@color/error_text</item>
+    <!-- Neutral keeps the Flush parent so it stays left-aligned with the
+         dialog content edge, per Material's default. No caller uses a neutral
+         button today; this exists so the first one that does inherits the
+         right thing. Destructive styling is NOT here — only some dialogs are
+         destructive and a theme cannot know which, so the call site applies
+         it after show() via AlertDialog.markDestructive() (DialogStyle.kt),
+         the single owner of that colour. -->
+    <style name="Button.Econ.Dialog.Neutral" parent="Widget.MaterialComponents.Button.TextButton.Dialog.Flush">
+        <item name="android:textColor">@color/text_secondary</item>
+        <item name="rippleColor">@color/ripple_dialog_secondary</item>
         <item name="android:textAllCaps">false</item>
-    </style>
-
-    <style name="TextAppearance.Econ.DialogTitle" parent="TextAppearance.MaterialComponents.Headline6">
-        <item name="android:textColor">@color/text_navy</item>
-        <item name="android:textSize">@dimen/text_body</item>
-        <item name="android:textStyle">bold</item>
     </style>
 
     <style name="ThemeOverlay.Econ.MaterialAlertDialog" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
-        <item name="shapeAppearanceOverlay">@style/ShapeAppearance.Econ.Dialog</item>
-        <item name="android:background">@color/surface_card</item>
-        <item name="android:textColorPrimary">@color/text_navy</item>
-        <item name="android:textColorSecondary">@color/text_secondary</item>
-        <item name="materialAlertDialogTitleTextStyle">@style/TextAppearance.Econ.DialogTitle</item>
+        <item name="alertDialogStyle">@style/MaterialAlertDialog.Econ</item>
+        <item name="materialAlertDialogTitleTextStyle">@style/MaterialAlertDialog.Econ.Title.Text</item>
+        <item name="materialAlertDialogBodyTextStyle">@style/MaterialAlertDialog.Econ.Body.Text</item>
         <item name="buttonBarPositiveButtonStyle">@style/Button.Econ.Dialog.Positive</item>
         <item name="buttonBarNegativeButtonStyle">@style/Button.Econ.Dialog.Negative</item>
-        <item name="buttonBarNeutralButtonStyle">@style/Button.Econ.Dialog.Negative</item>
+        <item name="buttonBarNeutralButtonStyle">@style/Button.Econ.Dialog.Neutral</item>
     </style>
 
     <!-- Full screen dialog theme for AI Chat (kept for reference) -->
