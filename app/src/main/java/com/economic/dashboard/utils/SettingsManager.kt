@@ -44,6 +44,9 @@ object SettingsManager {
     // Internal bookkeeping (not shown in UI)
     @JvmField val KEY_DAILY_BRIEF = "daily_ai_brief"
     @JvmField val KEY_LAST_BRIEF_DATE = "last_brief_date"
+    // TICKET-P2-7: fingerprint of the historical data block behind the last
+    // sent brief — a matching fingerprint means no material change, no brief.
+    @JvmField val KEY_LAST_BRIEF_FINGERPRINT = "last_brief_fingerprint"
 
     @JvmField val KEY_LAST_MOVE_NOTIFIED = "last_move_notified"
     @JvmField val KEY_LAST_RELEASE_NOTIFIED = "last_release_notified"

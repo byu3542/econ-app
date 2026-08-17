@@ -62,4 +62,42 @@ object SmartPromptGenerator {
 
         return prompts.subList(0, Math.min(5, prompts.size))
     }
+
+    /**
+     * Follow-up questions derived from an analyst ANSWER, not a headline
+     * (TICKET-P2-4, truncated pyramid). The 60–90-word gesture tier keeps only
+     * what was asked; the detail it leaves out gets somewhere to go — chips
+     * keyed to the topics the answer actually mentioned. Plain text, no emoji:
+     * these render in the quick-ask chip row, whose chips are unadorned.
+     */
+    @JvmStatic
+    fun generateFollowUpsForAnswer(answer: String?): List<String> {
+        val followUps = ArrayList<String>()
+        if (answer == null || answer.trim().isEmpty()) return followUps
+        // Locale.US for the same Turkish-I reason as generatePromptsForHeadline.
+        val text = answer.lowercase(Locale.US)
+
+        if (text.contains("inflation") || text.contains("cpi") || text.contains("pce") || text.contains("prices"))
+            followUps.add("How does inflation compare historically?")
+        if (text.contains("unemployment") || text.contains("jobs") || text.contains("labor") || text.contains("employment"))
+            followUps.add("What's the trend in the labor market?")
+        if (text.contains("yield") || text.contains("treasury") || text.contains("spread") || text.contains("curve"))
+            followUps.add("What is the yield curve signaling?")
+        if (text.contains("fed") || text.contains("federal reserve") || text.contains("rate cut") || text.contains("rate hike"))
+            followUps.add("What's the Fed's likely next move?")
+        if (text.contains("recession") || text.contains("slowdown") || text.contains("contraction"))
+            followUps.add("What's the current recession risk?")
+        if (text.contains("mortgage") || text.contains("housing") || text.contains("home"))
+            followUps.add("What does this mean for mortgage rates?")
+        if (text.contains("wage") || text.contains("earnings") || text.contains("income"))
+            followUps.add("Are real wages keeping up with inflation?")
+        if (text.contains("market") || text.contains("s&p") || text.contains("stock") || text.contains("nasdaq") || text.contains("vix"))
+            followUps.add("How are markets pricing this in?")
+
+        // Depth extenders so a match-poor answer still offers the second level.
+        if (followUps.size < 2) followUps.add("What's driving this?")
+        if (followUps.size < 2) followUps.add("What should I watch next?")
+
+        return followUps.subList(0, Math.min(3, followUps.size))
+    }
 }

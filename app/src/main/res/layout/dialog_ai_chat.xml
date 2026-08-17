@@ -36,14 +36,21 @@
             android:layout_height="52dp"
             android:paddingHorizontal="@dimen/space_lg">
 
+            <!-- TICKET-P2-8: the identity marker is tappable — what is this /
+                 where do the numbers come from (AnalystIdentity.showAbout). -->
             <LinearLayout
+                android:id="@+id/llAnalystIdentity"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentStart="true"
                 android:layout_toStartOf="@+id/btnClearChat"
                 android:layout_centerVertical="true"
                 android:gravity="center_vertical"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="About Econ Analyst">
 
                 <ImageView
                     android:layout_width="16dp"
@@ -126,6 +133,7 @@
         android:paddingEnd="@dimen/space_lg">
 
         <LinearLayout
+            android:id="@+id/llChipRow"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal">

@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.work.ListenableWorker.Result
 import androidx.work.Worker
 import androidx.work.WorkerParameters
+import com.economic.dashboard.analyst.AnalystIdentity
 import com.economic.dashboard.analyst.HistoricalContextBuilder
 import com.economic.dashboard.analyst.ModelConfig
 import com.economic.dashboard.analyst.NewsContextBuilder
@@ -52,6 +53,23 @@ class DailyBriefWorker(context: Context, params: WorkerParameters) : Worker(cont
             val already = SettingsManager.getString(ctx, SettingsManager.KEY_LAST_BRIEF_DATE, "")
             if (today == already) return Result.success()
 
+            // TICKET-P2-7 (AI Law 29): suppression rule — a brief with no
+            // material change does not fire. Material = the historical DATA
+            // block; headlines are deliberately excluded because they churn
+            // every day and would defeat suppression. The block is built from
+            // cached data rows only (no "today" timestamp), so its hash is
+            // stable across a morning where nothing new was released.
+            // Suppression does NOT stamp KEY_LAST_BRIEF_DATE, so a same-day
+            // rerun can still fire if data lands later.
+            val historicalBlock = HistoricalContextBuilder.build(ctx)
+            val fingerprint = sha256(historicalBlock)
+            val lastFingerprint = SettingsManager.getString(
+                ctx, SettingsManager.KEY_LAST_BRIEF_FINGERPRINT, "")
+            if (fingerprint == lastFingerprint) {
+                Log.i(TAG, "Daily brief suppressed: no material data change since last brief")
+                return Result.success()
+            }
+
             // Fresh headlines (synchronous; returns cache on failure)
             val news: List<NewsItem> = try {
                 NewsRepository.getInstance().fetchAllFeeds(false)
@@ -68,7 +86,7 @@ class DailyBriefWorker(context: Context, params: WorkerParameters) : Worker(cont
                 "number (e.g. '10Y Treasury 4.33%, +6bp today').\n" +
                 "- Then one closing sentence on what to watch.\n" +
                 "Plain text only — no markdown, no bullet characters, no headers.\n\n" +
-                HistoricalContextBuilder.build(ctx) +
+                historicalBlock +
                 ReleaseCalendar.build() +
                 NewsContextBuilder.build(news)
 
@@ -115,6 +133,7 @@ class DailyBriefWorker(context: Context, params: WorkerParameters) : Worker(cont
             }
 
             SettingsManager.setString(ctx, SettingsManager.KEY_LAST_BRIEF_DATE, today)
+            SettingsManager.setString(ctx, SettingsManager.KEY_LAST_BRIEF_FINGERPRINT, fingerprint)
 
             // Use the model's first line as the notification headline and the
             // remaining movers as the expanded body — a polished "end" to the
@@ -127,10 +146,15 @@ class DailyBriefWorker(context: Context, params: WorkerParameters) : Worker(cont
                 detail = finalBrief.substring(nl + 1).trim()
             }
             if (detail.isEmpty()) detail = finalBrief
-            NotificationHelper.notify(ctx, NOTIFICATION_ID_BRIEF, headline, detail)
+            // TICKET-P2-8: the marker travels with AI-generated content —
+            // the notification title and the persisted chat entry both carry it.
+            NotificationHelper.notify(ctx, NOTIFICATION_ID_BRIEF,
+                AnalystIdentity.MARKER + " " + headline, detail)
 
             // Drop the brief into the persisted chat so it's there on open.
-            val entity = ChatMessageEntity.from(ChatMessage("☀️ Morning brief\n\n$finalBrief", false))
+            val entity = ChatMessageEntity.from(ChatMessage(
+                AnalystIdentity.MARKER + " Morning brief — " + AnalystIdentity.NAME +
+                    "\n\n" + finalBrief, false))
             YieldDatabase.getInstance(ctx).chatMessageDao().insert(entity)
 
             // TICKET-26: mark that a genuinely new analyst insight exists so the
@@ -148,6 +172,15 @@ class DailyBriefWorker(context: Context, params: WorkerParameters) : Worker(cont
         private const val TAG = "DailyBriefWorker"
         private const val WORK_ID = "daily_ai_brief"
         private const val NOTIFICATION_ID_BRIEF = 2003
+
+        /** Hex SHA-256 of the historical data block (TICKET-P2-7 fingerprint). */
+        private fun sha256(s: String): String {
+            val digest = java.security.MessageDigest.getInstance("SHA-256").digest(
+                s.toByteArray(Charsets.UTF_8))
+            val sb = StringBuilder(digest.size * 2)
+            for (b in digest) sb.append(String.format(Locale.US, "%02x", b))
+            return sb.toString()
+        }
 
         /** Schedules the daily brief at ~7:30 AM local. KEEP policy — idempotent. */
         @JvmStatic

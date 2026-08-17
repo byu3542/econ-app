@@ -85,7 +85,8 @@ object AskAnalyst {
         if (card == null || activity == null) return
         card.setOnLongClickListener { v ->
             val menu = PopupMenu(v.context, v)
-            menu.menu.add(0, 1, 0, "Ask Econ Analyst")
+            // TICKET-P2-8: one marker + name across every analyst door.
+            menu.menu.add(0, 1, 0, AnalystIdentity.label("Ask " + AnalystIdentity.NAME))
             menu.setOnMenuItemClickListener { item ->
                 if (item.itemId == 1) {
                     // Harvest at press time, not wire time — values load async.
@@ -157,7 +158,10 @@ object AskAnalyst {
         chart.setOnChartGestureListener(object : OnChartGestureListener {
             override fun onChartLongPressed(me: MotionEvent?) {
                 val menu = PopupMenu(chart.context, chart)
-                menu.menu.add(0, 1, 0, "✨ Explain this chart")
+                // TICKET-P2-8: action first, then the assistant's name — the
+                // marker alone left this door anonymous.
+                menu.menu.add(0, 1, 0,
+                    AnalystIdentity.label("Explain this chart — " + AnalystIdentity.NAME))
                 menu.setOnMenuItemClickListener { item ->
                     if (item.itemId == 1) {
                         val stats = describeChartData(chart)

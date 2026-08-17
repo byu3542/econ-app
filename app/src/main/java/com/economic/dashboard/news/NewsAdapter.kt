@@ -17,6 +17,7 @@ import androidx.browser.customtabs.CustomTabsIntent
 import androidx.fragment.app.FragmentActivity
 import androidx.recyclerview.widget.RecyclerView
 import com.economic.dashboard.R
+import com.economic.dashboard.analyst.AnalystIdentity
 import com.economic.dashboard.analyst.AskAnalyst
 import com.economic.dashboard.analyst.SmartPromptGenerator
 import java.text.SimpleDateFormat
@@ -108,7 +109,8 @@ class NewsAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         if (activity == null || title == null) return
 
         val menu = PopupMenu(ctx, anchor)
-        menu.menu.add(0, 1, 0, "✨ Analyze with Econ Analyst")
+        menu.menu.add(0, 1, 0,
+            AnalystIdentity.label("Analyze with " + AnalystIdentity.NAME))
         menu.menu.add(0, 10, 0, ctx.getString(R.string.news_open_original))
         val prompts: List<String> = SmartPromptGenerator.generatePromptsForHeadline(title)
         val shown = minOf(2, prompts.size)

@@ -14,6 +14,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.widget.FrameLayout
+import android.widget.LinearLayout
+import android.widget.TextView
+
+import androidx.core.content.ContextCompat
 
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -25,8 +29,10 @@ import com.economic.dashboard.analyst.AnalystToolExecutor
 import com.economic.dashboard.analyst.DerivedMetricsBuilder
 import com.economic.dashboard.analyst.HistoricalContextBuilder
 import com.economic.dashboard.analyst.ModelConfig
+import com.economic.dashboard.analyst.AnalystIdentity
 import com.economic.dashboard.analyst.NewsContextBuilder
 import com.economic.dashboard.analyst.ReleaseCalendar
+import com.economic.dashboard.analyst.SmartPromptGenerator
 import com.economic.dashboard.api.ApiConfig
 import com.economic.dashboard.cache.DashboardDataCache
 import com.economic.dashboard.databinding.DialogAiChatBinding
@@ -359,6 +365,9 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
 
         btnClose?.setOnClickListener { dismiss() }
 
+        // TICKET-P2-8: the header identity block is the marker's tap target.
+        b.llAnalystIdentity.setOnClickListener { AnalystIdentity.showAbout(requireContext()) }
+
         b.btnClearChat.setOnClickListener {
             MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Clear conversation")
@@ -639,6 +648,9 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
          *  is not a data lookup — R4/KTD2), so without their own cap the model
          *  could loop forever on free chart rounds. Capped at MAX_CHART_ROUNDS. */
         @JvmField var chartRounds = 0
+        /** TICKET-P2-4: true when this turn came from a one-tap gesture, so
+         *  finalizeTurn() offers follow-up chips derived from the answer. */
+        @JvmField var gestureTurn = false
     }
 
     private fun queryClaude(userQuery: String, rv: RecyclerView) {
@@ -701,6 +713,7 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
             // stronger model for the whole turn; plain questions stay on Haiku.
             val st = StreamState()
             st.routeStrong = conciseTurn || looksToolLikely(userQuery)
+            st.gestureTurn = conciseTurn
             sendTurn(messages, systemPrompt, userQuery, st, 0)
         } catch (e: Exception) {
             requestFinished()
@@ -728,10 +741,18 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
         // Lives with the other turn-volatile blocks below (not spliced into
         // the fixed rules text) so that text stays one contiguous, cacheable
         // block — see `fixed` below.
+        // TICKET-P2-4: the gesture tier is a truncated pyramid, not a
+        // truncation — the reply carries only what was asked plus accuracy
+        // caveats; deferred detail surfaces as follow-up chips after the
+        // answer (showFollowUpChips), so the prompt can honestly promise it.
         val lengthRule = if (conciseGesture)
             "This question came from a one-tap gesture on a card or chart. Keep the " +
-                "reply to 60-90 words. Lead with the answer in the first sentence. Skip " +
-                "news, upcoming releases, and charts unless directly relevant. "
+                "reply to 60-90 words: only what was asked, plus any caveat needed to " +
+                "keep it accurate — never drop an accuracy caveat to save words. Lead " +
+                "with the answer in the first sentence; keep paragraphs to 2-3 " +
+                "sentences. Skip news, upcoming releases, and charts unless directly " +
+                "relevant. Deeper detail is offered to the user separately as follow-up " +
+                "questions, so leave it out rather than compressing it in. "
         else if (SettingsManager.getBool(requireContext(), SettingsManager.KEY_DETAILED_AI, false))
             "Detailed analysis is welcome — up to roughly 500 words when the question warrants it. "
         else
@@ -788,7 +809,9 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
             "current article and analyze it directly. NEVER reply that a headline is not in your cached feed — " +
             "the news list below is only a partial sample, not the full set of articles the user can tap. " +
             "When news headlines are provided, weave relevant recent developments into your analysis where appropriate. " +
-            "When an upcoming data release is relevant, mention it so the user knows what to watch.\n"
+            "When an upcoming data release is relevant, mention it so the user knows what to watch. " +
+            "If a request is outside what you can do, say so plainly in your first sentence — " +
+            "never pad the refusal, and never bury the part you can help with behind the part you can't.\n"
 
         val rest = lengthRule +
             screenBlock + "\n" +
@@ -1276,8 +1299,55 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
                 chatAdapter().updateMessageCharts(st.streamIdx, persisted.charts)
             }
             host().persistChatMessage(persisted)
+            // TICKET-P2-4: the gesture tier's deferred detail gets somewhere
+            // to go — chips derived from this answer, not from the screen.
+            if (st.gestureTurn) showFollowUpChips(finalText)
             maybeScrollToBottom(false)
         }
+    }
+
+    /**
+     * TICKET-P2-4 (truncated pyramid): renders follow-up chips derived from a
+     * gesture answer at the front of the quick-ask row. The row and its
+     * KEY_SMART_CHIPS setting govern visibility exactly as for the static
+     * chips; a new gesture answer replaces the previous answer's follow-ups.
+     */
+    private fun showFollowUpChips(answerText: String) {
+        val b = binding ?: return
+        if (activity == null) return
+        val row = b.llChipRow
+
+        // Drop the previous answer's follow-ups; static chips carry no tag.
+        var i = row.childCount - 1
+        while (i >= 0) {
+            if (FOLLOW_UP_CHIP_TAG == row.getChildAt(i).tag) row.removeViewAt(i)
+            i--
+        }
+
+        val followUps = SmartPromptGenerator.generateFollowUpsForAnswer(answerText)
+        if (followUps.isEmpty()) return
+        val res = resources
+        val padH = res.getDimensionPixelSize(R.dimen.space_lg)
+        val padV = res.getDimensionPixelSize(R.dimen.space_sm)
+        for ((idx, question) in followUps.withIndex()) {
+            val chip = TextView(requireContext())
+            chip.text = question
+            chip.tag = FOLLOW_UP_CHIP_TAG
+            chip.setBackgroundResource(R.drawable.bg_chip_outline)
+            chip.setPadding(padH, padV, padH, padV)
+            chip.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX,
+                res.getDimension(R.dimen.text_secondary))
+            chip.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_secondary))
+            chip.isClickable = true
+            chip.isFocusable = true
+            val lp = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+            lp.marginEnd = res.getDimensionPixelSize(R.dimen.space_sm)
+            chip.layoutParams = lp
+            chip.setOnClickListener { sendQuery(question) }
+            row.addView(chip, idx)
+        }
+        b.hsvChips.scrollTo(0, 0)
     }
 
     /**
@@ -1584,6 +1654,10 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
         private const val ARG_SCREEN_CONTEXT = "screen_context"
         private const val ARG_IMAGE_URI = "image_uri"
         private const val ARG_CONCISE = "concise_gesture"
+
+        /** TICKET-P2-4: marks dynamically added follow-up chips so a new
+         *  answer can clear its predecessors without touching static chips. */
+        private const val FOLLOW_UP_CHIP_TAG = "follow_up_chip"
 
         /** Cap request context at the last N history entries (N/2 turns). */
         private const val HISTORY_CAP = 20

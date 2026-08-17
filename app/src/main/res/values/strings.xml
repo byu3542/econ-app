@@ -113,7 +113,9 @@
     <!-- TICKET-45: purpose labels for the Overview cards' tap/long-press, spoken
          as "Double-tap to …" / "double-tap and hold to …" — lowercase verb phrases. -->
     <string name="a11y_view_details">view benchmarks and history</string>
-    <string name="a11y_ask_analyst">ask the AI analyst</string>
+    <!-- TICKET-P2-8: lowercase verb phrase (TalkBack composes "double-tap and
+         hold to …"), but the assistant is named, not called "the AI". -->
+    <string name="a11y_ask_analyst">ask the Econ Analyst</string>
     <string name="refresh_failed">Refresh failed — check your connection</string>
     <string name="refresh_on_open">Refresh data when the app opens</string>
     <string name="refresh_on_open_sub">Uses more data and may take longer to load</string>
@@ -191,7 +193,11 @@
     <string name="checking_freshness">Checking data freshness\u2026</string>
     <!-- Daily AI morning brief -->
     <string name="daily_brief">Daily AI morning brief</string>
-    <string name="daily_brief_sub">A 7:30 AM summary of what changed and what to watch (one AI request per day)</string>
+    <string name="daily_brief_sub">A 7:30 AM summary of what changed and what to watch. Skipped on mornings with no new data (at most one AI request per day)</string>
+    <!-- TICKET-P2-8: the ✨ marker's tap target — what the analyst is and
+         where its numbers come from (AnalystIdentity.showAbout). -->
+    <string name="analyst_about_title">✨ Econ Analyst</string>
+    <string name="analyst_about_body">The Econ Analyst is an AI analyst powered by Claude, built into this app.\n\nThe figures it cites come from the app\'s own data: official series fetched from the U.S. Bureau of Labor Statistics, FRED (Federal Reserve Bank of St. Louis), the U.S. Treasury, and market data feeds. The model is handed these exact numbers — it does not look them up elsewhere.\n\nIts analysis is AI-generated and can be wrong. Verify anything important before acting on it.</string>
     <string name="about_version_label">Version %1$s</string>
     <string name="about_privacy">Data sources and AI information</string>
 </resources>

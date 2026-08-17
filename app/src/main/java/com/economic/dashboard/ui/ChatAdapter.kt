@@ -33,6 +33,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
 import androidx.recyclerview.widget.RecyclerView
 import com.economic.dashboard.R
+import com.economic.dashboard.analyst.AnalystIdentity
 import com.economic.dashboard.analyst.AnalystToolExecutor
 import com.economic.dashboard.analyst.EconomicSeriesRegistry
 import com.economic.dashboard.database.YieldDatabase
@@ -422,6 +423,8 @@ class ChatAdapter(
 
         if (m.isUser) {
             holder.tvSenderLabel.text = "YOU"
+            holder.tvSenderLabel.setOnClickListener(null)
+            holder.tvSenderLabel.isClickable = false
             bubbleParams.horizontalBias = 1.0f
             labelParams.horizontalBias = 1.0f
             timeParams.horizontalBias = 1.0f
@@ -433,7 +436,21 @@ class ChatAdapter(
             holder.llBubbleContainer.isClickable = false
             holder.llBubbleContainer.setOnClickListener(null)
         } else {
-            holder.tvSenderLabel.text = if (m.isError) "ERROR" else "ECON ANALYST"
+            // TICKET-P2-8: the ✨-marked label is the identity marker on
+            // AI-generated content; tapping it explains what the analyst is
+            // and where its numbers come from. Reset on the error branch —
+            // views recycle.
+            if (m.isError) {
+                holder.tvSenderLabel.text = "ERROR"
+                holder.tvSenderLabel.setOnClickListener(null)
+                holder.tvSenderLabel.isClickable = false
+            } else {
+                holder.tvSenderLabel.text = AnalystIdentity.MARKER + " " +
+                    AnalystIdentity.NAME.uppercase(Locale.US)
+                holder.tvSenderLabel.setOnClickListener {
+                    AnalystIdentity.showAbout(it.context)
+                }
+            }
             bubbleParams.horizontalBias = 0.0f
             labelParams.horizontalBias = 0.0f
             timeParams.horizontalBias = 0.0f
@@ -471,8 +488,9 @@ class ChatAdapter(
         // Long-press → copy / share (any real message)
         val text = m.text
         if (!m.isTyping && !text.isNullOrEmpty()) {
+            val fromAnalyst = !m.isUser && !m.isError
             holder.llBubbleContainer.setOnLongClickListener {
-                showMessageMenu(it, text)
+                showMessageMenu(it, text, fromAnalyst)
                 true
             }
         } else {
@@ -512,7 +530,9 @@ class ChatAdapter(
         val listener = actionListener ?: return
         tv.customSelectionActionModeCallback = object : ActionMode.Callback {
             override fun onCreateActionMode(mode: ActionMode, menu: Menu): Boolean {
-                menu.add(0, R.id.menu_ask_ai, 0, "Ask AI")
+                // TICKET-P2-8: named action, not the "Ask AI" tech label.
+                menu.add(0, R.id.menu_ask_ai, 0,
+                    AnalystIdentity.label("Ask " + AnalystIdentity.NAME))
                 return true
             }
             override fun onPrepareActionMode(mode: ActionMode, menu: Menu): Boolean = false
@@ -544,7 +564,7 @@ class ChatAdapter(
         }
     }
 
-    private fun showMessageMenu(anchor: View, text: String) {
+    private fun showMessageMenu(anchor: View, text: String, fromAnalyst: Boolean) {
         val ctx = anchor.context
         val menu = PopupMenu(ctx, anchor)
         menu.menu.add(0, 1, 0, "Copy")
@@ -562,7 +582,11 @@ class ChatAdapter(
                 2 -> {
                     val share = Intent(Intent.ACTION_SEND)
                     share.type = "text/plain"
-                    share.putExtra(Intent.EXTRA_TEXT, text)
+                    // TICKET-P2-8: analyst content leaving the app carries its
+                    // marker; Copy stays raw — clipboard users expect verbatim.
+                    val shared = if (fromAnalyst)
+                        AnalystIdentity.shareAttribution() + text else text
+                    share.putExtra(Intent.EXTRA_TEXT, shared)
                     ctx.startActivity(Intent.createChooser(share, "Share message"))
                     true
                 }
