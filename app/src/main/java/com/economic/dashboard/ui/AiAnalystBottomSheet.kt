@@ -929,6 +929,9 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
             currentCall = apiCall
             apiCall.enqueue(object : Callback {
                 override fun onFailure(call: Call, e: IOException) {
+                    // Field diagnosis: the visible errors say what the user saw,
+                    // not what actually broke — this is the only record of that.
+                    Log.w(TAG, "onFailure depth=$depth retries=${st.retryAttempts}", e)
                     if (call.isCanceled()) {
                         runOnUi {
                             requestFinished()
@@ -964,11 +967,26 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
                 override fun onResponse(call: Call, response: Response) {
                     try {
                         response.use { r ->
-                            val contentType = r.header("content-type", "")
-                            if (r.isSuccessful && contentType != null && contentType.contains("text/event-stream")) {
-                                handleStreamedResponse(r, committedQuery, call, messages, systemPrompt, st, depth)
-                            } else if (r.isSuccessful) {
-                                handleJsonResponse(r, committedQuery, messages, systemPrompt, st, depth)
+                            if (r.isSuccessful) {
+                                // Route by BODY shape, not the content-type header:
+                                // middleboxes (VPNs, DNS filters) rewrite the header
+                                // in the field, and the header-based check sent real
+                                // SSE bodies into the JSON fallback — which cannot
+                                // represent tool_use rounds, so every forced tool
+                                // round died as "empty SSE payload" (2026-08-18
+                                // device logs). An Anthropic JSON body always opens
+                                // with '{'; an SSE body opens with "event:"/"data:".
+                                val peek = r.body?.source()?.peek()
+                                val firstByte = try {
+                                    if (peek != null && peek.request(1)) peek.buffer[0].toInt() else 0
+                                } catch (e: Exception) { 0 }
+                                val ct = r.header("content-type", "") ?: ""
+                                Log.d(TAG, "response route: content-type=$ct first=$firstByte")
+                                if (firstByte != '{'.code) {
+                                    handleStreamedResponse(r, committedQuery, call, messages, systemPrompt, st, depth)
+                                } else {
+                                    handleJsonResponse(r, committedQuery, messages, systemPrompt, st, depth)
+                                }
                             } else {
                                 val apiMsg = readApiError(r)
                                 runOnUi {
@@ -980,6 +998,8 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
                             }
                         }
                     } catch (e: Exception) {
+                        Log.w(TAG, "round failed depth=$depth retries=${st.retryAttempts}" +
+                            " canceled=${call.isCanceled()}", e)
                         // Streams that die partway through (timeout, dropped
                         // connection, transient server error) get one automatic
                         // retry of this round. Rewind the accumulated text so the
