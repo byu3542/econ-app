@@ -541,6 +541,15 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
         // already-failed call, so cancelling only that would be a no-op.
         retryHandler.removeCallbacksAndMessages(null)
         currentCall?.cancel()
+        // The cancelled call cannot be relied on to fire a callback: during
+        // the retry delay window currentCall is an already-failed call whose
+        // cancel() is a no-op, and between tool rounds it is a completed one.
+        // Restore the terminal UI state here; the callback-side resets stay as
+        // an idempotent second pass for the genuinely in-flight case.
+        if (isAdded) {
+            requestFinished()
+            chatAdapter().removeTypingIndicator()
+        }
     }
 
     /** Send button doubles as Stop while a response is streaming. */
@@ -975,9 +984,15 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
                         // connection, transient server error) get one automatic
                         // retry of this round. Rewind the accumulated text so the
                         // re-streamed round doesn't duplicate what already showed.
+                        // A read timeout costs a full 60s window per attempt, so
+                        // burning the whole shared retry budget on timeouts makes
+                        // the user wait minutes before seeing the error — one
+                        // timeout retry, then surface it.
+                        val retryCap = if (e is java.net.SocketTimeoutException) 1
+                            else MAX_RETRIES_PER_TURN
                         if (e is IOException && !call.isCanceled()
                             && isTransientFailure(e)
-                            && st.retryAttempts < MAX_RETRIES_PER_TURN
+                            && st.retryAttempts < retryCap
                             && retried.compareAndSet(false, true)
                         ) {
                             st.retryAttempts++
@@ -991,6 +1006,10 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
                         runOnUi {
                             requestFinished()
                             chatAdapter().removeTypingIndicator()
+                            // A bubble created just to show TOOL_STATUS must not
+                            // keep saying "Checking the data…" next to an error.
+                            if (st.streamIdx >= 0)
+                                chatAdapter().updateMessageText(st.streamIdx, st.acc.toString())
                             if (!call.isCanceled())
                                 chatAdapter().addMessage(ChatMessage(friendly, false, false, true))
                             maybeScrollToBottom(false)
@@ -1211,8 +1230,19 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
                 if (hasDataTool) {
                     val statusText = st.acc.toString() + ChatAdapter.TOOL_STATUS
                     runOnUi {
-                        if (binding != null && st.streamIdx >= 0)
+                        if (binding == null) return@runOnUi
+                        // Forced tool rounds (tool_choice "any") emit no prose, so
+                        // streamIdx is still -1 on exactly the slowest multi-round
+                        // turns — create the bubble here or the user stares at bare
+                        // typing dots for the whole loop and reads it as a hang.
+                        if (st.streamIdx < 0) {
+                            chatAdapter().removeTypingIndicator()
+                            chatAdapter().addMessage(ChatMessage(statusText, false))
+                            st.streamIdx = chatAdapter().getLastIndex()
+                        } else {
                             chatAdapter().updateMessageText(st.streamIdx, statusText)
+                        }
+                        maybeScrollToBottom(false)
                     }
                 }
                 if (!hasDataTool) st.chartRounds++
@@ -1249,8 +1279,17 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
                 st.acc.setLength(roundStart)
                 val statusText = st.acc.toString() + ChatAdapter.TOOL_STATUS
                 runOnUi {
-                    if (binding != null && st.streamIdx >= 0)
+                    if (binding == null) return@runOnUi
+                    // Same streamIdx<0 hole as the data-tool status above: the
+                    // dropped announce-then-stop text may have been this turn's
+                    // only prose, leaving no bubble to carry the status.
+                    if (st.streamIdx < 0) {
+                        chatAdapter().removeTypingIndicator()
+                        chatAdapter().addMessage(ChatMessage(statusText, false))
+                        st.streamIdx = chatAdapter().getLastIndex()
+                    } else {
                         chatAdapter().updateMessageText(st.streamIdx, statusText)
+                    }
                 }
                 sendTurn(messages, systemPrompt, committedQuery, st, depth + 1)
                 return

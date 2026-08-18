@@ -93,6 +93,11 @@ class MainActivity : AppCompatActivity() {
         .connectTimeout(30, TimeUnit.SECONDS)
         .writeTimeout(30, TimeUnit.SECONDS)
         .readTimeout(60, TimeUnit.SECONDS)
+        // Per-call ceiling on one analyst round. The 60s read timeout only
+        // bounds a single silent gap — a stream that trickles keep-alives can
+        // otherwise hold a turn open forever, and the non-streamed fallback
+        // path buffers the whole body under no total bound at all.
+        .callTimeout(180, TimeUnit.SECONDS)
         .build()
 
     fun getChatAdapter(): ChatAdapter = chatAdapter
