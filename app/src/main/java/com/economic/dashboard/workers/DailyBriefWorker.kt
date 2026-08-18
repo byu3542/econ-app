@@ -104,7 +104,10 @@ class DailyBriefWorker(context: Context, params: WorkerParameters) : Worker(cont
 
             val client = OkHttpClient.Builder()
                 .connectTimeout(30, TimeUnit.SECONDS)
-                .readTimeout(60, TimeUnit.SECONDS)
+                // Non-streamed request: nothing arrives until the whole brief is
+                // generated, so the read timeout must cover full generation time,
+                // not one inter-byte gap.
+                .readTimeout(120, TimeUnit.SECONDS)
                 .build()
             val request = Request.Builder()
                 .url(ApiConfig.PROXY_BASE_URL + "/v1/messages")
@@ -164,7 +167,9 @@ class DailyBriefWorker(context: Context, params: WorkerParameters) : Worker(cont
             return Result.success()
         } catch (e: Exception) {
             Log.w(TAG, "Daily brief failed: " + e.message)
-            return Result.success()
+            // A timeout means the brief was never produced — retry (WorkManager
+            // backoff bounds it) instead of silently dropping the day's brief.
+            return if (e is java.net.SocketTimeoutException) Result.retry() else Result.success()
         }
     }
 
