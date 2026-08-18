@@ -1515,7 +1515,7 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
             sb.append(String.format(Locale.US, "GDP Growth (4Q Avg): %.2f%%\n", sum / (gdpRows.size - start)))
             val latestGdp = gdpRows[gdpRows.size - 1]
             val qLabel = vm.getLatestQuarterLabel().getValue()
-            sb.append(String.format(Locale.US, "GDP Growth (Latest Quarter): %.2f%% (%s)\n", latestGdp.value, if (qLabel != null) qLabel else latestGdp.date))
+            sb.append(String.format(Locale.US, "GDP Growth (Latest Quarter): %.2f%% (%s)%s\n", latestGdp.value, if (qLabel != null) qLabel else latestGdp.date, freshnessTag(latestGdp.date, 160)))
         } else { sb.append("GDP Growth (4Q Avg): Unavailable\nGDP Growth (Latest Quarter): Unavailable\n") }
 
         val cpiList = vm.getCpiData().getValue()
@@ -1555,7 +1555,8 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
         if (wageRows != null && wageRows.size >= 13 && cpiRows != null && cpiRows.size >= 13) {
             val wYoy = ((wageRows[wageRows.size - 1].value - wageRows[wageRows.size - 13].value) / wageRows[wageRows.size - 13].value) * 100.0
             val cYoy = ((cpiRows[cpiRows.size - 1].value - cpiRows[cpiRows.size - 13].value) / cpiRows[cpiRows.size - 13].value) * 100.0
-            sb.append(String.format(Locale.US, "Real Wage Growth (Wages-CPI spread): %.2f%%\n", wYoy - cYoy))
+            val wageDate = wageRows[wageRows.size - 1].date
+            sb.append(String.format(Locale.US, "Real Wage Growth (Wages-CPI spread): %.2f%% (%s)%s\n", wYoy - cYoy, wageDate, freshnessTag(wageDate, 75)))
         } else { sb.append("Real Wage Growth (Wages-CPI spread): Unavailable\n") }
 
         sb.append("\nTREASURY YIELD CURVE\n")
@@ -1563,23 +1564,26 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
         val maturities = arrayOf("1 Month", "3 Month", "6 Month", "1 Year", "2 Year", "5 Year", "10 Year", "30 Year")
         val shortLabels = arrayOf("1M", "3M", "6M", "1Y", "2Y", "5Y", "10Y", "30Y")
         if (treasuryList != null && !treasuryList.isEmpty()) {
+            var curveDate: String? = null
             for (i in maturities.indices) {
                 val yld = EconomicViewModel.getLatest(treasuryList, maturities[i])
+                if (yld != null && (curveDate == null || yld.date > curveDate)) curveDate = yld.date
                 sb.append(shortLabels[i]).append(": ").append(if (yld != null) String.format(Locale.US, "%.2f%%", yld.value) else "N/A")
                 sb.append(if (i < maturities.size - 1) "  " else "\n")
             }
+            if (curveDate != null) sb.append(String.format(Locale.US, "Curve as of: %s%s\n", curveDate, freshnessTag(curveDate, 10)))
         } else { sb.append("Unavailable\n") }
 
         val spread10y2y = vm.getCalculatedSpreadData().getValue()
         if (spread10y2y != null && !spread10y2y.isEmpty()) {
             val s = spread10y2y[spread10y2y.size - 1]
-            sb.append(String.format(Locale.US, "10Y-2Y Spread: %.2f%%%s\n", s.value, if (s.value < 0) " (INVERTED)" else ""))
+            sb.append(String.format(Locale.US, "10Y-2Y Spread: %.2f%%%s (%s)%s\n", s.value, if (s.value < 0) " (INVERTED)" else "", s.date, freshnessTag(s.date, 10)))
         } else { sb.append("10Y-2Y Spread: Unavailable\n") }
 
         val spread10y3m = vm.getCalculatedSpread3MData().getValue()
         if (spread10y3m != null && !spread10y3m.isEmpty()) {
             val s = spread10y3m[spread10y3m.size - 1]
-            sb.append(String.format(Locale.US, "10Y-3M Spread: %.2f%%%s\n", s.value, if (s.value < 0) " (INVERTED)" else ""))
+            sb.append(String.format(Locale.US, "10Y-3M Spread: %.2f%%%s (%s)%s\n", s.value, if (s.value < 0) " (INVERTED)" else "", s.date, freshnessTag(s.date, 10)))
         } else { sb.append("10Y-3M Spread: Unavailable\n") }
 
         sb.append("\nHOUSING\n")
