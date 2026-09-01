@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- TICKET-56: depth cue for the (now opaque) bottom bar. A 24dp vertical
+     fade from transparent down to the bar's own color, laid just above
+     bottomNavWrapper (activity_main.xml navScrim) so content scrolling under
+     the bar visibly dissolves into it instead of being cut off by a hard edge
+     or, as before, showing through a 95%-alpha fill. angle=270 runs the
+     gradient top → bottom. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <gradient
+        android:angle="270"
+        android:startColor="@android:color/transparent"
+        android:endColor="@color/nav_bg"
+        android:type="linear" />
+</shape>

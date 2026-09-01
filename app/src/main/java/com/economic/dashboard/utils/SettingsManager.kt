@@ -142,10 +142,19 @@ object SettingsManager {
      * Per-chart time range (TICKET-11). Each chart persists its own choice under
      * a suffixed key and falls back to the global default until the user picks a
      * range for that chart. `chartId` is a short stable slug, e.g. "gdp".
+     *
+     * TICKET-56: the result is clamped to the series' cadence floor
+     * ([ChartCadence.minMonths]) on read, so a stored 3M on quarterly GDP —
+     * reachable with one tap before the floor existed — draws as 2Y everywhere
+     * the window is consumed (selector, chart, sheet table) without the pref
+     * being rewritten behind the user's back.
      */
     @JvmStatic
     fun getChartTimeframeMonths(c: Context, chartId: String): Int =
-        getInt(c, KEY_CHART_TIMEFRAME + "_" + chartId, getChartTimeframeMonths(c))
+        maxOf(
+            getInt(c, KEY_CHART_TIMEFRAME + "_" + chartId, getChartTimeframeMonths(c)),
+            ChartCadence.minMonths(chartId)
+        )
 
     @JvmStatic
     fun setChartTimeframeMonths(c: Context, chartId: String, months: Int) {

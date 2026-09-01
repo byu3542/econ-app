@@ -27,9 +27,9 @@
          themes, declared here so the whole badge path is theme-complete. -->
     <color name="card_navy_badge">#1C2236</color>
     <color name="header_navy">#1a1a2e</color>
-    <!-- 2026-07-27 nav fix: raised ~85% (#D9) → ~95% (#F2), matching
-         values/colors.xml. See the comment there for why. -->
-    <color name="header_navy_translucent">#F21A1A2E</color>
+    <!-- 2026-07-27 nav fix: raised ~85% (#D9) → ~95% (#F2); TICKET-56
+         2026-09-01: opaque. Matches values/colors.xml, see the comment there. -->
+    <color name="header_navy_translucent">#FF1A1A2E</color>
 
     <color name="background">#12161F</color>
     <color name="economy_tab_bg">#1C222E</color>

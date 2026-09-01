@@ -20,17 +20,40 @@ object TimeframeSelector {
     }
 
     /**
-     * @param selector the included control
-     * @param chartId  stable per-chart slug used for persistence (e.g. "gdp")
-     * @param cb       invoked immediately with the remembered range, then again
-     *                 on each user change
+     * @param selector  the included control
+     * @param chartId   stable per-chart slug used for persistence (e.g. "gdp")
+     * @param minMonths TICKET-56 cadence floor: segments below it are disabled
+     *                  (dimmed, not tappable, TalkBack reason) and a remembered
+     *                  window below it is shown clamped. Defaults to the floor
+     *                  [ChartCadence] knows for [chartId]; sits before [cb] so
+     *                  callers keep the trailing-lambda form.
+     * @param cb        invoked immediately with the remembered range, then again
+     *                  on each user change
      */
     @JvmStatic
-    fun attach(selector: SegmentedView?, chartId: String, cb: OnTimeframeChange?) {
+    @JvmOverloads
+    fun attach(
+        selector: SegmentedView?,
+        chartId: String,
+        minMonths: Int = ChartCadence.minMonths(chartId),
+        cb: OnTimeframeChange?
+    ) {
         if (selector == null) return
         val ctx: Context = selector.context
-        val stored = SettingsManager.getChartTimeframeMonths(ctx, chartId)
-        val offered = selector.segments.map { parseTag(it.tag) }.filter { it > 0 }
+        // Already clamped to ChartCadence's floor by SettingsManager; clamp
+        // again here in case a caller passed a stricter minMonths.
+        val stored = maxOf(SettingsManager.getChartTimeframeMonths(ctx, chartId), minMonths)
+
+        val reason: CharSequence? = ChartCadence.of(chartId).floorReasonRes
+            .takeIf { it != 0 }?.let { ctx.getString(it) }
+        for (seg in selector.segments) {
+            val months = parseTag(seg.tag)
+            if (months <= 0) continue
+            selector.setSegmentEnabled(seg.tag.toString(), months >= minMonths, reason)
+        }
+        val offered = selector.segments
+            .map { parseTag(it.tag) }
+            .filter { it >= minMonths }
         // A remembered window the row doesn't offer (e.g. a global default set
         // before 2Y existed here) would leave no segment active and the thumb
         // unsized; show the nearest window at or above it instead. Not

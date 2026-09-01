@@ -155,8 +155,10 @@ class MainActivity : AppCompatActivity() {
         // backdrop-sampling API to do the latter in a single opaque window
         // (Window#setBackgroundBlurRadius blurs behind the *window*, e.g. the
         // home screen, which doesn't apply here). The translucent fill
-        // (header_navy_translucent / bg_bottom_nav_border's ~85% alpha) is
-        // the real, working "material" signal on every API level instead.
+        // (header_navy_translucent / bg_bottom_nav_border, 85% then 95%) was
+        // the "material" signal on every API level instead — until TICKET-56
+        // (2026-09-01) made both fills opaque because content still read
+        // through; the depth cue is now the navScrim fade above the bar.
 
         supportActionBar?.hide()
 
@@ -283,6 +285,7 @@ class MainActivity : AppCompatActivity() {
         // Full-screen page, no bottom chrome — the FAB floats on top of the
         // nav bar, so it goes with it.
         binding.bottomNavWrapper.visibility = View.GONE
+        binding.navScrim.visibility = View.GONE
         binding.fabAiAnalyst.visibility = View.GONE
     }
 
@@ -296,6 +299,7 @@ class MainActivity : AppCompatActivity() {
         currentScreenLabel = title
         resetSettingsGearIcon()
         binding.bottomNavWrapper.visibility = View.VISIBLE
+        binding.navScrim.visibility = View.VISIBLE
         binding.fabAiAnalyst.visibility = View.VISIBLE
         // If this recreate started inside Settings, the nav was GONE during
         // setupBottomNav() and the indicator was never sized (width was 0).
@@ -644,6 +648,7 @@ class MainActivity : AppCompatActivity() {
                 // GONE with no way back. Unconditional: any tab tap shows them.
                 resetSettingsGearIcon()
                 binding.bottomNavWrapper.visibility = View.VISIBLE
+                binding.navScrim.visibility = View.VISIBLE
                 binding.fabAiAnalyst.visibility = View.VISIBLE
                 if (id == R.id.navigation_news) {
                     markNewsSeen(); clearNewsBadge() // opening News clears the unread badge
