@@ -177,8 +177,10 @@ class EmploymentFragment : Fragment() {
         val low = currentRate - riseFromLow
 
         tvUnempValue.text = NumberFormatUtil.percent(currentRate, 1) // TICKET-19
-        tvUnempLowInfo.text = "12-month low: " + NumberFormatUtil.percent(low, 1) +
-            " (Rise: " + NumberFormatUtil.signedPercent(riseFromLow, 1) + ")"
+        // TICKET-59: a sentence, not arithmetic in parentheses.
+        tvUnempLowInfo.text = if (riseFromLow < 0.05) getString(R.string.unemp_at_low)
+            else getString(R.string.unemp_above_low,
+                NumberFormatUtil.percent(riseFromLow, 1), NumberFormatUtil.percent(low, 1))
 
         // Shared with Overview so the same rate can't grade differently by screen (TICKET-03)
         val result = Benchmarks.unemployment(currentRate, riseFromLow)

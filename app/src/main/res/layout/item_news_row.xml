@@ -116,14 +116,29 @@
             android:visibility="gone"
             android:importantForAccessibility="no" />
 
-        <ImageButton
+        <!-- TICKET-59: was a circled-chevron ImageButton (reads "expand"); now a
+             labelled chip with the analyst's sparkle. Same id, same target
+             (NewsAdapter.showAnalyzeMenu). -->
+        <TextView
             android:id="@+id/btn_row_more"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minHeight="40dp"
+            android:gravity="center"
             android:layout_gravity="center_vertical"
-            android:background="?attr/selectableItemBackgroundBorderless"
+            android:layout_marginStart="@dimen/space_sm"
+            android:paddingHorizontal="@dimen/space_md"
+            android:background="@drawable/bg_pill_navy"
+            android:drawableStart="@drawable/ic_sparkle_12"
+            android:drawableTint="@color/accent_gold"
+            android:drawablePadding="@dimen/space_xs"
+            android:text="@string/news_analyze_chip"
+            android:textColor="@color/accent_gold"
+            android:textSize="@dimen/text_caption"
+            android:textStyle="bold"
             android:contentDescription="@string/news_more_actions"
-            android:src="@android:drawable/ic_menu_more" />
+            android:clickable="true"
+            android:focusable="true" />
 
     </LinearLayout>
 
