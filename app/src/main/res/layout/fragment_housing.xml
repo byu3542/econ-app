@@ -314,10 +314,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="30-Year Mortgage Rate (%)"
-                        android:textColor="@color/info_blue_tint"
-                        android:textSize="@dimen/text_body"
-                        android:fontFamily="serif"
-                        android:textStyle="bold" />
+                        android:textAppearance="@style/TextAppearance.Econ.PanelTitle" />
 
                     <View
                         android:layout_width="match_parent"
@@ -364,10 +361,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="MBS &amp; Mortgage Rates"
-                        android:textColor="@color/info_blue_tint"
-                        android:textSize="@dimen/text_body"
-                        android:fontFamily="serif"
-                        android:textStyle="bold" />
+                        android:textAppearance="@style/TextAppearance.Econ.PanelTitle" />
 
                     <View
                         android:layout_width="match_parent"

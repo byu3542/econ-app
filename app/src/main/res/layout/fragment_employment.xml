@@ -91,7 +91,7 @@
                     android:orientation="vertical" android:paddingHorizontal="@dimen/space_xl" android:paddingTop="@dimen/space_lg">
                     <TextView android:id="@+id/tvChartTitle" android:layout_width="wrap_content"
                         android:layout_height="wrap_content" android:text="Unemployment Rate Trend"
-                        android:textColor="@color/card_white" android:textSize="@dimen/text_body" android:fontFamily="serif" android:textStyle="bold" />
+                        android:textAppearance="@style/TextAppearance.Econ.PanelTitle" />
                     <View android:layout_width="match_parent" android:layout_height="2dp"
                         android:layout_marginTop="@dimen/space_sm" android:background="@color/accent_gold" />
                 </LinearLayout>

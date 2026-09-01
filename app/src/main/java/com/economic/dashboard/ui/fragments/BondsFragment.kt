@@ -1,6 +1,5 @@
 package com.economic.dashboard.ui.fragments
 
-import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -23,6 +22,8 @@ import com.economic.dashboard.ui.views.PressFeedback
 import com.economic.dashboard.ui.views.SegmentedView
 import com.economic.dashboard.ui.views.SkeletonController
 import com.economic.dashboard.utils.ChartHelper
+import com.economic.dashboard.utils.AxisDateFormat
+import com.economic.dashboard.utils.ChartPalette
 import com.economic.dashboard.utils.EdgeToEdgeInsets
 import com.economic.dashboard.utils.NumberFormatUtil
 import com.economic.dashboard.utils.RetryChip
@@ -162,9 +163,9 @@ class BondsFragment : Fragment() {
         if (!::swappableChart.isInitialized) return
         val data: List<EconomicDataPoint>?
         val seriesName: String
-        val lineColor: String
-        if ("hy" == activeCard) { data = currentHyData; seriesName = "High Yield Spread"; lineColor = "#F57C00" }
-        else { data = currentBaaData; seriesName = "BAA Corporate Spread"; lineColor = "#1976D2" }
+        val lineColor: Int = ChartPalette.primary(requireContext()) // TICKET-57
+        if ("hy" == activeCard) { data = currentHyData; seriesName = "High Yield Spread" }
+        else { data = currentBaaData; seriesName = "BAA Corporate Spread" }
         if (data == null) return
         var rows = rowsFor(data, seriesName)
         if (rows.isEmpty()) return
@@ -173,30 +174,24 @@ class BondsFragment : Fragment() {
         val dateLabels = ArrayList<String>()
         for (i in rows.indices) {
             entries.add(Entry(i.toFloat(), rows[i].value.toFloat()))
-            val d = rows[i].date
-            dateLabels.add(if (d.length >= 10) d.substring(5, 7) + "/" + d.substring(8, 10) + "/" + d.substring(2, 4) else d)
+            dateLabels.add(rows[i].date)
         }
-        swappableChart.xAxis.setValueFormatter(object : ValueFormatter() {
-            override fun getFormattedValue(value: Float): String {
-                val idx = value.toInt()
-                return if ((idx % 20 == 0 || idx == dateLabels.size - 1) && idx >= 0 && idx < dateLabels.size) dateLabels[idx] else ""
-            }
-        })
+        AxisDateFormat.attach(swappableChart, requireContext(), "bonds", dateLabels) // TICKET-57
         swappableChart.axisLeft.setValueFormatter(object : ValueFormatter() {
             override fun getFormattedValue(value: Float): String = String.format(Locale.US, "%.2f%%", value)
         })
         val ds = LineDataSet(entries, seriesName)
-        ChartHelper.styleLineSeries(ds, Color.parseColor(lineColor)) // IOS-07
-        swappableChart.setData(LineData(ds)); swappableChart.animateX(500); swappableChart.invalidate()
+        ChartHelper.styleLineSeries(ds, lineColor) // IOS-07
+        ChartHelper.setLineData(swappableChart, LineData(ds), 500)
         // P6 TICKET-37: TalkBack announces the visible series, not the static XML label.
         swappableChart.contentDescription =
             seriesName + " trend, " + NumberFormatUtil.percent(rows[rows.size - 1].value)
     }
 
     private fun addAllBenchmarks(chart: LineChart) {
-        ChartHelper.addLimitLine(chart, 1.5f, "BAA Tight", "#6FA97A"); ChartHelper.addLimitLine(chart, 2.5f, "BAA Normal", "#5B8DB8")
-        ChartHelper.addLimitLine(chart, 3.5f, "BAA Elevated", "#D98E4F"); ChartHelper.addLimitLine(chart, 3f, "HY Tight", "#6FA97A")
-        ChartHelper.addLimitLine(chart, 5f, "HY Normal", "#5B8DB8"); ChartHelper.addLimitLine(chart, 8f, "HY Elevated", "#D98E4F")
+        ChartHelper.addLimitLine(chart, 1.5f, "BAA Tight", BenchmarkStyle.Tier.GOOD); ChartHelper.addNormalLimitLine(chart, 2.5f, "BAA Normal")
+        ChartHelper.addLimitLine(chart, 3.5f, "BAA Elevated", BenchmarkStyle.Tier.ELEVATED); ChartHelper.addLimitLine(chart, 3f, "HY Tight", BenchmarkStyle.Tier.GOOD)
+        ChartHelper.addNormalLimitLine(chart, 5f, "HY Normal"); ChartHelper.addLimitLine(chart, 8f, "HY Elevated", BenchmarkStyle.Tier.ELEVATED)
         chart.axisLeft.setDrawLimitLinesBehindData(true)
     }
 

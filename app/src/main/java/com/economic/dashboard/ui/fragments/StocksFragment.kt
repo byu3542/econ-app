@@ -1,6 +1,5 @@
 package com.economic.dashboard.ui.fragments
 
-import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -23,6 +22,8 @@ import com.economic.dashboard.ui.views.PressFeedback
 import com.economic.dashboard.ui.views.SegmentedView
 import com.economic.dashboard.ui.views.SkeletonController
 import com.economic.dashboard.utils.ChartHelper
+import com.economic.dashboard.utils.AxisDateFormat
+import com.economic.dashboard.utils.ChartPalette
 import com.economic.dashboard.utils.EdgeToEdgeInsets
 import com.economic.dashboard.utils.NumberFormatUtil
 import com.economic.dashboard.utils.RetryChip
@@ -204,23 +205,25 @@ class StocksFragment : Fragment() {
         if (!::swappableChart.isInitialized) return
         val data: List<EconomicDataPoint>?
         val seriesName: String
-        val lineColor: String
+        // TICKET-57: every single-series panel draws in the palette primary; the
+        // active card's gold stroke already says which series this is.
+        val lineColor: Int = ChartPalette.primary(requireContext())
         val formatter: ValueFormatter
         when (activeCard) {
             "nasdaq" -> {
-                data = currentNasdaqData; seriesName = "Nasdaq Composite Index"; lineColor = "#F57C00"
+                data = currentNasdaqData; seriesName = "Nasdaq Composite Index"
                 formatter = object : ValueFormatter() {
                     override fun getFormattedValue(value: Float): String = String.format(Locale.US, "%.0f", value)
                 }
             }
             "vix" -> {
-                data = currentVixData; seriesName = "VIX Volatility Index"; lineColor = "#D32F2F"
+                data = currentVixData; seriesName = "VIX Volatility Index"
                 formatter = object : ValueFormatter() {
                     override fun getFormattedValue(value: Float): String = String.format(Locale.US, "%.1f", value)
                 }
             }
             else -> {
-                data = currentSp500Data; seriesName = "S&P 500 Index"; lineColor = "#1976D2"
+                data = currentSp500Data; seriesName = "S&P 500 Index"
                 formatter = object : ValueFormatter() {
                     override fun getFormattedValue(value: Float): String = String.format(Locale.US, "%.0f", value)
                 }
@@ -234,27 +237,21 @@ class StocksFragment : Fragment() {
         val dateLabels = ArrayList<String>()
         for (i in rows.indices) {
             entries.add(Entry(i.toFloat(), rows[i].value.toFloat()))
-            val d = rows[i].date
-            dateLabels.add(if (d.length >= 10) d.substring(5, 7) + "/" + d.substring(8, 10) + "/" + d.substring(2, 4) else d)
+            dateLabels.add(rows[i].date)
         }
-        swappableChart.xAxis.setValueFormatter(object : ValueFormatter() {
-            override fun getFormattedValue(value: Float): String {
-                val idx = value.toInt()
-                return if ((idx % 20 == 0 || idx == dateLabels.size - 1) && idx >= 0 && idx < dateLabels.size) dateLabels[idx] else ""
-            }
-        })
+        AxisDateFormat.attach(swappableChart, requireContext(), "stocks", dateLabels) // TICKET-57
         swappableChart.axisLeft.setValueFormatter(formatter)
         val ds = LineDataSet(entries, seriesName)
-        ChartHelper.styleLineSeries(ds, Color.parseColor(lineColor)) // IOS-07
-        swappableChart.setData(LineData(ds)); swappableChart.animateX(500); swappableChart.invalidate()
+        ChartHelper.styleLineSeries(ds, lineColor) // IOS-07
+        ChartHelper.setLineData(swappableChart, LineData(ds), 500)
         // P6 TICKET-37: TalkBack announces the visible series, not the static XML label.
         swappableChart.contentDescription =
             seriesName + " trend, " + NumberFormatUtil.number(rows[rows.size - 1].value, 0)
     }
 
     private fun addVixBenchmarks(chart: LineChart) {
-        ChartHelper.addLimitLine(chart, 12f, "Low Vol", "#6FA97A"); ChartHelper.addLimitLine(chart, 20f, "Normal", "#5B8DB8")
-        ChartHelper.addLimitLine(chart, 30f, "Elevated", "#D98E4F"); ChartHelper.addLimitLine(chart, 50f, "Extreme", "#C75B4E")
+        ChartHelper.addLimitLine(chart, 12f, "Low Vol", BenchmarkStyle.Tier.GOOD); ChartHelper.addNormalLimitLine(chart, 20f, "Normal")
+        ChartHelper.addLimitLine(chart, 30f, "Elevated", BenchmarkStyle.Tier.ELEVATED); ChartHelper.addLimitLine(chart, 50f, "Extreme", BenchmarkStyle.Tier.ALERT)
         chart.axisLeft.setDrawLimitLinesBehindData(true)
     }
 

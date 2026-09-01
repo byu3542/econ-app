@@ -114,23 +114,9 @@
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:orientation="vertical" android:paddingHorizontal="@dimen/space_xl" android:paddingTop="@dimen/space_lg">
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="PCE vs CPI-U (Year-over-Year)" android:textColor="@color/card_white"
-                        android:textSize="@dimen/text_body" android:fontFamily="serif" android:textStyle="bold" />
-                    <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:orientation="horizontal" android:layout_marginTop="@dimen/space_xs">
-                        <View android:layout_width="24dp" android:layout_height="3dp" android:background="@color/google_blue"
-                            android:layout_gravity="center_vertical" android:layout_marginEnd="@dimen/space_xs" />
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:text="PCE" android:textColor="@color/slate_soft" android:textSize="@dimen/text_caption" android:layout_marginEnd="@dimen/space_md" />
-                        <View android:layout_width="24dp" android:layout_height="3dp" android:background="@color/google_amber"
-                            android:layout_gravity="center_vertical" android:layout_marginEnd="@dimen/space_xs" />
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:text="CPI-U" android:textColor="@color/slate_soft" android:textSize="@dimen/text_caption" android:layout_marginEnd="@dimen/space_md" />
-                        <View android:layout_width="24dp" android:layout_height="1dp" android:background="@color/signal_good"
-                            android:layout_gravity="center_vertical" android:layout_marginEnd="@dimen/space_xs" />
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:text="2% Target" android:textColor="@color/slate_soft" android:textSize="@dimen/text_caption" />
-                    </LinearLayout>
+                        android:text="PCE vs CPI-U (Year-over-Year)" android:textAppearance="@style/TextAppearance.Econ.PanelTitle" />
+                    <!-- TICKET-57: the XML swatch legend that sat here duplicated the
+                         direct end-of-line labels (TICKET-08); one or the other, never both. -->
                     <View android:layout_width="match_parent" android:layout_height="2dp"
                         android:layout_marginTop="@dimen/space_sm" android:background="@color/accent_gold" />
                 </LinearLayout>
@@ -151,23 +137,7 @@
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:orientation="vertical" android:paddingHorizontal="@dimen/space_xl" android:paddingTop="@dimen/space_lg">
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="Inflation vs Wage Growth" android:textColor="@color/card_white"
-                        android:textSize="@dimen/text_body" android:fontFamily="serif" android:textStyle="bold" />
-                    <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:orientation="horizontal" android:layout_marginTop="@dimen/space_xs">
-                        <View android:layout_width="24dp" android:layout_height="3dp" android:background="@color/google_amber"
-                            android:layout_gravity="center_vertical" android:layout_marginEnd="@dimen/space_xs" />
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:text="CPI-U" android:textColor="@color/slate_soft" android:textSize="@dimen/text_caption" android:layout_marginEnd="@dimen/space_md" />
-                        <View android:layout_width="24dp" android:layout_height="3dp" android:background="@color/google_blue"
-                            android:layout_gravity="center_vertical" android:layout_marginEnd="@dimen/space_xs" />
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:text="PCE" android:textColor="@color/slate_soft" android:textSize="@dimen/text_caption" android:layout_marginEnd="@dimen/space_md" />
-                        <View android:layout_width="24dp" android:layout_height="3dp" android:background="@color/accent_purple"
-                            android:layout_gravity="center_vertical" android:layout_marginEnd="@dimen/space_xs" />
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:text="Average Wages" android:textColor="@color/slate_soft" android:textSize="@dimen/text_caption" />
-                    </LinearLayout>
+                        android:text="Inflation vs Wage Growth" android:textAppearance="@style/TextAppearance.Econ.PanelTitle" />
                     <View android:layout_width="match_parent" android:layout_height="2dp"
                         android:layout_marginTop="@dimen/space_sm" android:background="@color/accent_gold" />
                 </LinearLayout>

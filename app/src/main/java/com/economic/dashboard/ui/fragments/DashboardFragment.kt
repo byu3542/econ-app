@@ -28,6 +28,7 @@ import com.economic.dashboard.ui.MetricPopupController
 import com.economic.dashboard.ui.MetricPopupRegistry
 import com.economic.dashboard.ui.onboarding.WatchlistSetupFragment
 import com.economic.dashboard.ui.views.PressFeedback
+import com.economic.dashboard.utils.AxisDateFormat
 import com.economic.dashboard.utils.DeltaFormatter
 import com.economic.dashboard.utils.EdgeToEdgeInsets
 import com.economic.dashboard.utils.HapticUtil
@@ -578,7 +579,7 @@ class DashboardFragment : Fragment() {
             return
         }
         setCardValue(card, display.value)
-        setCardDate(card, display.date)
+        setCardDate(card, AxisDateFormat.full(display.date)) // TICKET-57
         applyDelta(card, display.delta, display.deltaFmt, display.goodWhenDown)
         setSparkline(card, display.spark)
         if (display.tier != null) {
