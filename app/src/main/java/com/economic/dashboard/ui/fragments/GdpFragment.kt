@@ -5,7 +5,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.LinearLayout
 import android.widget.TextView
 
 import androidx.cardview.widget.CardView
@@ -20,6 +19,7 @@ import com.economic.dashboard.ui.BenchmarkStyle
 import com.economic.dashboard.ui.Benchmarks
 import com.economic.dashboard.ui.EconomicViewModel
 import com.economic.dashboard.ui.MetricPopupController
+import com.economic.dashboard.ui.views.SegmentedView
 import com.economic.dashboard.ui.views.SkeletonController
 import com.economic.dashboard.utils.ChartHelper
 import com.economic.dashboard.utils.EdgeToEdgeInsets
@@ -100,7 +100,7 @@ class GdpFragment : Fragment() {
         })
 
         // TICKET-11: inline range switcher — redraw the chart for the new window.
-        val tfSelector: LinearLayout? = view.findViewById(R.id.timeframeSelector)
+        val tfSelector: SegmentedView? = view.findViewById(R.id.timeframeSelector)
         TimeframeSelector.attach(tfSelector, "gdp") {
             lastGdpData?.let { buildGdpChart(it) }
         }

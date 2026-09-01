@@ -1,105 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- TICKET-11 / IOS-05 — inline timeframe segmented control.
-     Four ≥48dp targets over a recessed track, with a sliding gold thumb
-     (SegmentedControl) that springs to the tapped segment instead of each
-     chip just swapping its own background color. Segment tags carry the
-     month window; TimeframeSelector remembers the active range per chart
-     and drives the thumb + text-color restyle. Hairline dividers sit between
-     segments, matching the boundaries of four equal-weight children. -->
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/timeframeSelectorRoot"
+<!-- TICKET-11 / IOS-05 / TICKET-55 — inline timeframe segmented control.
+     One SegmentedView (four ≥48dp targets, recessed track, sliding gold
+     thumb); tags carry the month window, which TimeframeSelector reads,
+     persists per chart, and clamps to the series' cadence floor. -->
+<com.economic.dashboard.ui.views.SegmentedView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/timeframeSelector"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="@dimen/space_sm">
-
-    <!-- Recessed track -->
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:background="@drawable/bg_segmented_track" />
-
-    <!-- Sliding thumb — width/x set by SegmentedControl (via TimeframeSelector) -->
-    <View
-        android:id="@+id/timeframeThumb"
-        android:layout_width="0dp"
-        android:layout_height="40dp"
-        android:layout_marginTop="4dp"
-        android:layout_gravity="top|start"
-        android:background="@drawable/bg_segmented_thumb"
-        android:importantForAccessibility="no" />
-
-    <!-- Hairline dividers, one at each of the three internal segment
-         boundaries (four equal-weight segments below). -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:orientation="horizontal"
-        android:baselineAligned="false"
-        android:importantForAccessibility="no">
-        <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" />
-        <View android:layout_width="1dp" android:layout_height="20dp" android:layout_gravity="center_vertical" android:background="@color/divider_sand" android:alpha="0.6"/>
-        <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" />
-        <View android:layout_width="1dp" android:layout_height="20dp" android:layout_gravity="center_vertical" android:background="@color/divider_sand" android:alpha="0.6"/>
-        <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" />
-        <View android:layout_width="1dp" android:layout_height="20dp" android:layout_gravity="center_vertical" android:background="@color/divider_sand" android:alpha="0.6"/>
-        <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/timeframeSelector"
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:orientation="horizontal"
-        android:baselineAligned="false">
-
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="48dp"
-            android:layout_weight="1"
-            android:tag="3"
-            android:gravity="center"
-            android:text="@string/tf_3m"
-            android:textSize="@dimen/text_caption"
-            android:textStyle="bold"
-            android:clickable="true"
-            android:focusable="true" />
-
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="48dp"
-            android:layout_weight="1"
-            android:tag="6"
-            android:gravity="center"
-            android:text="@string/tf_6m"
-            android:textSize="@dimen/text_caption"
-            android:textStyle="bold"
-            android:clickable="true"
-            android:focusable="true" />
-
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="48dp"
-            android:layout_weight="1"
-            android:tag="12"
-            android:gravity="center"
-            android:text="@string/tf_1y"
-            android:textSize="@dimen/text_caption"
-            android:textStyle="bold"
-            android:clickable="true"
-            android:focusable="true" />
-
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="48dp"
-            android:layout_weight="1"
-            android:tag="60"
-            android:gravity="center"
-            android:text="@string/tf_5y"
-            android:textSize="@dimen/text_caption"
-            android:textStyle="bold"
-            android:clickable="true"
-            android:focusable="true" />
-
-    </LinearLayout>
-
-</FrameLayout>
+    android:layout_marginBottom="@dimen/space_sm"
+    app:segmentLabels="@array/timeframe_segment_labels"
+    app:segmentTags="@array/timeframe_segment_tags" />

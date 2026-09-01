@@ -363,30 +363,8 @@
         <item name="android:textColor">@color/text_secondary</item>
     </style>
 
-    <!-- Segmented buttons for the settings pickers (theme / startup tab / decimals) -->
-    <style name="SettingsSegmentButton" parent="Widget.MaterialComponents.Button.OutlinedButton">
-        <item name="android:layout_width">0dp</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_weight">1</item>
-        <item name="android:minWidth">0dp</item>
-        <item name="android:textSize">@dimen/text_body</item>
-        <item name="android:textAllCaps">false</item>
-        <item name="android:paddingStart">4dp</item>
-        <item name="android:paddingEnd">4dp</item>
-        <!-- TICKET-55: never let MDC's colorPrimary default decide contrast -->
-        <item name="android:textColor">@color/segment_text</item>
-        <item name="backgroundTint">@color/segment_bg</item>
-        <item name="strokeColor">@color/divider_sand</item>
-    </style>
-
-    <!-- Startup-tab choice chips: same explicit selectors as the segment
-         buttons above, for the same reason (TICKET-55). -->
-    <style name="SettingsSegmentChip" parent="Widget.MaterialComponents.Chip.Choice">
-        <item name="android:textColor">@color/segment_text</item>
-        <item name="chipBackgroundColor">@color/segment_bg</item>
-        <item name="chipStrokeWidth">1dp</item>
-        <item name="chipStrokeColor">@color/divider_sand</item>
-    </style>
+    <!-- Settings pickers (theme / startup tab / decimals / timeframe) are
+         ui.views.SegmentedView since TICKET-55; no MDC toggle styles remain. -->
 
     <!-- Dismiss button on the metric popup sheet (theme-aware surface) -->
     <style name="BenchmarkDismissButton" parent="Widget.MaterialComponents.Button.OutlinedButton">

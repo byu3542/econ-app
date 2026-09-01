@@ -178,28 +178,15 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
 
-                    <com.google.android.material.button.MaterialButtonToggleGroup
-                        android:id="@+id/tgTheme"
+                    <!-- TICKET-55: the app's one segmented control; tags light/dark/system -->
+                    <com.economic.dashboard.ui.views.SegmentedView
+                        android:id="@+id/segTheme"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        app:singleSelection="true"
-                        app:selectionRequired="true">
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnThemeLight"
-                            style="@style/SettingsSegmentButton"
-                            android:text="@string/theme_light"/>
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnThemeDark"
-                            style="@style/SettingsSegmentButton"
-                            android:text="@string/theme_dark"/>
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnThemeSystem"
-                            style="@style/SettingsSegmentButton"
-                            android:text="@string/theme_system"/>
-                    </com.google.android.material.button.MaterialButtonToggleGroup>
+                        android:layout_marginBottom="@dimen/space_sm"
+                        app:segmentTextSize="@dimen/text_secondary"
+                        app:segmentLabels="@array/theme_segment_labels"
+                        app:segmentTags="@array/theme_segment_tags"/>
 
                     <LinearLayout style="@style/SettingsRow">
                         <LinearLayout style="@style/SettingsRowText">
@@ -235,42 +222,14 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
 
-                    <com.google.android.material.chip.ChipGroup
-                        android:id="@+id/cgDefaultTab"
+                    <!-- TICKET-55: tags are the bottom-nav index SettingsManager stores -->
+                    <com.economic.dashboard.ui.views.SegmentedView
+                        android:id="@+id/segDefaultTab"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        app:singleSelection="true"
-                        app:selectionRequired="true"
-                        app:chipSpacingHorizontal="@dimen/space_sm">
-
-                        <com.google.android.material.chip.Chip
-                            android:id="@+id/chipTabOverview"
-                            style="@style/SettingsSegmentChip"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/tab_overview"/>
-
-                        <com.google.android.material.chip.Chip
-                            android:id="@+id/chipTabMarkets"
-                            style="@style/SettingsSegmentChip"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/tab_markets"/>
-
-                        <com.google.android.material.chip.Chip
-                            android:id="@+id/chipTabEconomy"
-                            style="@style/SettingsSegmentChip"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/tab_economy"/>
-
-                        <com.google.android.material.chip.Chip
-                            android:id="@+id/chipTabNews"
-                            style="@style/SettingsSegmentChip"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/tab_news"/>
-                    </com.google.android.material.chip.ChipGroup>
+                        app:segmentTextSize="@dimen/text_secondary"
+                        app:segmentLabels="@array/startup_tab_segment_labels"
+                        app:segmentTags="@array/startup_tab_segment_tags"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -466,66 +425,28 @@
                         android:layout_marginBottom="@dimen/space_xs"
                         android:text="@string/axis_decimals"/>
 
-                    <com.google.android.material.button.MaterialButtonToggleGroup
-                        android:id="@+id/tgDecimals"
+                    <!-- TICKET-55: tags are the decimal count -->
+                    <com.economic.dashboard.ui.views.SegmentedView
+                        android:id="@+id/segDecimals"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        app:singleSelection="true"
-                        app:selectionRequired="true">
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnDec1"
-                            style="@style/SettingsSegmentButton"
-                            android:text="@string/dec_one"/>
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnDec2"
-                            style="@style/SettingsSegmentButton"
-                            android:text="@string/dec_two"/>
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnDec3"
-                            style="@style/SettingsSegmentButton"
-                            android:text="@string/dec_three"/>
-                    </com.google.android.material.button.MaterialButtonToggleGroup>
+                        app:segmentTextSize="@dimen/text_secondary"
+                        app:segmentLabels="@array/decimals_segment_labels"
+                        app:segmentTags="@array/decimals_segment_tags"/>
 
                     <TextView style="@style/SettingsRowTitle"
                         android:layout_marginTop="@dimen/space_sm"
                         android:layout_marginBottom="@dimen/space_xs"
                         android:text="@string/chart_timeframe"/>
 
-                    <com.google.android.material.button.MaterialButtonToggleGroup
-                        android:id="@+id/tgTimeframe"
+                    <!-- TICKET-55: tags are month windows (KEY_CHART_TIMEFRAME) -->
+                    <com.economic.dashboard.ui.views.SegmentedView
+                        android:id="@+id/segTimeframe"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        app:singleSelection="true"
-                        app:selectionRequired="true">
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnTf3m"
-                            style="@style/SettingsSegmentButton"
-                            android:text="@string/tf_3m"/>
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnTf6m"
-                            style="@style/SettingsSegmentButton"
-                            android:text="@string/tf_6m"/>
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnTf1y"
-                            style="@style/SettingsSegmentButton"
-                            android:text="@string/tf_1y"/>
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnTf2y"
-                            style="@style/SettingsSegmentButton"
-                            android:text="@string/tf_2y"/>
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnTf5y"
-                            style="@style/SettingsSegmentButton"
-                            android:text="@string/tf_5y"/>
-                    </com.google.android.material.button.MaterialButtonToggleGroup>
+                        app:segmentTextSize="@dimen/text_secondary"
+                        app:segmentLabels="@array/timeframe_segment_labels"
+                        app:segmentTags="@array/timeframe_segment_tags"/>
 
                     <TextView style="@style/SettingsRowSub"
                         android:layout_marginTop="@dimen/space_sm"

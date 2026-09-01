@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- TICKET-55: the one segmented control (ui/views/SegmentedView). -->
+    <declare-styleable name="SegmentedView">
+        <!-- string-array of segment labels, in order -->
+        <attr name="segmentLabels" format="reference" />
+        <!-- string-array of segment tags (values passed to onSelect); defaults to the labels -->
+        <attr name="segmentTags" format="reference" />
+        <!-- primary = gold thumb on the recessed track; subtle = divider-toned thumb on a bordered track -->
+        <attr name="segmentEmphasis" format="enum">
+            <enum name="primary" value="0" />
+            <enum name="subtle" value="1" />
+        </attr>
+        <!-- label size; defaults to @dimen/text_caption -->
+        <attr name="segmentTextSize" format="dimension" />
+    </declare-styleable>
+</resources>

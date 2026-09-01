@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- TICKET-55: label/tag pairs for every SegmentedView in the app.
+         Tags are the values a controller receives; keep them stable. -->
+
+    <!-- Chart timeframe (view_timeframe_selector) and Settings › Charts default.
+         Tags are month windows, read by TimeframeSelector; must stay numeric. -->
+    <string-array name="timeframe_segment_labels">
+        <item>@string/tf_3m</item>
+        <item>@string/tf_6m</item>
+        <item>@string/tf_1y</item>
+        <item>@string/tf_2y</item>
+        <item>@string/tf_5y</item>
+    </string-array>
+    <string-array name="timeframe_segment_tags">
+        <item>3</item>
+        <item>6</item>
+        <item>12</item>
+        <item>24</item>
+        <item>60</item>
+    </string-array>
+
+    <!-- Metric sheet, primary row -->
+    <string-array name="sheet_primary_segment_labels">
+        <item>@string/str_seg_data</item>
+        <item>@string/str_seg_benchmarks</item>
+    </string-array>
+    <string-array name="sheet_primary_segment_tags">
+        <item>data</item>
+        <item>benchmarks</item>
+    </string-array>
+
+    <!-- Metric sheet, secondary row -->
+    <string-array name="sheet_secondary_segment_labels">
+        <item>@string/str_seg_graph</item>
+        <item>@string/str_seg_table</item>
+    </string-array>
+    <string-array name="sheet_secondary_segment_tags">
+        <item>graph</item>
+        <item>table</item>
+    </string-array>
+
+    <!-- Settings › Appearance -->
+    <string-array name="theme_segment_labels">
+        <item>@string/theme_light</item>
+        <item>@string/theme_dark</item>
+        <item>@string/theme_system</item>
+    </string-array>
+    <string-array name="theme_segment_tags">
+        <item>light</item>
+        <item>dark</item>
+        <item>system</item>
+    </string-array>
+
+    <!-- Settings › Charts: axis decimals (tag = count) -->
+    <string-array name="decimals_segment_labels">
+        <item>@string/dec_one</item>
+        <item>@string/dec_two</item>
+        <item>@string/dec_three</item>
+    </string-array>
+    <string-array name="decimals_segment_tags">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+    </string-array>
+
+    <!-- Settings › Startup tab. Tags are the bottom-nav index SettingsManager stores. -->
+    <string-array name="startup_tab_segment_labels">
+        <item>@string/tab_overview</item>
+        <item>@string/tab_markets</item>
+        <item>@string/tab_economy</item>
+        <item>@string/tab_news</item>
+    </string-array>
+    <string-array name="startup_tab_segment_tags">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+    </string-array>
+</resources>

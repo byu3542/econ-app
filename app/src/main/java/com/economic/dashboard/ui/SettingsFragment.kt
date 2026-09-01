@@ -23,14 +23,13 @@ import com.economic.dashboard.R
 import com.economic.dashboard.cache.CacheManager
 import com.economic.dashboard.databinding.FragmentSettingsBinding
 import com.economic.dashboard.news.NewsRepository
+import com.economic.dashboard.ui.views.SegmentedView
 import com.economic.dashboard.utils.EdgeToEdgeInsets
 import com.economic.dashboard.utils.SettingsManager
 import com.economic.dashboard.utils.markDestructive
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.card.MaterialCardView
-import com.google.android.material.chip.ChipGroup
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.switchmaterial.SwitchMaterial
 
@@ -263,24 +262,27 @@ class SettingsFragment : Fragment() {
     // -- Appearance -----------------------------------------------------------
 
     private fun setupTheme(v: View) {
-        val tg: MaterialButtonToggleGroup = v.findViewById(R.id.tgTheme)
+        val seg: SegmentedView = v.findViewById(R.id.segTheme)
         val mode = SettingsManager.getNightMode(requireContext())
-        if (mode == AppCompatDelegate.MODE_NIGHT_NO) tg.check(R.id.btnThemeLight)
-        else if (mode == AppCompatDelegate.MODE_NIGHT_YES) tg.check(R.id.btnThemeDark)
-        else tg.check(R.id.btnThemeSystem)
+        val tag = when (mode) {
+            AppCompatDelegate.MODE_NIGHT_NO -> "light"
+            AppCompatDelegate.MODE_NIGHT_YES -> "dark"
+            else -> "system"
+        }
+        seg.select(tag, animate = false)
 
-        tg.addOnButtonCheckedListener { _, checkedId, isChecked ->
-            if (isChecked) {
-                var newMode = AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
-                if (checkedId == R.id.btnThemeLight) newMode = AppCompatDelegate.MODE_NIGHT_NO
-                else if (checkedId == R.id.btnThemeDark) newMode = AppCompatDelegate.MODE_NIGHT_YES
-                if (newMode != SettingsManager.getNightMode(requireContext())) {
-                    SettingsManager.setNightMode(requireContext(), newMode)
-                    // Recreates the activity with the new theme. MainActivity's
-                    // setupBottomNav keeps the restored Settings on screen (and
-                    // re-applies its chrome), so the user can keep comparing themes.
-                    AppCompatDelegate.setDefaultNightMode(newMode)
-                }
+        seg.onSelect = SegmentedView.OnSelect { picked ->
+            val newMode = when (picked) {
+                "light" -> AppCompatDelegate.MODE_NIGHT_NO
+                "dark" -> AppCompatDelegate.MODE_NIGHT_YES
+                else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+            }
+            if (newMode != SettingsManager.getNightMode(requireContext())) {
+                SettingsManager.setNightMode(requireContext(), newMode)
+                // Recreates the activity with the new theme. MainActivity's
+                // setupBottomNav keeps the restored Settings on screen (and
+                // re-applies its chrome), so the user can keep comparing themes.
+                AppCompatDelegate.setDefaultNightMode(newMode)
             }
         }
 
@@ -357,19 +359,13 @@ class SettingsFragment : Fragment() {
     // -- Startup tab ------------------------------------------------------------
 
     private fun setupDefaultTab(v: View) {
-        val cg: ChipGroup = v.findViewById(R.id.cgDefaultTab)
-        val ids = intArrayOf(R.id.chipTabOverview, R.id.chipTabMarkets,
-            R.id.chipTabEconomy, R.id.chipTabNews)
+        val seg: SegmentedView = v.findViewById(R.id.segDefaultTab)
         val tab = SettingsManager.getDefaultTab(requireContext())
-        cg.check(ids[tab.coerceIn(0, 3)])
+        seg.select(tab.coerceIn(0, 3).toString(), animate = false)
 
-        cg.setOnCheckedStateChangeListener { _, checkedIds ->
-            if (!checkedIds.isEmpty()) {
-                val checkedId = checkedIds[0]
-                for (i in ids.indices)
-                    if (ids[i] == checkedId)
-                        SettingsManager.setInt(requireContext(), SettingsManager.KEY_DEFAULT_TAB, i)
-            }
+        seg.onSelect = SegmentedView.OnSelect { picked ->
+            val i = picked.toIntOrNull() ?: return@OnSelect
+            SettingsManager.setInt(requireContext(), SettingsManager.KEY_DEFAULT_TAB, i)
         }
     }
 
@@ -439,33 +435,23 @@ class SettingsFragment : Fragment() {
         // A note under the controls tells the user changes apply on next chart open
         bindSwitch(v, R.id.switchGridlines, SettingsManager.KEY_CHART_GRIDLINES, true, null)
 
-        val tg: MaterialButtonToggleGroup = v.findViewById(R.id.tgDecimals)
-        val ids = intArrayOf(R.id.btnDec1, R.id.btnDec2, R.id.btnDec3)
+        val segDec: SegmentedView = v.findViewById(R.id.segDecimals)
         val decimals = SettingsManager.getChartDecimals(requireContext())
-        tg.check(ids[decimals.coerceIn(1, 3) - 1])
-
-        tg.addOnButtonCheckedListener { _, checkedId, isChecked ->
-            if (isChecked) {
-                for (i in ids.indices)
-                    if (ids[i] == checkedId)
-                        SettingsManager.setInt(requireContext(), SettingsManager.KEY_CHART_DECIMALS, i + 1)
-            }
+        segDec.select(decimals.coerceIn(1, 3).toString(), animate = false)
+        segDec.onSelect = SegmentedView.OnSelect { picked ->
+            val n = picked.toIntOrNull() ?: return@OnSelect
+            SettingsManager.setInt(requireContext(), SettingsManager.KEY_CHART_DECIMALS, n)
         }
 
         // Default chart time range — standardizes the x-axis window on every chart
-        val tgTf: MaterialButtonToggleGroup = v.findViewById(R.id.tgTimeframe)
-        val tfIds = intArrayOf(R.id.btnTf3m, R.id.btnTf6m, R.id.btnTf1y, R.id.btnTf2y, R.id.btnTf5y)
+        val segTf: SegmentedView = v.findViewById(R.id.segTimeframe)
         val tfMonths = intArrayOf(3, 6, 12, 24, 60)
         val currentMonths = SettingsManager.getChartTimeframeMonths(requireContext())
-        var sel = tfMonths.size - 1 // default -> 5Y
-        for (i in tfMonths.indices) if (tfMonths[i] == currentMonths) { sel = i; break }
-        tgTf.check(tfIds[sel])
-        tgTf.addOnButtonCheckedListener { _, checkedId, isChecked ->
-            if (isChecked) {
-                for (i in tfIds.indices)
-                    if (tfIds[i] == checkedId)
-                        SettingsManager.setInt(requireContext(), SettingsManager.KEY_CHART_TIMEFRAME, tfMonths[i])
-            }
+        val sel = if (currentMonths in tfMonths) currentMonths else 60 // default -> 5Y
+        segTf.select(sel.toString(), animate = false)
+        segTf.onSelect = SegmentedView.OnSelect { picked ->
+            val months = picked.toIntOrNull() ?: return@OnSelect
+            SettingsManager.setInt(requireContext(), SettingsManager.KEY_CHART_TIMEFRAME, months)
         }
     }
 
