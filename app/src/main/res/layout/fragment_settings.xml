@@ -245,28 +245,28 @@
 
                         <com.google.android.material.chip.Chip
                             android:id="@+id/chipTabOverview"
-                            style="@style/Widget.MaterialComponents.Chip.Choice"
+                            style="@style/SettingsSegmentChip"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/tab_overview"/>
 
                         <com.google.android.material.chip.Chip
                             android:id="@+id/chipTabMarkets"
-                            style="@style/Widget.MaterialComponents.Chip.Choice"
+                            style="@style/SettingsSegmentChip"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/tab_markets"/>
 
                         <com.google.android.material.chip.Chip
                             android:id="@+id/chipTabEconomy"
-                            style="@style/Widget.MaterialComponents.Chip.Choice"
+                            style="@style/SettingsSegmentChip"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/tab_economy"/>
 
                         <com.google.android.material.chip.Chip
                             android:id="@+id/chipTabNews"
-                            style="@style/Widget.MaterialComponents.Chip.Choice"
+                            style="@style/SettingsSegmentChip"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/tab_news"/>
