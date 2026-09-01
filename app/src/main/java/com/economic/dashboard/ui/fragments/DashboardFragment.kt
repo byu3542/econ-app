@@ -34,6 +34,7 @@ import com.economic.dashboard.utils.EdgeToEdgeInsets
 import com.economic.dashboard.utils.HapticUtil
 import com.economic.dashboard.utils.MotionUtil
 import com.economic.dashboard.utils.SettingsManager
+import com.google.android.material.snackbar.Snackbar
 import com.economic.dashboard.utils.ValueAnimatorUtil
 import com.economic.dashboard.views.SparklineView
 
@@ -202,7 +203,8 @@ class DashboardFragment : Fragment() {
             // indicator currently occupies that slot.
         }
 
-        v.findViewById<View>(R.id.btnEditDashboard)?.setOnClickListener { openEditTargetSheet() }
+        // "Edit cards" lives in the header since TICKET-58 (MainActivity.btnEditCards
+        // calls openEditTargetSheet()); nothing to wire in the scroll content.
 
         // Fed funds hero — bind views directly from the root to avoid null-chain issues
         tvFedFundsHeroValue = v.findViewById(R.id.tvFedFundsHeroValue)
@@ -239,8 +241,21 @@ class DashboardFragment : Fragment() {
 
     // ── Design branch 2a, direction 1d: single edit entry point ─────────────
 
-    /** "Edit cards" button → the drag-to-reorder, tap-to-swap editor. */
-    private fun openEditTargetSheet() {
+    /**
+     * TICKET-58: the permanent "Customize which indicators…" sentence that used
+     * to occupy the Overview's first row is now a one-time snackbar on the first
+     * data reveal, gated by a SettingsManager flag.
+     */
+    private fun showEditCardsHintOnce() {
+        val ctx = context ?: return
+        if (SettingsManager.getBool(ctx, SettingsManager.KEY_HINT_EDIT_CARDS_SEEN, false)) return
+        SettingsManager.setBool(ctx, SettingsManager.KEY_HINT_EDIT_CARDS_SEEN, true)
+        val root = view ?: return
+        Snackbar.make(root, R.string.hint_edit_cards_once, Snackbar.LENGTH_LONG).show()
+    }
+
+    /** Header pencil (MainActivity, TICKET-58) → the drag-to-reorder, tap-to-swap editor. */
+    fun openEditTargetSheet() {
         val heroRow = EditCardsBottomSheet.HeroRow(
             getString(R.string.edit_dashboard_hero_title), heroIndicatorId
         )
@@ -403,6 +418,7 @@ class DashboardFragment : Fragment() {
     private fun hideSkeleton() {
         if (skeletonHidden) return
         skeletonHidden = true
+        showEditCardsHintOnce()
         // TICKET-28: respect "reduce motion" — reveal instantly, no cross-fade.
         val ctx = context
         val animate = ctx == null || MotionUtil.animationsEnabled(ctx)
@@ -483,7 +499,7 @@ class DashboardFragment : Fragment() {
     private fun setSparkline(card: View, vals: List<Float>?) {
         val sp: SparklineView = card.findViewById(R.id.sparkline) ?: return
         val hasData = vals != null && vals.size >= 2
-        sp.visibility = if (hasData) View.VISIBLE else View.GONE
+        sp.visibility = if (hasData) View.VISIBLE else View.INVISIBLE // slot stays (TICKET-58)
         if (hasData && vals != null) {
             sp.setFillEnabled(false)
             sp.setLineColor(0xFFC9A84C.toInt())
@@ -572,9 +588,10 @@ class DashboardFragment : Fragment() {
                 if (tvValue.animation == null) startSkeleton(card)
             }
             card.findViewById<TextView>(R.id.tvMetricDelta)?.visibility = View.GONE
-            card.findViewById<SparklineView>(R.id.sparkline)?.visibility = View.GONE
+            // INVISIBLE, not GONE: fixed slots keep the pair's baselines aligned (TICKET-58).
+            card.findViewById<SparklineView>(R.id.sparkline)?.visibility = View.INVISIBLE
             setCardDate(card, "")
-            statusBadge?.visibility = View.GONE
+            statusBadge?.visibility = View.INVISIBLE
             card.contentDescription = (meta?.label ?: id) + ", loading"
             return
         }
@@ -586,7 +603,7 @@ class DashboardFragment : Fragment() {
             statusBadge?.visibility = View.VISIBLE
             BenchmarkStyle.applyBadge(card, requireContext(), display.tier)
         } else {
-            statusBadge?.visibility = View.GONE
+            statusBadge?.visibility = View.INVISIBLE // slot stays (TICKET-58)
         }
         // TICKET-45: one grouped TalkBack node per card, built from the same
         // formatted strings the card displays so speech can't diverge from

@@ -18,6 +18,7 @@ import com.economic.dashboard.ui.BenchmarkStyle
 import com.economic.dashboard.ui.Benchmarks
 import com.economic.dashboard.ui.EconomicViewModel
 import com.economic.dashboard.ui.MetricPopupController
+import com.economic.dashboard.ui.views.HeroValue
 import com.economic.dashboard.ui.views.PressFeedback
 import com.economic.dashboard.ui.views.SegmentedView
 import com.economic.dashboard.ui.views.SkeletonController
@@ -194,6 +195,10 @@ class StocksFragment : Fragment() {
             requireContext(), R.dimen.radius_card_kpi) else null
         cardVix.foreground = if ("vix" == which) BenchmarkStyle.activeCardBorder(
             requireContext(), R.dimen.radius_card_kpi) else null
+        // TICKET-58: the value size moves with the stroke — one hero per row.
+        HeroValue.apply(tvSp500Value, "sp500" == which)
+        HeroValue.apply(tvNasdaqValue, "nasdaq" == which)
+        HeroValue.apply(tvVixValue, "vix" == which)
         when (which) {
             "nasdaq" -> tvChartTitle.text = "Nasdaq Composite Index"
             "vix" -> tvChartTitle.text = "VIX Volatility Index"

@@ -404,13 +404,14 @@
         <item name="android:layout_marginBottom">@dimen/space_sm</item>
     </style>
 
-    <!-- Bordered "common region" holding a cluster's KPI cards. -->
+    <!-- "Common region" holding a cluster's KPI cards. TICKET-58: the 1dp
+         stroked box (bg_metric_group, now in _to_delete) drew a border around
+         two already-bordered cards; the header above and the space_lg gap
+         below are the grouping device now. -->
     <style name="MetricGroupRegion">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:orientation">horizontal</item>
         <item name="android:baselineAligned">false</item>
-        <item name="android:background">@drawable/bg_metric_group</item>
-        <item name="android:padding">@dimen/space_sm</item>
     </style>
 </resources>

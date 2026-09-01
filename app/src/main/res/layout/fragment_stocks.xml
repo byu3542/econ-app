@@ -19,7 +19,11 @@
              18sp siblings) while the rest of the app used 34sp. All three values
              are now @dimen/text_display_lg like everywhere else; because three
              34sp values don't fit a 360dp row, they auto-shrink uniformly to
-             @dimen/text_kpi_autosize_min rather than being hardcoded smaller. -->
+             @dimen/text_kpi_autosize_min rather than being hardcoded smaller.
+             TICKET-58: the charted card is the row's hero — StocksFragment
+             (HeroValue) caps the two siblings at text_display and moves the cap
+             with the gold stroke; the 140dp minHeight is gone so cards size to
+             their content. -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -33,7 +37,6 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginEnd="@dimen/space_hairline"
-                android:minHeight="140dp"
                 app:cardCornerRadius="@dimen/radius_card_kpi"
                 app:cardElevation="@dimen/elevation_card_kpi"
                 app:cardBackgroundColor="@color/card_navy_badge">
@@ -65,7 +68,6 @@
                 android:layout_weight="1"
                 android:layout_marginStart="@dimen/space_hairline"
                 android:layout_marginEnd="@dimen/space_hairline"
-                android:minHeight="140dp"
                 app:cardCornerRadius="@dimen/radius_card_kpi"
                 app:cardElevation="@dimen/elevation_card_kpi"
                 app:cardBackgroundColor="@color/card_navy_badge">
@@ -96,7 +98,6 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginStart="@dimen/space_hairline"
-                android:minHeight="140dp"
                 app:cardCornerRadius="@dimen/radius_card_kpi"
                 app:cardElevation="@dimen/elevation_card_kpi"
                 app:cardBackgroundColor="@color/card_navy_badge">

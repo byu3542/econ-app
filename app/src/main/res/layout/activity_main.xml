@@ -100,6 +100,23 @@
                     android:background="?attr/selectableItemBackgroundBorderless"
                     app:tint="@color/white_70"/>
 
+                <!-- TICKET-58: "Edit cards" moved off the Overview's first row into
+                     the header, left of the gear. Same 48dp target; MainActivity
+                     shows it only while Overview is the visible tab. -->
+                <ImageView
+                    android:id="@+id/btnEditCards"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="-2dp"
+                    android:layout_marginBottom="-2dp"
+                    android:layout_marginEnd="48dp"
+                    android:layout_gravity="end|center_vertical"
+                    android:padding="@dimen/space_md"
+                    android:src="@drawable/ic_edit"
+                    android:contentDescription="@string/edit_dashboard_button"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    app:tint="@color/white_70"/>
+
             </FrameLayout>
 
             <!-- 0.5dp neutral hairline under the persistent bar. Always

@@ -20,6 +20,7 @@ import com.economic.dashboard.ui.BenchmarkStyle
 import com.economic.dashboard.ui.Benchmarks
 import com.economic.dashboard.ui.EconomicViewModel
 import com.economic.dashboard.ui.MetricPopupController
+import com.economic.dashboard.ui.views.HeroValue
 import com.economic.dashboard.ui.views.SegmentedView
 import com.economic.dashboard.ui.views.SkeletonController
 import com.economic.dashboard.utils.ChartHelper
@@ -379,6 +380,10 @@ class HousingFragment : Fragment() {
             requireContext(), R.dimen.radius_card_kpi) else null
         badgeSpread.foreground = if ("spread" == which) BenchmarkStyle.activeCardBorder(
             requireContext(), R.dimen.radius_card_kpi) else null
+        // TICKET-58: the value size moves with the stroke — one hero per row.
+        HeroValue.apply(tvBadgeMortgageValue, "mortgage" == which)
+        HeroValue.apply(tvBadge10YValue, "tenYear" == which)
+        HeroValue.apply(tvBadgeSpreadValue, "spread" == which)
 
         // Update swappable chart title
         when (which) {

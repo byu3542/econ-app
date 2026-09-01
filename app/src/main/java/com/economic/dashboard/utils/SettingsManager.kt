@@ -75,6 +75,9 @@ object SettingsManager {
     @JvmField val KEY_WATCHLIST = "watchlist"
     @JvmField val KEY_ONBOARDING_COMPLETE = "onboarding_complete"
 
+    /** TICKET-58: the one-time "tap the pencil to edit cards" snackbar has been shown. */
+    @JvmField val KEY_HINT_EDIT_CARDS_SEEN = "hint_edit_cards_seen"
+
     /** Design-branch 2a: which indicator each Overview slot tracks. */
     @JvmField val KEY_DASHBOARD_HERO = "dashboard_hero"
     @JvmField val KEY_DASHBOARD_SLOTS = "dashboard_slots"

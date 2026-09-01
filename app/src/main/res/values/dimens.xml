@@ -22,6 +22,10 @@
          44sp = 34sp x ~1.17 Roboto line height + headroom; declared in sp so it
          still fits when the user raises the system font scale. -->
     <dimen name="kpi_value_height">44sp</dimen>
+    <!-- TICKET-58: fixed two-caption-line slot for the KPI card label, so a
+         wrapped label ("10Y-3M SPREAD" at narrow widths) never pushes the value
+         row down relative to its pair. -->
+    <dimen name="kpi_label_height">28sp</dimen>
 
     <!-- Spacing (4dp grid) -->
     <dimen name="space_hairline">2dp</dimen>
