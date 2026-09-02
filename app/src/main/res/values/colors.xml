@@ -12,8 +12,11 @@
          through the bar and compete with the title / nav labels — the
          translucency looked like a rendering bug rather than a material. 95%
          keeps the depth cue while restoring legibility. Keep this in sync with
-         bg_bottom_nav_border.xml's fill and values-night/colors.xml. -->
-    <color name="header_navy_translucent">#F21A1A2E</color>
+         bg_bottom_nav_border.xml's fill and values-night/colors.xml.
+         TICKET-56 (2026-09-01): now fully opaque (#FF) — at 95% the leak was
+         smaller but still there. Name kept so the IOS-04 history stays
+         greppable; the depth cue is bg_nav_scrim.xml under the bottom bar. -->
+    <color name="header_navy_translucent">#FF1A1A2E</color>
     <color name="card_white">#ffffff</color>
     <!-- Light/dark-flipping card surface. card_white stays literal white in both
          modes because many layouts use it as TEXT color on navy cards. -->

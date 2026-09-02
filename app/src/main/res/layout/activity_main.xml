@@ -140,11 +140,31 @@
              very top edge of the nav bar so it appears as a 2dp top-line
              indicator above the active destination icon.
         ═════════════════════════ -->
+        <!-- TICKET-56: 24dp fade sitting on the bar's top edge (anchored so it
+             follows the wrapper's measured height, incl. system-bar padding).
+             Declared before the wrapper and at 0 elevation, so it draws over
+             the fragment and under the FAB (8dp elevation). MainActivity
+             toggles it with the wrapper (Settings hides both). -->
+        <View
+            android:id="@+id/navScrim"
+            android:layout_width="match_parent"
+            android:layout_height="24dp"
+            android:background="@drawable/bg_nav_scrim"
+            android:importantForAccessibility="no"
+            app:layout_anchor="@id/bottomNavWrapper"
+            app:layout_anchorGravity="top"
+            android:layout_gravity="top" />
+
+        <!-- TICKET-56: the wrapper carries the bar color itself, so the
+             system-gesture inset it pads for (MainActivity insets listener)
+             is bar material too — before, that strip was transparent and
+             the list's last rows showed through under the nav labels. -->
         <FrameLayout
             android:id="@+id/bottomNavWrapper"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="bottom">
+            android:layout_gravity="bottom"
+            android:background="@color/nav_bg">
 
             <!-- BottomNav declared FIRST so it is drawn beneath the indicator -->
             <com.google.android.material.bottomnavigation.BottomNavigationView
@@ -191,18 +211,22 @@
          straddles the top edge of the bottom nav (pantrii-style FAB).
          Opens AiAnalystBottomSheet — wired in MainActivity.
     ═════════════════════════ -->
+    <!-- TICKET-56: 70dp card in the bar's own color with the 62dp artwork
+         inset 4dp, so the part of the disc that overhangs the bar has bar
+         material behind it and scrolling text passes behind a ring, never
+         straight under the gold. Center is unchanged (anchored). -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/fabAiAnalyst"
-        android:layout_width="62dp"
-        android:layout_height="62dp"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
         android:layout_gravity="center"
         android:translationY="10dp"
         android:clickable="true"
         android:focusable="true"
         android:contentDescription="Ask Econ Analyst"
-        app:cardCornerRadius="31dp"
+        app:cardCornerRadius="35dp"
         app:cardElevation="8dp"
-        app:cardBackgroundColor="@color/fab_ring"
+        app:cardBackgroundColor="@color/nav_bg"
         app:rippleColor="@color/navy_ripple"
         app:strokeWidth="0dp"
         app:layout_anchor="@id/bottomNavWrapper"
@@ -211,6 +235,7 @@
         <ImageView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:layout_margin="4dp"
             android:src="@drawable/ic_fab_gold_ai"
             android:scaleType="fitXY"
             android:importantForAccessibility="no" />

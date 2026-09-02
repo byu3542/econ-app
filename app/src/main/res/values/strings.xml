@@ -161,6 +161,9 @@
     <string name="tf_1y">1Y</string>
     <string name="tf_2y">2Y</string>
     <string name="tf_5y">5Y</string>
+    <!-- TICKET-56: TalkBack reason on timeframe segments below a series' cadence floor -->
+    <string name="tf_floor_quarterly">Not available for quarterly data</string>
+    <string name="tf_floor_monthly">Not available for monthly data</string>
 
     <!-- Metric popup redesign (mockup 1c) -->
     <string name="str_seg_benchmarks">BENCHMARKS</string>
