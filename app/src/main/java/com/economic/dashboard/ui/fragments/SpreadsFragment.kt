@@ -1,6 +1,5 @@
 package com.economic.dashboard.ui.fragments
 
-import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -23,12 +22,13 @@ import com.economic.dashboard.ui.views.PressFeedback
 import com.economic.dashboard.ui.views.SegmentedView
 import com.economic.dashboard.ui.views.SkeletonController
 import com.economic.dashboard.utils.ChartHelper
+import com.economic.dashboard.utils.AxisDateFormat
+import com.economic.dashboard.utils.ChartPalette
 import com.economic.dashboard.utils.EdgeToEdgeInsets
 import com.economic.dashboard.utils.NumberFormatUtil
 import com.economic.dashboard.utils.RetryChip
 import com.economic.dashboard.utils.TimeframeSelector
 import com.github.mikephil.charting.charts.LineChart
-import com.github.mikephil.charting.components.LimitLine
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
@@ -168,43 +168,31 @@ class SpreadsFragment : Fragment() {
         if (!::swappableChart.isInitialized) return
         val source: List<EconomicDataPoint>?
         val label: String
-        val lineColor: String
-        if ("3m" == activeCard) { source = current3MData; label = "10Y-3M Spread (%)"; lineColor = "#E91E63" }
-        else { source = currentYoyData; label = "10Y-2Y Spread (%)"; lineColor = "#D98E4F" }
+        val lineColor: Int = ChartPalette.primary(requireContext()) // TICKET-57
+        if ("3m" == activeCard) { source = current3MData; label = "10Y-3M Spread (%)" }
+        else { source = currentYoyData; label = "10Y-2Y Spread (%)" }
         if (source == null || source.isEmpty()) return
         val data = EconomicViewModel.filterByTimeframe(requireContext(), source, "spreads")
         val entries = ArrayList<Entry>()
         val dateLabels = ArrayList<String>()
         for (i in data.indices) {
             entries.add(Entry(i.toFloat(), data[i].value.toFloat()))
-            val d = data[i].date
-            dateLabels.add(if (d.length >= 7) d.substring(5, 7) + "-" + d.substring(0, 4) else d)
+            dateLabels.add(data[i].date)
         }
-        swappableChart.xAxis.setValueFormatter(object : ValueFormatter() {
-            override fun getFormattedValue(value: Float): String {
-                val idx = value.toInt()
-                return if ((idx % 5 == 0 || idx == dateLabels.size - 1) && idx >= 0 && idx < dateLabels.size) dateLabels[idx] else ""
-            }
-        })
+        AxisDateFormat.attach(swappableChart, requireContext(), "spreads", dateLabels) // TICKET-57
         val ds = LineDataSet(entries, label)
-        ChartHelper.styleLineSeries(ds, Color.parseColor(lineColor)) // IOS-07
-        swappableChart.setData(LineData(ds)); swappableChart.animateX(500); swappableChart.invalidate()
+        ChartHelper.styleLineSeries(ds, lineColor) // IOS-07
+        ChartHelper.setLineData(swappableChart, LineData(ds), 500)
         // P6 TICKET-37: TalkBack announces the visible series, not the static XML label.
         swappableChart.contentDescription =
             label + ", " + NumberFormatUtil.percent(data[data.size - 1].value)
     }
 
     private fun addSpreadLimitLines(chart: LineChart) {
-        val zero = LimitLine(0f, "Inversion")
-        zero.setLineColor(Color.parseColor("#C75B4E")); zero.setLineWidth(1.2f)
-        zero.setTextColor(Color.parseColor("#C75B4E")); zero.setTextSize(9f); zero.enableDashedLine(8f, 4f, 0f)
-        val warn = LimitLine(-0.5f, "Warning")
-        warn.setLineColor(Color.parseColor("#D98E4F")); warn.setLineWidth(1f)
-        warn.setTextColor(Color.parseColor("#D98E4F")); warn.setTextSize(9f); warn.enableDashedLine(8f, 4f, 0f)
-        val deep = LimitLine(-1.5f, "Deep")
-        deep.setLineColor(Color.parseColor("#8A6E9E")); deep.setLineWidth(1f)
-        deep.setTextColor(Color.parseColor("#8A6E9E")); deep.setTextSize(9f); deep.enableDashedLine(8f, 4f, 0f)
-        chart.axisLeft.addLimitLine(zero); chart.axisLeft.addLimitLine(warn); chart.axisLeft.addLimitLine(deep)
+        // TICKET-57: tier-coloured through ChartPalette (colourblind-aware).
+        ChartHelper.addLimitLine(chart, 0f, "Inversion", BenchmarkStyle.Tier.ALERT)
+        ChartHelper.addLimitLine(chart, -0.5f, "Warning", BenchmarkStyle.Tier.ELEVATED)
+        ChartHelper.addLimitLine(chart, -1.5f, "Deep", BenchmarkStyle.Tier.IMBALANCE)
         chart.axisLeft.setDrawLimitLinesBehindData(true)
     }
 

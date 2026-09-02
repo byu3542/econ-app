@@ -1,6 +1,5 @@
 package com.economic.dashboard.ui.fragments
 
-import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -19,6 +18,8 @@ import com.economic.dashboard.ui.EconomicViewModel
 import com.economic.dashboard.ui.MetricPopupController
 import com.economic.dashboard.ui.views.SkeletonController
 import com.economic.dashboard.utils.ChartHelper
+import com.economic.dashboard.utils.AxisDateFormat
+import com.economic.dashboard.utils.ChartPalette
 import com.economic.dashboard.utils.DeltaFormatter
 import com.economic.dashboard.utils.EdgeToEdgeInsets
 import com.economic.dashboard.utils.NumberFormatUtil
@@ -68,7 +69,7 @@ class YieldsFragment : Fragment() {
         AskAnalyst.attachChartExplain(
             yieldCurveChart, requireActivity(), "the current Treasury yield curve across maturities")
         ChartHelper.styleNavyChart(yieldCurveChart, noDataText = "Loading yield data…",
-            noDataTextColor = Color.parseColor("#8899BB"))
+            noDataTextColor = ChartPalette.slate(requireContext()))
         ChartHelper.declutterDark(yieldCurveChart)
         yieldCurveChart.axisLeft.setValueFormatter(object : ValueFormatter() {
             override fun getFormattedValue(value: Float): String {
@@ -129,8 +130,8 @@ class YieldsFragment : Fragment() {
             }
         }
 
-        val ds = LineDataSet(entries, "Yield (%) — $finalLatestDate")
-        ChartHelper.styleLineSeries(ds, Color.parseColor("#1a73e8")) // IOS-07
+        val ds = LineDataSet(entries, "Yield (%) — " + AxisDateFormat.full(finalLatestDate))
+        ChartHelper.styleLineSeries(ds, ChartPalette.primary(requireContext())) // IOS-07 / TICKET-57
 
         yieldCurveChart.xAxis.setValueFormatter(object : ValueFormatter() {
             override fun getFormattedValue(value: Float): String {
@@ -140,7 +141,7 @@ class YieldsFragment : Fragment() {
             }
         })
 
-        yieldCurveChart.setData(LineData(ds)); yieldCurveChart.invalidate()
+        ChartHelper.setLineData(yieldCurveChart, LineData(ds))
     }
 
     private fun setupTreasuryRow(row: View, label: String) {
@@ -174,7 +175,7 @@ class YieldsFragment : Fragment() {
         if (!rows.isEmpty()) {
             val p = rows[rows.size - 1]
             if (valView != null) valView.text = NumberFormatUtil.percent(p.value) // TICKET-19
-            if (dateView != null) dateView.text = p.date
+            if (dateView != null) dateView.text = AxisDateFormat.full(p.date) // TICKET-57
             if (changeView != null && rows.size >= 2) {
                 val bps = (p.value - rows[rows.size - 2].value) * 100.0
                 if (Math.abs(bps) < 0.5) {

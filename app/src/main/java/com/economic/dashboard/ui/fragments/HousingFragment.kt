@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 
 import androidx.cardview.widget.CardView
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 
@@ -22,6 +23,8 @@ import com.economic.dashboard.ui.MetricPopupController
 import com.economic.dashboard.ui.views.SegmentedView
 import com.economic.dashboard.ui.views.SkeletonController
 import com.economic.dashboard.utils.ChartHelper
+import com.economic.dashboard.utils.AxisDateFormat
+import com.economic.dashboard.utils.ChartPalette
 import com.economic.dashboard.utils.EdgeToEdgeInsets
 import com.economic.dashboard.utils.NumberFormatUtil
 import com.economic.dashboard.utils.RetryChip
@@ -36,8 +39,6 @@ import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.formatter.ValueFormatter
 
-import java.text.ParseException
-import java.text.SimpleDateFormat
 import java.util.Collections
 import java.util.Locale
 
@@ -161,7 +162,7 @@ class HousingFragment : Fragment() {
         setActiveBadge("mortgage")
 
         // ── MBS Chart: full dark theme styling ──────────────────────────────
-        val mbsDarkBg = Color.parseColor("#1C2236")
+        val mbsDarkBg = ContextCompat.getColor(requireContext(), R.color.card_navy_badge) // TICKET-57
         val mbsSubtleGrid = Color.argb(0x14, 0xFF, 0xFF, 0xFF) // ~8% white
 
         chartMbsMortgage.setBackgroundColor(mbsDarkBg)
@@ -174,7 +175,7 @@ class HousingFragment : Fragment() {
         chartMbsMortgage.setDoubleTapToZoomEnabled(true)
         chartMbsMortgage.description.setEnabled(false)
         chartMbsMortgage.setNoDataText("Awaiting MBS Data...")
-        chartMbsMortgage.setNoDataTextColor(Color.parseColor("#5A6A8A"))
+        chartMbsMortgage.setNoDataTextColor(ChartPalette.slateDim(requireContext()))
         chartMbsMortgage.setExtraBottomOffset(30f)
         chartMbsMortgage.setExtraLeftOffset(10f)
         chartMbsMortgage.setExtraTopOffset(10f)
@@ -183,7 +184,7 @@ class HousingFragment : Fragment() {
         // X-axis
         val mbsXAxis = chartMbsMortgage.xAxis
         mbsXAxis.setPosition(XAxis.XAxisPosition.BOTTOM)
-        mbsXAxis.setTextColor(Color.parseColor("#5A6A8A"))
+        mbsXAxis.setTextColor(ChartPalette.slateDim(requireContext()))
         mbsXAxis.setTextSize(10f)
         mbsXAxis.setDrawGridLines(true)
         mbsXAxis.setGridColor(mbsSubtleGrid)
@@ -195,7 +196,7 @@ class HousingFragment : Fragment() {
 
         // Left Y-axis (MBS holdings in billions → display as trillions)
         val mbsLeftAxis = chartMbsMortgage.axisLeft
-        mbsLeftAxis.setTextColor(Color.parseColor("#C9A84C"))
+        mbsLeftAxis.setTextColor(ChartPalette.gold(requireContext())) // matches the Bank MBS line
         mbsLeftAxis.setTextSize(10f)
         mbsLeftAxis.setDrawGridLines(true)
         mbsLeftAxis.setGridColor(mbsSubtleGrid)
@@ -210,7 +211,7 @@ class HousingFragment : Fragment() {
         // Right Y-axis (mortgage rate %)
         val mbsRightAxis = chartMbsMortgage.axisRight
         mbsRightAxis.setEnabled(true)
-        mbsRightAxis.setTextColor(Color.parseColor("#E07060"))
+        mbsRightAxis.setTextColor(ChartPalette.coral(requireContext())) // matches the mortgage line
         mbsRightAxis.setTextSize(10f)
         mbsRightAxis.setDrawGridLines(false)
         mbsRightAxis.setAxisLineColor(mbsSubtleGrid)
@@ -222,7 +223,7 @@ class HousingFragment : Fragment() {
 
         // Legend
         val mbsLegend = chartMbsMortgage.legend
-        mbsLegend.setTextColor(Color.parseColor("#8899BB"))
+        mbsLegend.setTextColor(ChartPalette.slate(requireContext()))
         mbsLegend.setTextSize(11f)
         mbsLegend.setForm(Legend.LegendForm.LINE)
         mbsLegend.setFormSize(16f)
@@ -390,7 +391,7 @@ class HousingFragment : Fragment() {
     // ── Swappable Chart ────────────────────────────────────────────────────────
 
     private fun styleSwappableChart() {
-        val darkBg = Color.parseColor("#1C2236")
+        val darkBg = ContextCompat.getColor(requireContext(), R.color.card_navy_badge) // TICKET-57
         val subtleGrid = Color.argb(0x14, 0xFF, 0xFF, 0xFF)
 
         chartSwappable.setBackgroundColor(darkBg)
@@ -402,14 +403,14 @@ class HousingFragment : Fragment() {
         chartSwappable.setPinchZoom(true)
         chartSwappable.description.setEnabled(false)
         chartSwappable.setNoDataText("Select a badge above…")
-        chartSwappable.setNoDataTextColor(Color.parseColor("#5A6A8A"))
+        chartSwappable.setNoDataTextColor(ChartPalette.slateDim(requireContext()))
         chartSwappable.setExtraBottomOffset(8f)
         chartSwappable.setExtraLeftOffset(8f)
         chartSwappable.setExtraRightOffset(8f)
 
         val xAxis = chartSwappable.xAxis
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM)
-        xAxis.setTextColor(Color.parseColor("#5A6A8A"))
+        xAxis.setTextColor(ChartPalette.slateDim(requireContext()))
         xAxis.setTextSize(9f)
         xAxis.setDrawGridLines(true)
         xAxis.setGridColor(subtleGrid)
@@ -420,23 +421,21 @@ class HousingFragment : Fragment() {
         xAxis.setAvoidFirstLastClipping(true)
 
         val leftAxis = chartSwappable.axisLeft
-        leftAxis.setTextColor(Color.parseColor("#8899BB"))
+        leftAxis.setTextColor(ChartPalette.slate(requireContext()))
         leftAxis.setTextSize(10f)
         leftAxis.setDrawGridLines(true)
         leftAxis.setGridColor(subtleGrid)
         leftAxis.setAxisLineColor(subtleGrid)
 
         chartSwappable.axisRight.setEnabled(false)
-
-        val legend = chartSwappable.legend
-        legend.setEnabled(false) // single-line chart, no legend needed
+        // Legend: ChartHelper.setLineData decides (TICKET-57) — single series, so off.
     }
 
     private fun buildSwappableChart(spreadRowsPrecomputed: List<EconomicDataPoint>? = null) {
         if (!::chartSwappable.isInitialized) return
 
         val seriesLabel: String
-        val lineColor: String
+        val lineColor: Int = ChartPalette.primary(requireContext()) // TICKET-57
         var rows: List<EconomicDataPoint>
         var twoDecimals = false
 
@@ -445,50 +444,32 @@ class HousingFragment : Fragment() {
                 val treasury = currentTreasuryData ?: return
                 rows = EconomicViewModel.filterBySeries(treasury, "10 Year")
                 seriesLabel = "10Y Treasury Rate"
-                lineColor = "#C9A84C"
             }
             "spread" -> {
                 rows = spreadRowsPrecomputed ?: computeSpreadRows()
                 seriesLabel = "Mortgage-10Y Spread"
-                lineColor = "#BBBBBB"
                 twoDecimals = true
             }
             else -> { // mortgage
                 val mbs = currentMbsData ?: return
                 rows = EconomicViewModel.filterBySeries(mbs, "30-Yr Mortgage Rate")
                 seriesLabel = "30-Yr Mortgage Rate"
-                lineColor = "#E07060"
             }
         }
 
         if (rows.isEmpty()) return
 
         // Standardized chart window (Settings -> Charts -> time range)
-        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
         rows = EconomicViewModel.filterByTimeframe(requireContext(), rows, "housing")
         if (rows.isEmpty()) return
 
         val entries = ArrayList<Entry>()
         val dateLabels = ArrayList<String>()
-        val labelFmt = SimpleDateFormat("MMM yy", Locale.US)
-
         for (i in rows.indices) {
-            val v = rows[i].value
-            entries.add(Entry(i.toFloat(), v.toFloat()))
-            try {
-                val date = sdf.parse(rows[i].date)
-                dateLabels.add(if (date != null) labelFmt.format(date) else "")
-            } catch (e: ParseException) {
-                dateLabels.add("")
-            }
+            entries.add(Entry(i.toFloat(), rows[i].value.toFloat()))
+            dateLabels.add(rows[i].date)
         }
-
-        chartSwappable.xAxis.setValueFormatter(object : ValueFormatter() {
-            override fun getFormattedValue(value: Float): String {
-                val idx = value.toInt()
-                return if (idx >= 0 && idx < dateLabels.size) dateLabels[idx] else ""
-            }
-        })
+        AxisDateFormat.attach(chartSwappable, requireContext(), "housing", dateLabels) // TICKET-57
 
         // All swappable series are percentages; the spread gets extra precision
         val useTwoDecimals = twoDecimals
@@ -504,9 +485,7 @@ class HousingFragment : Fragment() {
         ds.setLineWidth(1.5f)
         ds.setDrawFilled(false)
 
-        chartSwappable.setData(LineData(ds))
-        chartSwappable.animateX(500)
-        chartSwappable.invalidate()
+        ChartHelper.setLineData(chartSwappable, LineData(ds), 500)
         // P6 TICKET-37: TalkBack announces the visible series, not the static XML label.
         chartSwappable.contentDescription = seriesLabel + " trend, " +
             NumberFormatUtil.percent(rows[rows.size - 1].value, if (twoDecimals) 2 else 1)
@@ -524,8 +503,6 @@ class HousingFragment : Fragment() {
         if (bankRows.isEmpty() && fedRows.isEmpty() && mortgageRows.isEmpty()) return
 
         // Standardized chart window (Settings -> Charts -> time range)
-        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-
         bankRows = EconomicViewModel.filterByTimeframe(requireContext(), bankRows, "housing")
         fedRows = EconomicViewModel.filterByTimeframe(requireContext(), fedRows, "housing")
         mortgageRows = EconomicViewModel.filterByTimeframe(requireContext(), mortgageRows, "housing")
@@ -558,27 +535,10 @@ class HousingFragment : Fragment() {
         }
         val mortgageEntries = buildEntriesForDates(mortgageRows, allDates)
 
-        // Format X-axis labels as MMM yy
-        val labelFmt = SimpleDateFormat("MMM yy", Locale.US)
-        val dateLabels = ArrayList<String>()
-        for (d in allDates) {
-            try {
-                val date = sdf.parse(d)
-                dateLabels.add(if (date != null) labelFmt.format(date) else d)
-            } catch (e: ParseException) {
-                dateLabels.add(if (d.length >= 7) d.substring(5, 7) + "/" + d.substring(2, 4) else d)
-            }
-        }
-
-        chartMbsMortgage.xAxis.setValueFormatter(object : ValueFormatter() {
-            override fun getFormattedValue(value: Float): String {
-                val idx = value.toInt()
-                return if (idx >= 0 && idx < dateLabels.size) dateLabels[idx] else ""
-            }
-        })
+        AxisDateFormat.attach(chartMbsMortgage, requireContext(), "housing", allDates) // TICKET-57
 
         // Bank MBS — left axis, gold, thin line, no dots
-        val bankSet = makeLineDataSet(bankEntries, "Bank MBS Holdings", "#C9A84C", false)
+        val bankSet = makeLineDataSet(bankEntries, "Bank MBS Holdings", ChartPalette.gold(requireContext()), false)
         bankSet.setAxisDependency(YAxis.AxisDependency.LEFT)
         bankSet.setDrawCircles(false)
         bankSet.setDrawCircleHole(false)
@@ -586,7 +546,7 @@ class HousingFragment : Fragment() {
         bankSet.setDrawFilled(false)
 
         // Fed MBS — left axis, light gray, thin line, no dots
-        val fedSet = makeLineDataSet(fedEntries, "Fed MBS Holdings", "#BBBBBB", false)
+        val fedSet = makeLineDataSet(fedEntries, "Fed MBS Holdings", ChartPalette.slate(requireContext()), false)
         fedSet.setAxisDependency(YAxis.AxisDependency.LEFT)
         fedSet.setDrawCircles(false)
         fedSet.setDrawCircleHole(false)
@@ -594,15 +554,14 @@ class HousingFragment : Fragment() {
         fedSet.setDrawFilled(false)
 
         // Mortgage rate — right axis, muted coral, thin line, no dots
-        val mortgageSet = makeLineDataSet(mortgageEntries, "30-Yr Mortgage Rate", "#E07060", false)
+        val mortgageSet = makeLineDataSet(mortgageEntries, "30-Yr Mortgage Rate", ChartPalette.coral(requireContext()), false)
         mortgageSet.setAxisDependency(YAxis.AxisDependency.RIGHT)
         mortgageSet.setDrawCircles(false)
         mortgageSet.setDrawCircleHole(false)
         mortgageSet.setLineWidth(1.5f)
         mortgageSet.setDrawFilled(false)
 
-        chartMbsMortgage.setData(LineData(bankSet, fedSet, mortgageSet))
-        chartMbsMortgage.invalidate()
+        ChartHelper.setLineData(chartMbsMortgage, LineData(bankSet, fedSet, mortgageSet))
     }
 
     /** Builds chart Entry list by mapping data points onto a shared date index. */
@@ -622,9 +581,8 @@ class HousingFragment : Fragment() {
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private fun makeLineDataSet(entries: List<Entry>, label: String, hexColor: String, filled: Boolean): LineDataSet {
+    private fun makeLineDataSet(entries: List<Entry>, label: String, c: Int, filled: Boolean): LineDataSet {
         val ds = LineDataSet(entries, label)
-        val c = Color.parseColor(hexColor)
         ds.setColor(c)
         ds.setCircleColor(c)
         ds.setLineWidth(2.5f)

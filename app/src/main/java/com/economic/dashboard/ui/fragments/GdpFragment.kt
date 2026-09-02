@@ -1,6 +1,5 @@
 package com.economic.dashboard.ui.fragments
 
-import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -22,6 +21,8 @@ import com.economic.dashboard.ui.MetricPopupController
 import com.economic.dashboard.ui.views.SegmentedView
 import com.economic.dashboard.ui.views.SkeletonController
 import com.economic.dashboard.utils.ChartHelper
+import com.economic.dashboard.utils.AxisDateFormat
+import com.economic.dashboard.utils.ChartPalette
 import com.economic.dashboard.utils.EdgeToEdgeInsets
 import com.economic.dashboard.utils.NumberFormatUtil
 import com.economic.dashboard.utils.RetryChip
@@ -165,16 +166,11 @@ class GdpFragment : Fragment() {
             labels.add(chartRows[i].date)
         }
 
-        gdpChart.xAxis.setValueFormatter(object : ValueFormatter() {
-            override fun getFormattedValue(value: Float): String {
-                val idx = value.toInt()
-                return if (idx >= 0 && idx < labels.size) labels[idx] else ""
-            }
-        })
+        AxisDateFormat.attach(gdpChart, requireContext(), "gdp", labels) // TICKET-57
 
         val ds = LineDataSet(entries, "GDP Growth (%)")
-        ChartHelper.styleLineSeries(ds, Color.parseColor("#1a73e8")) // IOS-07
-        gdpChart.setData(LineData(ds)); gdpChart.invalidate()
+        ChartHelper.styleLineSeries(ds, ChartPalette.primary(requireContext())) // IOS-07 / TICKET-57
+        ChartHelper.setLineData(gdpChart, LineData(ds))
     }
 
     override fun onDestroyView() {

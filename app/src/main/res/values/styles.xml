@@ -48,4 +48,17 @@
         <item name="android:fontFeatureSettings">tnum</item>
     </style>
 
+    <!-- TICKET-57: the one chart-card / panel title. Serif bold in card_white on
+         the navy panels — the news headlines' face, the Alabaster identity. Was
+         inline on nine TextViews across eight leaf layouts, five serif and three
+         sans, two sizes. Apply with android:textAppearance and set NO inline
+         textColor / textSize / fontFamily / textStyle on the same view (those
+         override the appearance silently). -->
+    <style name="TextAppearance.Econ.PanelTitle" parent="android:TextAppearance">
+        <item name="android:fontFamily">serif</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">@dimen/text_title</item>
+        <item name="android:textColor">@color/card_white</item>
+    </style>
+
 </resources>

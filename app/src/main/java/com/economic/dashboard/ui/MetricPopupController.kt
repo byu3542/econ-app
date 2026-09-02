@@ -20,6 +20,7 @@ import com.economic.dashboard.R
 import com.economic.dashboard.models.EconomicDataPoint
 import com.economic.dashboard.ui.views.SegmentedView
 import com.economic.dashboard.utils.ChartHelper
+import com.economic.dashboard.utils.AxisDateFormat
 import com.economic.dashboard.utils.TimeframeSelector
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.data.Entry
@@ -208,19 +209,12 @@ object MetricPopupController {
         val dates = ArrayList<String>()
         for (i in rows.indices) {
             entries.add(Entry(i.toFloat(), rows[i].value.toFloat()))
-            val d = rows[i].date
-            dates.add(if (d.length >= 7) d.substring(5, 7) + "-" + d.substring(0, 4) else d)
+            dates.add(rows[i].date)
         }
-        chart.xAxis.setValueFormatter(object : ValueFormatter() {
-            override fun getFormattedValue(value: Float): String {
-                val idx = value.toInt()
-                return if (idx >= 0 && idx < dates.size) dates[idx] else ""
-            }
-        })
+        AxisDateFormat.attach(chart, chart.context, spec.chartId, dates) // TICKET-57
         val ds = LineDataSet(entries, spec.title)
         ChartHelper.styleLineSeries(ds, ContextCompat.getColor(chart.context, R.color.sheet_accent))
-        chart.setData(LineData(ds))
-        chart.invalidate()
+        ChartHelper.setLineData(chart, LineData(ds))
     }
 
     /**

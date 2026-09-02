@@ -1,6 +1,5 @@
 package com.economic.dashboard.ui.fragments
 
-import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -22,6 +21,8 @@ import com.economic.dashboard.ui.MetricPopupController
 import com.economic.dashboard.ui.views.SegmentedView
 import com.economic.dashboard.ui.views.SkeletonController
 import com.economic.dashboard.utils.ChartHelper
+import com.economic.dashboard.utils.AxisDateFormat
+import com.economic.dashboard.utils.ChartPalette
 import com.economic.dashboard.utils.EdgeToEdgeInsets
 import com.economic.dashboard.utils.NumberFormatUtil
 import com.economic.dashboard.utils.RetryChip
@@ -161,9 +162,9 @@ class EmploymentFragment : Fragment() {
         if (!::swappableChart.isInitialized) return
         val data: List<EconomicDataPoint>?
         val seriesName: String
-        val lineColor: String
-        if ("labor" == activeCard) { data = currentLaborData; seriesName = "Labor Force Participation Rate"; lineColor = "#4285F4" }
-        else { data = currentUnempData; seriesName = "Unemployment Rate"; lineColor = "#EA4335" }
+        val lineColor: Int = ChartPalette.primary(requireContext()) // TICKET-57
+        if ("labor" == activeCard) { data = currentLaborData; seriesName = "Labor Force Participation Rate" }
+        else { data = currentUnempData; seriesName = "Unemployment Rate" }
         if (data == null || data.isEmpty()) return
         buildChart(data, seriesName, swappableChart, lineColor)
     }
@@ -195,16 +196,16 @@ class EmploymentFragment : Fragment() {
     }
 
     private fun addEmploymentLimitLines(chart: LineChart) {
-        ChartHelper.addLimitLine(chart, 4.5f, "Healthy ≤4.5%", "#6FA97A")
-        ChartHelper.addLimitLine(chart, 5.5f, "Elevated 5.5%", "#D98E4F")
-        ChartHelper.addLimitLine(chart, 7.0f, "Recession 7.0%", "#C75B4E")
-        ChartHelper.addLimitLine(chart, 63.3f, "Pre-COVID 63.3%", "#6FA97A")
-        ChartHelper.addLimitLine(chart, 62.0f, "Declining 62.0%", "#D98E4F")
-        ChartHelper.addLimitLine(chart, 61.0f, "Critical 61.0%", "#C75B4E")
+        ChartHelper.addLimitLine(chart, 4.5f, "Healthy ≤4.5%", BenchmarkStyle.Tier.GOOD)
+        ChartHelper.addLimitLine(chart, 5.5f, "Elevated 5.5%", BenchmarkStyle.Tier.ELEVATED)
+        ChartHelper.addLimitLine(chart, 7.0f, "Recession 7.0%", BenchmarkStyle.Tier.ALERT)
+        ChartHelper.addLimitLine(chart, 63.3f, "Pre-COVID 63.3%", BenchmarkStyle.Tier.GOOD)
+        ChartHelper.addLimitLine(chart, 62.0f, "Declining 62.0%", BenchmarkStyle.Tier.ELEVATED)
+        ChartHelper.addLimitLine(chart, 61.0f, "Critical 61.0%", BenchmarkStyle.Tier.ALERT)
         chart.axisLeft.setDrawLimitLinesBehindData(true)
     }
 
-    private fun buildChart(data: List<EconomicDataPoint>, series: String, chart: LineChart, hexColor: String) {
+    private fun buildChart(data: List<EconomicDataPoint>, series: String, chart: LineChart, color: Int) {
         var rows = rowsFor(data, series)
         if (rows.isEmpty()) return
         rows = EconomicViewModel.filterByTimeframe(requireContext(), rows, "employment")
@@ -212,18 +213,12 @@ class EmploymentFragment : Fragment() {
         val dates = ArrayList<String>()
         for (i in rows.indices) {
             entries.add(Entry(i.toFloat(), rows[i].value.toFloat()))
-            val d = rows[i].date
-            dates.add(if (d.length >= 7) d.substring(5, 7) + "-" + d.substring(0, 4) else d)
+            dates.add(rows[i].date)
         }
-        chart.xAxis.setValueFormatter(object : ValueFormatter() {
-            override fun getFormattedValue(value: Float): String {
-                val idx = value.toInt()
-                return if ((idx % 5 == 0 || idx == dates.size - 1) && idx >= 0 && idx < dates.size) dates[idx] else ""
-            }
-        })
+        AxisDateFormat.attach(chart, requireContext(), "employment", dates) // TICKET-57
         val ds = LineDataSet(entries, series)
-        ChartHelper.styleLineSeries(ds, Color.parseColor(hexColor)) // IOS-07
-        chart.setData(LineData(ds)); chart.animateX(500); chart.invalidate()
+        ChartHelper.styleLineSeries(ds, color) // IOS-07
+        ChartHelper.setLineData(chart, LineData(ds), 500)
         // P6 TICKET-37: TalkBack announces the visible series, not the static XML label.
         chart.contentDescription =
             series + " trend, " + NumberFormatUtil.percent(rows[rows.size - 1].value, 1)

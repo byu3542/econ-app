@@ -1,6 +1,5 @@
 package com.economic.dashboard.ui.fragments
 
-import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -23,6 +22,8 @@ import com.economic.dashboard.ui.MetricPopupController
 import com.economic.dashboard.ui.views.SegmentedView
 import com.economic.dashboard.ui.views.SkeletonController
 import com.economic.dashboard.utils.ChartHelper
+import com.economic.dashboard.utils.AxisDateFormat
+import com.economic.dashboard.utils.ChartPalette
 import com.economic.dashboard.utils.EdgeToEdgeInsets
 import com.economic.dashboard.utils.NumberFormatUtil
 import com.economic.dashboard.utils.RetryChip
@@ -30,7 +31,6 @@ import com.economic.dashboard.utils.SeriesMath
 import com.economic.dashboard.utils.SettingsManager
 import com.economic.dashboard.utils.TimeframeSelector
 import com.github.mikephil.charting.charts.LineChart
-import com.github.mikephil.charting.components.LimitLine
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
@@ -273,8 +273,7 @@ class InflationFragment : Fragment() {
         for (i in pcStart until pceRows.size) {
             val yoy = ((pceRows[i].value - pceRows[i - 12].value) / pceRows[i - 12].value) * 100.0
             pceEntries.add(Entry(pceEntries.size.toFloat(), yoy.toFloat()))
-            val d = pceRows[i].date
-            dates.add(if (d.length >= 7) d.substring(5, 7) + "/" + d.substring(2, 4) else d)
+            dates.add(pceRows[i].date)
         }
 
         val ciStart = Math.max(12, cpiRows.size - months)
@@ -287,17 +286,11 @@ class InflationFragment : Fragment() {
         while (pceEntries.size > cpiEntries.size) pceEntries.removeAt(pceEntries.size - 1)
         while (dates.size > pceEntries.size) dates.removeAt(dates.size - 1)
 
-        chartPceCpi.xAxis.setValueFormatter(object : ValueFormatter() {
-            override fun getFormattedValue(value: Float): String {
-                val idx = value.toInt()
-                return if (idx >= 0 && idx < dates.size) dates[idx] else ""
-            }
-        })
+        AxisDateFormat.attach(chartPceCpi, requireContext(), "inflation", dates) // TICKET-57
 
-        chartPceCpi.setData(LineData(
-            makeLineDataSet(pceEntries, "PCE", "#4285F4"),
-            makeLineDataSet(cpiEntries, "CPI-U", "#fbbc04")))
-        chartPceCpi.invalidate()
+        ChartHelper.setLineData(chartPceCpi, LineData(
+            makeLineDataSet(pceEntries, "PCE", ChartPalette.blue(requireContext())),
+            makeLineDataSet(cpiEntries, "CPI-U", ChartPalette.gold(requireContext()))))
     }
 
     private fun tryBuildComparisonChart() {
@@ -329,7 +322,7 @@ class InflationFragment : Fragment() {
         for (i in cpiRows.indices) {
             val date = cpiRows[i].date
             cpiEntries.add(Entry(i.toFloat(), ((cpiRows[i].value / cpiBase) * 100.0).toFloat()))
-            dates.add(if (date.length >= 7) date.substring(5, 7) + "-" + date.substring(0, 4) else date)
+            dates.add(date)
             for (w in wageRows) {
                 if (w.date == date) {
                     if (wageBase < 0) wageBase = w.value
@@ -344,37 +337,27 @@ class InflationFragment : Fragment() {
             }
         }
 
-        chartComparison.xAxis.setValueFormatter(object : ValueFormatter() {
-            override fun getFormattedValue(value: Float): String {
-                val idx = value.toInt()
-                return if (idx >= 0 && idx < dates.size) dates[idx] else ""
-            }
-        })
+        AxisDateFormat.attach(chartComparison, requireContext(), "inflation", dates) // TICKET-57
 
         val sets = ArrayList<ILineDataSet>()
-        sets.add(makeLineDataSet(cpiEntries, "CPI-U", "#fbbc04"))
-        if (!pceEntries.isEmpty()) sets.add(makeLineDataSet(pceEntries, "PCE", "#4285F4"))
-        sets.add(makeLineDataSet(wageEntries, "Average Wages", "#8A6E9E"))
-        chartComparison.setData(LineData(sets))
-        chartComparison.invalidate()
+        sets.add(makeLineDataSet(cpiEntries, "CPI-U", ChartPalette.gold(requireContext())))
+        if (!pceEntries.isEmpty()) sets.add(makeLineDataSet(pceEntries, "PCE", ChartPalette.blue(requireContext())))
+        sets.add(makeLineDataSet(wageEntries, "Average Wages", ChartPalette.purple(requireContext())))
+        ChartHelper.setLineData(chartComparison, LineData(sets))
     }
 
-    private fun makeLineDataSet(entries: List<Entry>, label: String, hexColor: String): LineDataSet {
+    private fun makeLineDataSet(entries: List<Entry>, label: String, color: Int): LineDataSet {
         val ds = LineDataSet(entries, label)
-        ChartHelper.styleLineSeries(ds, Color.parseColor(hexColor)) // IOS-07
+        ChartHelper.styleLineSeries(ds, color) // IOS-07 / TICKET-57
         // TICKET-08: draw the series name at the line's right end in its colour.
         ChartHelper.labelLineEnd(ds, label)
         return ds
     }
 
     private fun addYoYLimitLines(chart: LineChart) {
-        val target = LimitLine(2.0f, "Fed Target 2%")
-        target.setLineColor(Color.parseColor("#6FA97A")); target.setLineWidth(1f)
-        target.setTextColor(Color.parseColor("#6FA97A")); target.setTextSize(9f); target.enableDashedLine(8f, 4f, 0f)
-        val elevated = LimitLine(3.5f, "Elevated 3.5%")
-        elevated.setLineColor(Color.parseColor("#D98E4F")); elevated.setLineWidth(1f)
-        elevated.setTextColor(Color.parseColor("#D98E4F")); elevated.setTextSize(9f); elevated.enableDashedLine(8f, 4f, 0f)
-        chart.axisLeft.addLimitLine(target); chart.axisLeft.addLimitLine(elevated)
+        // TICKET-57: tier-coloured through ChartPalette (colourblind-aware).
+        ChartHelper.addLimitLine(chart, 2.0f, "Fed Target 2%", BenchmarkStyle.Tier.GOOD)
+        ChartHelper.addLimitLine(chart, 3.5f, "Elevated 3.5%", BenchmarkStyle.Tier.ELEVATED)
         chart.axisLeft.setDrawLimitLinesBehindData(true)
     }
 

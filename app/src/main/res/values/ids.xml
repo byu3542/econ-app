@@ -2,4 +2,7 @@
 <resources>
     <!-- Text-selection "Ask AI" menu item in analyst chat bubbles -->
     <item name="menu_ask_ai" type="id" />
+    <!-- TICKET-57: View tag key ChartHelper.useDirectLabels sets so setLineData
+         keeps the detached legend off for that chart -->
+    <item name="chart_direct_labels" type="id" />
 </resources>

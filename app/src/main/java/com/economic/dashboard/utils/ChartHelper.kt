@@ -8,8 +8,10 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
 
 import com.economic.dashboard.R
+import com.economic.dashboard.ui.BenchmarkStyle
 
 import android.widget.TextView
+import androidx.annotation.ColorInt
 
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.components.Legend
@@ -19,6 +21,7 @@ import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.components.YAxis
 import com.github.mikephil.charting.components.Description
 import com.github.mikephil.charting.data.Entry
+import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.formatter.DefaultAxisValueFormatter
 import com.github.mikephil.charting.formatter.ValueFormatter
@@ -106,6 +109,8 @@ object ChartHelper {
         legend.setTextColor(legendText)
         legend.setForm(Legend.LegendForm.LINE)
         legend.setYOffset(5f)
+        // TICKET-57: off until setLineData sees more than one series.
+        legend.setEnabled(false)
 
         // Loading state
         chart.setNoDataText("Awaiting Economic Data...")
@@ -133,22 +138,56 @@ object ChartHelper {
         noDataTextColor: Int? = null,
         xAxisLineToGrid: Boolean = false
     ) {
+        val ctx: Context = chart.context
         val grid = Color.argb(0x14, 0xFF, 0xFF, 0xFF)
-        chart.setBackgroundColor(Color.parseColor("#1C2236")); chart.setDrawGridBackground(false)
+        // TICKET-57: tokens, not literals — the same navy the badge cards use.
+        chart.setBackgroundColor(ContextCompat.getColor(ctx, R.color.card_navy_badge)); chart.setDrawGridBackground(false)
         chart.setDrawBorders(false); chart.setTouchEnabled(true); chart.setDragEnabled(true)
         chart.setScaleEnabled(true); chart.setPinchZoom(true); chart.description.setEnabled(false)
         chart.setNoDataText(noDataText)
         if (noDataTextColor != null) chart.setNoDataTextColor(noDataTextColor)
         chart.setExtraBottomOffset(8f)
         val x = chart.xAxis
-        x.setPosition(XAxis.XAxisPosition.BOTTOM); x.setTextColor(Color.parseColor("#5A6A8A")); x.setTextSize(9f)
+        x.setPosition(XAxis.XAxisPosition.BOTTOM); x.setTextColor(ChartPalette.slateDim(ctx)); x.setTextSize(9f)
         x.setDrawGridLines(true); x.setGridColor(grid)
         if (xAxisLineToGrid) x.setAxisLineColor(grid)
         x.setLabelRotationAngle(-45f)
         x.setGranularity(1f); x.setLabelCount(6, false); x.setAvoidFirstLastClipping(true)
         val y = chart.axisLeft
-        y.setTextColor(Color.parseColor("#8899BB")); y.setTextSize(10f); y.setDrawGridLines(true); y.setGridColor(grid)
+        y.setTextColor(ChartPalette.slate(ctx)); y.setTextSize(10f); y.setDrawGridLines(true); y.setGridColor(grid)
         chart.axisRight.setEnabled(false)
+        // TICKET-57: one legend look (line swatch, slate, bottom-centre); off
+        // until setLineData sees more than one series.
+        val legend = chart.legend
+        legend.setVerticalAlignment(Legend.LegendVerticalAlignment.BOTTOM)
+        legend.setHorizontalAlignment(Legend.LegendHorizontalAlignment.CENTER)
+        legend.setOrientation(Legend.LegendOrientation.HORIZONTAL)
+        legend.setDrawInside(false)
+        legend.setTextSize(11f)
+        legend.setTextColor(ChartPalette.slate(ctx))
+        legend.setForm(Legend.LegendForm.LINE)
+        legend.setFormSize(16f)
+        legend.setFormLineWidth(2f)
+        legend.setYOffset(5f)
+        legend.setEnabled(false)
+    }
+
+    /**
+     * TICKET-57 — the one way to put data on a line chart. Applies the legend
+     * rule (a detached legend only when there is more than one series and the
+     * chart is not using direct end-of-line labels), optionally animates, and
+     * redraws. Replaces the `setData(); animateX(); invalidate()` triplets the
+     * fragments carried, and the per-fragment `legend.setEnabled(false)` toggles.
+     */
+    @JvmStatic
+    @JvmOverloads
+    fun setLineData(chart: LineChart?, data: LineData, animateMs: Int = 0) {
+        if (chart == null) return
+        chart.setData(data)
+        val direct = chart.getTag(R.id.chart_direct_labels) == true
+        chart.legend.setEnabled(data.getDataSetCount() > 1 && !direct)
+        if (animateMs > 0) chart.animateX(animateMs)
+        chart.invalidate()
     }
 
     /**
@@ -158,11 +197,23 @@ object ChartHelper {
      * accessor pairs are never assumed.
      */
     @JvmStatic
-    fun addLimitLine(chart: LineChart, value: Float, label: String, color: String) {
+    fun addLimitLine(chart: LineChart, value: Float, label: String, @ColorInt color: Int) {
         val l = LimitLine(value, label)
-        l.setLineColor(Color.parseColor(color)); l.setLineWidth(1f)
-        l.setTextColor(Color.parseColor(color)); l.setTextSize(9f); l.enableDashedLine(8f, 4f, 0f)
+        l.setLineColor(color); l.setLineWidth(1f)
+        l.setTextColor(color); l.setTextSize(9f); l.enableDashedLine(8f, 4f, 0f)
         chart.axisLeft.addLimitLine(l)
+    }
+
+    /** TICKET-57: benchmark line coloured by its tier (colourblind-aware). */
+    @JvmStatic
+    fun addLimitLine(chart: LineChart, value: Float, label: String, tier: BenchmarkStyle.Tier) {
+        addLimitLine(chart, value, label, ChartPalette.limit(chart.context, tier))
+    }
+
+    /** TICKET-57: the neutral "normal range" benchmark line, which has no tier. */
+    @JvmStatic
+    fun addNormalLimitLine(chart: LineChart, value: Float, label: String) {
+        addLimitLine(chart, value, label, ChartPalette.limitNormal(chart.context))
     }
 
     /**
@@ -208,6 +259,7 @@ object ChartHelper {
     fun useDirectLabels(chart: LineChart?) {
         if (chart == null) return
         chart.legend.setEnabled(false)
+        chart.setTag(R.id.chart_direct_labels, true) // TICKET-57: setLineData keeps it off
         chart.setExtraRightOffset(40f) // reserve space for the end labels
     }
 
