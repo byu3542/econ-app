@@ -92,7 +92,8 @@
     <string name="indicator_picker_title">Choose an indicator</string>
     <string name="close_glyph">✕</string>
     <string name="check_glyph">✓</string>
-    <string name="customize_hint">Customize which indicators the cards below track</string>
+    <!-- TICKET-58: one-time snackbar; the permanent sentence it replaced is gone -->
+    <string name="hint_edit_cards_once">Tap the pencil to choose which indicators these cards track</string>
     <string name="edit_dashboard_button">Edit cards</string>
     <string name="edit_dashboard_hero_title">Hero card</string>
     <!-- Design branch 2a, direction 1d: drag to reorder, tap to swap -->

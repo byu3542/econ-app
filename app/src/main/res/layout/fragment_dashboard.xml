@@ -43,47 +43,19 @@
                     android:visibility="gone" />
 
                 <!-- Design branch 2a: customizable dashboard — single edit entry
-                     point. Cards themselves keep their original tap (status
-                     detail) / long-press (ask analyst) behavior; this is the
-                     only way to open the indicator picker. -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginBottom="@dimen/space_sm">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/customize_hint"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="@dimen/text_caption" />
-
-                    <TextView
-                        android:id="@+id/btnEditDashboard"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:minHeight="32dp"
-                        android:gravity="center"
-                        android:paddingHorizontal="@dimen/space_md"
-                        android:paddingVertical="@dimen/space_xs"
-                        android:background="@drawable/bg_pill_navy"
-                        android:text="@string/edit_dashboard_button"
-                        android:textColor="@color/accent_gold"
-                        android:textSize="@dimen/text_caption"
-                        android:textStyle="bold"
-                        android:clickable="true"
-                        android:focusable="true" />
-
-                </LinearLayout>
-
+                     point. TICKET-58 moved it out of the scroll content into the
+                     header (activity_main.xml btnEditCards, shown only on
+                     Overview) so the Fed Funds hero is the first thing under
+                     the header. Cards keep their tap (status detail) /
+                     long-press (ask analyst) behavior. -->
                 <include layout="@layout/card_fed_funds_hero" />
 
                 <!-- TICKET-05/06: KPI cards grouped into labelled common regions
                      under the Fed Funds hero. Each cluster holds ≤2 related
-                     metrics so the Overview reads as a few scannable groups. -->
+                     metrics so the Overview reads as a few scannable groups.
+                     TICKET-58: the region is header + gap only (no box), and
+                     both cards in a pair are match_parent tall so they end
+                     together. -->
 
                 <!-- GROUP: Growth & Rates -->
                 <!-- TICKET-25: group header/region ids let the fragment reorder
@@ -97,10 +69,10 @@
                     style="@style/MetricGroupRegion"
                     android:layout_marginBottom="@dimen/space_lg">
                     <include layout="@layout/card_kpi_badge" android:id="@+id/cardGdp"
-                        android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_width="0dp" android:layout_height="match_parent"
                         android:layout_weight="1" android:layout_marginEnd="@dimen/space_sm" />
                     <include layout="@layout/card_kpi_badge" android:id="@+id/cardSpread"
-                        android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_width="0dp" android:layout_height="match_parent"
                         android:layout_weight="1" android:layout_marginStart="@dimen/space_sm" />
                 </LinearLayout>
 
@@ -114,10 +86,10 @@
                     style="@style/MetricGroupRegion"
                     android:layout_marginBottom="@dimen/space_lg">
                     <include layout="@layout/card_kpi_badge" android:id="@+id/cardCpiYoy"
-                        android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_width="0dp" android:layout_height="match_parent"
                         android:layout_weight="1" android:layout_marginEnd="@dimen/space_sm" />
                     <include layout="@layout/card_kpi_badge" android:id="@+id/cardUnemployment"
-                        android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_width="0dp" android:layout_height="match_parent"
                         android:layout_weight="1" android:layout_marginStart="@dimen/space_sm" />
                 </LinearLayout>
 
@@ -131,10 +103,10 @@
                     style="@style/MetricGroupRegion"
                     android:layout_marginBottom="@dimen/space_lg">
                     <include layout="@layout/card_kpi_badge" android:id="@+id/cardMortgage"
-                        android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_width="0dp" android:layout_height="match_parent"
                         android:layout_weight="1" android:layout_marginEnd="@dimen/space_sm" />
                     <include layout="@layout/card_kpi_badge" android:id="@+id/cardVix"
-                        android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_width="0dp" android:layout_height="match_parent"
                         android:layout_weight="1" android:layout_marginStart="@dimen/space_sm" />
                 </LinearLayout>
 

@@ -41,18 +41,25 @@
         android:padding="@dimen/space_lg"
         android:gravity="center">
 
+        <!-- TICKET-58: every row below is a fixed-height slot (label: two caption
+             lines; value: kpi_value_height; sparkline: 20dp; badge and date keep
+             their intrinsic height and go INVISIBLE, never GONE) so two cards in
+             a pair always put their value on the same baseline. -->
+
         <!-- Label: indicator name (gold, all-caps) — R2-TICKET-07 -->
         <TextView
             android:id="@+id/tvMetricLabel"
             style="@style/Card.Overline"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="@dimen/kpi_label_height"
+            android:gravity="bottom|center_horizontal"
+            android:maxLines="2"
             android:text="METRIC" />
 
         <!-- Value + delta vs. previous release -->
         <LinearLayout
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="@dimen/kpi_value_height"
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:layout_marginTop="@dimen/space_xs">
@@ -82,7 +89,7 @@
             android:layout_width="90dp"
             android:layout_height="20dp"
             android:layout_marginTop="@dimen/space_sm"
-            android:visibility="gone"
+            android:visibility="invisible"
             android:importantForAccessibility="no" />
 
         <!-- Status row: colored dot + status word (R2-TICKET-03) -->
@@ -99,6 +106,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text=""
+            android:lines="1"
             android:textColor="@color/text_slate"
             android:textSize="@dimen/text_caption"
             android:layout_marginTop="@dimen/space_hairline" />

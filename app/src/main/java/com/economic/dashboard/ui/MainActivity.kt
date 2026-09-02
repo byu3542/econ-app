@@ -222,6 +222,12 @@ class MainActivity : AppCompatActivity() {
         // openSettings() here would leave the chevron dead (openSettings
         // early-returns while Settings is showing).
         if (!isSettingsShowing()) binding.btnSettings.setOnClickListener { openSettings() }
+        // TICKET-58: header pencil opens the Overview's card editor.
+        binding.btnEditCards.setOnClickListener {
+            (supportFragmentManager.findFragmentByTag("overview") as? DashboardFragment)
+                ?.takeIf { it.isAdded }?.openEditTargetSheet()
+        }
+        updateEditCardsButton()
         observeViewModel()
         // Skip on a theme-toggle/rotation recreate: the ViewModel survives
         // those (ViewModelStore), so its LiveData already holds the current
@@ -271,6 +277,14 @@ class MainActivity : AppCompatActivity() {
         applySettingsChrome()
     }
 
+    /** TICKET-58: the header pencil belongs to Overview only — hidden on every
+     *  other tab and while Settings covers the tab. */
+    private fun updateEditCardsButton() {
+        val onOverview = !isSettingsShowing() &&
+            binding.bottomNav.selectedItemId == R.id.nav_overview
+        binding.btnEditCards.visibility = if (onOverview) View.VISIBLE else View.GONE
+    }
+
     /** Header/nav chrome for the full-screen Settings page — split out of
      *  [openSettings] because an Activity recreate (theme switch, rotation)
      *  restores the fragment via the FragmentManager without running
@@ -287,6 +301,7 @@ class MainActivity : AppCompatActivity() {
         binding.bottomNavWrapper.visibility = View.GONE
         binding.navScrim.visibility = View.GONE
         binding.fabAiAnalyst.visibility = View.GONE
+        binding.btnEditCards.visibility = View.GONE
     }
 
     /** Restores whichever tab bottomNav still has selected and puts the gear
@@ -301,6 +316,7 @@ class MainActivity : AppCompatActivity() {
         binding.bottomNavWrapper.visibility = View.VISIBLE
         binding.navScrim.visibility = View.VISIBLE
         binding.fabAiAnalyst.visibility = View.VISIBLE
+        updateEditCardsButton()
         // If this recreate started inside Settings, the nav was GONE during
         // setupBottomNav() and the indicator was never sized (width was 0).
         binding.bottomNav.doOnLayout { sizeNavIndicator() }
@@ -629,7 +645,10 @@ class MainActivity : AppCompatActivity() {
             // below already relies on to park the indicator under the restored tab.
             // loadFragment() early-returns on a matching tag, so the FragmentManager's
             // own restored fragment is kept rather than replaced with a blank one.
-            binding.bottomNav.post { loadFragmentForNavId(binding.bottomNav.selectedItemId) }
+            binding.bottomNav.post {
+                loadFragmentForNavId(binding.bottomNav.selectedItemId)
+                updateEditCardsButton()
+            }
         }
 
         binding.bottomNav.post {
@@ -650,6 +669,7 @@ class MainActivity : AppCompatActivity() {
                 binding.bottomNavWrapper.visibility = View.VISIBLE
                 binding.navScrim.visibility = View.VISIBLE
                 binding.fabAiAnalyst.visibility = View.VISIBLE
+                binding.btnEditCards.visibility = if (id == R.id.nav_overview) View.VISIBLE else View.GONE
                 if (id == R.id.navigation_news) {
                     markNewsSeen(); clearNewsBadge() // opening News clears the unread badge
                 }
