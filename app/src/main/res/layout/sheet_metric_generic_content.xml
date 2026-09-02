@@ -34,62 +34,15 @@
         android:textSize="@dimen/text_secondary"
         android:gravity="center" />
 
-    <!-- Primary switch: DATA / BENCHMARKS — full-width, filled (mockup 1c).
-         DATA sits left and is the default-active segment. -->
-    <FrameLayout
-        android:id="@+id/switchPrimaryRoot"
+    <!-- Primary switch: DATA / BENCHMARKS — full-width, gold thumb (mockup 1c,
+         TICKET-55). DATA sits left and is the default-active segment. -->
+    <com.economic.dashboard.ui.views.SegmentedView
+        android:id="@+id/switchPrimary"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="@dimen/space_lg">
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:background="@drawable/bg_segmented_track" />
-
-        <View
-            android:id="@+id/switchPrimaryThumb"
-            android:layout_width="0dp"
-            android:layout_height="40dp"
-            android:layout_marginTop="4dp"
-            android:layout_gravity="top|start"
-            android:background="@drawable/bg_segmented_thumb"
-            android:importantForAccessibility="no" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:orientation="horizontal"
-            android:baselineAligned="false">
-
-            <TextView
-                android:id="@+id/tvSegData"
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_weight="1"
-                android:tag="data"
-                android:gravity="center"
-                android:text="@string/str_seg_data"
-                android:textSize="@dimen/text_caption"
-                android:textStyle="bold"
-                android:clickable="true"
-                android:focusable="true" />
-
-            <TextView
-                android:id="@+id/tvSegBenchmarks"
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_weight="1"
-                android:tag="benchmarks"
-                android:gravity="center"
-                android:text="@string/str_seg_benchmarks"
-                android:textSize="@dimen/text_caption"
-                android:textStyle="bold"
-                android:clickable="true"
-                android:focusable="true" />
-
-        </LinearLayout>
-    </FrameLayout>
+        android:layout_marginBottom="@dimen/space_lg"
+        app:segmentLabels="@array/sheet_primary_segment_labels"
+        app:segmentTags="@array/sheet_primary_segment_tags" />
 
     <!-- paneStack: BENCHMARKS and DATA overlaid in the same FrameLayout slot
          (rather than stacked as plain siblings) so the sheet's overall height
@@ -137,60 +90,17 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <FrameLayout
-            android:id="@+id/switchSecondaryRoot"
+        <!-- Secondary switch, subtle emphasis: same 48dp control as the row
+             above, divider-toned thumb so it reads as subordinate (TICKET-55;
+             was 36dp, below the Fitts floor). -->
+        <com.economic.dashboard.ui.views.SegmentedView
+            android:id="@+id/switchSecondary"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/space_md">
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="36dp"
-                android:background="@drawable/bg_segmented_track_subtle" />
-
-            <View
-                android:id="@+id/switchSecondaryThumb"
-                android:layout_width="0dp"
-                android:layout_height="28dp"
-                android:layout_marginTop="4dp"
-                android:layout_gravity="top|start"
-                android:background="@drawable/bg_segmented_thumb_subtle"
-                android:importantForAccessibility="no" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="36dp"
-                android:orientation="horizontal"
-                android:baselineAligned="false">
-
-                <TextView
-                    android:id="@+id/tvSegGraph"
-                    android:layout_width="0dp"
-                    android:layout_height="36dp"
-                    android:layout_weight="1"
-                    android:tag="graph"
-                    android:gravity="center"
-                    android:text="@string/str_seg_graph"
-                    android:textSize="@dimen/text_caption"
-                    android:textStyle="bold"
-                    android:clickable="true"
-                    android:focusable="true" />
-
-                <TextView
-                    android:id="@+id/tvSegTable"
-                    android:layout_width="0dp"
-                    android:layout_height="36dp"
-                    android:layout_weight="1"
-                    android:tag="table"
-                    android:gravity="center"
-                    android:text="@string/str_seg_table"
-                    android:textSize="@dimen/text_caption"
-                    android:textStyle="bold"
-                    android:clickable="true"
-                    android:focusable="true" />
-
-            </LinearLayout>
-        </FrameLayout>
+            android:layout_marginBottom="@dimen/space_md"
+            app:segmentEmphasis="subtle"
+            app:segmentLabels="@array/sheet_secondary_segment_labels"
+            app:segmentTags="@array/sheet_secondary_segment_tags" />
 
         <include layout="@layout/view_timeframe_selector" />
 

@@ -18,7 +18,7 @@ import androidx.transition.Fade
 import androidx.transition.TransitionManager
 import com.economic.dashboard.R
 import com.economic.dashboard.models.EconomicDataPoint
-import com.economic.dashboard.ui.views.BinarySwitch
+import com.economic.dashboard.ui.views.SegmentedView
 import com.economic.dashboard.utils.ChartHelper
 import com.economic.dashboard.utils.TimeframeSelector
 import com.github.mikephil.charting.charts.LineChart
@@ -72,37 +72,33 @@ object MetricPopupController {
         val paneStack: View? = content.findViewById(R.id.paneStack)
         val paneBenchmarks: View? = content.findViewById(R.id.paneBenchmarks)
         val paneData: View? = content.findViewById(R.id.paneData)
-        val primaryThumb: View? = content.findViewById(R.id.switchPrimaryThumb)
-        val segBenchmarks: TextView? = content.findViewById(R.id.tvSegBenchmarks)
-        val segData: TextView? = content.findViewById(R.id.tvSegData)
-        if (primaryThumb != null && segBenchmarks != null && segData != null) {
-            val navy = ContextCompat.getColor(ctx, R.color.header_navy)
-            val secondaryText = ContextCompat.getColor(ctx, R.color.text_secondary)
-            BinarySwitch.attach(primaryThumb, segData, segBenchmarks, "data", navy, secondaryText) { tag ->
+        // TICKET-55: both rows are SegmentedViews. DATA is the default-active
+        // pane in the XML, so select() without a callback is enough here.
+        val switchPrimary: SegmentedView? = content.findViewById(R.id.switchPrimary)
+        if (switchPrimary != null) {
+            switchPrimary.onSelect = SegmentedView.OnSelect { tag ->
                 if (paneStack is android.view.ViewGroup) {
                     TransitionManager.beginDelayedTransition(paneStack, Fade())
                 }
                 setPaneActive(paneBenchmarks, tag == "benchmarks")
                 setPaneActive(paneData, tag == "data")
             }
+            switchPrimary.select("data", animate = false)
         }
 
         val dataPaneStack: View? = content.findViewById(R.id.dataPaneStack)
         val paneTable: View? = content.findViewById(R.id.paneTable)
         val paneGraph: View? = content.findViewById(R.id.paneGraph)
-        val secondaryThumb: View? = content.findViewById(R.id.switchSecondaryThumb)
-        val segTable: TextView? = content.findViewById(R.id.tvSegTable)
-        val segGraph: TextView? = content.findViewById(R.id.tvSegGraph)
-        if (secondaryThumb != null && segTable != null && segGraph != null) {
-            val gold = ContextCompat.getColor(ctx, R.color.sheet_accent)
-            val slate = ContextCompat.getColor(ctx, R.color.sheet_text_secondary)
-            BinarySwitch.attach(secondaryThumb, segGraph, segTable, "graph", gold, slate) { tag ->
+        val switchSecondary: SegmentedView? = content.findViewById(R.id.switchSecondary)
+        if (switchSecondary != null) {
+            switchSecondary.onSelect = SegmentedView.OnSelect { tag ->
                 if (dataPaneStack is android.view.ViewGroup) {
                     TransitionManager.beginDelayedTransition(dataPaneStack, Fade())
                 }
                 setPaneActive(paneTable, tag == "table")
                 setPaneActive(paneGraph, tag == "graph")
             }
+            switchSecondary.select("graph", animate = false)
         }
 
         val rv: RecyclerView? = content.findViewById(R.id.rvMetricHistory)
@@ -129,7 +125,10 @@ object MetricPopupController {
             }
         }
 
-        val tfSelector: LinearLayout? = content.findViewById(R.id.timeframeSelector)
+        val tfSelector: SegmentedView? = content.findViewById(R.id.timeframeSelector)
+        // Third row of the DATA pane: subordinate to DATA / BENCHMARKS, same
+        // weight as GRAPH / TABLE above it (TICKET-55 step 5).
+        tfSelector?.emphasis = SegmentedView.Emphasis.SUBTLE
         TimeframeSelector.attach(tfSelector, spec.chartId) {
             val windowed = EconomicViewModel.filterByTimeframe(ctx, fullHistory, spec.chartId)
             adapter.setData(windowed)
@@ -226,7 +225,7 @@ object MetricPopupController {
 
     /**
      * Shows/hides one pane of an overlaid pair (paneStack or dataPaneStack —
-     * see the comment above their BinarySwitch.attach() calls). Uses
+     * see the comment above their SegmentedView wiring). Uses
      * INVISIBLE rather than GONE so the inactive pane still holds its share
      * of the container's fixed height, but that means it stays in the
      * accessibility tree unless told otherwise — NO_HIDE_DESCENDANTS keeps a

@@ -6,7 +6,6 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.LinearLayout
 import android.widget.TextView
 
 import androidx.cardview.widget.CardView
@@ -21,6 +20,7 @@ import com.economic.dashboard.ui.BenchmarkStyle
 import com.economic.dashboard.ui.Benchmarks
 import com.economic.dashboard.ui.EconomicViewModel
 import com.economic.dashboard.ui.MetricPopupController
+import com.economic.dashboard.ui.views.SegmentedView
 import com.economic.dashboard.ui.views.SkeletonController
 import com.economic.dashboard.utils.ChartHelper
 import com.economic.dashboard.utils.EdgeToEdgeInsets
@@ -128,7 +128,7 @@ class InflationFragment : Fragment() {
         ChartHelper.attachCrosshair(chartComparison)
 
         // TICKET-11: one inline range switcher drives both Inflation charts.
-        val tfSel: LinearLayout? = view.findViewById(R.id.timeframeSelector)
+        val tfSel: SegmentedView? = view.findViewById(R.id.timeframeSelector)
         TimeframeSelector.attach(tfSel, "inflation") {
             buildPceCpiChart(viewModel.getPceData().getValue(), viewModel.getCpiData().getValue())
             tryBuildComparisonChart()
