@@ -316,7 +316,12 @@ class MainActivity : AppCompatActivity() {
         binding.bottomNavWrapper.visibility = View.VISIBLE
         binding.navScrim.visibility = View.VISIBLE
         binding.fabAiAnalyst.visibility = View.VISIBLE
-        updateEditCardsButton()
+        // Not updateEditCardsButton(): loadFragmentForNavId() commits the
+        // replace asynchronously, so isSettingsShowing() is still true here
+        // and the pencil would stay GONE after every Settings round-trip on
+        // Overview. Decide from the nav id, like the item-selected listener.
+        binding.btnEditCards.visibility =
+            if (id == R.id.nav_overview) View.VISIBLE else View.GONE
         // If this recreate started inside Settings, the nav was GONE during
         // setupBottomNav() and the indicator was never sized (width was 0).
         binding.bottomNav.doOnLayout { sizeNavIndicator() }
