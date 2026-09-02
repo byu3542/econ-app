@@ -19,28 +19,53 @@
      Adding a badge to a new screen is one <include> + one applyBadge() call.
      Do NOT copy this row inline and do NOT set textColor/textSize on the word —
      @style/Badge.Status owns that, and scripts/check_badges.sh enforces it.
+
+     TICKET-59: the coloured word is the TIER word (BenchmarkStyle.tierWord —
+     one word per colour, app-wide). The metric-specific reading from
+     Benchmarks ("Recovering", "Losing ground") goes on the tvBadgeDetail line
+     below in sentence case, and that line is GONE when the reading is the
+     tier word itself (every HEALTHY badge). applyBadge fills both.
      ═══════════════════════════════════════════════════════════════════════════ -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:gravity="center_vertical">
+    android:orientation="vertical"
+    android:gravity="center_horizontal">
 
-    <!-- Neutral grey placeholder until BenchmarkStyle.tintDot() supplies the
-         tier colour, so the loading state is identical on every screen. -->
-    <View
-        android:id="@+id/viewTierDot"
-        android:layout_width="@dimen/dot_status"
-        android:layout_height="@dimen/dot_status"
-        android:background="@drawable/dot_neutral"
-        android:layout_marginEnd="@dimen/space_xs"
-        android:importantForAccessibility="no" />
-
-    <TextView
-        android:id="@+id/tvTierStatus"
-        style="@style/Badge.Status"
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="—" />
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <!-- Neutral grey placeholder until BenchmarkStyle.tintDot() supplies the
+             tier colour, so the loading state is identical on every screen. -->
+        <View
+            android:id="@+id/viewTierDot"
+            android:layout_width="@dimen/dot_status"
+            android:layout_height="@dimen/dot_status"
+            android:background="@drawable/dot_neutral"
+            android:layout_marginEnd="@dimen/space_xs"
+            android:importantForAccessibility="no" />
+
+        <TextView
+            android:id="@+id/tvTierStatus"
+            style="@style/Badge.Status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="—" />
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/tvBadgeDetail"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_hairline"
+        android:lines="1"
+        android:ellipsize="end"
+        android:textColor="@color/slate_dim"
+        android:textSize="@dimen/text_caption"
+        android:visibility="gone" />
 
 </LinearLayout>

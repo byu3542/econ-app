@@ -6,6 +6,14 @@ import android.view.ViewGroup
 import android.widget.PopupMenu
 import android.widget.TextView
 
+import com.economic.dashboard.R
+import android.content.res.ColorStateList
+import android.view.Gravity
+import android.widget.FrameLayout
+import android.widget.ImageView
+import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat.AccessibilityActionCompat
 import androidx.fragment.app.FragmentActivity
 
 import com.economic.dashboard.ui.AiAnalystBottomSheet
@@ -83,6 +91,7 @@ object AskAnalyst {
         card: View?, activity: FragmentActivity?, label: String, seriesId: String?
     ) {
         if (card == null || activity == null) return
+        markLongPressable(card)
         card.setOnLongClickListener { v ->
             val menu = PopupMenu(v.context, v)
             // TICKET-P2-8: one marker + name across every analyst door.
@@ -115,6 +124,37 @@ object AskAnalyst {
             true
         }
     }
+
+    /**
+     * TICKET-59: every card wired here shows a 12dp sparkle at 50% alpha in its
+     * top-trailing corner — the same glyph as the analyst FAB — so the
+     * long-press has a visible affordance, and TalkBack names the action
+     * ("double-tap and hold to ask the Econ Analyst"). Cards are CardViews
+     * (FrameLayouts), so the marker is an overlay child; a card re-wired on
+     * refresh keeps its single marker (tag check).
+     */
+    private fun markLongPressable(card: View) {
+        ViewCompat.replaceAccessibilityAction(
+            card, AccessibilityActionCompat.ACTION_LONG_CLICK,
+            card.context.getString(R.string.a11y_ask_analyst), null
+        )
+        if (card !is FrameLayout || card.findViewWithTag<View>(TAG_SPARKLE) != null) return
+        val res = card.resources
+        val size = res.getDimensionPixelSize(R.dimen.icon_sparkle_marker)
+        val margin = res.getDimensionPixelSize(R.dimen.space_sm)
+        val iv = ImageView(card.context)
+        iv.tag = TAG_SPARKLE
+        iv.setImageResource(R.drawable.ic_sparkle_12)
+        iv.imageTintList = ColorStateList.valueOf(
+            ContextCompat.getColor(card.context, R.color.card_white))
+        iv.alpha = 0.5f
+        iv.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+        val lp = FrameLayout.LayoutParams(size, size, Gravity.TOP or Gravity.END)
+        lp.setMargins(margin, margin, margin, margin)
+        card.addView(iv, lp)
+    }
+
+    private const val TAG_SPARKLE = "askAnalystSparkle"
 
     /**
      * Names the pressed card's series so a get_series call in this turn pulls

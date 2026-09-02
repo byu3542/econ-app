@@ -622,8 +622,10 @@ class DashboardFragment : Fragment() {
         if (delta != null && Math.abs(delta) > 1e-9) {
             sb.append(", ").append(DeltaFormatter.spoken(delta, display.deltaFmt))
         }
-        val word = display.tier?.word
-        if (word != null && word.isNotEmpty()) sb.append(", ").append(word)
+        // TICKET-59: spoken badge = tier word + metric reading ("WATCH, recovering").
+        val tier = display.tier
+        val ctx = context
+        if (tier != null && ctx != null) sb.append(", ").append(BenchmarkStyle.spoken(ctx, tier))
         if (display.date.isNotEmpty()) sb.append(", ").append(display.date)
         return sb.toString()
     }

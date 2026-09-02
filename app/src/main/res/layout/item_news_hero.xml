@@ -58,6 +58,16 @@
                 android:textSize="@dimen/text_caption"
                 android:textStyle="bold" />
 
+            <!-- TICKET-59: middle-dot separator, same grammar as the row cards -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="@dimen/space_xs"
+                android:text="@string/news_meta_separator"
+                android:textSize="@dimen/text_caption"
+                android:textColor="@color/text_muted"
+                android:importantForAccessibility="no" />
+
             <TextView
                 android:id="@+id/tv_hero_time"
                 android:layout_width="wrap_content"
@@ -65,14 +75,26 @@
                 android:textSize="@dimen/text_caption"
                 android:textColor="@color/text_muted" />
 
-            <ImageButton
+            <!-- TICKET-59: labelled Analyze chip, see item_news_row.xml -->
+        <TextView
                 android:id="@+id/btn_hero_more"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_marginStart="@dimen/space_xs"
-                android:background="?attr/selectableItemBackgroundBorderless"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minHeight="40dp"
+                android:gravity="center"
+                android:layout_marginStart="@dimen/space_sm"
+                android:paddingHorizontal="@dimen/space_md"
+                android:background="@drawable/bg_pill_navy"
+                android:drawableStart="@drawable/ic_sparkle_12"
+                android:drawableTint="@color/accent_gold"
+                android:drawablePadding="@dimen/space_xs"
+                android:text="@string/news_analyze_chip"
+                android:textColor="@color/accent_gold"
+                android:textSize="@dimen/text_caption"
+                android:textStyle="bold"
                 android:contentDescription="@string/news_more_actions"
-                android:src="@android:drawable/ic_menu_more" />
+                android:clickable="true"
+                android:focusable="true" />
 
         </LinearLayout>
 

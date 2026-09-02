@@ -117,6 +117,20 @@
     <!-- TICKET-P2-8: lowercase verb phrase (TalkBack composes "double-tap and
          hold to …"), but the assistant is named, not called "the AI". -->
     <string name="a11y_ask_analyst">ask the Econ Analyst</string>
+
+    <!-- TICKET-59: one badge word per tier colour, app-wide. Benchmarks.Result.word
+         (the metric-specific reading: "Recovering", "Losing ground") is shown in
+         sentence case on the badge's detail line, never on the coloured badge. -->
+    <string name="tier_word_good">HEALTHY</string>
+    <string name="tier_word_watch">WATCH</string>
+    <string name="tier_word_elevated">ELEVATED</string>
+    <string name="tier_word_alert">ALERT</string>
+    <string name="tier_word_alert_deep">SEVERE</string>
+    <string name="tier_word_imbalance">IMBALANCE</string>
+
+    <!-- TICKET-59: Employment unemployment sub-line (was "12-month low: x% (Rise: +y%)") -->
+    <string name="unemp_at_low">At a 12-month low</string>
+    <string name="unemp_above_low">%1$s above the 12-month low of %2$s</string>
     <string name="refresh_failed">Refresh failed — check your connection</string>
     <string name="refresh_on_open">Refresh data when the app opens</string>
     <string name="refresh_on_open_sub">Uses more data and may take longer to load</string>
@@ -190,7 +204,11 @@
     <string name="news_top_story">Top story</string>
     <string name="news_high_impact">High impact</string>
     <string name="news_medium_impact">Medium impact</string>
-    <string name="news_more_actions">More article actions</string>
+    <!-- TICKET-59: the circled-chevron ImageButton became a labelled chip;
+         news_more_actions is its spoken description, news_analyze_chip its label. -->
+    <string name="news_more_actions">Analyze this article with the Econ Analyst</string>
+    <string name="news_analyze_chip">Analyze</string>
+    <string name="news_meta_separator">·</string>
     <string name="news_featured_image">Featured story image</string>
     <string name="news_analyze">Analyze with Econ Analyst</string>
     <string name="news_open_original">Open original</string>

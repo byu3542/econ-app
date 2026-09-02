@@ -26,6 +26,8 @@
          wrapped label ("10Y-3M SPREAD" at narrow widths) never pushes the value
          row down relative to its pair. -->
     <dimen name="kpi_label_height">28sp</dimen>
+    <!-- TICKET-59: long-press sparkle marker in a card's top-trailing corner -->
+    <dimen name="icon_sparkle_marker">12dp</dimen>
 
     <!-- Spacing (4dp grid) -->
     <dimen name="space_hairline">2dp</dimen>

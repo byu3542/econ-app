@@ -56,6 +56,39 @@ object BenchmarkStyle {
         return ContextCompat.getColor(context, res)
     }
 
+    /**
+     * TICKET-59: the one badge word a tier owns. Six colours, six words, fixed
+     * app-wide, so the dot and the word never disagree about severity.
+     */
+    @JvmStatic
+    fun tierWord(context: Context, tier: Tier): String = context.getString(when (tier) {
+        Tier.GOOD -> R.string.tier_word_good
+        Tier.WATCH -> R.string.tier_word_watch
+        Tier.ELEVATED -> R.string.tier_word_elevated
+        Tier.ALERT -> R.string.tier_word_alert
+        Tier.ALERT_DEEP -> R.string.tier_word_alert_deep
+        Tier.IMBALANCE -> R.string.tier_word_imbalance
+    })
+
+    /**
+     * The metric-specific reading for the badge's detail line ("Recovering",
+     * "Losing ground"), or null when [Benchmarks.Result.word] is already the
+     * tier word (every HEALTHY badge) — nothing to add.
+     */
+    @JvmStatic
+    fun detailWord(context: Context, r: Benchmarks.Result): String? {
+        val w = r.word.trim()
+        if (w.isEmpty() || w.equals(tierWord(context, r.tier), ignoreCase = true)) return null
+        return w.substring(0, 1).uppercase() + w.substring(1).lowercase()
+    }
+
+    /** What TalkBack says for a badge: "WATCH, recovering" or just "HEALTHY". */
+    @JvmStatic
+    fun spoken(context: Context, r: Benchmarks.Result): String {
+        val d = detailWord(context, r) ?: return tierWord(context, r.tier)
+        return tierWord(context, r.tier) + ", " + d.lowercase()
+    }
+
     /** Render a status dot as a filled oval in the tier colour. Centralises dot drawing. */
     @JvmStatic
     fun tintDot(dot: View?, context: Context?, tier: Tier) {
@@ -75,7 +108,15 @@ object BenchmarkStyle {
         if (card == null || r == null) return
         tintDot(card.findViewById(dotId), context, r.tier)
         val tv: TextView? = card.findViewById(statusTextId)
-        if (tv != null) tv.text = r.word
+        // TICKET-59: the coloured word is the tier word; the metric-specific
+        // reading goes to the detail line when the row (view_status_badge) has one.
+        if (tv != null) tv.text = if (context != null) tierWord(context, r.tier) else r.word
+        val detail: TextView? = card.findViewById(R.id.tvBadgeDetail)
+        if (detail != null) {
+            val d = if (context != null) detailWord(context, r) else null
+            detail.text = d ?: ""
+            detail.visibility = if (d == null) View.GONE else View.VISIBLE
+        }
     }
 
     /**
