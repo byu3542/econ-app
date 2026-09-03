@@ -7,6 +7,8 @@ import android.view.ViewGroup
 import android.widget.TextView
 
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat.AccessibilityActionCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 
@@ -91,12 +93,19 @@ class YieldsFragment : Fragment() {
         setupTreasuryRow(row30Y, "30 Year")
         applyZebra()
 
-        // P6 TICKET-35: single-chart screen — the 10Y row (the screen's headline
-        // maturity, and the only one with a fetched history series) opens the
-        // shared "yield10y" popup + Add-alert on any tap.
-        row10Y.setOnClickListener {
-            MetricPopupController.show(requireContext(), viewModel, "yield10y")
-        }
+        // P6 TICKET-35 opened the shared "yield10y" popup from the 10Y row only.
+        // Yield-row popups (2026-09-03): every row opens its own maturity's
+        // popup + Add-alert. Rows take the app's list-row idiom (news, settings,
+        // alert-rule rows): a selectableItemBackground ripple in the layout and
+        // a named TalkBack click action — not the cards' PressFeedback spring,
+        // which scales a full-bleed stripe visibly, and no haptic (same as the
+        // GDP direct-popup card). No long-press: the sparkle marker is
+        // FrameLayout-only and card_white would vanish on the light rows.
+        wireRowPopup(row1M, "yield1m")
+        wireRowPopup(row3M, "yield3m")
+        wireRowPopup(row2Y, "yield2y")
+        wireRowPopup(row10Y, "yield10y")
+        wireRowPopup(row30Y, "yield30y")
 
         viewModel.getTreasuryData().observe(viewLifecycleOwner) { data ->
             if (data != null) {
@@ -149,6 +158,18 @@ class YieldsFragment : Fragment() {
         if (tv != null) tv.text = label
     }
 
+    /** Tap → that maturity's metric popup (benchmarks, history, Add-alert). */
+    private fun wireRowPopup(row: View, popupId: String) {
+        row.setOnClickListener {
+            val ctx = context ?: return@setOnClickListener
+            MetricPopupController.show(ctx, viewModel, popupId)
+        }
+        ViewCompat.replaceAccessibilityAction(
+            row, AccessibilityActionCompat.ACTION_CLICK,
+            getString(R.string.a11y_view_details), null
+        )
+    }
+
     /** Zebra striping — alternate rows get the warm alt background. */
     private fun applyZebra() {
         val rowsInOrder = arrayOf(row1M, row3M, row2Y, row10Y, row30Y)
@@ -176,21 +197,32 @@ class YieldsFragment : Fragment() {
             val p = rows[rows.size - 1]
             if (valView != null) valView.text = NumberFormatUtil.percent(p.value) // TICKET-19
             if (dateView != null) dateView.text = AxisDateFormat.full(p.date) // TICKET-57
+            // Spoken form of the row, built from the same values the row shows
+            // (mirrors DashboardFragment.buildCardDescription): a clickable row
+            // is one TalkBack node, and without this it would read its child
+            // TextViews in order — including the ▲/▼ glyph and true-minus sign.
+            val spoken = StringBuilder(series).append(", ").append(NumberFormatUtil.percent(p.value))
             if (changeView != null && rows.size >= 2) {
                 val bps = (p.value - rows[rows.size - 2].value) * 100.0
                 if (Math.abs(bps) < 0.5) {
                     changeView.text = "—"
                     changeView.setTextColor(ContextCompat.getColor(
                         requireContext(), R.color.text_muted))
+                    spoken.append(", unchanged")
                 } else {
                     changeView.text = DeltaFormatter.format(bps, "%.0fbp")
                     changeView.setTextColor(DeltaFormatter.color(requireContext(), bps, goodWhenDown = true))
+                    spoken.append(", ").append(
+                        DeltaFormatter.spoken(bps, "%.0fbp").replace("bp", " basis points"))
                 }
             }
+            spoken.append(", ").append(AxisDateFormat.full(p.date))
+            row.contentDescription = spoken.toString()
         } else {
             if (valView != null) valView.text = "—"
             if (dateView != null) dateView.text = ""
             if (changeView != null) changeView.text = ""
+            row.contentDescription = "$series, no data"
         }
     }
 
