@@ -53,7 +53,10 @@ class AlertValuesTest {
         nasdaq = pair("Nasdaq Composite Index", 19000.0),
         baaSpread = pair("BAA Corporate Spread", 1.9),
         hySpread = pair("High Yield Spread", 3.1),
-        treasury = pair("10 Year", 4.6) + pair("3 Month", 5.1),
+        treasury = pair("10 Year", 4.6) + pair("3 Month", 5.1) +
+            // Yield-row popups (2026-09-03): the other Yields-table maturities
+            // publish their own alert keys, so the fixture must carry them too.
+            pair("1 Month", 5.2) + pair("2 Year", 4.0) + pair("30 Year", 4.9),
         spread2y = pair("10Y-2Y Spread", 0.45))
 
     // ── the dead-key class (R1, R3, R4) ─────────────────────────────────────

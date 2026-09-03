@@ -9,8 +9,10 @@ import com.economic.dashboard.utils.SeriesMath
  * [MetricPopupController] needs to render that indicator's popup (mockup 1c)
  * generically: no hand-typed dialog XML, no per-indicator Kotlin binding code.
  *
- * `title` delegates to [DashboardIndicatorCatalog.label] so a popup's title can
- * never drift from its Overview slot label. `grade` always calls an existing
+ * For catalog-backed indicators `title` delegates to [DashboardIndicatorCatalog.label]
+ * so a popup's title can never drift from its Overview slot label; leaf-screen-only
+ * specs (`hy`, `baa`, `labor`, the `yield1m`…`yield30y` tenors) carry a literal
+ * title because no Overview slot exists to drift from. `grade` always calls an existing
  * [Benchmarks] function with its already-established cutoffs (TICKET-03) —
  * never a new cutoff invented here.
  */
@@ -243,6 +245,20 @@ object MetricPopupRegistry {
                 BenchmarkBand("VERY HIGH", "5.0% or higher", Tier.ALERT_DEEP)
             )
         ),
+        // Yield-row popups (2026-09-03): the Yields table's other four maturities,
+        // same generic sheet as yield10y. Titles are literals (like "hy"/"baa") —
+        // these are not Overview catalog indicators. Cutoffs are borrowed, never
+        // new: bills (1M, 3M) track the policy rate, so they take the fedfunds
+        // bands; 2Y and 30Y take the 10Y bands. History depth matches yield10y
+        // (the ~30-date Treasury.gov snapshot every treasury spec reads).
+        "yield1m" to treasuryTenor("yield1m", "1M TREASURY YIELD", "1 Month",
+            EconomicViewModel.ALERT_YIELD_1M, shortEnd = true),
+        "yield3m" to treasuryTenor("yield3m", "3M TREASURY YIELD", "3 Month",
+            EconomicViewModel.ALERT_YIELD_3M, shortEnd = true),
+        "yield2y" to treasuryTenor("yield2y", "2Y TREASURY YIELD", "2 Year",
+            EconomicViewModel.ALERT_YIELD_2Y, shortEnd = false),
+        "yield30y" to treasuryTenor("yield30y", "30Y TREASURY YIELD", "30 Year",
+            EconomicViewModel.ALERT_YIELD_30Y, shortEnd = false),
         "corepce" to MetricPopupSpec(
             id = "corepce",
             title = DashboardIndicatorCatalog.label("corepce"),
@@ -434,6 +450,44 @@ object MetricPopupRegistry {
                 BenchmarkBand("DECLINING", "62.0% – 63.3%", Tier.ELEVATED),
                 BenchmarkBand("CRITICAL", "Below 62.0%", Tier.ALERT)
             )
+        )
+    )
+
+    /**
+     * One Treasury maturity, plotted as published from the daily curve snapshot.
+     * [shortEnd] picks the borrowed grader: the fedfunds cutoffs (2.0/4.0/5.5)
+     * for bills, the 10Y cutoffs (3.0/4.0/5.0) for the long end — see the
+     * "fedfunds" and "yield10y" specs above for the precedent of each. A
+     * function, not a val: SPECS is initialised first, so a band-list val
+     * declared below it would still be null when SPECS reads it.
+     */
+    private fun treasuryTenor(
+        id: String, title: String, series: String, alertKey: String, shortEnd: Boolean
+    ): MetricPopupSpec = MetricPopupSpec(
+        id = id,
+        title = title,
+        alertSeriesKey = alertKey,
+        valueFmt = "%.2f%%",
+        deltaFmt = "%.2f",
+        goodWhenDown = true,
+        chartId = "popup_$id",
+        history = { vm -> EconomicViewModel.filterBySeries(vm.getTreasuryData().value, series) },
+        grade = { rows ->
+            rows.lastOrNull()?.let {
+                if (shortEnd) Benchmarks.rateBadge(it.value, 2.0, 4.0, 5.5)
+                else Benchmarks.rateBadge(it.value, 3.0, 4.0, 5.0)
+            }
+        },
+        bands = if (shortEnd) listOf(
+            BenchmarkBand("HEALTHY", "Below 2.0%", Tier.GOOD),
+            BenchmarkBand("MODERATE", "2.0% – 4.0%", Tier.ELEVATED),
+            BenchmarkBand("HIGH", "4.0% – 5.5%", Tier.ALERT),
+            BenchmarkBand("VERY HIGH", "5.5% or higher", Tier.ALERT_DEEP)
+        ) else listOf(
+            BenchmarkBand("HEALTHY", "Below 3.0%", Tier.GOOD),
+            BenchmarkBand("MODERATE", "3.0% – 4.0%", Tier.ELEVATED),
+            BenchmarkBand("HIGH", "4.0% – 5.0%", Tier.ALERT),
+            BenchmarkBand("VERY HIGH", "5.0% or higher", Tier.ALERT_DEEP)
         )
     )
 

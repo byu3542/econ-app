@@ -560,6 +560,13 @@ class EconomicViewModel(application: Application) : AndroidViewModel(application
         // Housing mortgage-10Y spread.
         const val ALERT_SPREAD_2Y = "spread_10y2y"
         const val ALERT_MORTGAGE_SPREAD = "mortgage_spread"
+        // Yield-row popups (2026-09-03): alert keys for the Yields table's other
+        // maturities. CACHE_TREASURY stays the 10Y key so existing 10Y rules keep
+        // evaluating; a 2Y rule saved from the 2Y popup must never grade 10Y.
+        const val ALERT_YIELD_1M = "yield_1m"
+        const val ALERT_YIELD_3M = "yield_3m"
+        const val ALERT_YIELD_2Y = "yield_2y"
+        const val ALERT_YIELD_30Y = "yield_30y"
 
         // Latest-value/YoY helpers formerly here moved to alerts/AlertValues.kt
         // (review fix): the alert key → value contract is now pure and JVM-tested.

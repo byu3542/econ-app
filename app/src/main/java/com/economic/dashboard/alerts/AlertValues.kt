@@ -69,6 +69,12 @@ object AlertValues {
             lastValue(SeriesMath.tenYearMinusThreeMonthSpread(
                 filter(treasury, "10 Year"), filter(treasury, "3 Month"))))
         putIfPresent(latest, EconomicViewModel.CACHE_TREASURY, latestOf(treasury, "10 Year"))
+        // Yield-row popups: each maturity popup plots filterBySeries(treasury, <tenor>)
+        // as published, so its alert evaluates the same latest print.
+        putIfPresent(latest, EconomicViewModel.ALERT_YIELD_1M, latestOf(treasury, "1 Month"))
+        putIfPresent(latest, EconomicViewModel.ALERT_YIELD_3M, latestOf(treasury, "3 Month"))
+        putIfPresent(latest, EconomicViewModel.ALERT_YIELD_2Y, latestOf(treasury, "2 Year"))
+        putIfPresent(latest, EconomicViewModel.ALERT_YIELD_30Y, latestOf(treasury, "30 Year"))
         putIfPresent(latest, EconomicViewModel.ALERT_SPREAD_2Y, lastValue(spread2y))
         putIfPresent(latest, EconomicViewModel.ALERT_MORTGAGE_SPREAD,
             lastValue(SeriesMath.mortgageMinusTenYearSpread(
