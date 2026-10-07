@@ -42,6 +42,9 @@ import com.economic.dashboard.database.YieldDatabase
 import com.economic.dashboard.models.ChatChart
 import com.economic.dashboard.models.ChatMessage
 import com.economic.dashboard.models.EconomicDataPoint
+import com.economic.dashboard.models.TurnSource
+import com.economic.dashboard.news.NewsAdapter
+import com.economic.dashboard.ui.views.SourceStackView
 import com.economic.dashboard.utils.AppExecutors
 import com.economic.dashboard.utils.MotionUtil
 import com.economic.dashboard.views.SparklineView
@@ -75,6 +78,10 @@ class ChatAdapter(
          *  known metric name — the host injects that metric's snapshot value +
          *  screen context and asks concisely, mirroring a card long-press. */
         fun onAskAiMetric(metricName: String)
+
+        /** MOT-04: a series row in the sources stack was tapped — open that
+         *  metric's popup. */
+        fun onOpenMetricPopup(popupId: String)
     }
 
     private val messages = ArrayList<ChatMessage>()
@@ -111,6 +118,48 @@ class ChatAdapter(
         if (index < 0 || index >= messages.size) return
         messages[index].charts = charts
         notifyItemChanged(index, PAYLOAD_CHARTS)
+    }
+
+    /** MOT-04: the turn finished — attach the sources its tools read and
+     *  redraw only the stack, closed. */
+    fun updateMessageSources(index: Int, sources: List<TurnSource>) {
+        if (index < 0 || index >= messages.size) return
+        val m = messages[index]
+        m.sources = sources
+        m.sourcesExpanded = false
+        notifyItemChanged(index, PAYLOAD_SOURCES)
+    }
+
+    /** MOT-04: binds the sources stack. [toggled] animates an open/close of
+     *  the already-bound stack; otherwise it is a full bind with no motion. */
+    private fun bindSources(holder: ViewHolder, m: ChatMessage, toggled: Boolean) {
+        val stack = holder.sourceStack
+        if (m.isUser || m.isError || m.isTrace || m.isTyping || m.sources.isEmpty()) {
+            stack.clear()
+            return
+        }
+        if (toggled) {
+            stack.setExpanded(m.sourcesExpanded, holder.itemView as ViewGroup)
+            return
+        }
+        stack.bind(m.sources, m.sourcesExpanded)
+        stack.onToggle = {
+            val pos = holder.bindingAdapterPosition
+            if (pos != RecyclerView.NO_POSITION) {
+                val msg = messages[pos]
+                msg.sourcesExpanded = !msg.sourcesExpanded
+                notifyItemChanged(pos, PAYLOAD_SOURCES_TOGGLE)
+            }
+        }
+        stack.onOpen = { s ->
+            when (s.kind) {
+                TurnSource.Kind.SERIES ->
+                    s.seriesId?.let { MetricPopupRegistry.popupIdForSeries(it) }
+                        ?.let { actionListener?.onOpenMetricPopup(it) }
+                TurnSource.Kind.HEADLINE ->
+                    s.url?.let { NewsAdapter.openArticle(stack.context, it) }
+            }
+        }
     }
 
     fun getLastIndex(): Int = messages.size - 1
@@ -443,25 +492,31 @@ class ChatAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int, payloads: List<Any>) {
-        if (payloads.contains(PAYLOAD_TEXT)) {
+        if (payloads.isEmpty()) {
+            super.onBindViewHolder(holder, position, payloads)
+            return
+        }
+        // MOT-04: handle every payload present, not just the first —
+        // finalizeTurn sends TEXT + CHARTS + SOURCES in the same frame.
+        val m = messages[position]
+        val text = payloads.contains(PAYLOAD_TEXT)
+        if (text) {
             // Streaming update: swap the text only — no full rebind, no flicker.
             ensureMarkwon(holder.itemView.context)
-            renderText(holder, messages[position])
-            bindCharts(holder, messages[position])
-            return
+            renderText(holder, m)
+            bindCharts(holder, m)
         }
         if (payloads.contains(PAYLOAD_TRACE)) {
             // MOT-02: state change on the trace row — animate the collapse.
-            bindTrace(holder, messages[position], true)
-            return
+            bindTrace(holder, m, true)
         }
-        if (payloads.contains(PAYLOAD_CHARTS)) {
+        if (!text && payloads.contains(PAYLOAD_CHARTS)) {
             // A render_chart landed mid-stream: draw it without touching the
             // text, so the prose keeps streaming uninterrupted.
-            bindCharts(holder, messages[position])
-            return
+            bindCharts(holder, m)
         }
-        super.onBindViewHolder(holder, position, payloads)
+        if (payloads.contains(PAYLOAD_SOURCES)) bindSources(holder, m, false)
+        else if (payloads.contains(PAYLOAD_SOURCES_TOGGLE)) bindSources(holder, m, true)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
@@ -494,6 +549,7 @@ class ChatAdapter(
         }
 
         bindCharts(holder, m)
+        bindSources(holder, m, false) // MOT-04
 
         // Attached image (vision messages) — transient, shown only this session
         val bitmap = m.imageBitmap
@@ -740,6 +796,7 @@ class ChatAdapter(
         super.onViewRecycled(holder)
         stopDancingDots(holder)
         holder.shimmerTrace.stopShimmer() // MOT-02
+        holder.sourceStack.cancelMotion() // MOT-04
     }
 
     override fun getItemCount(): Int = messages.size
@@ -763,6 +820,8 @@ class ChatAdapter(
         val shimmerTrace: ShimmerFrameLayout = v.findViewById(R.id.shimmerTrace)
         val tvTraceLabel: TextView = v.findViewById(R.id.tvTraceLabel)
         val llTraceSteps: LinearLayout = v.findViewById(R.id.llTraceSteps)
+        // MOT-04: sources the turn's tools read
+        val sourceStack: SourceStackView = v.findViewById(R.id.sourceStack)
 
         /** Recycling guard for async chart loads (TICKET-P2-2): bumped on every
          *  bindCharts, checked when a background load posts back. Replaces the
@@ -785,6 +844,10 @@ class ChatAdapter(
 
         /** MOT-02: partial-bind payload — only the trace row's state changed. */
         private val PAYLOAD_TRACE = Any()
+
+        /** MOT-04: sources attached (full stack bind) / stack opened or closed. */
+        private val PAYLOAD_SOURCES = Any()
+        private val PAYLOAD_SOURCES_TOGGLE = Any()
         private const val MAX_TRACE_STEPS = 3
         private const val TRACE_COLLAPSE_MS = 220L
 
