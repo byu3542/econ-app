@@ -243,7 +243,7 @@ class SettingsFragment : Fragment() {
                 val name = c.packageManager.getPackageInfo(c.packageName, 0).versionName
                 getString(R.string.about_version_label, name)
             } catch (e: Exception) {
-                "Econ Monitor"
+                "Economi"
             }
             else -> ""
         }
@@ -523,7 +523,7 @@ class SettingsFragment : Fragment() {
                 .getPackageInfo(requireContext().packageName, 0).versionName
             tvVersion.text = getString(R.string.about_version_label, name)
         } catch (e: Exception) {
-            tvVersion.text = "Econ Monitor"
+            tvVersion.text = "Economi"
         }
     }
 

@@ -539,7 +539,7 @@
                     <TextView
                         android:id="@+id/tvVersion"
                         style="@style/SettingsRowSub"
-                        android:text="Econ Monitor"/>
+                        android:text="Economi"/>
 
                     <TextView
                         style="@style/SettingsRowSub"
