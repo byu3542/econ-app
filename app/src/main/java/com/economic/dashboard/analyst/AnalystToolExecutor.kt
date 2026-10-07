@@ -248,9 +248,13 @@ object AnalystToolExecutor {
      * cold cache, no matching headlines), so a failed lookup never earns a
      * badge.
      */
-    class ToolOutcome(
+    class ToolOutcome @JvmOverloads constructor(
         @JvmField val text: String,
-        @JvmField val sources: List<TurnSource>
+        @JvmField val sources: List<TurnSource>,
+        /** MOT-05: the call itself failed (bad id, unknown tool, exception) —
+         *  its trace row shows a red cross. An honest empty result ("no
+         *  headlines match") is not a failure: the lookup worked. */
+        @JvmField val failed: Boolean = false
     )
 
     /** Runs one tool call; returns the text payload for the tool_result block. */
@@ -269,15 +273,35 @@ object AnalystToolExecutor {
                 // keep the resolved ChatChart; this branch serves the non-streamed
                 // fallback in handleJsonResponse, where the chart is lost but the
                 // model still gets a coherent, non-retrying answer.
-                RENDER_CHART -> noSource(renderChart(input).message)
-                else -> noSource("Unknown tool: " + name)
+                RENDER_CHART -> renderChart(input).let { ToolOutcome(it.message, emptyList(), it.chart == null) }
+                else -> failedCall("Unknown tool: " + name)
             }
         } catch (e: Exception) {
-            noSource("Tool error: " + e.message)
+            failedCall("Tool error: " + e.message)
         }
     }
 
     private fun noSource(text: String) = ToolOutcome(text, emptyList())
+
+    /** MOT-05: no data AND the call itself went wrong. */
+    private fun failedCall(text: String) = ToolOutcome(text, emptyList(), true)
+
+    /**
+     * MOT-05: the human label for a tool call's trace row. [input] is null
+     * while the call's arguments are still streaming, so `get_series` reads
+     * "Pull data" until its series id is known.
+     */
+    @JvmStatic
+    fun stepLabel(name: String, input: JSONObject?): String = when (name) {
+        "get_series" -> {
+            val id = input?.optString("series_id", "") ?: ""
+            if (id.isEmpty()) "Pull data"
+            else "Pull " + (EconomicSeriesRegistry.byId(id)?.chartLabel ?: LIVE_SERIES[id] ?: id)
+        }
+        "get_headlines" -> "Check headlines"
+        RENDER_CHART -> "Drawing chart"
+        else -> "Calling $name…"
+    }
 
     /** MOT-04: a get_series result that carried points. */
     private fun fetchedSeries(seriesId: String, text: String) =
@@ -306,7 +330,7 @@ object AnalystToolExecutor {
         if (LIVE_SERIES.containsKey(seriesId)) return getLiveSeries(seriesId, months)
 
         // AI Law 16: be honest about limits instead of inviting a retry loop.
-        return noSource("Invalid series_id: " + seriesId + ". No such series is available — do not " +
+        return failedCall("Invalid series_id: " + seriesId + ". No such series is available — do not " +
             "retry; answer from the data snapshot in the system prompt instead.")
     }
 

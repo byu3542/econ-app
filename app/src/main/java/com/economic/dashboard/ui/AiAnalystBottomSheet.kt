@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.text.Editable
 import android.util.Log
 import android.text.TextWatcher
@@ -39,11 +40,13 @@ import com.economic.dashboard.databinding.DialogAiChatBinding
 import com.economic.dashboard.models.ChatChart
 import com.economic.dashboard.models.ChatMessage
 import com.economic.dashboard.models.EconomicDataPoint
+import com.economic.dashboard.models.TraceStep
 import com.economic.dashboard.models.TurnSources
 import com.economic.dashboard.news.NewsItem
 import com.economic.dashboard.news.NewsRepository
 import com.economic.dashboard.ui.views.CentreOutStagger
 import com.economic.dashboard.utils.AppExecutors
+import com.economic.dashboard.utils.HapticUtil
 import com.economic.dashboard.utils.ImageUtils
 import com.economic.dashboard.utils.SettingsManager
 import com.economic.dashboard.utils.markDestructive
@@ -622,8 +625,34 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
         // MOT-02 backstop: every exit path (success, error, cancel) lands here,
         // so the trace can never be left "Thinking". Success paths finish it
         // first with "Thought"; anything still running here was cut short.
-        if (activity != null) chatAdapter().finishTrace("Stopped")
+        if (activity != null) {
+            chatAdapter().finishTrace("Stopped")
+            // MOT-05: same backstop for the step list — a running step was cut
+            // short and becomes failed. No-op after a successful close.
+            chatAdapter().closeTraceTurn(false)
+        }
     }
+
+    /**
+     * MOT-05: closes the turn's step list after a successful answer, and fires
+     * the one confirm haptic for a multi-step turn. Fired here, not when a
+     * step ticks: the last step is only knowable once the turn is over.
+     */
+    private fun closeTurnSuccessfully() {
+        if (chatAdapter().closeTraceTurn(true)) HapticUtil.confirm(binding?.rvChat)
+    }
+
+    /** MOT-05: posts a step's state (and duration) from the tool thread. */
+    private fun markStep(id: String, state: TraceStep.State, durationMs: Long = -1L) {
+        runOnUi {
+            if (binding == null) return@runOnUi
+            chatAdapter().updateTraceStep(id, state, durationMs = durationMs)
+        }
+    }
+
+    /** A streamed tool call's accumulated input; `{}` when malformed. */
+    private fun parseToolInput(tb: ToolUseBlock): JSONObject =
+        try { JSONObject(tb.inputJson.toString()) } catch (e: Exception) { JSONObject() }
 
     /** Autoscrolls only when the user is already near the bottom; otherwise shows the pill. */
     private fun maybeScrollToBottom(force: Boolean) {
@@ -1036,6 +1065,9 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
                         ) {
                             st.retryAttempts++
                             st.acc.setLength(accLenAtSend)
+                            // MOT-05: the retry re-announces this round's calls
+                            // under new ids; drop the never-run originals.
+                            runOnUi { if (binding != null) chatAdapter().dropPendingTraceSteps() }
                             retryHandler.postDelayed(
                                 { if (isAdded) sendTurn(messages, systemPrompt, committedQuery, st, depth) },
                                 1200)
@@ -1123,11 +1155,25 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
                     tb.id = block.optString("id")
                     tb.name = block.optString("name")
                     toolBlocks[evt.optInt("index")] = tb
-                    // MOT-02: show the tool call as a step under "Thinking".
-                    val step = "Calling " + tb.name + "…"
+                    // MOT-02/MOT-05: the call becomes a pending step, keyed by
+                    // its tool_use id. Its arguments haven't streamed yet, so
+                    // the label is name-only until content_block_stop.
+                    val id = tb.id
+                    val step = AnalystToolExecutor.stepLabel(tb.name, null)
                     runOnUi {
                         if (binding == null) return@runOnUi
-                        chatAdapter().addTraceStep(step)
+                        chatAdapter().addTraceStep(id, step)
+                    }
+                }
+            } else if ("content_block_stop" == type) {
+                // MOT-05: the call's input is complete — name the series.
+                val tb = toolBlocks[evt.optInt("index")]
+                if (tb != null) {
+                    val id = tb.id
+                    val label = AnalystToolExecutor.stepLabel(tb.name, parseToolInput(tb))
+                    runOnUi {
+                        if (binding == null) return@runOnUi
+                        chatAdapter().updateTraceStep(id, label = label)
                     }
                 }
             } else if ("content_block_delta" == type) {
@@ -1218,13 +1264,16 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
                 val toolResults = JSONArray()
                 var chartsChanged = false
                 for (tb in toolBlocks.values) {
-                    var input: JSONObject
-                    try { input = JSONObject(tb.inputJson.toString()) }
-                    catch (e: Exception) { input = JSONObject() }
+                    val input = parseToolInput(tb)
                     assistantContent.put(JSONObject()
                         .put("type", "tool_use").put("id", tb.id)
                         .put("name", tb.name).put("input", input))
                     val result: String
+                    // MOT-05: running now; timed around the call itself.
+                    val stepId = tb.id
+                    markStep(stepId, TraceStep.State.RUNNING)
+                    val t0 = SystemClock.elapsedRealtime()
+                    val failed: Boolean
                     if (AnalystToolExecutor.RENDER_CHART == tb.name) {
                         // Intercepted (not routed through execute()) so the
                         // resolved ChatChart survives — the app draws from its
@@ -1233,12 +1282,17 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
                         val chart = outcome.chart
                         if (chart != null) { st.charts.add(chart); chartsChanged = true }
                         result = outcome.message
+                        failed = chart == null
                     } else {
                         // MOT-04: keep what the call fetched for the sources stack.
                         val outcome = AnalystToolExecutor.executeWithSources(appCtx, tb.name, input)
                         st.sources.addAll(outcome.sources)
                         result = outcome.text
+                        failed = outcome.failed
                     }
+                    markStep(stepId,
+                        if (failed) TraceStep.State.FAILED else TraceStep.State.DONE,
+                        SystemClock.elapsedRealtime() - t0)
                     toolResults.put(JSONObject()
                         .put("type", "tool_result")
                         .put("tool_use_id", tb.id)
@@ -1379,6 +1433,7 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
         persisted.sources = st.sources.snapshot()
         runOnUi {
             chatAdapter().finishTrace("Thought") // MOT-02: success, not "Stopped"
+            closeTurnSuccessfully() // MOT-05
             requestFinished()
             // If no delta ever arrived on-screen (edge case), add the bubble now.
             if (st.streamIdx < 0) {
@@ -1529,8 +1584,22 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
                         // turn the NPE into "Tool error: ..."; an empty object
                         // reaches the same error path with a clearer message and is
                         // what the streamed path above already substitutes.
-                        val outcome = AnalystToolExecutor.executeWithSources(appCtx,
-                            block.optString("name"), block.optJSONObject("input") ?: JSONObject())
+                        val name = block.optString("name")
+                        val input = block.optJSONObject("input") ?: JSONObject()
+                        // MOT-05: no content_block_start on this path, so the
+                        // step is added here, already knowing its input.
+                        val stepId = block.optString("id")
+                        val label = AnalystToolExecutor.stepLabel(name, input)
+                        runOnUi {
+                            if (binding == null) return@runOnUi
+                            chatAdapter().addTraceStep(stepId, label)
+                        }
+                        markStep(stepId, TraceStep.State.RUNNING)
+                        val t0 = SystemClock.elapsedRealtime()
+                        val outcome = AnalystToolExecutor.executeWithSources(appCtx, name, input)
+                        markStep(stepId,
+                            if (outcome.failed) TraceStep.State.FAILED else TraceStep.State.DONE,
+                            SystemClock.elapsedRealtime() - t0)
                         st.sources.addAll(outcome.sources) // MOT-04
                         toolResults.put(JSONObject()
                             .put("type", "tool_result")
@@ -1573,6 +1642,7 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
         msg.sources = st.sources.snapshot() // MOT-04
         runOnUi {
             chatAdapter().finishTrace("Thought") // MOT-02: success, not "Stopped"
+            closeTurnSuccessfully() // MOT-05
             requestFinished()
             chatAdapter().removeTypingIndicator()
             // ChatMessage is Kotlin (batch 3), so `text` is a property here —

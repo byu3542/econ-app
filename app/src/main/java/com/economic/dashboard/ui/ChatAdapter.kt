@@ -33,6 +33,8 @@ import android.widget.Toast
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
+import androidx.dynamicanimation.animation.DynamicAnimation
+import androidx.dynamicanimation.animation.SpringAnimation
 import androidx.recyclerview.widget.RecyclerView
 import com.economic.dashboard.R
 import com.economic.dashboard.analyst.AnalystIdentity
@@ -42,9 +44,11 @@ import com.economic.dashboard.database.YieldDatabase
 import com.economic.dashboard.models.ChatChart
 import com.economic.dashboard.models.ChatMessage
 import com.economic.dashboard.models.EconomicDataPoint
+import com.economic.dashboard.models.TraceStep
 import com.economic.dashboard.models.TurnSource
 import com.economic.dashboard.news.NewsAdapter
 import com.economic.dashboard.ui.views.SourceStackView
+import com.economic.dashboard.ui.views.StepStatusView
 import com.economic.dashboard.utils.AppExecutors
 import com.economic.dashboard.utils.MotionUtil
 import com.economic.dashboard.views.SparklineView
@@ -184,6 +188,7 @@ class ChatAdapter(
         val t = ChatMessage("", false)
         t.isTrace = true
         t.traceStartMs = startMs
+        t.traceTurnOpen = true // MOT-05
         addMessage(t)
     }
 
@@ -194,14 +199,78 @@ class ChatAdapter(
         return -1
     }
 
-    /** Appends a step line ("Calling get_series…") under the running trace. */
-    fun addTraceStep(step: String) {
-        val i = runningTraceIndex()
+    /**
+     * MOT-05: the trace of the turn still in flight. Unlike [runningTraceIndex]
+     * this survives first output, so tool rounds after the answer has started
+     * still land as rows in the (collapsed) trace.
+     */
+    private fun openTraceIndex(): Int {
+        for (i in messages.indices.reversed()) {
+            val m = messages[i]
+            if (m.isTrace && m.traceTurnOpen) return i
+        }
+        return -1
+    }
+
+    /** MOT-05: adds a pending step for tool call [id] to this turn's trace. */
+    fun addTraceStep(id: String, label: String) {
+        val i = openTraceIndex()
         if (i < 0) return
         val steps = messages[i].traceSteps
-        steps.add(step)
-        while (steps.size > MAX_TRACE_STEPS) steps.removeAt(0)
+        if (steps.size >= MAX_TRACE_STEPS || steps.any { it.id == id }) return
+        steps.add(TraceStep(id, label))
         notifyItemChanged(i, PAYLOAD_TRACE)
+    }
+
+    /**
+     * MOT-05: changes step [id]'s state, label and/or duration. Matched by
+     * tool_use id. A no-op once the turn is closed, so a tool that finishes
+     * after Stop cannot repaint a closed trace.
+     */
+    fun updateTraceStep(
+        id: String, state: TraceStep.State? = null,
+        label: String? = null, durationMs: Long = -1L
+    ) {
+        val i = openTraceIndex()
+        if (i < 0) return
+        val s = messages[i].traceSteps.firstOrNull { it.id == id } ?: return
+        if (state != null) s.state = state
+        if (label != null) s.label = label
+        if (durationMs >= 0) s.durationMs = durationMs
+        notifyItemChanged(i, PAYLOAD_TRACE)
+    }
+
+    /**
+     * MOT-05: a round is being re-streamed after a mid-stream failure. Its
+     * steps never ran and the retry re-announces them under new ids, so drop
+     * them instead of leaving orphans pending.
+     */
+    fun dropPendingTraceSteps() {
+        val i = openTraceIndex()
+        if (i < 0) return
+        if (messages[i].traceSteps.removeAll { it.state == TraceStep.State.PENDING })
+            notifyItemChanged(i, PAYLOAD_TRACE)
+    }
+
+    /**
+     * MOT-05: ends the turn's step list. A step still running was cut short
+     * (Stop or error) and becomes failed; a step still pending never ran (past
+     * the depth cap, or never reached) and is removed rather than shown as an
+     * error. Only now does the label gain " · K steps". Idempotent.
+     *
+     * Returns true when a successful multi-step turn just closed — the caller
+     * fires the one confirm haptic.
+     */
+    fun closeTraceTurn(success: Boolean): Boolean {
+        val i = openTraceIndex()
+        if (i < 0) return false
+        val m = messages[i]
+        m.traceTurnOpen = false
+        m.traceSteps.removeAll { it.state == TraceStep.State.PENDING }
+        for (s in m.traceSteps)
+            if (s.state == TraceStep.State.RUNNING) s.state = TraceStep.State.FAILED
+        notifyItemChanged(i, PAYLOAD_TRACE)
+        return success && m.traceSteps.size >= CHECKLIST_MIN_STEPS
     }
 
     /**
@@ -221,29 +290,25 @@ class ChatAdapter(
 
     private fun bindTrace(holder: ViewHolder, m: ChatMessage, animate: Boolean) {
         val motion = MotionUtil.animationsEnabled(holder.itemView.context)
-        if (animate && motion) {
+        val running = m.traceElapsedMs < 0
+        val hasSteps = m.traceSteps.isNotEmpty()
+        val stepsVisible = hasSteps && (running || m.traceExpanded)
+        val steps = holder.llTraceSteps
+        // MOT-05: only a collapse/expand gets the AutoTransition. Row state
+        // changes arrive many times a turn and animate themselves; a 220ms
+        // transition on each would fight the row springs.
+        if (animate && motion && (steps.visibility == View.VISIBLE) != stepsVisible) {
             TransitionManager.beginDelayedTransition(
                 holder.itemView as ViewGroup, AutoTransition().setDuration(TRACE_COLLAPSE_MS))
         }
-        val running = m.traceElapsedMs < 0
-        holder.tvTraceLabel.text = if (running) "Thinking"
-            else String.format(Locale.US, "%s for %.1fs", m.traceVerb, m.traceElapsedMs / 1000.0)
+        holder.tvTraceLabel.text = traceLabel(m)
         // Bound to stream state only: runs exactly while the trace is running.
         if (running && motion) holder.shimmerTrace.startShimmer()
         else holder.shimmerTrace.stopShimmer()
 
-        val steps = holder.llTraceSteps
-        steps.removeAllViews()
-        for (s in m.traceSteps) {
-            val tv = TextView(steps.context)
-            tv.text = s
-            tv.setTextColor(ContextCompat.getColor(steps.context, R.color.text_muted))
-            tv.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX,
-                steps.resources.getDimension(R.dimen.text_caption))
-            steps.addView(tv)
-        }
-        val hasSteps = m.traceSteps.isNotEmpty()
-        steps.visibility = if (hasSteps && (running || m.traceExpanded)) View.VISIBLE else View.GONE
+        // Collapsed rows (later tool rounds) update silently: no spin out of sight.
+        bindTraceSteps(steps, m.traceSteps, motion && stepsVisible, animate && stepsVisible)
+        steps.visibility = if (stepsVisible) View.VISIBLE else View.GONE
         holder.tvTraceChevron.visibility = if (hasSteps && !running) View.VISIBLE else View.GONE
         holder.tvTraceChevron.rotation = if (m.traceExpanded) 0f else -90f
         if (hasSteps && !running) {
@@ -257,6 +322,134 @@ class ChatAdapter(
             holder.traceRow.setOnClickListener(null)
             holder.traceRow.isClickable = false
         }
+    }
+
+    /**
+     * "Thinking" while running; "Thought for N.Ns" / "Stopped after N.Ns" once
+     * finished. MOT-05: " · K steps" only after the turn closes — the model
+     * reveals each call as it makes it, so no total is known before then.
+     */
+    private fun traceLabel(m: ChatMessage): String {
+        if (m.traceElapsedMs < 0) return "Thinking"
+        val joiner = if (m.traceVerb == "Stopped") "after" else "for"
+        val base = String.format(Locale.US, "%s %s %.1fs", m.traceVerb, joiner, m.traceElapsedMs / 1000.0)
+        val k = m.traceSteps.size
+        return if (!m.traceTurnOpen && k >= CHECKLIST_MIN_STEPS) "$base · $k steps" else base
+    }
+
+    /**
+     * MOT-05: reconciles the step rows in place, keyed by tool_use id (the
+     * row's tag), so a state change never rebuilds the list — spinners keep
+     * spinning and only genuinely new rows spring in. With fewer than
+     * [CHECKLIST_MIN_STEPS] steps each row is the plain MOT-02 line: no icon,
+     * no duration.
+     */
+    private fun bindTraceSteps(
+        container: LinearLayout, steps: List<TraceStep>, motion: Boolean, live: Boolean
+    ) {
+        for (c in container.childCount - 1 downTo 0) {
+            val id = container.getChildAt(c).tag
+            if (steps.none { it.id == id }) container.removeViewAt(c) // detaching stops its icon
+        }
+        val checklist = steps.size >= CHECKLIST_MIN_STEPS
+        for ((idx, s) in steps.withIndex()) {
+            var row = container.getChildAt(idx)
+            if (row == null || row.tag != s.id) {
+                row = newStepRow(container)
+                row.tag = s.id
+                container.addView(row, idx)
+                if (live && motion) springIn(row)
+            }
+            bindStepRow(row as LinearLayout, s, checklist, motion, live)
+        }
+    }
+
+    private fun newStepRow(parent: ViewGroup): LinearLayout {
+        val ctx = parent.context
+        val res = ctx.resources
+        val caption = res.getDimension(R.dimen.text_caption)
+        val row = LinearLayout(ctx)
+        row.orientation = LinearLayout.HORIZONTAL
+        row.gravity = android.view.Gravity.CENTER_VERTICAL
+        row.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
+
+        val icon = StepStatusView(ctx)
+        val iconLp = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+        iconLp.marginEnd = res.getDimensionPixelSize(R.dimen.space_sm)
+        row.addView(icon, iconLp)
+
+        val label = TextView(ctx)
+        label.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, caption)
+        label.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+        row.addView(label)
+
+        val ms = TextView(ctx)
+        ms.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, caption)
+        ms.setTextColor(ContextCompat.getColor(ctx, R.color.text_muted))
+        ms.fontFeatureSettings = "tnum"
+        ms.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+        val msLp = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+        msLp.marginStart = res.getDimensionPixelSize(R.dimen.space_md)
+        row.addView(ms, msLp)
+        return row
+    }
+
+    private fun bindStepRow(
+        row: LinearLayout, s: TraceStep, checklist: Boolean, motion: Boolean, live: Boolean
+    ) {
+        val ctx = row.context
+        val icon = row.getChildAt(0) as StepStatusView
+        val label = row.getChildAt(1) as TextView
+        val ms = row.getChildAt(2) as TextView
+        val pad = if (checklist) ctx.resources.getDimensionPixelSize(R.dimen.space_xs) / 2 else 0
+        row.setPadding(0, pad, 0, pad)
+
+        label.text = s.label
+        label.setTextColor(ContextCompat.getColor(ctx,
+            if (checklist && s.state == TraceStep.State.RUNNING) R.color.text_secondary
+            else R.color.text_muted))
+
+        icon.visibility = if (checklist) View.VISIBLE else View.GONE
+        // A hidden icon must not spin, so motion is off for it in MOT-02 mode.
+        icon.setState(s.state, motion && checklist, live)
+
+        val showMs = checklist && s.durationMs >= 0
+        ms.visibility = if (showMs) View.VISIBLE else View.GONE
+        if (showMs) ms.text = String.format(Locale.US, "%d ms", s.durationMs)
+
+        row.contentDescription = if (!checklist) s.label else {
+            val state = when (s.state) {
+                TraceStep.State.PENDING -> "waiting"
+                TraceStep.State.RUNNING -> "in progress"
+                TraceStep.State.DONE -> "done"
+                TraceStep.State.FAILED -> "failed"
+            }
+            if (showMs) "${s.label}, $state, ${s.durationMs} milliseconds" else "${s.label}, $state"
+        }
+    }
+
+    /**
+     * MOT-05: on recycle, drop the rows outright. Detaching stops each icon's
+     * spinner and check, and the next bind rebuilds rows in their current state
+     * (stopping them in place would leave a running row frozen on rebind,
+     * because setState skips an unchanged state).
+     */
+    private fun stopTraceSteps(holder: ViewHolder) {
+        val steps = holder.llTraceSteps
+        for (c in 0 until steps.childCount) steps.getChildAt(c).animate().cancel()
+        steps.removeAllViews()
+    }
+
+    /** MOT-05: a new row rises 6dp on the app's 0.75 / 1200 spring and fades in. */
+    private fun springIn(row: View) {
+        row.alpha = 0f
+        row.translationY = 6f * row.resources.displayMetrics.density
+        row.animate().alpha(1f).setDuration(ROW_FADE_MS).start()
+        val spring = SpringAnimation(row, DynamicAnimation.TRANSLATION_Y, 0f)
+        spring.spring.setDampingRatio(ROW_DAMPING).setStiffness(ROW_STIFFNESS)
+        spring.start()
     }
 
     /** Removes the most recent error bubble (before a retry). */
@@ -533,6 +726,9 @@ class ChatAdapter(
         } else {
             holder.shimmerTrace.stopShimmer()
             holder.traceRow.setOnClickListener(null)
+            // MOT-05: a GONE trace row stays attached, so its rows would keep
+            // spinning out of sight; removing them detaches and stops them.
+            holder.llTraceSteps.removeAllViews()
         }
 
         if (m.isTrace) {
@@ -796,6 +992,7 @@ class ChatAdapter(
         super.onViewRecycled(holder)
         stopDancingDots(holder)
         holder.shimmerTrace.stopShimmer() // MOT-02
+        stopTraceSteps(holder) // MOT-05
         holder.sourceStack.cancelMotion() // MOT-04
     }
 
@@ -848,8 +1045,16 @@ class ChatAdapter(
         /** MOT-04: sources attached (full stack bind) / stack opened or closed. */
         private val PAYLOAD_SOURCES = Any()
         private val PAYLOAD_SOURCES_TOGGLE = Any()
-        private const val MAX_TRACE_STEPS = 3
+        /** MOT-05: was 3 (MOT-02 kept the last three), which would hide
+         *  checklist rows. Now a safety cap only — MAX_TOOL_DEPTH rounds plus
+         *  chart rounds stay well under it. */
+        private const val MAX_TRACE_STEPS = 12
         private const val TRACE_COLLAPSE_MS = 220L
+        /** MOT-05: below this many steps the trace keeps the MOT-02 plain line. */
+        private const val CHECKLIST_MIN_STEPS = 2
+        private const val ROW_FADE_MS = 200L
+        private const val ROW_DAMPING = 0.75f
+        private const val ROW_STIFFNESS = 1200f
 
         /** Timestamps only render when the next message is at least this far away. */
         private const val TIME_GAP_MS = 15 * 60 * 1000L

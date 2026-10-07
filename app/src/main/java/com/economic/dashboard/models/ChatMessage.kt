@@ -42,8 +42,13 @@ class ChatMessage @JvmOverloads constructor(
     /** Label verb once finished: "Thought" (normal) or e.g. "Stopped". */
     var traceVerb: String = "Thought"
 
-    /** Step lines shown beneath the label (tool calls). */
-    val traceSteps: MutableList<String> = ArrayList()
+    /** MOT-05: tool-call steps beneath the label, in call order. Two or more
+     *  render as a checklist; zero or one keep the plain MOT-02 line. */
+    val traceSteps: MutableList<TraceStep> = ArrayList()
+
+    /** MOT-05: true from send until the turn ends. Outlives [isTraceRunning]
+     *  (which stops at first output) so later tool rounds still add steps. */
+    var traceTurnOpen: Boolean = false
 
     /** Whether a finished trace has been tapped open again. */
     var traceExpanded: Boolean = false
