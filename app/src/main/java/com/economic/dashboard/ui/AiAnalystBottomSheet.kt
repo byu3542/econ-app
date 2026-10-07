@@ -41,6 +41,7 @@ import com.economic.dashboard.models.ChatMessage
 import com.economic.dashboard.models.EconomicDataPoint
 import com.economic.dashboard.news.NewsItem
 import com.economic.dashboard.news.NewsRepository
+import com.economic.dashboard.ui.views.CentreOutStagger
 import com.economic.dashboard.utils.AppExecutors
 import com.economic.dashboard.utils.ImageUtils
 import com.economic.dashboard.utils.SettingsManager
@@ -321,6 +322,9 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
         chipRecentUpdates?.setOnClickListener { sendQuery(buildRecentUpdatesQuery()) }
         chipRecentNews?.setOnClickListener { sendQuery(buildRecentNewsQuery()) }
 
+        // MOT-03: empty-state starter prompts — fill the composer, never send.
+        bindPromptChips(b.cgStarters, STARTER_PROMPTS)
+
         refreshContextChips()
         val vm = host().getViewModel()
         vm.getCpiData().observe(viewLifecycleOwner) { refreshContextChips() }
@@ -527,6 +531,11 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
         val b = binding ?: return
         if (activity == null) return
         val hasMessages = chatAdapter().itemCount > 0
+        // MOT-03: play the centre-out reveal each time the empty state appears.
+        val showEmpty = !hasMessages
+        if (showEmpty && b.llEmptyState.visibility != View.VISIBLE)
+            b.llEmptyState.post { CentreOutStagger.animateIn(binding?.cgStarters) }
+        if (!hasMessages) b.cgFollowUps.visibility = View.GONE
         b.llEmptyState.visibility = if (hasMessages) View.GONE else View.VISIBLE
         val chipsEnabled = SettingsManager.getBool(requireContext(),
             SettingsManager.KEY_SMART_CHIPS, true)
@@ -583,6 +592,7 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
         if (awaitingResponse) return
         if (userQuery == null || userQuery.trim().isEmpty()) return
         val q = userQuery.trim()
+        b.cgFollowUps.visibility = View.GONE // MOT-03: follow-ups belong to the last answer
         b.etMessage.setText("")
         b.rvChat.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP)
         val userMsg = ChatMessage(q, true)
@@ -608,6 +618,10 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
     private fun requestFinished() {
         awaitingResponse = false
         refreshSendEnabled()
+        // MOT-02 backstop: every exit path (success, error, cancel) lands here,
+        // so the trace can never be left "Thinking". Success paths finish it
+        // first with "Thought"; anything still running here was cut short.
+        if (activity != null) chatAdapter().finishTrace("Stopped")
     }
 
     /** Autoscrolls only when the user is already near the bottom; otherwise shows the pill. */
@@ -673,7 +687,8 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
         setLastUserQuery(userQuery)
         awaitingResponse = true
         refreshSendEnabled()
-        chatAdapter().addMessage(ChatMessage("", false, true))
+        // MOT-02: a timed "Thinking" trace replaces the anonymous typing dots.
+        chatAdapter().addTrace(System.currentTimeMillis())
         maybeScrollToBottom(false)
 
         try {
@@ -1104,6 +1119,12 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
                     tb.id = block.optString("id")
                     tb.name = block.optString("name")
                     toolBlocks[evt.optInt("index")] = tb
+                    // MOT-02: show the tool call as a step under "Thinking".
+                    val step = "Calling " + tb.name + "…"
+                    runOnUi {
+                        if (binding == null) return@runOnUi
+                        chatAdapter().addTraceStep(step)
+                    }
                 }
             } else if ("content_block_delta" == type) {
                 val delta = evt.optJSONObject("delta") ?: continue
@@ -1347,6 +1368,7 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
         // survive a restart, which the old in-text tag got for free.
         persisted.charts = ArrayList(st.charts)
         runOnUi {
+            chatAdapter().finishTrace("Thought") // MOT-02: success, not "Stopped"
             requestFinished()
             // If no delta ever arrived on-screen (edge case), add the bubble now.
             if (st.streamIdx < 0) {
@@ -1361,8 +1383,58 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
             // TICKET-P2-4: the gesture tier's deferred detail gets somewhere
             // to go — chips derived from this answer, not from the screen.
             if (st.gestureTurn) showFollowUpChips(finalText)
+            showFollowUpPrompts(finalText) // MOT-03
             maybeScrollToBottom(false)
         }
+    }
+
+    // ── MOT-03: starter / follow-up prompt chips ────────────────────────────────
+
+    /**
+     * Fills [group] with up to [MAX_PROMPT_CHIPS] prompt chips. A tap puts the
+     * prompt in the composer and leaves the send to the user — it never
+     * dispatches a request.
+     */
+    private fun bindPromptChips(group: ViewGroup, prompts: List<String>) {
+        group.removeAllViews()
+        val ctx = requireContext()
+        val res = resources
+        val padH = res.getDimensionPixelSize(R.dimen.space_lg)
+        val padV = res.getDimensionPixelSize(R.dimen.space_sm)
+        for (prompt in prompts.take(MAX_PROMPT_CHIPS)) {
+            val chip = TextView(ctx)
+            chip.text = prompt
+            chip.setBackgroundResource(R.drawable.bg_chip_outline)
+            chip.setPadding(padH, padV, padH, padV)
+            chip.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX,
+                res.getDimension(R.dimen.text_secondary))
+            chip.setTextColor(ContextCompat.getColor(ctx, R.color.text_secondary))
+            chip.isClickable = true
+            chip.isFocusable = true
+            chip.setOnClickListener { fillComposer(prompt) }
+            group.addView(chip)
+        }
+    }
+
+    private fun fillComposer(prompt: String) {
+        val b = binding ?: return
+        b.etMessage.setText(prompt)
+        b.etMessage.setSelection(b.etMessage.text.length)
+        b.etMessage.requestFocus()
+    }
+
+    /** Follow-ups under every finished answer, revealed centre-out. */
+    private fun showFollowUpPrompts(answerText: String) {
+        val b = binding ?: return
+        if (activity == null) return
+        val followUps = SmartPromptGenerator.generateFollowUpsForAnswer(answerText)
+        if (followUps.isEmpty()) {
+            b.cgFollowUps.visibility = View.GONE
+            return
+        }
+        bindPromptChips(b.cgFollowUps, followUps)
+        b.cgFollowUps.visibility = View.VISIBLE
+        b.cgFollowUps.post { CentreOutStagger.animateIn(binding?.cgFollowUps) }
     }
 
     /**
@@ -1487,6 +1559,7 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
         // belong to the reply even when the final round came back as JSON.
         msg.charts = ArrayList(st.charts)
         runOnUi {
+            chatAdapter().finishTrace("Thought") // MOT-02: success, not "Stopped"
             requestFinished()
             chatAdapter().removeTypingIndicator()
             // ChatMessage is Kotlin (batch 3), so `text` is a property here —
@@ -1721,6 +1794,15 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
         /** TICKET-P2-4: marks dynamically added follow-up chips so a new
          *  answer can clear its predecessors without touching static chips. */
         private const val FOLLOW_UP_CHIP_TAG = "follow_up_chip"
+
+        /** MOT-03: four max — five wraps and breaks the centre-out reading. */
+        private const val MAX_PROMPT_CHIPS = 4
+        private val STARTER_PROMPTS = listOf(
+            "What moved today?",
+            "Is the curve inverted?",
+            "Explain the CPI print",
+            "Recession risk?"
+        )
 
         /** Cap request context at the last N history entries (N/2 turns). */
         private const val HISTORY_CAP = 20

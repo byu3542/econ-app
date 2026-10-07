@@ -44,7 +44,7 @@
                     android:orientation="vertical" android:padding="@dimen/space_md" android:gravity="center">
                     <TextView style="@style/Card.Overline" android:layout_width="wrap_content"
                         android:layout_height="wrap_content" android:text="S&amp;P 500" />
-                    <TextView android:id="@+id/tvSp500Value" android:layout_width="match_parent"
+                    <com.economic.dashboard.ui.views.RollingNumberView android:id="@+id/tvSp500Value" android:layout_width="match_parent"
                         android:layout_height="@dimen/kpi_value_height" android:text="—" android:gravity="center"
                         android:maxLines="1"
                         android:autoSizeTextType="uniform"
@@ -75,7 +75,7 @@
                     android:orientation="vertical" android:padding="@dimen/space_md" android:gravity="center">
                     <TextView style="@style/Card.Overline" android:layout_width="wrap_content"
                         android:layout_height="wrap_content" android:text="Nasdaq" />
-                    <TextView android:id="@+id/tvNasdaqValue" android:layout_width="match_parent"
+                    <com.economic.dashboard.ui.views.RollingNumberView android:id="@+id/tvNasdaqValue" android:layout_width="match_parent"
                         android:layout_height="@dimen/kpi_value_height" android:text="—" android:gravity="center"
                         android:maxLines="1"
                         android:autoSizeTextType="uniform"
@@ -105,7 +105,7 @@
                     android:orientation="vertical" android:padding="@dimen/space_md" android:gravity="center">
                     <TextView style="@style/Card.Overline" android:layout_width="wrap_content"
                         android:layout_height="wrap_content" android:text="VIX" />
-                    <TextView android:id="@+id/tvVixValue" android:layout_width="match_parent"
+                    <com.economic.dashboard.ui.views.RollingNumberView android:id="@+id/tvVixValue" android:layout_width="match_parent"
                         android:layout_height="@dimen/kpi_value_height" android:text="—" android:gravity="center"
                         android:maxLines="1"
                         android:autoSizeTextType="uniform"

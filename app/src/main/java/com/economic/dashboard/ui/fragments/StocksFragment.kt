@@ -20,6 +20,7 @@ import com.economic.dashboard.ui.EconomicViewModel
 import com.economic.dashboard.ui.MetricPopupController
 import com.economic.dashboard.ui.views.HeroValue
 import com.economic.dashboard.ui.views.PressFeedback
+import com.economic.dashboard.ui.views.RollingNumberView
 import com.economic.dashboard.ui.views.SegmentedView
 import com.economic.dashboard.ui.views.SkeletonController
 import com.economic.dashboard.utils.ChartHelper
@@ -45,9 +46,10 @@ class StocksFragment : Fragment() {
     private lateinit var cardSp500: CardView
     private lateinit var cardNasdaq: CardView
     private lateinit var cardVix: CardView
-    private lateinit var tvSp500Value: TextView
-    private lateinit var tvNasdaqValue: TextView
-    private lateinit var tvVixValue: TextView
+    // MOT-01: rolling figures
+    private lateinit var tvSp500Value: RollingNumberView
+    private lateinit var tvNasdaqValue: RollingNumberView
+    private lateinit var tvVixValue: RollingNumberView
     /** Roots of the included view_status_badge rows (R2-TICKET-03). */
     private lateinit var statusSp500: View
     private lateinit var statusNasdaq: View
@@ -155,7 +157,7 @@ class StocksFragment : Fragment() {
         val rows = rowsFor(data, "S&P 500 Index")
         if (rows.isEmpty()) return
         val latest = rows[rows.size - 1].value
-        tvSp500Value.text = NumberFormatUtil.number(latest, 0) // TICKET-19
+        tvSp500Value.setValue(NumberFormatUtil.number(latest, 0)) // TICKET-19, MOT-01
         val result = Benchmarks.stockLevel(latest, 3500.0, 4000.0)
         BenchmarkStyle.applyBadge(statusSp500, requireContext(), result)
     }
@@ -164,7 +166,7 @@ class StocksFragment : Fragment() {
         val rows = rowsFor(data, "Nasdaq Composite Index")
         if (rows.isEmpty()) return
         val latest = rows[rows.size - 1].value
-        tvNasdaqValue.text = NumberFormatUtil.number(latest, 0) // TICKET-19
+        tvNasdaqValue.setValue(NumberFormatUtil.number(latest, 0)) // TICKET-19, MOT-01
         val result = Benchmarks.stockLevel(latest, 10000.0, 12000.0)
         BenchmarkStyle.applyBadge(statusNasdaq, requireContext(), result)
     }
@@ -173,7 +175,7 @@ class StocksFragment : Fragment() {
         val rows = rowsFor(data, "VIX Volatility Index")
         if (rows.isEmpty()) return
         val latest = rows[rows.size - 1].value
-        tvVixValue.text = NumberFormatUtil.indexPoints(latest, 1) // TICKET-19
+        tvVixValue.setValue(NumberFormatUtil.indexPoints(latest, 1)) // TICKET-19, MOT-01
         val result = Benchmarks.vix(latest)
         BenchmarkStyle.applyBadge(statusVix, requireContext(), result)
     }

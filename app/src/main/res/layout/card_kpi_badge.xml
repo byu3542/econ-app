@@ -64,7 +64,8 @@
             android:gravity="center_vertical"
             android:layout_marginTop="@dimen/space_xs">
 
-            <TextView
+            <!-- MOT-01: rolling figures -->
+            <com.economic.dashboard.ui.views.RollingNumberView
                 android:id="@+id/tvMetricValue"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

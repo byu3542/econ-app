@@ -30,6 +30,16 @@ object HeroValue {
             tv, min, max, step, TypedValue.COMPLEX_UNIT_PX)
     }
 
+    /** MOT-01: same hero/sibling ceiling for a [RollingNumberView] value. */
+    @JvmStatic
+    fun apply(rv: RollingNumberView?, hero: Boolean) {
+        if (rv == null) return
+        val res = rv.resources
+        val min = res.getDimension(R.dimen.text_kpi_autosize_min)
+        val max = res.getDimension(if (hero) R.dimen.text_display_lg else R.dimen.text_display)
+        rv.setTextSizeRange(min, max)
+    }
+
     /** Applies [apply] across a row: exactly [heroIndex] is the hero. */
     @JvmStatic
     fun applyRow(values: List<TextView?>, heroIndex: Int) {

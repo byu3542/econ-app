@@ -27,4 +27,26 @@ class ChatMessage @JvmOverloads constructor(
      * a typed list does not get that for free.
      */
     var charts: List<ChatChart> = emptyList()
+
+    // ── MOT-02: thinking trace row. Transient — never persisted to Room. ──────
+
+    /** This row is the analyst's "Thinking / Thought for N.Ns" trace. */
+    var isTrace: Boolean = false
+
+    /** Send time, for the elapsed label. */
+    var traceStartMs: Long = 0L
+
+    /** Send → first output; negative while the trace is still running. */
+    var traceElapsedMs: Long = -1L
+
+    /** Label verb once finished: "Thought" (normal) or e.g. "Stopped". */
+    var traceVerb: String = "Thought"
+
+    /** Step lines shown beneath the label (tool calls). */
+    val traceSteps: MutableList<String> = ArrayList()
+
+    /** Whether a finished trace has been tapped open again. */
+    var traceExpanded: Boolean = false
+
+    val isTraceRunning: Boolean get() = isTrace && traceElapsedMs < 0
 }

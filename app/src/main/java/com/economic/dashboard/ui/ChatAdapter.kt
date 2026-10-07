@@ -15,6 +15,8 @@ import android.text.method.LinkMovementMethod
 import android.text.style.ClickableSpan
 import android.text.style.ForegroundColorSpan
 import android.text.style.StyleSpan
+import android.transition.AutoTransition
+import android.transition.TransitionManager
 import android.util.DisplayMetrics
 import android.view.ActionMode
 import android.view.LayoutInflater
@@ -43,6 +45,7 @@ import com.economic.dashboard.models.EconomicDataPoint
 import com.economic.dashboard.utils.AppExecutors
 import com.economic.dashboard.utils.MotionUtil
 import com.economic.dashboard.views.SparklineView
+import com.facebook.shimmer.ShimmerFrameLayout
 import io.noties.markwon.Markwon
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -113,12 +116,97 @@ class ChatAdapter(
     fun getLastIndex(): Int = messages.size - 1
 
     fun removeTypingIndicator() {
+        // MOT-02: every call site is "first output arrived" or a terminal
+        // path, which is exactly when the trace must stop.
+        finishTrace("Thought")
         for (i in messages.indices.reversed()) {
             if (messages[i].isTyping) {
                 messages.removeAt(i)
                 notifyItemRemoved(i)
                 break
             }
+        }
+    }
+
+    // ── MOT-02: thinking trace ──────────────────────────────────────────────────
+
+    /** Adds a running "Thinking" trace row, timed from [startMs] (send). */
+    fun addTrace(startMs: Long) {
+        val t = ChatMessage("", false)
+        t.isTrace = true
+        t.traceStartMs = startMs
+        addMessage(t)
+    }
+
+    private fun runningTraceIndex(): Int {
+        for (i in messages.indices.reversed()) {
+            if (messages[i].isTraceRunning) return i
+        }
+        return -1
+    }
+
+    /** Appends a step line ("Calling get_series…") under the running trace. */
+    fun addTraceStep(step: String) {
+        val i = runningTraceIndex()
+        if (i < 0) return
+        val steps = messages[i].traceSteps
+        steps.add(step)
+        while (steps.size > MAX_TRACE_STEPS) steps.removeAt(0)
+        notifyItemChanged(i, PAYLOAD_TRACE)
+    }
+
+    /**
+     * Ends the running trace, if any: stops the shimmer, collapses the steps
+     * and swaps the label to "<verb> for N.Ns". Idempotent — every exit path
+     * of a request may call it; only the first call lands.
+     */
+    fun finishTrace(verb: String) {
+        val i = runningTraceIndex()
+        if (i < 0) return
+        val m = messages[i]
+        m.traceElapsedMs = Math.max(0L, System.currentTimeMillis() - m.traceStartMs)
+        m.traceVerb = verb
+        m.traceExpanded = false
+        notifyItemChanged(i, PAYLOAD_TRACE)
+    }
+
+    private fun bindTrace(holder: ViewHolder, m: ChatMessage, animate: Boolean) {
+        val motion = MotionUtil.animationsEnabled(holder.itemView.context)
+        if (animate && motion) {
+            TransitionManager.beginDelayedTransition(
+                holder.itemView as ViewGroup, AutoTransition().setDuration(TRACE_COLLAPSE_MS))
+        }
+        val running = m.traceElapsedMs < 0
+        holder.tvTraceLabel.text = if (running) "Thinking"
+            else String.format(Locale.US, "%s for %.1fs", m.traceVerb, m.traceElapsedMs / 1000.0)
+        // Bound to stream state only: runs exactly while the trace is running.
+        if (running && motion) holder.shimmerTrace.startShimmer()
+        else holder.shimmerTrace.stopShimmer()
+
+        val steps = holder.llTraceSteps
+        steps.removeAllViews()
+        for (s in m.traceSteps) {
+            val tv = TextView(steps.context)
+            tv.text = s
+            tv.setTextColor(ContextCompat.getColor(steps.context, R.color.text_muted))
+            tv.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX,
+                steps.resources.getDimension(R.dimen.text_caption))
+            steps.addView(tv)
+        }
+        val hasSteps = m.traceSteps.isNotEmpty()
+        steps.visibility = if (hasSteps && (running || m.traceExpanded)) View.VISIBLE else View.GONE
+        holder.tvTraceChevron.visibility = if (hasSteps && !running) View.VISIBLE else View.GONE
+        holder.tvTraceChevron.rotation = if (m.traceExpanded) 0f else -90f
+        if (hasSteps && !running) {
+            holder.traceRow.setOnClickListener {
+                val pos = holder.bindingAdapterPosition
+                if (pos == RecyclerView.NO_POSITION) return@setOnClickListener
+                m.traceExpanded = !m.traceExpanded
+                notifyItemChanged(pos, PAYLOAD_TRACE)
+            }
+        } else {
+            holder.traceRow.setOnClickListener(null)
+            holder.traceRow.isClickable = false
         }
     }
 
@@ -362,6 +450,11 @@ class ChatAdapter(
             bindCharts(holder, messages[position])
             return
         }
+        if (payloads.contains(PAYLOAD_TRACE)) {
+            // MOT-02: state change on the trace row — animate the collapse.
+            bindTrace(holder, messages[position], true)
+            return
+        }
         if (payloads.contains(PAYLOAD_CHARTS)) {
             // A render_chart landed mid-stream: draw it without touching the
             // text, so the prose keeps streaming uninterrupted.
@@ -375,7 +468,21 @@ class ChatAdapter(
         val m = messages[position]
         ensureMarkwon(holder.itemView.context)
 
-        if (m.isTyping) {
+        // MOT-02: a trace row shows only the trace inside the bubble.
+        holder.traceRow.visibility = if (m.isTrace) View.VISIBLE else View.GONE
+        if (m.isTrace) {
+            holder.tvMessage.visibility = View.GONE
+            holder.llTypingIndicator.visibility = View.GONE
+            stopDancingDots(holder)
+            bindTrace(holder, m, false)
+        } else {
+            holder.shimmerTrace.stopShimmer()
+            holder.traceRow.setOnClickListener(null)
+        }
+
+        if (m.isTrace) {
+            // handled above
+        } else if (m.isTyping) {
             holder.tvMessage.visibility = View.GONE
             holder.llTypingIndicator.visibility = View.VISIBLE
             startDancingDots(holder)
@@ -632,6 +739,7 @@ class ChatAdapter(
     override fun onViewRecycled(holder: ViewHolder) {
         super.onViewRecycled(holder)
         stopDancingDots(holder)
+        holder.shimmerTrace.stopShimmer() // MOT-02
     }
 
     override fun getItemCount(): Int = messages.size
@@ -649,6 +757,12 @@ class ChatAdapter(
         val dot2: View = v.findViewById(R.id.dot2)
         val dot3: View = v.findViewById(R.id.dot3)
         val dotAnimators: MutableList<ObjectAnimator> = ArrayList()
+        // MOT-02: thinking trace (item_chat_trace, included in the bubble)
+        val traceRow: LinearLayout = v.findViewById(R.id.traceRow)
+        val tvTraceChevron: TextView = v.findViewById(R.id.tvTraceChevron)
+        val shimmerTrace: ShimmerFrameLayout = v.findViewById(R.id.shimmerTrace)
+        val tvTraceLabel: TextView = v.findViewById(R.id.tvTraceLabel)
+        val llTraceSteps: LinearLayout = v.findViewById(R.id.llTraceSteps)
 
         /** Recycling guard for async chart loads (TICKET-P2-2): bumped on every
          *  bindCharts, checked when a background load posts back. Replaces the
@@ -668,6 +782,11 @@ class ChatAdapter(
 
         /** Partial-bind payload: only the chart list changed (TICKET-P2-2). */
         private val PAYLOAD_CHARTS = Any()
+
+        /** MOT-02: partial-bind payload — only the trace row's state changed. */
+        private val PAYLOAD_TRACE = Any()
+        private const val MAX_TRACE_STEPS = 3
+        private const val TRACE_COLLAPSE_MS = 220L
 
         /** Timestamps only render when the next message is at least this far away. */
         private const val TIME_GAP_MS = 15 * 60 * 1000L

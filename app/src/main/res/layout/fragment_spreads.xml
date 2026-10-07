@@ -39,7 +39,7 @@
                     android:orientation="vertical" android:padding="@dimen/space_lg" android:gravity="center">
                     <TextView style="@style/Card.Overline" android:layout_width="wrap_content"
                         android:layout_height="wrap_content" android:text="10Y-3M SPREAD" />
-                    <TextView android:id="@+id/tvSpread3MValue" android:layout_width="wrap_content"
+                    <com.economic.dashboard.ui.views.RollingNumberView android:id="@+id/tvSpread3MValue" android:layout_width="wrap_content"
                         android:layout_height="wrap_content" android:text="&#8212;" android:textSize="@dimen/text_display_lg"
                         android:textColor="@color/card_white" android:textStyle="bold" android:layout_marginTop="@dimen/space_xs" />
                     <include
@@ -64,7 +64,7 @@
                     android:orientation="vertical" android:padding="@dimen/space_lg" android:gravity="center">
                     <TextView style="@style/Card.Overline" android:layout_width="wrap_content"
                         android:layout_height="wrap_content" android:text="10Y-2Y SPREAD" />
-                    <TextView android:id="@+id/tvSpreadValue" android:layout_width="wrap_content"
+                    <com.economic.dashboard.ui.views.RollingNumberView android:id="@+id/tvSpreadValue" android:layout_width="wrap_content"
                         android:layout_height="wrap_content" android:text="&#8212;" android:textSize="@dimen/text_display_lg"
                         android:textColor="@color/card_white" android:textStyle="bold" android:layout_marginTop="@dimen/space_xs" />
                     <include

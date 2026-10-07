@@ -19,6 +19,7 @@ import com.economic.dashboard.ui.Benchmarks
 import com.economic.dashboard.ui.EconomicViewModel
 import com.economic.dashboard.ui.MetricPopupController
 import com.economic.dashboard.ui.views.PressFeedback
+import com.economic.dashboard.ui.views.RollingNumberView
 import com.economic.dashboard.ui.views.SegmentedView
 import com.economic.dashboard.ui.views.SkeletonController
 import com.economic.dashboard.utils.ChartHelper
@@ -43,8 +44,9 @@ class BondsFragment : Fragment() {
     private lateinit var skeleton: SkeletonController
     private lateinit var cardBaa: CardView
     private lateinit var cardHy: CardView
-    private lateinit var tvBaaValue: TextView
-    private lateinit var tvHyValue: TextView
+    // MOT-01: rolling figures
+    private lateinit var tvBaaValue: RollingNumberView
+    private lateinit var tvHyValue: RollingNumberView
     /** Roots of the included view_status_badge rows (R2-TICKET-03). */
     private lateinit var statusBaa: View
     private lateinit var statusHy: View
@@ -127,7 +129,7 @@ class BondsFragment : Fragment() {
         val rows = rowsFor(data, "BAA Corporate Spread")
         if (rows.isEmpty()) return
         val latest = rows[rows.size - 1].value
-        tvBaaValue.text = NumberFormatUtil.percent(latest) // TICKET-19
+        tvBaaValue.setValue(NumberFormatUtil.percent(latest)) // TICKET-19, MOT-01
         val result = Benchmarks.bondSpread(latest, 2.5, 3.5)
         BenchmarkStyle.applyBadge(statusBaa, requireContext(), result)
     }
@@ -136,7 +138,7 @@ class BondsFragment : Fragment() {
         val rows = rowsFor(data, "High Yield Spread")
         if (rows.isEmpty()) return
         val latest = rows[rows.size - 1].value
-        tvHyValue.text = NumberFormatUtil.percent(latest) // TICKET-19
+        tvHyValue.setValue(NumberFormatUtil.percent(latest)) // TICKET-19, MOT-01
         val result = Benchmarks.bondSpread(latest, 5.0, 8.0)
         BenchmarkStyle.applyBadge(statusHy, requireContext(), result)
     }

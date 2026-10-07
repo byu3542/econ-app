@@ -28,6 +28,7 @@ import com.economic.dashboard.ui.MetricPopupController
 import com.economic.dashboard.ui.MetricPopupRegistry
 import com.economic.dashboard.ui.onboarding.WatchlistSetupFragment
 import com.economic.dashboard.ui.views.PressFeedback
+import com.economic.dashboard.ui.views.RollingNumberView
 import com.economic.dashboard.utils.AxisDateFormat
 import com.economic.dashboard.utils.DeltaFormatter
 import com.economic.dashboard.utils.EdgeToEdgeInsets
@@ -35,7 +36,6 @@ import com.economic.dashboard.utils.HapticUtil
 import com.economic.dashboard.utils.MotionUtil
 import com.economic.dashboard.utils.SettingsManager
 import com.google.android.material.snackbar.Snackbar
-import com.economic.dashboard.utils.ValueAnimatorUtil
 import com.economic.dashboard.views.SparklineView
 
 import java.util.Calendar
@@ -67,7 +67,7 @@ class DashboardFragment : Fragment() {
     private var heroIndicatorId: String = SettingsManager.DEFAULT_DASHBOARD_HERO
 
     // Fed funds hero views — bound directly so they never fail silently.
-    private var tvFedFundsHeroValue: TextView? = null
+    private var tvFedFundsHeroValue: RollingNumberView? = null // MOT-01
     private var changeFedFunds: TextView? = null
     private var tvFedFundsHeroCycle: TextView? = null
     private var tvFedFundsHeroDate: TextView? = null
@@ -406,7 +406,7 @@ class DashboardFragment : Fragment() {
     // ── Skeleton loading state ──────────────────────────────────────────────
 
     private fun startSkeleton(card: View) {
-        val tv: TextView = card.findViewById(R.id.tvMetricValue) ?: return
+        val tv: View = card.findViewById(R.id.tvMetricValue) ?: return
         val pulse = AlphaAnimation(1f, 0.35f)
         pulse.duration = 700
         pulse.repeatCount = Animation.INFINITE
@@ -448,14 +448,14 @@ class DashboardFragment : Fragment() {
 
     /**
      * Sets the metric value, stops the skeleton pulse, and — when a fresh value
-     * replaces a real cached one — rolls the number to its new value (TICKET-27).
+     * replaces a real cached one — rolls only the changed digits (MOT-01,
+     * replacing TICKET-27's whole-number count-up).
      */
     private fun setCardValue(card: View, text: String) {
-        val tv: TextView = card.findViewById(R.id.tvMetricValue) ?: return
-        val old = if (tv.text != null) tv.text.toString() else ""
+        val tv: RollingNumberView = card.findViewById(R.id.tvMetricValue) ?: return
         tv.clearAnimation()
         tv.alpha = 1f
-        ValueAnimatorUtil.animateOrSet(tv, old, text)
+        tv.setValue(text)
     }
 
     private fun setCardDate(card: View, text: String) {
@@ -582,9 +582,9 @@ class DashboardFragment : Fragment() {
             // delta, sparkline, date) so the card doesn't keep stale pixels
             // under the new label, and restart the skeleton pulse that
             // setCardValue() cleared on the earlier bind (review finding 1).
-            val tvValue: TextView? = card.findViewById(R.id.tvMetricValue)
+            val tvValue: RollingNumberView? = card.findViewById(R.id.tvMetricValue)
             if (tvValue != null) {
-                tvValue.text = "—"
+                tvValue.setValue("—")
                 if (tvValue.animation == null) startSkeleton(card)
             }
             card.findViewById<TextView>(R.id.tvMetricDelta)?.visibility = View.GONE
@@ -637,7 +637,7 @@ class DashboardFragment : Fragment() {
             // swap to a series that hasn't resolved. Clear the previous
             // indicator's pixels (value, delta chip, cycle line, date) so
             // label, pixels, and speech agree (review finding 2).
-            tvFedFundsHeroValue?.text = "—"
+            tvFedFundsHeroValue?.setValue("—")
             changeFedFunds?.visibility = View.GONE
             tvFedFundsHeroCycle?.visibility = View.GONE
             tvFedFundsHeroDate?.visibility = View.GONE
@@ -645,12 +645,8 @@ class DashboardFragment : Fragment() {
                 DashboardIndicatorCatalog.label(heroIndicatorId) + ", loading"
             return
         }
-        val heroValue = tvFedFundsHeroValue
-        if (heroValue != null) {
-            // TICKET-27: roll the hero value up/down on refresh.
-            val heroOld = if (heroValue.text != null) heroValue.text.toString() else ""
-            ValueAnimatorUtil.animateOrSet(heroValue, heroOld, display.value)
-        }
+        // MOT-01: roll only the hero digits that changed.
+        tvFedFundsHeroValue?.setValue(display.value)
         val change = changeFedFunds
         val ctx = context
         if (change != null && ctx != null) {

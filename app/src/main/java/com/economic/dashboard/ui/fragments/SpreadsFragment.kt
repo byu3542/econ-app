@@ -19,6 +19,7 @@ import com.economic.dashboard.ui.Benchmarks
 import com.economic.dashboard.ui.EconomicViewModel
 import com.economic.dashboard.ui.MetricPopupController
 import com.economic.dashboard.ui.views.PressFeedback
+import com.economic.dashboard.ui.views.RollingNumberView
 import com.economic.dashboard.ui.views.SegmentedView
 import com.economic.dashboard.ui.views.SkeletonController
 import com.economic.dashboard.utils.ChartHelper
@@ -46,8 +47,9 @@ class SpreadsFragment : Fragment() {
     private lateinit var tvChartTitle: TextView
     private lateinit var cardSpreadYoY: CardView
     private lateinit var cardSpread3M: CardView
-    private lateinit var tvSpreadValue: TextView
-    private lateinit var tvSpread3MValue: TextView
+    // MOT-01: rolling figures
+    private lateinit var tvSpreadValue: RollingNumberView
+    private lateinit var tvSpread3MValue: RollingNumberView
     /** Roots of the included view_status_badge rows (R2-TICKET-03). */
     private lateinit var statusSpread2Y: View
     private lateinit var statusSpread3M: View
@@ -131,13 +133,13 @@ class SpreadsFragment : Fragment() {
     /** @param badgeRow root of an included view_status_badge (R2-TICKET-03). */
     private fun updateSingleIndicator(
         data: List<EconomicDataPoint>, longKey: String, shortKey: String,
-        valTv: TextView, badgeRow: View, is3M: Boolean
+        valTv: RollingNumberView, badgeRow: View, is3M: Boolean
     ) {
         val longRate = EconomicViewModel.getLatest(data, longKey)
         val shortRate = EconomicViewModel.getLatest(data, shortKey)
         if (longRate != null && shortRate != null) {
             val spread = longRate.value - shortRate.value
-            valTv.text = NumberFormatUtil.percent(spread) // TICKET-19
+            valTv.setValue(NumberFormatUtil.percent(spread)) // TICKET-19, MOT-01
             // Shared 3M/10Y grader (same as Overview) + distinct RECOVERING/FLATTENING tiers (TICKET-03/06)
             val result = if (is3M) Benchmarks.spread3m10y(spread) else Benchmarks.spread10y2y(spread)
             BenchmarkStyle.applyBadge(badgeRow, requireContext(), result)

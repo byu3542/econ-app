@@ -42,6 +42,9 @@
         app:layout_constraintHorizontal_bias="0"
         app:layout_constraintWidth_default="wrap">
 
+        <!-- MOT-02: thinking trace (trace rows only) -->
+        <include layout="@layout/item_chat_trace" />
+
         <TextView
             android:id="@+id/tvMessage"
             android:layout_width="wrap_content"

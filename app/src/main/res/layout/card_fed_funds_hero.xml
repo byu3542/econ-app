@@ -48,7 +48,8 @@
                     android:textAllCaps="true"
                     android:letterSpacing="0.2" />
 
-                <TextView
+                <!-- MOT-01: rolling figures -->
+                <com.economic.dashboard.ui.views.RollingNumberView
                     android:id="@+id/tvFedFundsHeroValue"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
