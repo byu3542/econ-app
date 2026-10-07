@@ -168,6 +168,10 @@ class MainActivity : AppCompatActivity() {
             { retryLastQuery() },
             object : ChatAdapter.OnAnalystActionListener {
                 override fun onMetricTapped(tabKey: String) { navigateToTab(tabKey) }
+                // MOT-04: a series row in an answer's sources stack.
+                override fun onOpenMetricPopup(popupId: String) {
+                    MetricPopupController.show(this@MainActivity, viewModel, popupId)
+                }
                 override fun onAskAi(query: String) {
                     AskAnalyst.openWithQuery(this@MainActivity, query)
                 }

@@ -378,6 +378,17 @@ class NewsAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             }
         }
 
+        /**
+         * MOT-04: opens a story from outside the feed (the analyst's sources
+         * list) the same way a tap in the feed does — marked read, then opened
+         * in a Custom Tab.
+         */
+        @JvmStatic
+        fun openArticle(context: Context, url: String?) {
+            markRead(context, url)
+            openUrl(context, url)
+        }
+
         private fun openUrl(context: Context, url: String?) {
             if (url.isNullOrEmpty()) return
             try {

@@ -6,6 +6,7 @@ import com.economic.dashboard.database.YieldDatabase
 import com.economic.dashboard.models.ChatChart
 import com.economic.dashboard.models.EconomicDataPoint
 import com.economic.dashboard.models.EconomicHistoryEntry
+import com.economic.dashboard.models.TurnSource
 import com.economic.dashboard.news.NewsItem
 import com.economic.dashboard.news.NewsRepository
 
@@ -241,9 +242,25 @@ object AnalystToolExecutor {
                 "answer; do not restate the chart's points one by one.")
     }
 
+    /**
+     * MOT-04: one tool call's tool_result text plus the sources it actually
+     * returned. [sources] is empty whenever the call produced no data (bad id,
+     * cold cache, no matching headlines), so a failed lookup never earns a
+     * badge.
+     */
+    class ToolOutcome(
+        @JvmField val text: String,
+        @JvmField val sources: List<TurnSource>
+    )
+
     /** Runs one tool call; returns the text payload for the tool_result block. */
     @JvmStatic
-    fun execute(ctx: Context, name: String, input: JSONObject): String {
+    fun execute(ctx: Context, name: String, input: JSONObject): String =
+        executeWithSources(ctx, name, input).text
+
+    /** MOT-04: [execute] plus what the call fetched, for the sources stack. */
+    @JvmStatic
+    fun executeWithSources(ctx: Context, name: String, input: JSONObject): ToolOutcome {
         return try {
             when (name) {
                 "get_series" -> getSeries(ctx, input)
@@ -252,15 +269,35 @@ object AnalystToolExecutor {
                 // keep the resolved ChatChart; this branch serves the non-streamed
                 // fallback in handleJsonResponse, where the chart is lost but the
                 // model still gets a coherent, non-retrying answer.
-                RENDER_CHART -> renderChart(input).message
-                else -> "Unknown tool: " + name
+                RENDER_CHART -> noSource(renderChart(input).message)
+                else -> noSource("Unknown tool: " + name)
             }
         } catch (e: Exception) {
-            "Tool error: " + e.message
+            noSource("Tool error: " + e.message)
         }
     }
 
-    private fun getSeries(ctx: Context, input: JSONObject): String {
+    private fun noSource(text: String) = ToolOutcome(text, emptyList())
+
+    /** MOT-04: a get_series result that carried points. */
+    private fun fetchedSeries(seriesId: String, text: String) =
+        ToolOutcome(text, listOf(seriesSource(seriesId)))
+
+    /** MOT-04: the source row for a series — labelled with the provider the
+     *  app fetched it from (FRED, BLS, BEA, Treasury), not a guess. */
+    @JvmStatic
+    fun seriesSource(seriesId: String): TurnSource {
+        val e = EconomicSeriesRegistry.byId(seriesId)
+        val provider = when (e?.apiSource) {
+            EconomicSeriesRegistry.ApiSource.BLS -> "BLS"
+            EconomicSeriesRegistry.ApiSource.BEA -> "BEA"
+            EconomicSeriesRegistry.ApiSource.TREASURY -> "Treasury"
+            else -> "FRED"
+        }
+        return TurnSource.series(seriesId, e?.chartLabel ?: seriesId, provider)
+    }
+
+    private fun getSeries(ctx: Context, input: JSONObject): ToolOutcome {
         val seriesId = input.optString("series_id", "")
         val months = input.optInt("months", 24).coerceIn(1, 24)
 
@@ -269,8 +306,8 @@ object AnalystToolExecutor {
         if (LIVE_SERIES.containsKey(seriesId)) return getLiveSeries(seriesId, months)
 
         // AI Law 16: be honest about limits instead of inviting a retry loop.
-        return "Invalid series_id: " + seriesId + ". No such series is available — do not " +
-            "retry; answer from the data snapshot in the system prompt instead."
+        return noSource("Invalid series_id: " + seriesId + ". No such series is available — do not " +
+            "retry; answer from the data snapshot in the system prompt instead.")
     }
 
     /**
@@ -283,7 +320,7 @@ object AnalystToolExecutor {
      * catalog refresh is asynchronous, so on a cold first launch the table can
      * still be empty while the dashboard already has points in memory.
      */
-    private fun getCachedSeries(ctx: Context, seriesId: String, months: Int): String {
+    private fun getCachedSeries(ctx: Context, seriesId: String, months: Int): ToolOutcome {
         val cutoff = cutoffDate(months)
 
         val rows: List<EconomicHistoryEntry> = YieldDatabase.getInstance(ctx)
@@ -302,22 +339,24 @@ object AnalystToolExecutor {
 
         if (window.isEmpty()) {
             val live = buildLiveSeries(seriesId, months)
-            if (live != null) return live
-            return if (rows.isEmpty())
+            if (live != null) return fetchedSeries(seriesId, live)
+            return noSource(if (rows.isEmpty())
                 "No cached data for " + seriesId + " yet — do not retry; answer from the " +
                     "data snapshot in the system prompt and say the history isn't loaded."
             else
-                "No data points in the requested window."
+                "No data points in the requested window.")
         }
 
-        return render(seriesName, seriesId, months, window, all, unit)
+        return fetchedSeries(seriesId, render(seriesName, seriesId, months, window, all, unit))
     }
 
     /** Live ViewModel-backed series (used as the cache-cold fallback). */
-    private fun getLiveSeries(seriesId: String, months: Int): String =
-        buildLiveSeries(seriesId, months)
-            ?: ("No data loaded for " + seriesId + " right now — do not retry; answer from " +
-                "the data snapshot in the system prompt and say the history isn't available.")
+    private fun getLiveSeries(seriesId: String, months: Int): ToolOutcome {
+        val live = buildLiveSeries(seriesId, months)
+            ?: return noSource("No data loaded for " + seriesId + " right now — do not retry; " +
+                "answer from the data snapshot in the system prompt and say the history isn't available.")
+        return fetchedSeries(seriesId, live)
+    }
 
     /** Renders the live series, or null when the provider has nothing to show. */
     private fun buildLiveSeries(seriesId: String, months: Int): String? {
@@ -434,14 +473,16 @@ object AnalystToolExecutor {
         }
     }
 
-    private fun getHeadlines(input: JSONObject): String {
+    private fun getHeadlines(input: JSONObject): ToolOutcome {
         val topic = input.optString("topic", "").lowercase(Locale.US).trim()
         val count = input.optInt("count", 10).coerceIn(1, 25)
 
         val items: List<NewsItem> = NewsRepository.getInstance().cachedItems
         if (items.isEmpty())
-            return "No cached headlines available right now."
+            return noSource("No cached headlines available right now.")
 
+        // MOT-04: exactly the stories written into this result, nothing else.
+        val fetched = ArrayList<TurnSource>()
         val sb = StringBuilder()
         val fmt = SimpleDateFormat("MMM d", Locale.US)
         var added = 0
@@ -466,10 +507,12 @@ object AnalystToolExecutor {
                     sb.append(" — ").append(sum)
                 }
                 sb.append("\n")
+                fetched.add(TurnSource.headline(title, item.source, item.url))
                 added++
             }
             tier--
         }
-        return if (added == 0) "No cached headlines match '" + topic + "'." else sb.toString()
+        return if (added == 0) noSource("No cached headlines match '" + topic + "'.")
+            else ToolOutcome(sb.toString(), fetched)
     }
 }

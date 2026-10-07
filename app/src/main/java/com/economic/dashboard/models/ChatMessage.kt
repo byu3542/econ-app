@@ -49,4 +49,12 @@ class ChatMessage @JvmOverloads constructor(
     var traceExpanded: Boolean = false
 
     val isTraceRunning: Boolean get() = isTrace && traceElapsedMs < 0
+
+    // ── MOT-04: sources stack. Transient — never persisted to Room. ───────────
+
+    /** What this answer's turn actually fetched, in fetch order. */
+    var sources: List<TurnSource> = emptyList()
+
+    /** Whether the stack under the answer has been tapped open. */
+    var sourcesExpanded: Boolean = false
 }

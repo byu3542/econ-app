@@ -74,6 +74,15 @@
             android:orientation="vertical"
             android:visibility="gone" />
 
+        <!-- MOT-04: sources the turn's tools actually fetched (finished answers
+             only). Builds its own children; hidden when there are none. -->
+        <com.economic.dashboard.ui.views.SourceStackView
+            android:id="@+id/sourceStack"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_xs"
+            android:visibility="gone" />
+
         <!-- Explicit retry affordance for error bubbles -->
         <TextView
             android:id="@+id/tvRetry"

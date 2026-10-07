@@ -493,4 +493,38 @@ object MetricPopupRegistry {
 
     @JvmStatic
     fun byId(id: String): MetricPopupSpec? = SPECS[id]
+
+    /**
+     * MOT-04: analyst series id (EconomicSeriesRegistry) → the popup that is
+     * that metric's home, for the sources stack's series rows. Popups are keyed
+     * by their own ids, so this table is the bridge. Series with no popup
+     * (WILL5000INDX, TMBACBW027SBOG, WSHOMCB, PCE, HOME_SALES, NAPM,
+     * LNS12000000, CUSR0000SA0, CES0500000011, UST_6M, UST_1Y, UST_5Y) are
+     * deliberately absent: their rows show but don't open anything.
+     */
+    private val POPUP_FOR_SERIES: Map<String, String> = mapOf(
+        "DGS10" to "yield10y", "UST_10Y" to "yield10y",
+        "DGS2" to "yield2y", "UST_2Y" to "yield2y",
+        "DGS3MO" to "yield3m", "UST_3M" to "yield3m",
+        "UST_1M" to "yield1m",
+        "UST_30Y" to "yield30y",
+        "DFF" to "fedfunds",
+        "SP500" to "sp500",
+        "NASDAQ" to "nasdaq",
+        "VIX" to "vix",
+        "BAA_SPREAD" to "baa",
+        "HY_SPREAD" to "hy",
+        "MORTGAGE30US" to "mortgage",
+        "CORE_PCE" to "corepce",
+        "CPI" to "cpi",
+        "WAGES" to "wages",
+        "HOUSING_STARTS" to "housing",
+        "LNS14000000" to "unemployment",
+        "LNS11300000" to "labor",
+        "GDP_BEA_T10101" to "gdp"
+    )
+
+    @JvmStatic
+    fun popupIdForSeries(seriesId: String?): String? =
+        POPUP_FOR_SERIES[seriesId]?.takeIf { SPECS.containsKey(it) }
 }

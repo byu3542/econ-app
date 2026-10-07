@@ -39,6 +39,7 @@ import com.economic.dashboard.databinding.DialogAiChatBinding
 import com.economic.dashboard.models.ChatChart
 import com.economic.dashboard.models.ChatMessage
 import com.economic.dashboard.models.EconomicDataPoint
+import com.economic.dashboard.models.TurnSources
 import com.economic.dashboard.news.NewsItem
 import com.economic.dashboard.news.NewsRepository
 import com.economic.dashboard.ui.views.CentreOutStagger
@@ -674,6 +675,9 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
         /** TICKET-P2-4: true when this turn came from a one-tap gesture, so
          *  finalizeTurn() offers follow-up chips derived from the answer. */
         @JvmField var gestureTurn = false
+        /** MOT-04: what this turn's data tools actually returned, deduped.
+         *  Handed to the answer bubble in finalizeTurn(); never persisted. */
+        @JvmField val sources = TurnSources()
     }
 
     private fun queryClaude(userQuery: String, rv: RecyclerView) {
@@ -1230,7 +1234,10 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
                         if (chart != null) { st.charts.add(chart); chartsChanged = true }
                         result = outcome.message
                     } else {
-                        result = AnalystToolExecutor.execute(appCtx, tb.name, input)
+                        // MOT-04: keep what the call fetched for the sources stack.
+                        val outcome = AnalystToolExecutor.executeWithSources(appCtx, tb.name, input)
+                        st.sources.addAll(outcome.sources)
+                        result = outcome.text
                     }
                     toolResults.put(JSONObject()
                         .put("type", "tool_result")
@@ -1367,6 +1374,9 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
         // is what puts them in Room (via ChatMessageEntity.charts) so they
         // survive a restart, which the old in-text tag got for free.
         persisted.charts = ArrayList(st.charts)
+        // MOT-04: sources attach only to the finished answer, never mid-stream.
+        // Transient — persistChatMessage() ignores them.
+        persisted.sources = st.sources.snapshot()
         runOnUi {
             chatAdapter().finishTrace("Thought") // MOT-02: success, not "Stopped"
             requestFinished()
@@ -1378,6 +1388,7 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
                 // Sync the bubble in case a dangling announcement was stripped.
                 chatAdapter().updateMessageText(st.streamIdx, finalText)
                 chatAdapter().updateMessageCharts(st.streamIdx, persisted.charts)
+                chatAdapter().updateMessageSources(st.streamIdx, persisted.sources)
             }
             host().persistChatMessage(persisted)
             // TICKET-P2-4: the gesture tier's deferred detail gets somewhere
@@ -1518,12 +1529,13 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
                         // turn the NPE into "Tool error: ..."; an empty object
                         // reaches the same error path with a clearer message and is
                         // what the streamed path above already substitutes.
-                        val result = AnalystToolExecutor.execute(appCtx,
+                        val outcome = AnalystToolExecutor.executeWithSources(appCtx,
                             block.optString("name"), block.optJSONObject("input") ?: JSONObject())
+                        st.sources.addAll(outcome.sources) // MOT-04
                         toolResults.put(JSONObject()
                             .put("type", "tool_result")
                             .put("tool_use_id", block.optString("id"))
-                            .put("content", result))
+                            .put("content", outcome.text))
                     }
                     messages.put(JSONObject().put("role", "assistant").put("content", content))
                     messages.put(JSONObject().put("role", "user").put("content", toolResults))
@@ -1558,6 +1570,7 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
         // Charts collected by earlier streamed rounds of this same turn still
         // belong to the reply even when the final round came back as JSON.
         msg.charts = ArrayList(st.charts)
+        msg.sources = st.sources.snapshot() // MOT-04
         runOnUi {
             chatAdapter().finishTrace("Thought") // MOT-02: success, not "Stopped"
             requestFinished()
@@ -1568,6 +1581,7 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
                 chatAdapter().updateMessageText(st.streamIdx, msg.text)
                 if (msg.charts.isNotEmpty())
                     chatAdapter().updateMessageCharts(st.streamIdx, msg.charts)
+                chatAdapter().updateMessageSources(st.streamIdx, msg.sources) // MOT-04
             } else chatAdapter().addMessage(msg)
             host().persistChatMessage(msg)
             maybeScrollToBottom(false)
