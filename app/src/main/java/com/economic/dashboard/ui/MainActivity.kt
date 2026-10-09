@@ -118,13 +118,14 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         // Fresh launches only, so a theme change or rotation doesn't replay it.
-        // The system splash shows the wordmark's first frame until the first
-        // frame is drawn; the overlay then takes over on the same pixels and
-        // animates. Added before remove() so the navy ground never breaks.
+        // The system splash animates the wordmark until the first frame is
+        // drawn (API 31+; a still first frame below that); the overlay then
+        // takes over on the same pixels and keeps it moving.
         if (freshLaunch) {
             splash.setOnExitAnimationListener { provider ->
-                val launch = LaunchSplash.show(this)
-                provider.remove()
+                // remove() only once the overlay covers the system splash, so
+                // the navy ground and the motion never break.
+                val launch = LaunchSplash.show(this) { provider.remove() }
                 // Cache-first: with a snapshot on disk the cards are already
                 // painted, so the overlay only waits for its own animation.
                 // A first-ever launch waits for the network fetch to settle.
