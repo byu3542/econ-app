@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <!-- Launch splash wordmark. The stem is drawn as text; the double "ii"
-         is two bar-chart columns, so the full name is the content description. -->
-    <string name="app_wordmark" translatable="false">Economii</string>
-    <string name="app_wordmark_stem" translatable="false">Econom</string>
-</resources>

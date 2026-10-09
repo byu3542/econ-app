@@ -415,12 +415,13 @@
         <item name="android:baselineAligned">false</item>
     </style>
 
-    <!-- Cold-start theme. The system splash is plain navy with no icon so it
-         hands off seamlessly to the animated wordmark overlay MainActivity
-         draws (LaunchSplash.kt); installSplashScreen() swaps to the app theme. -->
+    <!-- Cold-start theme. The system splash shows the wordmark's first frame
+         from the instant the icon is tapped, then hands off to the animated
+         overlay MainActivity draws (LaunchSplash.kt) on the same pixels;
+         installSplashScreen() swaps to the app theme. -->
     <style name="Theme.EconomicDashboard.Starting" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/splash_navy</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_blank</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_wordmark</item>
         <item name="postSplashScreenTheme">@style/Theme.EconomicDashboard</item>
     </style>
 </resources>

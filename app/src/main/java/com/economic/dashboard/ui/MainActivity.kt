@@ -27,6 +27,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.economic.dashboard.R
 import com.economic.dashboard.analyst.AskAnalyst
 import com.economic.dashboard.cache.CacheManager
+import com.economic.dashboard.cache.DashboardDataCache
 import com.economic.dashboard.database.YieldDatabase
 import com.economic.dashboard.databinding.ActivityMainBinding
 import com.economic.dashboard.models.ChatMessage
@@ -117,14 +118,25 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         // Fresh launches only, so a theme change or rotation doesn't replay it.
-        // Started from the exit listener, not here: on API 31+ the system
-        // splash view sits on top of the window until the first frame, and an
-        // overlay added now would play out hidden underneath it. Adding the
-        // overlay before remove() keeps the navy ground continuous.
+        // The system splash shows the wordmark's first frame until the first
+        // frame is drawn; the overlay then takes over on the same pixels and
+        // animates. Added before remove() so the navy ground never breaks.
         if (freshLaunch) {
             splash.setOnExitAnimationListener { provider ->
-                LaunchSplash.show(this)
+                val launch = LaunchSplash.show(this)
                 provider.remove()
+                // Cache-first: with a snapshot on disk the cards are already
+                // painted, so the overlay only waits for its own animation.
+                // A first-ever launch waits for the network fetch to settle.
+                if (DashboardDataCache.hasAny(this)) {
+                    launch.markReady()
+                } else {
+                    var sawLoading = false
+                    viewModel.getIsLoading().observe(this) { loading ->
+                        if (loading == true) sawLoading = true
+                        else if (sawLoading) launch.markReady()
+                    }
+                }
             }
         }
 

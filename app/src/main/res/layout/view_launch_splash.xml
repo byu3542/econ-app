@@ -1,80 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Animated launch splash: "Econom" set in Bricolage Grotesque, with the
-     double "ii" drawn as two rising bar-chart columns. Driven by LaunchSplash. -->
+<!-- Animated launch splash. Picks up exactly where the system splash leaves
+     off: same navy ground, same wordmark drawable at the same size and centre,
+     so the handoff is invisible and only the motion starts. Driven by
+     LaunchSplash. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/splash_navy"
     android:clickable="true"
-    android:focusable="true"
-    android:importantForAccessibility="yes"
-    android:contentDescription="@string/app_wordmark">
+    android:focusable="true">
 
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+    <ImageView
+        android:id="@+id/splash_wordmark"
+        android:layout_width="@dimen/splash_wordmark_size"
+        android:layout_height="@dimen/splash_wordmark_size"
         android:layout_gravity="center"
-        android:gravity="center_horizontal"
-        android:orientation="vertical">
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:baselineAligned="false"
-            android:gravity="bottom"
-            android:orientation="horizontal">
-
-            <TextView
-                android:id="@+id/splash_word"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="@font/bricolage_grotesque"
-                android:fontVariationSettings="'wght' 800, 'opsz' 96"
-                android:includeFontPadding="false"
-                android:letterSpacing="-0.03"
-                android:text="@string/app_wordmark_stem"
-                android:textColor="@color/splash_ink"
-                android:textSize="44sp"
-                android:importantForAccessibility="no" />
-
-            <LinearLayout
-                android:id="@+id/splash_bars"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="3dp"
-                android:gravity="bottom"
-                android:orientation="horizontal">
-
-                <View
-                    android:id="@+id/splash_bar_short"
-                    android:layout_width="8dp"
-                    android:layout_height="20dp"
-                    android:background="@drawable/splash_bar" />
-
-                <View
-                    android:id="@+id/splash_bar_tall"
-                    android:layout_width="8dp"
-                    android:layout_height="33dp"
-                    android:layout_marginStart="3dp"
-                    android:background="@drawable/splash_bar" />
-            </LinearLayout>
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/splash_dots"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:orientation="horizontal">
-
-            <View android:layout_width="5dp" android:layout_height="5dp"
-                android:alpha="0.3" android:background="@drawable/splash_dot" />
-            <View android:layout_width="5dp" android:layout_height="5dp"
-                android:layout_marginStart="6dp"
-                android:alpha="0.3" android:background="@drawable/splash_dot" />
-            <View android:layout_width="5dp" android:layout_height="5dp"
-                android:layout_marginStart="6dp"
-                android:alpha="0.3" android:background="@drawable/splash_dot" />
-        </LinearLayout>
-    </LinearLayout>
+        android:contentDescription="@string/app_name"
+        android:src="@drawable/splash_wordmark_anim" />
 </FrameLayout>
