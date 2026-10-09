@@ -17,6 +17,7 @@ import androidx.core.view.accessibility.AccessibilityNodeInfoCompat.Accessibilit
 import androidx.fragment.app.FragmentActivity
 
 import com.economic.dashboard.ui.AiAnalystBottomSheet
+import com.economic.dashboard.ui.views.RollingNumberView
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.listener.ChartTouchListener
 import com.github.mikephil.charting.listener.OnChartGestureListener
@@ -190,7 +191,11 @@ object AskAnalyst {
      * @param description e.g. "the 10-year Treasury yield over the past 24 months"
      */
     @JvmStatic
-    fun attachChartExplain(chart: LineChart?, activity: FragmentActivity?, description: String) {
+    @JvmOverloads
+    fun attachChartExplain(
+        chart: LineChart?, activity: FragmentActivity?, description: String,
+        seriesId: String? = null
+    ) {
         if (chart == null || activity == null) return
         // OnChartGestureListener has seven abstract methods, so it is not a SAM
         // type — an object expression is required, and every override must be
@@ -211,7 +216,12 @@ object AskAnalyst {
                             "\nSCREEN CONTEXT: The user long-pressed a chart showing " +
                                 description + ". On-screen chart data: " + stats +
                                 ". Use these values directly and do not fetch them again.\n"
-                        openWithQuery(activity, query, context, true)
+                        // AIC-01: only a chart that names its series gets the
+                        // PRESSED METRIC block; null means "not wired", not
+                        // "derived", so the derived-value warning is skipped.
+                        val seriesBlock =
+                            if (seriesId.isNullOrEmpty()) "" else pressedSeriesBlock(seriesId)
+                        openWithQuery(activity, query, context + seriesBlock, true)
                         return@setOnMenuItemClickListener true
                     }
                     false
@@ -244,6 +254,17 @@ object AskAnalyst {
 
     private fun collectText(v: View?, sb: StringBuilder) {
         if (v == null || v.visibility != View.VISIBLE) return
+        // AIC-01: a RollingNumberView is built from digit columns that each
+        // hold all ten digits, so walking its children read "0 · 1 · 2 … 9".
+        // Take the value it was set to instead, and don't descend.
+        if (v is RollingNumberView) {
+            val t = v.getText()
+            if (t.isNotEmpty()) {
+                if (sb.length > 0) sb.append(" · ")
+                sb.append(t.toString().trim())
+            }
+            return
+        }
         if (v is TextView) {
             val t: CharSequence? = v.text
             if (t != null && t.length > 0) {
@@ -274,6 +295,12 @@ object AskAnalyst {
                     .append(String.format(Locale.US,
                         " — latest %.2f, range %.2f to %.2f across %d points",
                         last.getY(), ds.getYMin(), ds.getYMax(), n))
+                // AIC-01: date the latest point with the chart's own x-axis
+                // labels, so the model knows how fresh the reading is.
+                val date = try {
+                    chart.getXAxis().getValueFormatter().getFormattedValue(last.getX())
+                } catch (e: Exception) { "" }
+                if (!date.isNullOrBlank()) sb.append(" (latest point ").append(date).append(")")
             }
             return sb.toString()
         } catch (e: Exception) {
