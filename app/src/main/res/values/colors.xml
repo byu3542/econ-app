@@ -159,4 +159,10 @@
          different value — declared there anyway, identically, for the same
          reason header_navy is. -->
     <color name="header_hairline_neutral">#1FFFFFFF</color>
+
+    <!-- Launch splash (Economii wordmark). Fixed in both themes: the splash is
+         a brand moment, not a themed surface. -->
+    <color name="splash_navy">#101A33</color>
+    <color name="splash_gold">#D9A441</color>
+    <color name="splash_ink">#F2F4FA</color>
 </resources>

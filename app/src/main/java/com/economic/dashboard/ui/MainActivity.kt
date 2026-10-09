@@ -15,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.Insets
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -108,10 +109,24 @@ class MainActivity : AppCompatActivity() {
     fun getViewModel(): EconomicViewModel = viewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Must run before super.onCreate: swaps the navy Starting theme for the
+        // app theme. The animated wordmark (LaunchSplash) takes over below.
+        val splash = installSplashScreen()
         super.onCreate(savedInstanceState)
         freshLaunch = (savedInstanceState == null)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        // Fresh launches only, so a theme change or rotation doesn't replay it.
+        // Started from the exit listener, not here: on API 31+ the system
+        // splash view sits on top of the window until the first frame, and an
+        // overlay added now would play out hidden underneath it. Adding the
+        // overlay before remove() keeps the navy ground continuous.
+        if (freshLaunch) {
+            splash.setOnExitAnimationListener { provider ->
+                LaunchSplash.show(this)
+                provider.remove()
+            }
+        }
 
         // Edge-to-edge: draw behind system bars, then pad the header and
         // bottom nav so content clears them (required on Android 15+).

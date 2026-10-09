@@ -124,6 +124,7 @@ dependencies {
     implementation 'androidx.dynamicanimation:dynamicanimation:1.0.0'  // IOS-01 press springs
     implementation 'androidx.transition:transition:1.4.1'  // animates the BENCHMARKS/DATA + TABLE/GRAPH pane swaps
     implementation 'androidx.core:core-ktx:1.13.1'
+    implementation 'androidx.core:core-splashscreen:1.0.1'  // cold-start splash theme, backported below API 31
 
     // Networking
     implementation 'com.squareup.retrofit2:retrofit:2.9.0'
