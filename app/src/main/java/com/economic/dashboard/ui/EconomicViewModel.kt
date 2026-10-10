@@ -13,6 +13,7 @@ import com.economic.dashboard.api.ApiConfig
 import com.economic.dashboard.api.EconomicRepository
 import com.economic.dashboard.cache.DashboardDataCache
 import com.economic.dashboard.models.EconomicDataPoint
+import com.economic.dashboard.utils.AppExecutors
 import com.economic.dashboard.utils.SettingsManager
 
 import java.text.ParseException
@@ -256,23 +257,31 @@ class EconomicViewModel(application: Application) : AndroidViewModel(application
 
     fun fetchAllData() {
         hasFetchedOnce = true
-        // Cache-first: paint the last known values before the network returns.
-        primeFromCache()
         isLoading.postValue(true)
-        synchronized(lock) {
-            currentTenYearList = null; currentTwoYearList = null; currentThreeMonthList = null
+        // Off the main thread: primeFromCache parses every cached snapshot
+        // (about a second on a slow device), and on a cold launch that ran
+        // before MainActivity's first frame, holding the splash up. The cards
+        // still paint from cache, just a few frames later, under the splash.
+        // The network fetches start after the primes in the same task, so a
+        // fresh result is always posted after (and wins over) its snapshot.
+        AppExecutors.diskIO().execute {
+            // Cache-first: paint the last known values before the network returns.
+            primeFromCache()
+            synchronized(lock) {
+                currentTenYearList = null; currentTwoYearList = null; currentThreeMonthList = null
+            }
+            // Build the task list first so the pending count is always derived from
+            // the actual number of fetches — no hardcoded magic number to maintain.
+            val fetchTasks: List<() -> Unit> = listOf(
+                ::fetchTreasury, ::fetchGDP, ::fetchEmployment, ::fetchCPI, ::fetchWages,
+                ::fetchFedFunds, ::fetchFedFundsDaily, ::fetchTenYearHistory,
+                ::fetchTwoYearHistory, ::fetchThreeMonthHistory,
+                ::fetchPCE, ::fetchHousing, ::fetchMbsMortgage,
+                ::fetchSp500, ::fetchNasdaq, ::fetchVix,
+                ::fetchBaaSpread, ::fetchHySpread)
+            pendingFetches.set(fetchTasks.size)
+            for (task in fetchTasks) task()
         }
-        // Build the task list first so the pending count is always derived from
-        // the actual number of fetches — no hardcoded magic number to maintain.
-        val fetchTasks: List<() -> Unit> = listOf(
-            ::fetchTreasury, ::fetchGDP, ::fetchEmployment, ::fetchCPI, ::fetchWages,
-            ::fetchFedFunds, ::fetchFedFundsDaily, ::fetchTenYearHistory,
-            ::fetchTwoYearHistory, ::fetchThreeMonthHistory,
-            ::fetchPCE, ::fetchHousing, ::fetchMbsMortgage,
-            ::fetchSp500, ::fetchNasdaq, ::fetchVix,
-            ::fetchBaaSpread, ::fetchHySpread)
-        pendingFetches.set(fetchTasks.size)
-        for (task in fetchTasks) task()
     }
 
     private fun checkAllDone() {

@@ -15,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.Insets
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -26,6 +27,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.economic.dashboard.R
 import com.economic.dashboard.analyst.AskAnalyst
 import com.economic.dashboard.cache.CacheManager
+import com.economic.dashboard.cache.DashboardDataCache
 import com.economic.dashboard.database.YieldDatabase
 import com.economic.dashboard.databinding.ActivityMainBinding
 import com.economic.dashboard.models.ChatMessage
@@ -108,10 +110,36 @@ class MainActivity : AppCompatActivity() {
     fun getViewModel(): EconomicViewModel = viewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Must run before super.onCreate: swaps the navy Starting theme for the
+        // app theme. The animated wordmark (LaunchSplash) takes over below.
+        val splash = installSplashScreen()
         super.onCreate(savedInstanceState)
         freshLaunch = (savedInstanceState == null)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        // Fresh launches only, so a theme change or rotation doesn't replay it.
+        // The system splash animates the wordmark until the first frame is
+        // drawn (API 31+; a still first frame below that); the overlay then
+        // takes over on the same pixels and keeps it moving.
+        if (freshLaunch) {
+            splash.setOnExitAnimationListener { provider ->
+                // remove() only once the overlay covers the system splash, so
+                // the navy ground and the motion never break.
+                val launch = LaunchSplash.show(this) { provider.remove() }
+                // Cache-first: with a snapshot on disk the cards are already
+                // painted, so the overlay only waits for its own animation.
+                // A first-ever launch waits for the network fetch to settle.
+                if (DashboardDataCache.hasAny(this)) {
+                    launch.markReady()
+                } else {
+                    var sawLoading = false
+                    viewModel.getIsLoading().observe(this) { loading ->
+                        if (loading == true) sawLoading = true
+                        else if (sawLoading) launch.markReady()
+                    }
+                }
+            }
+        }
 
         // Edge-to-edge: draw behind system bars, then pad the header and
         // bottom nav so content clears them (required on Android 15+).
