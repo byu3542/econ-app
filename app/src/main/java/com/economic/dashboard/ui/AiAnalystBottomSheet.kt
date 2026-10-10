@@ -81,6 +81,13 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
     private var awaitingResponse = false
 
     /**
+     * AIC-02: whether the list should keep pinning to the bottom as a reply
+     * streams in. Set by a send; cleared only when the user drags up, and set
+     * again when they come back within [FOLLOW_SLOP_DP] of the bottom.
+     */
+    private var followStream = true
+
+    /**
      * 24-month historical trend block built from the Room cache.
      * Preloaded on a background thread in onViewCreated (Room queries are
      * synchronous and must not run on the main thread), then injected into
@@ -344,9 +351,14 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
         rvChat.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(rv: RecyclerView, dx: Int, dy: Int) {
                 val bb = binding ?: return
-                val lm = rv.layoutManager as? LinearLayoutManager
-                if (lm != null && lm.findLastVisibleItemPosition() >= chatAdapter().itemCount - 1)
+                // AIC-02: only a finger drag can stop following; our own
+                // programmatic scrolls (state IDLE) never do.
+                if (dy < 0 && rv.scrollState == RecyclerView.SCROLL_STATE_DRAGGING)
+                    followStream = false
+                if (isNearBottom(rv)) {
+                    followStream = true
                     bb.pillNewReply.visibility = View.GONE
+                }
             }
         })
 
@@ -654,20 +666,49 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
     private fun parseToolInput(tb: ToolUseBlock): JSONObject =
         try { JSONObject(tb.inputJson.toString()) } catch (e: Exception) { JSONObject() }
 
-    /** Autoscrolls only when the user is already near the bottom; otherwise shows the pill. */
+    /**
+     * AIC-02: a send ([force]) always jumps to the very bottom and resumes
+     * following. While a reply streams, the list follows unless the user has
+     * dragged up; then the "New reply" pill shows instead.
+     *
+     * "Bottom" is measured in pixels: the old item-count test treated a tall
+     * answer whose top was on screen as "at the bottom", and scrollToPosition
+     * on an already-visible item does nothing, so the growing reply and the
+     * user's own question stayed off screen.
+     */
     private fun maybeScrollToBottom(force: Boolean) {
         val b = binding ?: return
         val rv = b.rvChat
-        val count = chatAdapter().itemCount
-        if (count == 0) return
-        val lm = rv.layoutManager as? LinearLayoutManager
-        val nearBottom = lm != null && lm.findLastVisibleItemPosition() >= count - 2
-        if (force || nearBottom) {
-            rv.scrollToPosition(count - 1)
+        if (chatAdapter().itemCount == 0) return
+        if (force) followStream = true
+        if (followStream) {
             b.pillNewReply.visibility = View.GONE
+            scrollToAbsoluteBottom(rv)
         } else {
             b.pillNewReply.visibility = View.VISIBLE
         }
+    }
+
+    /** Scrolls past the end of the last item, after the pending layout lands. */
+    private fun scrollToAbsoluteBottom(rv: RecyclerView) {
+        rv.post {
+            val count = chatAdapter().itemCount
+            if (binding == null || count == 0) return@post
+            rv.scrollToPosition(count - 1)
+            rv.post {
+                if (binding == null) return@post
+                val remaining = rv.computeVerticalScrollRange() -
+                    rv.computeVerticalScrollExtent() - rv.computeVerticalScrollOffset()
+                if (remaining > 0) rv.scrollBy(0, remaining)
+            }
+        }
+    }
+
+    private fun isNearBottom(rv: RecyclerView): Boolean {
+        val slop = FOLLOW_SLOP_DP * rv.resources.displayMetrics.density
+        val remaining = rv.computeVerticalScrollRange() -
+            rv.computeVerticalScrollExtent() - rv.computeVerticalScrollOffset()
+        return remaining <= slop
     }
 
     /**
@@ -1870,6 +1911,9 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
     companion object {
 
         const val TAG = "AiAnalystBottomSheet"
+
+        /** AIC-02: within this distance of the bottom counts as "at the bottom". */
+        private const val FOLLOW_SLOP_DP = 100
         private const val ARG_PREFILL = "prefill_query"
         private const val ARG_SCREEN_CONTEXT = "screen_context"
         private const val ARG_IMAGE_URI = "image_uri"
