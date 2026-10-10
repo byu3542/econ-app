@@ -87,6 +87,20 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
      */
     private var followStream = true
 
+    /** AIC-03: the turn now streaming, and the question it answers. */
+    private class ActiveTurn(val query: String, val st: StreamState)
+
+    /**
+     * AIC-03: exactly one of Stop and the finishing callback may commit a turn.
+     * Whoever takes it out of here first owns the commit; the other backs off.
+     */
+    private val activeTurn = java.util.concurrent.atomic.AtomicReference<ActiveTurn?>(null)
+
+    private fun claimTurn(st: StreamState): Boolean {
+        val t = activeTurn.get() ?: return false
+        return t.st === st && activeTurn.compareAndSet(t, null)
+    }
+
     /**
      * 24-month historical trend block built from the Room cache.
      * Preloaded on a background thread in onViewCreated (Room queries are
@@ -572,9 +586,36 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
         // Restore the terminal UI state here; the callback-side resets stay as
         // an idempotent second pass for the genuinely in-flight case.
         if (isAdded) {
+            keepStoppedAnswer()
             requestFinished()
             chatAdapter().removeTypingIndicator()
         }
+    }
+
+    /**
+     * AIC-03: Stop used to leave the partial answer on screen but unlabelled,
+     * unsaved and out of the conversation history, so the next question lost
+     * it and a restart erased it. Keep it, mark it incomplete in the text
+     * itself (so the label survives Room and the model sees it too), and
+     * commit it like a finished answer.
+     */
+    private fun keepStoppedAnswer() {
+        val t = activeTurn.get() ?: return
+        if (!activeTurn.compareAndSet(t, null)) return
+        val st = t.st
+        val partial = stripDanglingAnnouncement(st.acc.toString()).trim()
+        if (partial.isEmpty()) return
+        val text = partial + STOPPED_SUFFIX
+        commitToHistory(t.query, text)
+        val msg = ChatMessage(text, false)
+        msg.charts = ArrayList(st.charts)
+        if (st.streamIdx >= 0) {
+            chatAdapter().updateMessageText(st.streamIdx, text)
+            if (msg.charts.isNotEmpty()) chatAdapter().updateMessageCharts(st.streamIdx, msg.charts)
+        } else {
+            chatAdapter().addMessage(msg)
+        }
+        host().persistChatMessage(msg)
     }
 
     /** Send button doubles as Stop while a response is streaming. */
@@ -812,6 +853,7 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
             val st = StreamState()
             st.routeStrong = conciseTurn || looksToolLikely(userQuery)
             st.gestureTurn = conciseTurn
+            activeTurn.set(ActiveTurn(userQuery, st))
             sendTurn(messages, systemPrompt, userQuery, st, 0)
         } catch (e: Exception) {
             requestFinished()
@@ -1463,6 +1505,8 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
             throw IOException("empty stream")
         }
 
+        // AIC-03: Stop already committed this turn's partial answer.
+        if (!claimTurn(st)) return
         commitToHistory(committedQuery, finalText)
         val persisted = ChatMessage(finalText, false)
         // TICKET-P2-2: charts ride the persisted message, not the text — this
@@ -1675,6 +1719,7 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
             if (st.acc.length > 0 && text.startsWith(st.acc.toString())) st.acc.length else 0)))
         if (st.acc.length == 0) st.acc.append(text)
 
+        if (!claimTurn(st)) return // AIC-03: Stop got here first
         commitToHistory(committedQuery, st.acc.toString())
         val msg = ChatMessage(st.acc.toString(), false)
         // Charts collected by earlier streamed rounds of this same turn still
@@ -1914,6 +1959,9 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
 
         /** AIC-02: within this distance of the bottom counts as "at the bottom". */
         private const val FOLLOW_SLOP_DP = 100
+
+        /** AIC-03: appended to a stopped answer; stored with it, so it survives a restart. */
+        private const val STOPPED_SUFFIX = "\n\n— Stopped. This answer is incomplete."
         private const val ARG_PREFILL = "prefill_query"
         private const val ARG_SCREEN_CONTEXT = "screen_context"
         private const val ARG_IMAGE_URI = "image_uri"
