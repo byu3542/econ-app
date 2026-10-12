@@ -134,6 +134,9 @@ class ChatAdapter(
     private val messages = ArrayList<ChatMessage>()
     private var markwon: Markwon? = null
 
+    /** AIC-09: dims the streaming caret after [CARET_IDLE_MS] without text. */
+    private val caretHandler = android.os.Handler(android.os.Looper.getMainLooper())
+
     /** TICKET-12 (Peak): analyst insights we've already played the reveal for,
      *  so each insight animates in exactly once (WeakHashMap avoids leaks). */
     private val revealed: MutableSet<ChatMessage> = Collections.newSetFromMap(WeakHashMap())
@@ -153,11 +156,24 @@ class ChatAdapter(
         notifyDataSetChanged()
     }
 
-    /** Streams new text into an existing bubble (SSE partials) via a payload bind. */
-    fun updateMessageText(index: Int, text: String?) {
+    /** Streams new text into an existing bubble (SSE partials) via a payload bind.
+     *  AIC-09: [streaming] repaints the text only (no charts) and keeps the
+     *  caret; any other update is final for now and drops the caret. */
+    fun updateMessageText(index: Int, text: String?, streaming: Boolean = false) {
         if (index < 0 || index >= messages.size) return
-        messages[index].text = text
-        notifyItemChanged(index, PAYLOAD_TEXT)
+        val m = messages[index]
+        m.text = text
+        m.isStreaming = streaming
+        caretHandler.removeCallbacksAndMessages(null)
+        if (streaming) {
+            m.streamTouchMs = System.currentTimeMillis()
+            // Repaint once the text goes quiet, so the caret can dim.
+            caretHandler.postDelayed({
+                val i = messages.indexOf(m)
+                if (i >= 0 && m.isStreaming) notifyItemChanged(i, PAYLOAD_STREAM)
+            }, CARET_IDLE_MS)
+        }
+        notifyItemChanged(index, if (streaming) PAYLOAD_STREAM else PAYLOAD_TEXT)
     }
 
     /** TICKET-P2-2: a render_chart call landed for the streaming bubble — set
@@ -257,8 +273,9 @@ class ChatAdapter(
 
     fun removeTypingIndicator() {
         // MOT-02: every call site is "first output arrived" or a terminal
-        // path, which is exactly when the trace must stop.
-        finishTrace("Thought")
+        // path. AIC-09: the trace stays open while tool steps are still due;
+        // terminal paths finish it themselves.
+        finishTraceIfIdle()
         for (i in messages.indices.reversed()) {
             if (messages[i].isTyping) {
                 messages.removeAt(i)
@@ -306,6 +323,9 @@ class ChatAdapter(
         val steps = messages[i].traceSteps
         if (steps.size >= MAX_TRACE_STEPS || steps.any { it.id == id }) return
         steps.add(TraceStep(id, label))
+        // AIC-09: a tool round after preamble text reopens the trace, so the
+        // steps show while they run instead of landing in a collapsed row.
+        if (messages[i].traceElapsedMs >= 0) messages[i].traceElapsedMs = -1L
         notifyItemChanged(i, PAYLOAD_TRACE)
     }
 
@@ -373,6 +393,17 @@ class ChatAdapter(
         m.traceVerb = verb
         m.traceExpanded = false
         notifyItemChanged(i, PAYLOAD_TRACE)
+    }
+
+    /** AIC-09: finishes the running trace once no tool step is pending or
+     *  running — the answer text that follows the last tool round. */
+    fun finishTraceIfIdle() {
+        val i = runningTraceIndex()
+        if (i < 0) return
+        if (messages[i].traceSteps.any {
+                it.state == TraceStep.State.PENDING || it.state == TraceStep.State.RUNNING })
+            return
+        finishTrace("Thought")
     }
 
     private fun bindTrace(holder: ViewHolder, m: ChatMessage, animate: Boolean) {
@@ -562,6 +593,27 @@ class ChatAdapter(
         markwon = Markwon.builder(ctx).build()
     }
 
+    /**
+     * AIC-09: a caret after streaming text, dimmed once no text has arrived for
+     * [CARET_IDLE_MS]. Render-only: the stored text never holds it, and the
+     * content description keeps TalkBack from reading it.
+     */
+    private fun appendCaret(tv: TextView, m: ChatMessage) {
+        if (!m.isStreaming) {
+            tv.contentDescription = null
+            return
+        }
+        val body = tv.text
+        val sb = android.text.SpannableStringBuilder(body).append(CARET)
+        if (System.currentTimeMillis() - m.streamTouchMs >= CARET_IDLE_MS) {
+            val dim = (tv.currentTextColor and 0x00FFFFFF) or 0x40000000
+            sb.setSpan(android.text.style.ForegroundColorSpan(dim), sb.length - CARET.length,
+                sb.length, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        }
+        tv.text = sb
+        tv.contentDescription = body
+    }
+
     private fun renderText(holder: ViewHolder, m: ChatMessage) {
         if (!m.isUser && !m.isError) {
             // ensureMarkwon() always runs before renderText() at both call sites
@@ -572,10 +624,13 @@ class ChatAdapter(
             // ChatAdapterTest calls it directly with null and asserts a null result.
             // stripChartTags always returns non-null, so this fallback is unreachable
             // in practice — it just satisfies the compiler without loosening that contract.
-            val display = stripStrayMarkdown(stripChartTags(m.text)) ?: ""
+            // AIC-09: a half-streamed **bold** would show raw asterisks; close it
+            // in this render copy only, never in the stored text.
+            val display = closeDanglingBold(stripStrayMarkdown(stripChartTags(m.text))) ?: ""
             mw.setMarkdown(holder.tvMessage, display)
             addMetricCitations(holder.tvMessage)
             styleToolRoundStatus(holder.tvMessage)
+            appendCaret(holder.tvMessage, m)
         } else {
             holder.tvMessage.text = m.text
         }
@@ -780,6 +835,11 @@ class ChatAdapter(
         // finalizeTurn sends TEXT + CHARTS + SOURCES in the same frame.
         val m = messages[position]
         val text = payloads.contains(PAYLOAD_TEXT)
+        if (!text && payloads.contains(PAYLOAD_STREAM)) {
+            // AIC-09: streaming repaint — text and caret only, charts untouched.
+            ensureMarkwon(holder.itemView.context)
+            renderText(holder, m)
+        }
         if (text) {
             // Streaming update: swap the text only — no full rebind, no flicker.
             ensureMarkwon(holder.itemView.context)
@@ -1225,6 +1285,10 @@ class ChatAdapter(
 
         /** MOT-02: partial-bind payload — only the trace row's state changed. */
         private val PAYLOAD_TRACE = Any()
+        /** AIC-09: streaming text repaint — no charts, no action row. */
+        private val PAYLOAD_STREAM = Any()
+        private const val CARET = "\u258D"
+        private const val CARET_IDLE_MS = 1500L
         /** AIC-08: the history-cut divider moved onto or off this row. */
         private val PAYLOAD_CUT = Any()
 
@@ -1310,6 +1374,20 @@ class ChatAdapter(
             // Keep each bullet on its own line (markdown collapses single newlines).
             t = t.replace("\n• ", "\n\n• ")
             return t
+        }
+
+        /**
+         * AIC-09: a streamed answer can stop mid-**bold**, and Markwon then
+         * shows the raw asterisks. An odd count of `**` gets a closing pair.
+         * Render copy only — callers never store the result.
+         */
+        @JvmStatic
+        fun closeDanglingBold(text: String?): String? {
+            if (text == null) return null
+            var n = 0
+            var i = text.indexOf("**")
+            while (i >= 0) { n++; i = text.indexOf("**", i + 2) }
+            return if (n % 2 == 1) text.trimEnd() + "**" else text
         }
     }
 }

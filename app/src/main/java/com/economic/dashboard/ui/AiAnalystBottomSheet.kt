@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import androidx.core.os.HandlerCompat
 import android.os.SystemClock
 import android.text.Editable
 import android.util.Log
@@ -138,6 +139,9 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
      *  cancel a retry that's queued but hasn't fired yet — a bare `new
      *  Handler(...).postDelayed(...)` can't be cancelled from outside itself. */
     private val retryHandler = Handler(Looper.getMainLooper())
+
+    /** AIC-09: batches stream repaints; each StreamState is its own token. */
+    private val streamHandler = Handler(Looper.getMainLooper())
 
     /** Photo picker for the attach-image button. Registered in onCreate, which
      *  is the only point the Activity Result API allows. */
@@ -862,6 +866,11 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
      */
     class StreamState {
         @JvmField val acc = StringBuilder()
+        /** AIC-09: the first text delta has posted the bubble; later deltas
+         *  batch through scheduleStreamFlush. Touched on the stream thread only. */
+        @JvmField var bubblePosted = false
+        /** AIC-09: a batched text repaint is queued. */
+        @JvmField val flushScheduled = java.util.concurrent.atomic.AtomicBoolean(false)
         @JvmField var streamIdx = -1
         /** AI Law 6: true when every round of this turn should use the stronger
          *  model (gesture-initiated, or the question looks tool-likely). */
@@ -1377,18 +1386,27 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
                 }
                 val text = delta.optString("text", "")
                 if (!text.isEmpty()) {
-                    st.acc.append(text)
-                    val partial = st.acc.toString()
-                    runOnUi {
-                        if (binding == null) return@runOnUi
-                        if (st.streamIdx < 0) {
-                            chatAdapter().removeTypingIndicator()
-                            chatAdapter().addMessage(ChatMessage(partial, false))
-                            st.streamIdx = chatAdapter().getLastIndex()
-                        } else {
-                            chatAdapter().updateMessageText(st.streamIdx, partial)
+                    synchronized(st.acc) { st.acc.append(text) }
+                    if (!st.bubblePosted) {
+                        // First text of the turn: show the bubble at once.
+                        st.bubblePosted = true
+                        val partial = synchronized(st.acc) { st.acc.toString() }
+                        runOnUi {
+                            if (binding == null) return@runOnUi
+                            if (st.streamIdx < 0) {
+                                chatAdapter().removeTypingIndicator()
+                                val m = ChatMessage(partial, false)
+                                m.isStreaming = true
+                                m.streamTouchMs = System.currentTimeMillis()
+                                chatAdapter().addMessage(m)
+                                st.streamIdx = chatAdapter().getLastIndex()
+                            } else {
+                                chatAdapter().updateMessageText(st.streamIdx, partial, streaming = true)
+                            }
+                            maybeScrollToBottom(false)
                         }
-                        maybeScrollToBottom(false)
+                    } else {
+                        scheduleStreamFlush(st) // AIC-09: one repaint per 50ms window
                     }
                 }
             } else if ("message_delta" == type) {
@@ -1533,6 +1551,9 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
                             chatAdapter().addMessage(ChatMessage(statusText, false))
                             st.streamIdx = chatAdapter().getLastIndex()
                         } else {
+                            // AIC-09: a batched delta still queued must not
+                            // overwrite the status line.
+                            cancelStreamFlush(st)
                             chatAdapter().updateMessageText(st.streamIdx, statusText)
                         }
                         maybeScrollToBottom(false)
@@ -1581,6 +1602,7 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
                         chatAdapter().addMessage(ChatMessage(statusText, false))
                         st.streamIdx = chatAdapter().getLastIndex()
                     } else {
+                        cancelStreamFlush(st) // AIC-09
                         chatAdapter().updateMessageText(st.streamIdx, statusText)
                     }
                 }
@@ -1593,6 +1615,33 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
     }
 
     /** Commits the finished answer to history + persistence. */
+    /**
+     * AIC-09: coalesces stream deltas into one text repaint per
+     * [STREAM_FLUSH_MS]. The flush reads the whole accumulated text, so no delta
+     * is lost; finalizeTurn and Stop write the final text themselves, and a
+     * flush that lands after either backs off because the turn is no longer
+     * active.
+     */
+    private fun scheduleStreamFlush(st: StreamState) {
+        if (!st.flushScheduled.compareAndSet(false, true)) return
+        HandlerCompat.postDelayed(streamHandler, {
+            st.flushScheduled.set(false)
+            if (binding == null || activity == null || st.streamIdx < 0) return@postDelayed
+            if (activeTurn.get()?.st !== st) return@postDelayed
+            val partial = synchronized(st.acc) { st.acc.toString() }
+            chatAdapter().updateMessageText(st.streamIdx, partial, streaming = true)
+            // MOT-05 + AIC-09: text after the last tool round closes the trace.
+            chatAdapter().finishTraceIfIdle()
+            maybeScrollToBottom(false)
+        }, st, STREAM_FLUSH_MS)
+    }
+
+    /** AIC-09: drops a queued flush, e.g. before a tool-status repaint. */
+    private fun cancelStreamFlush(st: StreamState) {
+        streamHandler.removeCallbacksAndMessages(st)
+        st.flushScheduled.set(false)
+    }
+
     private fun finalizeTurn(committedQuery: String, call: Call?, st: StreamState) {
         // AI Law 1 fallback for rounds the auto-continue guard can't reach
         // (e.g. the forced-text final round): drop a trailing lookup
@@ -2093,6 +2142,9 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
 
         /** Cap request context at the last N history entries (N/2 turns). */
         private const val HISTORY_CAP = 20
+
+        /** AIC-09: stream repaint window. */
+        private const val STREAM_FLUSH_MS = 50L
 
         /** Max tool-call round-trips per user question. */
         private const val MAX_TOOL_DEPTH = 3

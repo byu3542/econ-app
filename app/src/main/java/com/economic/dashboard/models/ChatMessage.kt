@@ -93,4 +93,12 @@ class ChatMessage @JvmOverloads constructor(
 
     /** Whether the stack under the answer has been tapped open. */
     var sourcesExpanded: Boolean = false
+
+    // ── AIC-09: streaming caret. Transient — never persisted to Room. ─────────
+
+    /** Text is still arriving; the bubble shows a caret after it. */
+    var isStreaming: Boolean = false
+
+    /** When text last arrived; the caret dims once this goes stale. */
+    var streamTouchMs: Long = 0L
 }
