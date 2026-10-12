@@ -46,6 +46,9 @@
 
     <!-- Badge chrome (TICKET-05): one status-dot diameter everywhere -->
     <dimen name="dot_status">8dp</dimen>
+    <!-- Chat card pill dot: same size as dot_status, but not a status badge, so it
+         stays outside check_badges.sh rule 3. -->
+    <dimen name="dot_pill">8dp</dimen>
 
     <!-- IOS-08: inset-grouped-list row separator -->
     <dimen name="divider_hairline_height">0.5dp</dimen>

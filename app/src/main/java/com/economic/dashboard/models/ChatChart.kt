@@ -16,7 +16,16 @@ package com.economic.dashboard.models
  * wrong-cased id completes with no API error and would otherwise vanish
  * silently.
  */
-data class ChatChart(
+data class ChatChart @JvmOverloads constructor(
     @JvmField val seriesId: String,
-    @JvmField val months: Int
-)
+    @JvmField val months: Int,
+    /** 2026-10-12: [VIEW_CHART] (render_chart) or [VIEW_TABLE] (render_table). */
+    @JvmField val view: String = VIEW_CHART
+) {
+    val isTable: Boolean get() = view == VIEW_TABLE
+
+    companion object {
+        const val VIEW_CHART = "chart"
+        const val VIEW_TABLE = "table"
+    }
+}

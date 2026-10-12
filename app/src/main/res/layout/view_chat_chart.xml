@@ -39,8 +39,8 @@
 
             <View
                 android:id="@+id/viewChartPillDot"
-                android:layout_width="@dimen/dot_status"
-                android:layout_height="@dimen/dot_status"
+                android:layout_width="@dimen/dot_pill"
+                android:layout_height="@dimen/dot_pill"
                 android:layout_marginEnd="@dimen/space_xs"
                 android:background="@drawable/dot_neutral"
                 android:importantForAccessibility="no" />

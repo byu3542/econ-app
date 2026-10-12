@@ -18,7 +18,9 @@ import android.text.style.StyleSpan
 import android.transition.AutoTransition
 import android.transition.TransitionManager
 import android.util.DisplayMetrics
+import android.util.TypedValue
 import android.view.ActionMode
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
@@ -747,12 +749,104 @@ class ChatAdapter(
         while (container.childCount > charts.size)
             container.removeViewAt(container.childCount - 1)
         val inflater = LayoutInflater.from(container.context)
-        while (container.childCount < charts.size)
-            container.addView(inflater.inflate(R.layout.view_chat_chart, container, false))
 
         for (i in charts.indices) {
-            bindOneChart(container.getChildAt(i), charts[i], holder, token)
+            // Rows are reused by index, but a slot can change type (chart vs
+            // table) between messages — each row is tagged with its layout id
+            // and swapped when the type no longer matches.
+            val layout = if (charts[i].isTable) R.layout.view_chat_table else R.layout.view_chat_chart
+            var row = if (i < container.childCount) container.getChildAt(i) else null
+            if (row == null || row.getTag(R.id.llChartContainer) != layout) {
+                if (row != null) container.removeViewAt(i)
+                row = inflater.inflate(layout, container, false)
+                row.setTag(R.id.llChartContainer, layout)
+                container.addView(row, i)
+            }
+            if (charts[i].isTable) bindOneTable(row!!, charts[i], holder, token)
+            else bindOneChart(row!!, charts[i], holder, token)
         }
+    }
+
+    /** 2026-10-12 analyst cards T2: one table card. Same resolve, cache and
+     *  token rules as [bindOneChart]. */
+    private fun bindOneTable(row: View, chart: ChatChart, holder: ViewHolder, token: Long) {
+        row.findViewById<TextView>(R.id.tvTableLabel).text =
+            SERIES_LABELS[chart.seriesId] ?: chart.seriesId
+
+        val cacheKey = "${chart.seriesId}:${chart.months}"
+        val cached: ChatSeriesData.Card?
+        synchronized(seriesCache) { cached = seriesCache[cacheKey] }
+        if (cached != null) { applyTableCard(row, cached); return }
+
+        row.visibility = View.INVISIBLE
+        val appCtx = row.context.applicationContext
+        val vm = actionListener?.metricViewModel()
+        AppExecutors.diskIO().execute {
+            val card = ChatSeriesData.resolve(appCtx, vm, chart.seriesId, chart.months)
+            if (card.popupId == null || card.grade != null)
+                synchronized(seriesCache) { seriesCache[cacheKey] = card }
+            row.post { if (token == holder.chartBindToken) applyTableCard(row, card) }
+        }
+    }
+
+    /** Daily series collapse to month-end rows; the last [TABLE_ROWS] months
+     *  show newest first (newest bold), each with its change from the month
+     *  before. Fewer than two months hides the row, like a chart. */
+    private fun applyTableCard(row: View, card: ChatSeriesData.Card) {
+        val monthly = LinkedHashMap<String, Double>()
+        for (p in card.points) if (p.date.length >= 7) monthly[p.date.substring(0, 7)] = p.value
+        val months = monthly.entries.toList()
+        if (months.size < 2) {
+            row.visibility = View.GONE
+            return
+        }
+        row.visibility = View.VISIBLE
+        val ctx = row.context
+        row.findViewById<TextView>(R.id.tvTableLabel).text = card.label
+        bindPill(row.findViewById(R.id.llTablePill), row.findViewById(R.id.viewTablePillDot),
+            row.findViewById(R.id.tvTablePill), card)
+        val shown = minOf(TABLE_ROWS, months.size)
+        row.findViewById<TextView>(R.id.tvTableCaption).text =
+            "Last $shown of ${months.size} months"
+
+        val rows: LinearLayout = row.findViewById(R.id.llTableRows)
+        rows.removeAllViews()
+        val size = ctx.resources.getDimension(R.dimen.text_caption)
+        val navy = ContextCompat.getColor(ctx, R.color.text_navy)
+        val muted = ContextCompat.getColor(ctx, R.color.text_muted)
+        for (k in 0 until shown) {
+            val idx = months.size - 1 - k
+            val cur = months[idx]
+            val change = if (idx > 0) cur.value - months[idx - 1].value else null
+            val line = LinearLayout(ctx).apply { orientation = LinearLayout.HORIZONTAL }
+            fun cell(text: String, weight: Float, gravity: Int, color: Int) =
+                TextView(ctx).apply {
+                    this.text = text
+                    setTextSize(TypedValue.COMPLEX_UNIT_PX, size)
+                    setTextColor(color)
+                    this.gravity = gravity
+                    if (k == 0) setTypeface(typeface, Typeface.BOLD)
+                    layoutParams = LinearLayout.LayoutParams(0,
+                        LinearLayout.LayoutParams.WRAP_CONTENT, weight)
+                }
+            line.addView(cell(AxisDateFormat.axisLabel(cur.key + "-01", "MMM yyyy"),
+                1.2f, Gravity.START, navy))
+            line.addView(cell(card.format(cur.value), 1f, Gravity.END, navy))
+            line.addView(cell(change?.let { signedChange(it) } ?: "—", 1f, Gravity.END, muted))
+            rows.addView(line)
+        }
+
+        val popupId = card.popupId
+        row.isClickable = popupId != null
+        row.setOnClickListener(if (popupId == null) null else View.OnClickListener {
+            actionListener?.onOpenMetricSheet(popupId, "table", card.months)
+        })
+    }
+
+    /** "+0.12" / "−0.12" (U+2212 minus, 2 decimals). */
+    private fun signedChange(d: Double): String {
+        val s = String.format(Locale.US, "%.2f", Math.abs(d))
+        return if (d < 0 && s != "0.00") "−$s" else "+$s"
     }
 
     /**
@@ -1275,6 +1369,9 @@ class ChatAdapter(
     }
 
     companion object {
+        /** Rows a table card shows (T2). */
+        private const val TABLE_ROWS = 5
+
         /** Display-only status the analyst bubble shows while a tool round runs
          *  (AI Law 11). Rendered italic + subdued (TICKET-6); never committed. */
         @JvmField

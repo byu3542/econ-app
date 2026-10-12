@@ -57,6 +57,14 @@ object AnalystToolExecutor {
      *  AiAnalystBottomSheet has to branch on it in the stream handler. */
     const val RENDER_CHART = "render_chart"
 
+    /** 2026-10-12: the table card's tool, a sibling of [RENDER_CHART]. */
+    const val RENDER_TABLE = "render_table"
+
+    /** Rendering directives (no data fetched): they share the chart-round
+     *  cap and stay offered on the chart-only last round. */
+    @JvmStatic
+    fun isRenderTool(name: String?): Boolean = name == RENDER_CHART || name == RENDER_TABLE
+
     /** Normalized (date, value) pair so the Room and live paths share a renderer. */
     private class Pt(@JvmField val date: String, @JvmField val value: Double)
 
@@ -134,6 +142,7 @@ object AnalystToolExecutor {
 
         if (chartOnly) {
             tools.put(renderChartTool(seriesEnum))
+            tools.put(renderTableTool(seriesEnum))
             return tools
         }
 
@@ -168,6 +177,7 @@ object AnalystToolExecutor {
                     .put("count", countParam))))
 
         tools.put(renderChartTool(seriesEnum))
+        tools.put(renderTableTool(seriesEnum))
         return tools
     }
 
@@ -197,7 +207,30 @@ object AnalystToolExecutor {
                         .put("description", "Months of history to show (1-24). Default 24.")))
                 .put("required", JSONArray().put("series_id")))
 
-    /** Outcome of a render_chart call: the chart to draw (or null), plus the
+    /** 2026-10-12: the table card — the last few readings, newest first. Same
+     *  directive contract as [renderChartTool]. */
+    private fun renderTableTool(seriesEnum: JSONArray): JSONObject =
+        JSONObject()
+            .put("name", RENDER_TABLE)
+            .put("description", "Show a small table of the most recent monthly readings " +
+                "(newest first, with the change from the prior month) inside your reply. " +
+                "Use it instead of render_chart when exact recent values matter more than " +
+                "the trend shape. It does NOT return data to you. Never describe the table " +
+                "or name this tool in your prose.")
+            .put("input_schema", JSONObject()
+                .put("type", "object")
+                .put("properties", JSONObject()
+                    .put("series_id", JSONObject()
+                        .put("type", "string")
+                        .put("enum", seriesEnum)
+                        .put("description", "Which series to tabulate."))
+                    .put("months", JSONObject()
+                        .put("type", "integer")
+                        .put("description", "Months of history behind the table (1-24). " +
+                            "Default 24.")))
+                .put("required", JSONArray().put("series_id")))
+
+    /** Outcome of a render_chart call:the chart to draw (or null), plus the
      *  text that goes back to the model as the tool_result. */
     class RenderChartOutcome(
         @JvmField val chart: ChatChart?,
@@ -229,17 +262,31 @@ object AnalystToolExecutor {
      * sentence rather than a visible artifact or a retry loop.
      */
     @JvmStatic
-    fun renderChart(input: JSONObject): RenderChartOutcome {
+    fun renderChart(input: JSONObject): RenderChartOutcome =
+        renderView(input, ChatChart.VIEW_CHART, "chart")
+
+    /** 2026-10-12: render_table, validated exactly like [renderChart]. */
+    @JvmStatic
+    fun renderTable(input: JSONObject): RenderChartOutcome =
+        renderView(input, ChatChart.VIEW_TABLE, "table")
+
+    /** Dispatches either render tool; see [isRenderTool]. */
+    @JvmStatic
+    fun renderCard(name: String, input: JSONObject): RenderChartOutcome =
+        if (name == RENDER_TABLE) renderTable(input) else renderChart(input)
+
+    private fun renderView(input: JSONObject, view: String, noun: String): RenderChartOutcome {
         val raw = input.optString("series_id", "")
         val id = resolveSeriesId(raw)
         if (id == null || !EconomicSeriesRegistry.chartLabels().containsKey(id))
             return RenderChartOutcome(null,
-                "No chart was drawn: '" + raw + "' is not a series this app can chart. Do not " +
-                    "retry and do not mention the chart — just continue your answer in prose.")
+                "No " + noun + " was drawn: '" + raw + "' is not a series this app can show. " +
+                    "Do not retry and do not mention the " + noun + " — just continue your " +
+                    "answer in prose.")
         val months = input.optInt("months", 24).coerceIn(1, 24)
-        return RenderChartOutcome(ChatChart(id, months),
-            "Chart rendered for " + id + " over the last " + months + " months. Continue your " +
-                "answer; do not restate the chart's points one by one.")
+        return RenderChartOutcome(ChatChart(id, months, view),
+            noun.replaceFirstChar { it.uppercase() } + " rendered for " + id + " over the last " +
+                months + " months. Continue your answer; do not restate its points one by one.")
     }
 
     /**
@@ -273,7 +320,8 @@ object AnalystToolExecutor {
                 // keep the resolved ChatChart; this branch serves the non-streamed
                 // fallback in handleJsonResponse, where the chart is lost but the
                 // model still gets a coherent, non-retrying answer.
-                RENDER_CHART -> renderChart(input).let { ToolOutcome(it.message, emptyList(), it.chart == null) }
+                RENDER_CHART, RENDER_TABLE -> renderCard(name, input)
+                    .let { ToolOutcome(it.message, emptyList(), it.chart == null) }
                 else -> failedCall("Unknown tool: " + name)
             }
         } catch (e: Exception) {
@@ -300,6 +348,7 @@ object AnalystToolExecutor {
         }
         "get_headlines" -> "Check headlines"
         RENDER_CHART -> "Drawing chart"
+        RENDER_TABLE -> "Building table"
         else -> "Calling $name…"
     }
 

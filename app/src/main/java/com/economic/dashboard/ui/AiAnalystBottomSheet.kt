@@ -1483,7 +1483,7 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
         if ("tool_use" == stopReason && !toolBlocks.isEmpty() && !call.isCanceled()) {
             var hasDataTool = false
             for (tb in toolBlocks.values)
-                if (AnalystToolExecutor.RENDER_CHART != tb.name) hasDataTool = true
+                if (!AnalystToolExecutor.isRenderTool(tb.name)) hasDataTool = true
             // TICKET-P2-6 (R4): on a forced round, record which tools satisfied
             // the force. This is the measurement behind two decisions this loop
             // deliberately did not make: whether the model dodges the force by
@@ -1520,11 +1520,11 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
                     markStep(stepId, TraceStep.State.RUNNING)
                     val t0 = SystemClock.elapsedRealtime()
                     val failed: Boolean
-                    if (AnalystToolExecutor.RENDER_CHART == tb.name) {
+                    if (AnalystToolExecutor.isRenderTool(tb.name)) {
                         // Intercepted (not routed through execute()) so the
                         // resolved ChatChart survives — the app draws from its
                         // own store; the tool_result is only an acknowledgement.
-                        val outcome = AnalystToolExecutor.renderChart(input)
+                        val outcome = AnalystToolExecutor.renderCard(tb.name, input)
                         val chart = outcome.chart
                         if (chart != null) { st.charts.add(chart); chartsChanged = true }
                         result = outcome.message

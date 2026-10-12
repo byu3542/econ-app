@@ -93,8 +93,12 @@ data class ChatMessageEntity(
         fun encodeCharts(charts: List<ChatChart>?): String? {
             if (charts == null || charts.isEmpty()) return null
             val arr = JSONArray()
-            for (c in charts)
-                arr.put(JSONObject().put("series_id", c.seriesId).put("months", c.months))
+            for (c in charts) {
+                val o = JSONObject().put("series_id", c.seriesId).put("months", c.months)
+                // Tables only, so chart rows keep their exact v6 shape.
+                if (c.isTable) o.put("view", ChatChart.VIEW_TABLE)
+                arr.put(o)
+            }
             return arr.toString()
         }
 
@@ -114,7 +118,9 @@ data class ChatMessageEntity(
                     val o = arr.optJSONObject(i) ?: continue
                     val id = o.optString("series_id", "")
                     if (id.isEmpty()) continue
-                    out.add(ChatChart(id, o.optInt("months", 24).coerceIn(1, 24)))
+                    val view = if (o.optString("view") == ChatChart.VIEW_TABLE)
+                        ChatChart.VIEW_TABLE else ChatChart.VIEW_CHART
+                    out.add(ChatChart(id, o.optInt("months", 24).coerceIn(1, 24), view))
                 }
                 out
             } catch (ignored: Exception) {
