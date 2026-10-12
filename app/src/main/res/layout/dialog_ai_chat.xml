@@ -33,7 +33,8 @@
         <RelativeLayout
             android:id="@+id/rlHeader"
             android:layout_width="match_parent"
-            android:layout_height="52dp"
+            android:layout_height="wrap_content"
+            android:minHeight="52dp"
             android:paddingHorizontal="@dimen/space_lg">
 
             <!-- TICKET-P2-8: the identity marker is tappable — what is this /
@@ -75,8 +76,8 @@
 
             <ImageButton
                 android:id="@+id/btnClearChat"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:layout_toStartOf="@+id/btnClose"
                 android:layout_marginEnd="@dimen/space_sm"
                 android:layout_centerVertical="true"
@@ -88,8 +89,8 @@
 
             <ImageButton
                 android:id="@+id/btnClose"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:layout_alignParentEnd="true"
                 android:layout_centerVertical="true"
                 android:background="?attr/selectableItemBackgroundBorderless"
@@ -364,8 +365,8 @@
 
             <ImageButton
                 android:id="@+id/btnAttach"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:src="@drawable/ic_attach_image"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 app:tint="@color/text_muted"
