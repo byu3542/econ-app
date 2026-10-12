@@ -140,6 +140,64 @@
 
     </LinearLayout>
 
+    <!-- AIC-05: action row under a finished analyst answer -->
+    <LinearLayout
+        android:id="@+id/llAnswerActions"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/llBubbleContainer"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0">
+
+        <TextView
+            android:id="@+id/btnAnswerCopy"
+            style="@style/ChatAnswerAction"
+            android:text="Copy" />
+
+        <TextView
+            android:id="@+id/btnAnswerRegenerate"
+            style="@style/ChatAnswerAction"
+            android:text="Regenerate" />
+
+        <TextView
+            android:id="@+id/btnAnswerContinue"
+            style="@style/ChatAnswerAction"
+            android:text="Continue" />
+
+        <TextView
+            android:id="@+id/btnVariantPrev"
+            style="@style/ChatAnswerAction"
+            android:contentDescription="Previous answer"
+            android:text="‹" />
+
+        <TextView
+            android:id="@+id/tvVariantCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/text_muted"
+            android:textSize="@dimen/text_caption"
+            android:text="1/2" />
+
+        <TextView
+            android:id="@+id/btnVariantNext"
+            style="@style/ChatAnswerAction"
+            android:contentDescription="Next answer"
+            android:text="›" />
+
+        <TextView
+            android:id="@+id/tvAnswerModel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/space_xs"
+            android:textColor="@color/text_muted"
+            android:textSize="@dimen/text_caption"
+            android:text="Haiku 4.5" />
+    </LinearLayout>
+
     <!-- Timestamp -->
     <TextView
         android:id="@+id/tvTimestamp"
@@ -149,7 +207,7 @@
         android:textColor="@color/text_muted"
         android:textSize="@dimen/text_caption"
         android:layout_marginTop="@dimen/space_xs"
-        app:layout_constraintTop_toBottomOf="@id/llBubbleContainer"
+        app:layout_constraintTop_toBottomOf="@id/llAnswerActions"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0" />

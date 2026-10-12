@@ -478,6 +478,15 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /** AIC-05: drops the stored answer Regenerate is about to replace. Runs on
+     *  the same serial disk executor as persistChatMessage, so it lands before
+     *  the replacement is inserted. */
+    fun deletePersistedLastAnswer() {
+        AppExecutors.diskIO().execute {
+            YieldDatabase.getInstance(this).chatMessageDao().deleteLastAnalyst()
+        }
+    }
+
     /** Wipes the stored conversation and resets the visible chat. */
     fun clearChatHistory() {
         AppExecutors.diskIO().execute {

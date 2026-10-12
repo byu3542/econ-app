@@ -87,6 +87,9 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
      */
     private var followStream = true
 
+    /** AIC-05: answers Regenerate set aside, handed to the next turn. */
+    private var pendingVariants: List<ChatMessage.AnswerVariant> = emptyList()
+
     /** AIC-03: the turn now streaming, and the question it answers. */
     private class ActiveTurn(val query: String, val st: StreamState)
 
@@ -217,6 +220,7 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
 
         // Empty state + quick-ask chips react to conversation state
         chatAdapter().registerAdapterDataObserver(conversationObserver)
+        chatAdapter().turnActions = turnActions // AIC-05
         updateConversationStateViews()
 
         // Preload the 24-month historical context from the Room cache so it's
@@ -605,14 +609,16 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
         val st = t.st
         val partial = stripDanglingAnnouncement(st.acc.toString()).trim()
         if (partial.isEmpty()) return
-        val text = partial + STOPPED_SUFFIX
+        val text = partial + ChatMessage.STOPPED_SUFFIX
         commitToHistory(t.query, text)
         val msg = ChatMessage(text, false)
         msg.charts = ArrayList(st.charts)
         if (st.streamIdx >= 0) {
             chatAdapter().updateMessageText(st.streamIdx, text)
             if (msg.charts.isNotEmpty()) chatAdapter().updateMessageCharts(st.streamIdx, msg.charts)
+            chatAdapter().messageAt(st.streamIdx)?.let { attachAnswerMeta(it, st) }
         } else {
+            attachAnswerMeta(msg, st)
             chatAdapter().addMessage(msg)
         }
         host().persistChatMessage(msg)
@@ -671,10 +677,67 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
         queryClaude(q, b.rvChat)
     }
 
+    /**
+     * AIC-05: asks the last question again. The old answer leaves the screen,
+     * the history and Room, and rides along as a variant of the new one, so
+     * the "1/2" toggle can bring it back.
+     */
+    private fun regenerate() {
+        val b = binding ?: return
+        if (awaitingResponse) return
+        val q = chatAdapter().questionFor(chatAdapter().lastAnswerIndex())
+        if (q.isNullOrEmpty()) return
+        val old = chatAdapter().removeLastAnswer() ?: return
+        pendingVariants = if (old.variants.isEmpty())
+            listOf(ChatMessage.AnswerVariant(old.text, old.charts, old.modelLabel))
+        else ArrayList(old.variants)
+        val history = conversationHistory()
+        synchronized(history) {
+            val n = history.length()
+            if (n >= 2 && history.optJSONObject(n - 1)?.optString("role") == "assistant") {
+                history.remove(n - 1)
+                history.remove(n - 2)
+            }
+        }
+        host().deletePersistedLastAnswer()
+        followStream = true
+        maybeScrollToBottom(true)
+        queryClaude(q, b.rvChat)
+    }
+
+    /** AIC-05: label + variants for an answer this turn produced. */
+    private fun attachAnswerMeta(m: ChatMessage, st: StreamState) {
+        m.modelLabel = ModelConfig.label(st.lastModel)
+        if (st.priorVariants.isEmpty()) return
+        m.variants.clear()
+        m.variants.addAll(st.priorVariants)
+        m.variants.add(ChatMessage.AnswerVariant(m.text, ArrayList(m.charts), m.modelLabel))
+        m.variantIndex = m.variants.size - 1
+    }
+
+    /** AIC-05: the history's last answer follows the variant on screen, so
+     *  the next question builds on what the user chose to keep. */
+    private fun syncHistoryToVariant(text: String?) {
+        if (text == null) return
+        val history = conversationHistory()
+        synchronized(history) {
+            val last = history.optJSONObject(history.length() - 1) ?: return
+            if (last.optString("role") == "assistant") last.put("content", text)
+        }
+    }
+
+    private val turnActions = object : ChatAdapter.TurnActions {
+        override fun isBusy(): Boolean = awaitingResponse
+        override fun onRegenerate() = regenerate()
+        override fun onContinue() = sendQuery(CONTINUE_PROMPT)
+        override fun onVariantShown(text: String?) = syncHistoryToVariant(text)
+    }
+
     /** Terminal state of a request: allow sending again. */
     private fun requestFinished() {
         awaitingResponse = false
         refreshSendEnabled()
+        if (activity != null) chatAdapter().refreshActionRows() // AIC-05
         // MOT-02 backstop: every exit path (success, error, cancel) lands here,
         // so the trace can never be left "Thinking". Success paths finish it
         // first with "Thought"; anything still running here was cut short.
@@ -789,6 +852,10 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
         /** MOT-04: what this turn's data tools actually returned, deduped.
          *  Handed to the answer bubble in finalizeTurn(); never persisted. */
         @JvmField val sources = TurnSources()
+        /** AIC-05: model id of the latest round, for the label under the answer. */
+        @JvmField var lastModel: String? = null
+        /** AIC-05: answers this turn regenerates, oldest first. */
+        @JvmField var priorVariants: List<ChatMessage.AnswerVariant> = emptyList()
     }
 
     private fun queryClaude(userQuery: String, rv: RecyclerView) {
@@ -802,6 +869,7 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
         setLastUserQuery(userQuery)
         awaitingResponse = true
         refreshSendEnabled()
+        chatAdapter().refreshActionRows() // AIC-05: older answers lose Regenerate
         // MOT-02: a timed "Thinking" trace replaces the anonymous typing dots.
         chatAdapter().addTrace(System.currentTimeMillis())
         maybeScrollToBottom(false)
@@ -853,6 +921,8 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
             val st = StreamState()
             st.routeStrong = conciseTurn || looksToolLikely(userQuery)
             st.gestureTurn = conciseTurn
+            st.priorVariants = pendingVariants
+            pendingVariants = emptyList()
             activeTurn.set(ActiveTurn(userQuery, st))
             sendTurn(messages, systemPrompt, userQuery, st, 0)
         } catch (e: Exception) {
@@ -972,7 +1042,9 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
         try {
             val body = JSONObject()
             // AI Law 6: model picked per round by the routing method, not a literal.
-            body.put("model", chooseModel(st, depth))
+            val model = chooseModel(st, depth)
+            st.lastModel = model
+            body.put("model", model)
             // 1024 truncated longer answers (and could cut tool-call JSON
             // mid-stream, yielding empty tool inputs). Each round gets its own
             // budget, so a bigger cap only costs tokens actually generated.
@@ -1523,8 +1595,10 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
             // If no delta ever arrived on-screen (edge case), add the bubble now.
             if (st.streamIdx < 0) {
                 chatAdapter().removeTypingIndicator()
+                attachAnswerMeta(persisted, st)
                 chatAdapter().addMessage(persisted)
             } else {
+                chatAdapter().messageAt(st.streamIdx)?.let { attachAnswerMeta(it, st) }
                 // Sync the bubble in case a dangling announcement was stripped.
                 chatAdapter().updateMessageText(st.streamIdx, finalText)
                 chatAdapter().updateMessageCharts(st.streamIdx, persisted.charts)
@@ -1940,6 +2014,7 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
         cancelCurrentCall()
         try {
             chatAdapter().unregisterAdapterDataObserver(conversationObserver)
+            if (chatAdapter().turnActions === turnActions) chatAdapter().turnActions = null
         } catch (ignored: Exception) {}
         // IOS-06: belt-and-suspenders reset for the backdrop recede — the
         // sheet's own STATE_HIDDEN callback usually already restores this,
@@ -1961,7 +2036,6 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
         private const val FOLLOW_SLOP_DP = 100
 
         /** AIC-03: appended to a stopped answer; stored with it, so it survives a restart. */
-        private const val STOPPED_SUFFIX = "\n\n— Stopped. This answer is incomplete."
         private const val ARG_PREFILL = "prefill_query"
         private const val ARG_SCREEN_CONTEXT = "screen_context"
         private const val ARG_IMAGE_URI = "image_uri"
@@ -2001,6 +2075,9 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
 
         /** AI Law 6: model ids, shared with DailyBriefWorker via ModelConfig so a
          *  model rotation only needs one edit (TICKET-F / review F9). */
+        /** AIC-05: what Continue sends after a stopped answer. */
+        private const val CONTINUE_PROMPT = "Continue your previous answer from where it stopped."
+
         private const val MODEL_FAST = ModelConfig.MODEL_FAST
         private const val MODEL_STRONG = ModelConfig.MODEL_STRONG
 

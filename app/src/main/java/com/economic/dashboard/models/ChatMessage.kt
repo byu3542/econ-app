@@ -12,7 +12,38 @@ class ChatMessage @JvmOverloads constructor(
     val isError: Boolean = false,
     val timeMillis: Long = System.currentTimeMillis()
 ) {
-    val timestamp: String = SimpleDateFormat("h:mm a", Locale.US).format(Date(timeMillis))
+    /** AIC-05: time alone for today's messages; older turns carry the date. */
+    val timestamp: String
+        get() {
+            val date = Date(timeMillis)
+            val day = SimpleDateFormat("yyyyMMdd", Locale.US)
+            val today = day.format(date) == day.format(Date())
+            return SimpleDateFormat(if (today) "h:mm a" else "MMM d, h:mm a", Locale.US).format(date)
+        }
+
+    // ── AIC-05: per-reply action row. Transient — never persisted to Room. ────
+
+    /** Short model name for the answer ("Haiku 4.5"); null when unknown,
+     *  e.g. for answers restored from Room. */
+    var modelLabel: String? = null
+
+    /** Earlier answers to the same question, kept by Regenerate, oldest
+     *  first; the current answer is the last entry. Empty until the first
+     *  regenerate, so a single answer shows no toggle. */
+    val variants: MutableList<AnswerVariant> = ArrayList()
+
+    /** Which of [variants] is on screen. */
+    var variantIndex: Int = 0
+
+    /** AIC-03 wrote the stop marker into the text, so it survives Room. */
+    val isStopped: Boolean get() = text?.endsWith(STOPPED_SUFFIX) == true
+
+    class AnswerVariant(val text: String?, val charts: List<ChatChart>, val modelLabel: String?)
+
+    companion object {
+        /** AIC-03: appended to an answer cut short by Stop. */
+        const val STOPPED_SUFFIX = "\n\n— Stopped. This answer is incomplete."
+    }
 
     /** Attached image preview (vision messages). Transient — not persisted to Room. */
     var imageBitmap: Bitmap? = null

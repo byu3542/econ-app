@@ -88,6 +88,24 @@ class ChatAdapter(
         fun onOpenMetricPopup(popupId: String)
     }
 
+    /** AIC-05: what the row under an answer can do, served by the open
+     *  analyst sheet. Null while no sheet is showing — the row hides. */
+    interface TurnActions {
+        /** A request is in flight: the newest answer is not finished yet. */
+        fun isBusy(): Boolean
+        fun onRegenerate()
+        fun onContinue()
+        /** The newest answer switched to another variant; the sheet keeps the
+         *  conversation history on the answer the user is looking at. */
+        fun onVariantShown(text: String?)
+    }
+
+    var turnActions: TurnActions? = null
+        set(value) {
+            field = value
+            refreshActionRows()
+        }
+
     private val messages = ArrayList<ChatMessage>()
     private var markwon: Markwon? = null
 
@@ -167,6 +185,49 @@ class ChatAdapter(
     }
 
     fun getLastIndex(): Int = messages.size - 1
+
+    fun messageAt(index: Int): ChatMessage? = messages.getOrNull(index)
+
+    /** AIC-05: the question the answer at [index] replies to, or null (the
+     *  welcome bubble answers nothing). Read from the list, not the sheet's
+     *  last query, which a restart does not restore. */
+    fun questionFor(index: Int): String? {
+        for (i in index - 1 downTo 0) if (messages[i].isUser) return messages[i].text
+        return null
+    }
+
+    /** AIC-05: index of the newest finished-or-streaming analyst answer, or -1. */
+    fun lastAnswerIndex(): Int {
+        for (i in messages.indices.reversed()) {
+            val m = messages[i]
+            if (m.isUser) return -1
+            if (isAnswer(m)) return i
+        }
+        return -1
+    }
+
+    /**
+     * AIC-05: Regenerate takes the newest answer (and the trace row above it)
+     * off screen and returns it, so the sheet can carry it as a variant of the
+     * replacement. Null when there is no answer to replace.
+     */
+    fun removeLastAnswer(): ChatMessage? {
+        val i = lastAnswerIndex()
+        if (i < 0) return null
+        val m = messages.removeAt(i)
+        notifyItemRemoved(i)
+        if (i > 0 && messages[i - 1].isTrace) {
+            messages.removeAt(i - 1)
+            notifyItemRemoved(i - 1)
+        }
+        return m
+    }
+
+    /** AIC-05: busy state or the newest answer changed — redraw every row's
+     *  action strip without touching text or charts. */
+    fun refreshActionRows() {
+        if (messages.isNotEmpty()) notifyItemRangeChanged(0, messages.size, PAYLOAD_ACTIONS)
+    }
 
     fun removeTypingIndicator() {
         // MOT-02: every call site is "first output arrived" or a terminal
@@ -710,6 +771,7 @@ class ChatAdapter(
         }
         if (payloads.contains(PAYLOAD_SOURCES)) bindSources(holder, m, false)
         else if (payloads.contains(PAYLOAD_SOURCES_TOGGLE)) bindSources(holder, m, true)
+        if (text || payloads.contains(PAYLOAD_ACTIONS)) bindActions(holder, position)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
@@ -857,6 +919,8 @@ class ChatAdapter(
             true
         }
 
+        bindActions(holder, position)
+
         holder.llBubbleContainer.layoutParams = bubbleParams
         holder.tvSenderLabel.layoutParams = labelParams
         holder.tvTimestamp.layoutParams = timeParams
@@ -924,6 +988,83 @@ class ChatAdapter(
         }
     }
 
+    /**
+     * AIC-05: Copy · Regenerate · Continue · variant toggle · model label under
+     * a finished analyst answer. Regenerate and Continue only on the newest
+     * answer, and nothing on the newest while it is still streaming.
+     */
+    private fun bindActions(holder: ViewHolder, position: Int) {
+        val m = messages[position]
+        val actions = turnActions
+        val newest = position == lastAnswerIndex()
+        val busy = actions?.isBusy() == true
+        if (!isAnswer(m) || m.text.isNullOrEmpty() || (newest && busy) ||
+            questionFor(position) == null) {
+            holder.llAnswerActions.visibility = View.GONE
+            return
+        }
+        holder.llAnswerActions.visibility = View.VISIBLE
+        holder.btnAnswerCopy.setOnClickListener { v ->
+            val text = currentAt(holder)?.text
+            if (!text.isNullOrEmpty()) copyToClipboard(v.context, text)
+        }
+        val canAct = newest && actions != null && !busy
+        holder.btnAnswerRegenerate.visibility = if (canAct) View.VISIBLE else View.GONE
+        holder.btnAnswerRegenerate.setOnClickListener { turnActions?.onRegenerate() }
+        holder.btnAnswerContinue.visibility = if (canAct && m.isStopped) View.VISIBLE else View.GONE
+        holder.btnAnswerContinue.setOnClickListener { turnActions?.onContinue() }
+
+        val n = m.variants.size
+        val toggle = if (n > 1) View.VISIBLE else View.GONE
+        holder.btnVariantPrev.visibility = toggle
+        holder.tvVariantCount.visibility = toggle
+        holder.btnVariantNext.visibility = toggle
+        if (n > 1) {
+            val i = m.variantIndex
+            holder.tvVariantCount.text = "${i + 1}/$n"
+            holder.tvVariantCount.contentDescription = "Answer ${i + 1} of $n"
+            holder.btnVariantPrev.isEnabled = i > 0
+            holder.btnVariantPrev.alpha = if (i > 0) 1f else 0.3f
+            holder.btnVariantNext.isEnabled = i < n - 1
+            holder.btnVariantNext.alpha = if (i < n - 1) 1f else 0.3f
+            holder.btnVariantPrev.setOnClickListener { showVariant(holder, -1) }
+            holder.btnVariantNext.setOnClickListener { showVariant(holder, +1) }
+        }
+
+        val label = m.modelLabel
+        holder.tvAnswerModel.visibility = if (label.isNullOrEmpty()) View.GONE else View.VISIBLE
+        holder.tvAnswerModel.text = label
+        holder.tvAnswerModel.contentDescription = label?.let { "Answered by $it" }
+    }
+
+    /** AIC-05: steps the answer under [holder] to its previous / next variant. */
+    private fun showVariant(holder: ViewHolder, step: Int) {
+        val pos = holder.bindingAdapterPosition
+        if (pos == RecyclerView.NO_POSITION) return
+        val m = messages[pos]
+        val target = m.variantIndex + step
+        if (target !in m.variants.indices) return
+        val v = m.variants[target]
+        m.variantIndex = target
+        m.text = v.text
+        m.charts = v.charts
+        m.modelLabel = v.modelLabel
+        m.sources = emptyList()
+        notifyItemChanged(pos)
+        if (pos == lastAnswerIndex()) turnActions?.onVariantShown(v.text)
+    }
+
+    private fun currentAt(holder: ViewHolder): ChatMessage? {
+        val pos = holder.bindingAdapterPosition
+        return if (pos == RecyclerView.NO_POSITION) null else messages[pos]
+    }
+
+    private fun copyToClipboard(ctx: Context, text: String) {
+        val cm = ctx.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager ?: return
+        cm.setPrimaryClip(ClipData.newPlainText("Econ Analyst message", text))
+        Toast.makeText(ctx, "Copied", Toast.LENGTH_SHORT).show()
+    }
+
     private fun showMessageMenu(anchor: View, text: String, fromAnalyst: Boolean) {
         val ctx = anchor.context
         val menu = PopupMenu(ctx, anchor)
@@ -932,11 +1073,7 @@ class ChatAdapter(
         menu.setOnMenuItemClickListener { item ->
             when (item.itemId) {
                 1 -> {
-                    val cm = ctx.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
-                    if (cm != null) {
-                        cm.setPrimaryClip(ClipData.newPlainText("Econ Analyst message", text))
-                        Toast.makeText(ctx, "Copied", Toast.LENGTH_SHORT).show()
-                    }
+                    copyToClipboard(ctx, text)
                     true
                 }
                 2 -> {
@@ -1020,6 +1157,15 @@ class ChatAdapter(
         val llTraceSteps: LinearLayout = v.findViewById(R.id.llTraceSteps)
         // MOT-04: sources the turn's tools read
         val sourceStack: SourceStackView = v.findViewById(R.id.sourceStack)
+        // AIC-05: action row under an answer
+        val llAnswerActions: LinearLayout = v.findViewById(R.id.llAnswerActions)
+        val btnAnswerCopy: TextView = v.findViewById(R.id.btnAnswerCopy)
+        val btnAnswerRegenerate: TextView = v.findViewById(R.id.btnAnswerRegenerate)
+        val btnAnswerContinue: TextView = v.findViewById(R.id.btnAnswerContinue)
+        val btnVariantPrev: TextView = v.findViewById(R.id.btnVariantPrev)
+        val tvVariantCount: TextView = v.findViewById(R.id.tvVariantCount)
+        val btnVariantNext: TextView = v.findViewById(R.id.btnVariantNext)
+        val tvAnswerModel: TextView = v.findViewById(R.id.tvAnswerModel)
 
         /** Recycling guard for async chart loads (TICKET-P2-2): bumped on every
          *  bindCharts, checked when a background load posts back. Replaces the
@@ -1036,6 +1182,14 @@ class ChatAdapter(
 
         /** Partial-bind payload: only the message text changed (SSE streaming). */
         private val PAYLOAD_TEXT = Any()
+
+        /** AIC-05: partial-bind payload — only the action row changed. */
+        private val PAYLOAD_ACTIONS = Any()
+
+        /** AIC-05: a real analyst answer, as opposed to a trace, typing dots,
+         *  an error bubble or a user message. */
+        private fun isAnswer(m: ChatMessage): Boolean =
+            !m.isUser && !m.isTrace && !m.isTyping && !m.isError
 
         /** Partial-bind payload: only the chart list changed (TICKET-P2-2). */
         private val PAYLOAD_CHARTS = Any()
