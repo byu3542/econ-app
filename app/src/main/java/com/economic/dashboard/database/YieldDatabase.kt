@@ -40,7 +40,7 @@ import com.economic.dashboard.models.TreasuryYield
  */
 @Database(
     entities = [TreasuryYield::class, NewsArticle::class, EconomicHistoryEntry::class, ChatMessageEntity::class],
-    version = 6,
+    version = 7,
     exportSchema = false
 )
 abstract class YieldDatabase : RoomDatabase() {
@@ -131,6 +131,16 @@ abstract class YieldDatabase : RoomDatabase() {
             }
         }
 
+        // ── Migration: v6 → v7 ───────────────────────────────────────────────────
+        // AIC-08: New chat archives instead of deleting. NOT NULL DEFAULT 0 keeps
+        // every existing row in the active thread; the entity declares the same
+        // default via @ColumnInfo so the identity hash matches.
+        private val MIGRATION_6_7: Migration = object : Migration(6, 7) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE `chat_messages` ADD COLUMN `archived` INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
         // ── Singleton factory ─────────────────────────────────────────────────────
 
         @JvmStatic
@@ -140,7 +150,7 @@ abstract class YieldDatabase : RoomDatabase() {
                 YieldDatabase::class.java,
                 "yield_database"
             )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_4_5, MIGRATION_5_6)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
                 // Safety net: if migration path is still missing, wipe and rebuild.
                 // All data is re-fetched from APIs so no data loss in practice.
                 .fallbackToDestructiveMigration()

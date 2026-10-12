@@ -487,10 +487,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /** Wipes the stored conversation and resets the visible chat. */
-    fun clearChatHistory() {
+    /** Resets the visible chat. AIC-08: [archive] (the sheet's New chat) keeps
+     *  the old thread in Room; Settings' clear still wipes everything. */
+    fun clearChatHistory(archive: Boolean = false) {
         AppExecutors.diskIO().execute {
-            YieldDatabase.getInstance(this).chatMessageDao().clearAll()
+            val dao = YieldDatabase.getInstance(this).chatMessageDao()
+            if (archive) dao.archiveActive() else dao.clearAll()
         }
         while (conversationHistory.length() > 0) conversationHistory.remove(0)
         lastUserQuery = ""
@@ -909,7 +911,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     companion object {
-        private const val WELCOME_TEXT =
+        const val WELCOME_TEXT =
             "Hello! I am your Econ Analyst, powered by Claude. " +
                 "I can see all of the dashboard's live data — ask me anything about it. " +
                 "Tip: long-press any card on the Overview screen to ask about that metric."

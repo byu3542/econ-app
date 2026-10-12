@@ -1,5 +1,6 @@
 package com.economic.dashboard.models
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -22,7 +23,11 @@ data class ChatMessageEntity(
      * before v6 carry NULL here, and a restored conversation must never crash on
      * one.
      */
-    var charts: String? = null
+    var charts: String? = null,
+    /** AIC-08: true once New chat has archived this row's thread. Schema v7
+     *  (MIGRATION_6_7); the default matches the migration's column. */
+    @ColumnInfo(defaultValue = "0")
+    var archived: Boolean = false
 ) {
     fun toChatMessage(): ChatMessage {
         val m = ChatMessage(text, isUser, false, false, timeMillis)

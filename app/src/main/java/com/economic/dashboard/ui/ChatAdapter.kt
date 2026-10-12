@@ -98,6 +98,31 @@ class ChatAdapter(
         /** The newest answer switched to another variant; the sheet keeps the
          *  conversation history on the answer the user is looking at. */
         fun onVariantShown(text: String?)
+        /** AIC-08: "Start new chat" tapped on the history-cut divider. */
+        fun onStartNewChat()
+    }
+
+    /** AIC-08: row that gets the "older messages aren't sent" divider above it —
+     *  the oldest question still inside the analyst's history window; -1 = none. */
+    private var historyCutIndex = -1
+
+    /** AIC-08: places the divider before the [keepPairs]-th newest question.
+     *  Matches the sheet's HISTORY_CAP slice, which is whole Q&A pairs. */
+    fun refreshHistoryCut(keepPairs: Int) {
+        val users = messages.indices.filter { messages[it].isUser }
+        val cut = if (users.size > keepPairs) users[users.size - keepPairs] else -1
+        if (cut == historyCutIndex) return
+        val old = historyCutIndex
+        historyCutIndex = cut
+        if (old in messages.indices) notifyItemChanged(old, PAYLOAD_CUT)
+        if (cut >= 0) notifyItemChanged(cut, PAYLOAD_CUT)
+    }
+
+    private fun bindHistoryCut(holder: ViewHolder, position: Int) {
+        val show = position == historyCutIndex
+        holder.tvHistoryCut.visibility = if (show) View.VISIBLE else View.GONE
+        holder.tvHistoryCut.setOnClickListener(
+            if (show) View.OnClickListener { turnActions?.onStartNewChat() } else null)
     }
 
     var turnActions: TurnActions? = null
@@ -123,6 +148,7 @@ class ChatAdapter(
     /** Replaces the whole list — used when restoring a persisted conversation. */
     fun setMessages(restored: List<ChatMessage>?) {
         messages.clear()
+        historyCutIndex = -1
         if (restored != null) messages.addAll(restored)
         notifyDataSetChanged()
     }
@@ -772,11 +798,13 @@ class ChatAdapter(
         if (payloads.contains(PAYLOAD_SOURCES)) bindSources(holder, m, false)
         else if (payloads.contains(PAYLOAD_SOURCES_TOGGLE)) bindSources(holder, m, true)
         if (text || payloads.contains(PAYLOAD_ACTIONS)) bindActions(holder, position)
+        if (payloads.contains(PAYLOAD_CUT)) bindHistoryCut(holder, position)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val m = messages[position]
         ensureMarkwon(holder.itemView.context)
+        bindHistoryCut(holder, position)
 
         // MOT-02: a trace row shows only the trace inside the bubble.
         holder.traceRow.visibility = if (m.isTrace) View.VISIBLE else View.GONE
@@ -1141,6 +1169,7 @@ class ChatAdapter(
         val llTypingIndicator: LinearLayout = v.findViewById(R.id.llTypingIndicator)
         val tvMessage: TextView = v.findViewById(R.id.tvMessage)
         val tvSenderLabel: TextView = v.findViewById(R.id.tvSenderLabel)
+        val tvHistoryCut: TextView = v.findViewById(R.id.tvHistoryCut)
         val tvTimestamp: TextView = v.findViewById(R.id.tvTimestamp)
         val tvRetry: TextView = v.findViewById(R.id.tvRetry)
         val ivChatImage: ImageView = v.findViewById(R.id.ivChatImage)
@@ -1196,6 +1225,8 @@ class ChatAdapter(
 
         /** MOT-02: partial-bind payload — only the trace row's state changed. */
         private val PAYLOAD_TRACE = Any()
+        /** AIC-08: the history-cut divider moved onto or off this row. */
+        private val PAYLOAD_CUT = Any()
 
         /** MOT-04: sources attached (full stack bind) / stack opened or closed. */
         private val PAYLOAD_SOURCES = Any()
