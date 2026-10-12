@@ -1,9 +1,9 @@
 package com.economic.dashboard.ui
 
 import android.app.Dialog
-import android.graphics.Rect
 import android.net.Uri
 import android.os.Bundle
+import android.view.KeyEvent
 import android.os.Handler
 import android.os.Looper
 import androidx.core.os.HandlerCompat
@@ -20,6 +20,9 @@ import android.widget.LinearLayout
 import android.widget.TextView
 
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -321,29 +324,22 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
                 }
             })
 
-            val decorView = window.decorView
-            decorView.viewTreeObserver.addOnGlobalLayoutListener {
-                if (dialog?.window == null) return@addOnGlobalLayoutListener
-                val visibleFrame = Rect()
-                decorView.getWindowVisibleDisplayFrame(visibleFrame)
-                val keypadHeight = screenHeight - visibleFrame.bottom
-                if (keypadHeight > screenHeight * 0.15) {
-                    val adjustedHeight = screenHeight - keypadHeight
-                    if (sheet.layoutParams.height != adjustedHeight) {
-                        sheet.layoutParams.height = adjustedHeight
-                        sheet.requestLayout()
-                        behavior.peekHeight = adjustedHeight
-                        if (chatAdapter().itemCount > 0)
-                            rvChat.post { rvChat.scrollToPosition(chatAdapter().itemCount - 1) }
-                    }
-                } else {
-                    if (sheet.layoutParams.height != sheetHeight) {
-                        sheet.layoutParams.height = sheetHeight
-                        sheet.requestLayout()
-                        behavior.peekHeight = sheetHeight
-                    }
-                }
+            // AIC-10: window insets replace the old visible-frame height hack.
+            // The window draws edge to edge, so the IME never resizes it; the
+            // root pads itself clear of the keyboard and the system bars.
+            WindowCompat.setDecorFitsSystemWindows(window, false)
+            val root = binding?.root ?: return@post
+            val padTop = root.paddingTop
+            val padBottom = root.paddingBottom
+            ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->
+                val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+                val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
+                v.setPadding(v.paddingLeft, padTop + bars.top, v.paddingRight,
+                    padBottom + Math.max(ime.bottom, bars.bottom))
+                onImeVisibilityChanged(insets.isVisible(WindowInsetsCompat.Type.ime()))
+                insets
             }
+            ViewCompat.requestApplyInsets(root)
         }
 
         // ── Chips auto-send: one tap asks the question ─────────────────────────
@@ -393,6 +389,20 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
         etMsg.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_SEND) { sendCurrentMessage(); true }
             else false
+        }
+        // AIC-10: Enter sends from a hardware keyboard; Shift+Enter is a newline.
+        etMsg.setOnKeyListener { _, keyCode, event ->
+            if (keyCode != KeyEvent.KEYCODE_ENTER && keyCode != KeyEvent.KEYCODE_NUMPAD_ENTER)
+                return@setOnKeyListener false
+            if (event.isShiftPressed) {
+                if (event.action == KeyEvent.ACTION_DOWN)
+                    etMsg.text.replace(etMsg.selectionStart.coerceAtLeast(0),
+                        etMsg.selectionEnd.coerceAtLeast(0), "\n")
+                return@setOnKeyListener true
+            }
+            if (event.action == KeyEvent.ACTION_DOWN && btnSend.isEnabled && !awaitingResponse)
+                sendCurrentMessage()
+            true
         }
 
         btnSend.setOnClickListener {
@@ -564,6 +574,32 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
             .show()
     }
 
+    /** AIC-10: the chip rows' visibility as conversation state wants it,
+     *  by view id; the IME may hide them on top of that. */
+    private val chipWant = HashMap<Int, Int>()
+
+    /** AIC-10: tracked from the window insets. */
+    private var imeVisible = false
+
+    /** AIC-10: every write to a chip row's visibility goes through here, so
+     *  the keyboard collapse and conversation state never overwrite each other. */
+    private fun setChipVis(v: View, vis: Int) {
+        chipWant[v.id] = vis
+        v.visibility = if (imeVisible) View.GONE else vis
+    }
+
+    /** AIC-10: chips collapse while the keyboard is up; a reader at the
+     *  bottom stays pinned there as the list shrinks. */
+    private fun onImeVisibilityChanged(visible: Boolean) {
+        if (visible == imeVisible) return
+        imeVisible = visible
+        val b = binding ?: return
+        for (v in listOf<View>(b.tvAskAbout, b.hsvChips, b.cgFollowUps)) {
+            chipWant[v.id]?.let { v.visibility = if (visible) View.GONE else it }
+        }
+        if (visible && followStream) maybeScrollToBottom(false)
+    }
+
     /** Shows the empty state on a fresh chat. Quick-ask chips stay visible
      *  whenever the setting is on — chat history persists across sessions,
      *  so tying them to an empty conversation would hide them forever. */
@@ -580,13 +616,13 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
         val showEmpty = !hasMessages
         if (showEmpty && b.llEmptyState.visibility != View.VISIBLE)
             b.llEmptyState.post { CentreOutStagger.animateIn(binding?.cgStarters) }
-        if (!hasMessages) b.cgFollowUps.visibility = View.GONE
+        if (!hasMessages) setChipVis(b.cgFollowUps, View.GONE)
         b.llEmptyState.visibility = if (hasMessages) View.GONE else View.VISIBLE
         val chipsEnabled = SettingsManager.getBool(requireContext(),
             SettingsManager.KEY_SMART_CHIPS, true)
         val chipVis = if (chipsEnabled) View.VISIBLE else View.GONE
-        b.tvAskAbout.visibility = chipVis
-        b.hsvChips.visibility = chipVis
+        setChipVis(b.tvAskAbout, chipVis)
+        setChipVis(b.hsvChips, chipVis)
     }
 
     private fun cancelCurrentCall() {
@@ -691,7 +727,7 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
         if (awaitingResponse) return
         if (userQuery == null || userQuery.trim().isEmpty()) return
         val q = userQuery.trim()
-        b.cgFollowUps.visibility = View.GONE // MOT-03: follow-ups belong to the last answer
+        setChipVis(b.cgFollowUps, View.GONE) // MOT-03: follow-ups belong to the last answer
         b.etMessage.setText("")
         b.rvChat.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP)
         val userMsg = ChatMessage(q, true)
@@ -1740,11 +1776,11 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
         if (activity == null) return
         val followUps = SmartPromptGenerator.generateFollowUpsForAnswer(answerText)
         if (followUps.isEmpty()) {
-            b.cgFollowUps.visibility = View.GONE
+            setChipVis(b.cgFollowUps, View.GONE)
             return
         }
         bindPromptChips(b.cgFollowUps, followUps)
-        b.cgFollowUps.visibility = View.VISIBLE
+        setChipVis(b.cgFollowUps, View.VISIBLE)
         b.cgFollowUps.post { CentreOutStagger.animateIn(binding?.cgFollowUps) }
     }
 
