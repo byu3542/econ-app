@@ -36,6 +36,7 @@ import androidx.core.graphics.ColorUtils
 import androidx.dynamicanimation.animation.DynamicAnimation
 import androidx.dynamicanimation.animation.SpringAnimation
 import androidx.recyclerview.widget.RecyclerView
+import com.economic.dashboard.analyst.ReleaseCalendar
 import com.economic.dashboard.R
 import com.economic.dashboard.analyst.AnalystIdentity
 import com.economic.dashboard.analyst.AnalystToolExecutor
@@ -196,7 +197,18 @@ class ChatAdapter(
 
     /** MOT-04: binds the sources stack. [toggled] animates an open/close of
      *  the already-bound stack; otherwise it is a full bind with no motion. */
+    /** AIC-11: "newer data out" chip when a series this answer used has had a
+     *  newer release since it was fetched. Checked at bind, so a restored
+     *  answer goes stale on its own as release dates pass. */
+    private fun bindStale(holder: ViewHolder, m: ChatMessage) {
+        val stale = !m.isUser && !m.isTrace && m.sources.any {
+            it.kind == TurnSource.Kind.SERIES && ReleaseCalendar.isStale(it.seriesId, it.latestDate)
+        }
+        holder.tvStaleData.visibility = if (stale) View.VISIBLE else View.GONE
+    }
+
     private fun bindSources(holder: ViewHolder, m: ChatMessage, toggled: Boolean) {
+        bindStale(holder, m)
         val stack = holder.sourceStack
         if (m.isUser || m.isError || m.isTrace || m.isTyping || m.sources.isEmpty()) {
             stack.clear()
@@ -1246,6 +1258,7 @@ class ChatAdapter(
         val llTraceSteps: LinearLayout = v.findViewById(R.id.llTraceSteps)
         // MOT-04: sources the turn's tools read
         val sourceStack: SourceStackView = v.findViewById(R.id.sourceStack)
+        val tvStaleData: TextView = v.findViewById(R.id.tvStaleData)
         // AIC-05: action row under an answer
         val llAnswerActions: LinearLayout = v.findViewById(R.id.llAnswerActions)
         val btnAnswerCopy: TextView = v.findViewById(R.id.btnAnswerCopy)

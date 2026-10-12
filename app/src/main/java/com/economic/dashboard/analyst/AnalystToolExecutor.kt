@@ -304,13 +304,14 @@ object AnalystToolExecutor {
     }
 
     /** MOT-04: a get_series result that carried points. */
-    private fun fetchedSeries(seriesId: String, text: String) =
-        ToolOutcome(text, listOf(seriesSource(seriesId)))
+    private fun fetchedSeries(seriesId: String, text: String, latestDate: String? = null) =
+        ToolOutcome(text, listOf(seriesSource(seriesId, latestDate)))
 
     /** MOT-04: the source row for a series — labelled with the provider the
      *  app fetched it from (FRED, BLS, BEA, Treasury), not a guess. */
     @JvmStatic
-    fun seriesSource(seriesId: String): TurnSource {
+    @JvmOverloads
+    fun seriesSource(seriesId: String, latestDate: String? = null): TurnSource {
         val e = EconomicSeriesRegistry.byId(seriesId)
         val provider = when (e?.apiSource) {
             EconomicSeriesRegistry.ApiSource.BLS -> "BLS"
@@ -318,7 +319,7 @@ object AnalystToolExecutor {
             EconomicSeriesRegistry.ApiSource.TREASURY -> "Treasury"
             else -> "FRED"
         }
-        return TurnSource.series(seriesId, e?.chartLabel ?: seriesId, provider)
+        return TurnSource.series(seriesId, e?.chartLabel ?: seriesId, provider, latestDate)
     }
 
     private fun getSeries(ctx: Context, input: JSONObject): ToolOutcome {
@@ -371,7 +372,9 @@ object AnalystToolExecutor {
                 "No data points in the requested window.")
         }
 
-        return fetchedSeries(seriesId, render(seriesName, seriesId, months, window, all, unit))
+        // AIC-11: the newest observation travels with the source for the stale chip.
+        val latest = all.maxOfOrNull { it.date }
+        return fetchedSeries(seriesId, render(seriesName, seriesId, months, window, all, unit), latest)
     }
 
     /** Live ViewModel-backed series (used as the cache-cold fallback). */

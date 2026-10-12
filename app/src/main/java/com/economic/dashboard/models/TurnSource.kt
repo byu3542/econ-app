@@ -24,15 +24,21 @@ class TurnSource(
     /** Who supplied it: "FRED", "BLS", … for series; the outlet for headlines. */
     @JvmField val provider: String,
     @JvmField val seriesId: String?,
-    @JvmField val url: String?
+    @JvmField val url: String?,
+    /** AIC-11: the series' newest observation ("yyyy-MM-dd" or "yyyy-MM") when
+     *  the fetch knew it; ReleaseCalendar.isStale reads it. */
+    @JvmField val latestDate: String? = null
 ) {
     enum class Kind { SERIES, HEADLINE }
 
     companion object {
 
         @JvmStatic
-        fun series(seriesId: String, label: String, provider: String): TurnSource =
-            TurnSource(Kind.SERIES, "series:$seriesId", label, provider, seriesId, null)
+        @JvmOverloads
+        fun series(
+            seriesId: String, label: String, provider: String, latestDate: String? = null
+        ): TurnSource =
+            TurnSource(Kind.SERIES, "series:$seriesId", label, provider, seriesId, null, latestDate)
 
         @JvmStatic
         fun headline(title: String, outlet: String?, url: String?): TurnSource {

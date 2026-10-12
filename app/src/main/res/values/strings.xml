@@ -158,6 +158,7 @@
     <string name="clear_chat_confirm">Delete the full chat history? This can\'t be undone.</string>
     <string name="clear_chat_action">Clear</string>
     <string name="chat_history_cut">Older messages aren\'t sent to the analyst. <u>Start new chat</u></string>
+    <string name="chat_stale_data">Newer data out · ask again</string>
     <string name="chat_cleared">Chat history cleared</string>
     <string name="gridlines">Gridlines</string>
     <string name="gridlines_sub">Show background gridlines on charts</string>

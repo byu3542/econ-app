@@ -57,7 +57,8 @@ data class ChatMessageEntity(
             for (s in sources)
                 arr.put(JSONObject().put("kind", s.kind.name).put("key", s.key)
                     .put("title", s.title).put("provider", s.provider)
-                    .put("series_id", s.seriesId).put("url", s.url))
+                    .put("series_id", s.seriesId).put("url", s.url)
+                    .put("latest", s.latestDate))
             return arr.toString()
         }
 
@@ -78,7 +79,8 @@ data class ChatMessageEntity(
                     out.add(TurnSource(kind, key, o.optString("title", ""),
                         o.optString("provider", ""),
                         o.optString("series_id", "").ifEmpty { null },
-                        o.optString("url", "").ifEmpty { null }))
+                        o.optString("url", "").ifEmpty { null },
+                        o.optString("latest", "").ifEmpty { null }))
                 }
                 out
             } catch (ignored: Exception) {
