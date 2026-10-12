@@ -43,6 +43,7 @@ import com.economic.dashboard.cache.DashboardDataCache
 import com.economic.dashboard.databinding.DialogAiChatBinding
 import com.economic.dashboard.models.ChatChart
 import com.economic.dashboard.models.ChatMessage
+import com.economic.dashboard.models.TurnSource
 import com.economic.dashboard.models.EconomicDataPoint
 import com.economic.dashboard.models.TraceStep
 import com.economic.dashboard.models.TurnSources
@@ -1032,7 +1033,7 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
         // TICKET-P2-4: the gesture tier is a truncated pyramid, not a
         // truncation — the reply carries only what was asked plus accuracy
         // caveats; deferred detail surfaces as follow-up chips after the
-        // answer (showFollowUpChips), so the prompt can honestly promise it.
+        // answer (showFollowUpPrompts), so the prompt can honestly promise it.
         val lengthRule = if (conciseGesture)
             "This question came from a one-tap gesture on a card or chart. Keep the " +
                 "reply to 60-90 words: only what was asked, plus any caveat needed to " +
@@ -1728,8 +1729,8 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
             host().persistChatMessage(persisted)
             // TICKET-P2-4: the gesture tier's deferred detail gets somewhere
             // to go — chips derived from this answer, not from the screen.
-            if (st.gestureTurn) showFollowUpChips(finalText)
-            showFollowUpPrompts(finalText) // MOT-03
+            // AIC-11: one follow-up row, built from this answer and its sources.
+            showFollowUpPrompts(finalText, persisted.sources) // MOT-03
             maybeScrollToBottom(false)
             announceAnswer(finalText) // AIC-06
         }
@@ -1771,10 +1772,10 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
     }
 
     /** Follow-ups under every finished answer, revealed centre-out. */
-    private fun showFollowUpPrompts(answerText: String) {
+    private fun showFollowUpPrompts(answerText: String, sources: List<TurnSource> = emptyList()) {
         val b = binding ?: return
         if (activity == null) return
-        val followUps = SmartPromptGenerator.generateFollowUpsForAnswer(answerText)
+        val followUps = SmartPromptGenerator.generateFollowUpsForAnswer(answerText, sources)
         if (followUps.isEmpty()) {
             setChipVis(b.cgFollowUps, View.GONE)
             return
@@ -1782,50 +1783,6 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
         bindPromptChips(b.cgFollowUps, followUps)
         setChipVis(b.cgFollowUps, View.VISIBLE)
         b.cgFollowUps.post { CentreOutStagger.animateIn(binding?.cgFollowUps) }
-    }
-
-    /**
-     * TICKET-P2-4 (truncated pyramid): renders follow-up chips derived from a
-     * gesture answer at the front of the quick-ask row. The row and its
-     * KEY_SMART_CHIPS setting govern visibility exactly as for the static
-     * chips; a new gesture answer replaces the previous answer's follow-ups.
-     */
-    private fun showFollowUpChips(answerText: String) {
-        val b = binding ?: return
-        if (activity == null) return
-        val row = b.llChipRow
-
-        // Drop the previous answer's follow-ups; static chips carry no tag.
-        var i = row.childCount - 1
-        while (i >= 0) {
-            if (FOLLOW_UP_CHIP_TAG == row.getChildAt(i).tag) row.removeViewAt(i)
-            i--
-        }
-
-        val followUps = SmartPromptGenerator.generateFollowUpsForAnswer(answerText)
-        if (followUps.isEmpty()) return
-        val res = resources
-        val padH = res.getDimensionPixelSize(R.dimen.space_lg)
-        val padV = res.getDimensionPixelSize(R.dimen.space_sm)
-        for ((idx, question) in followUps.withIndex()) {
-            val chip = TextView(requireContext())
-            chip.text = question
-            chip.tag = FOLLOW_UP_CHIP_TAG
-            chip.setBackgroundResource(R.drawable.bg_chip_outline)
-            chip.setPadding(padH, padV, padH, padV)
-            chip.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX,
-                res.getDimension(R.dimen.text_secondary))
-            chip.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_secondary))
-            chip.isClickable = true
-            chip.isFocusable = true
-            val lp = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
-            lp.marginEnd = res.getDimensionPixelSize(R.dimen.space_sm)
-            chip.layoutParams = lp
-            chip.setOnClickListener { sendQuery(question) }
-            row.addView(chip, idx)
-        }
-        b.hsvChips.scrollTo(0, 0)
     }
 
     /**
@@ -2165,7 +2122,6 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
 
         /** TICKET-P2-4: marks dynamically added follow-up chips so a new
          *  answer can clear its predecessors without touching static chips. */
-        private const val FOLLOW_UP_CHIP_TAG = "follow_up_chip"
 
         /** MOT-03: four max — five wraps and breaks the centre-out reading. */
         private const val MAX_PROMPT_CHIPS = 4

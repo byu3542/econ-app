@@ -1,5 +1,6 @@
 package com.economic.dashboard.analyst
 
+import com.economic.dashboard.models.TurnSource
 import java.util.Locale
 
 object SmartPromptGenerator {
@@ -71,11 +72,21 @@ object SmartPromptGenerator {
      * these render in the quick-ask chip row, whose chips are unadorned.
      */
     @JvmStatic
-    fun generateFollowUpsForAnswer(answer: String?): List<String> {
+    @JvmOverloads
+    fun generateFollowUpsForAnswer(
+        answer: String?, sources: List<TurnSource> = emptyList()
+    ): List<String> {
         val followUps = ArrayList<String>()
         if (answer == null || answer.trim().isEmpty()) return followUps
         // Locale.US for the same Turkish-I reason as generatePromptsForHeadline.
         val text = answer.lowercase(Locale.US)
+
+        // AIC-11: the series this answer actually fetched come first, so the
+        // follow-ups are about this answer rather than its topic in general.
+        for (s in sources) {
+            if (s.kind != TurnSource.Kind.SERIES || followUps.size >= 2) continue
+            followUps.add("How has the ${s.title} moved over the past year?")
+        }
 
         if (text.contains("inflation") || text.contains("cpi") || text.contains("pce") || text.contains("prices"))
             followUps.add("How does inflation compare historically?")

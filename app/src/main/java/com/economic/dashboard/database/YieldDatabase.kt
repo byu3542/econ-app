@@ -40,7 +40,7 @@ import com.economic.dashboard.models.TreasuryYield
  */
 @Database(
     entities = [TreasuryYield::class, NewsArticle::class, EconomicHistoryEntry::class, ChatMessageEntity::class],
-    version = 7,
+    version = 8,
     exportSchema = false
 )
 abstract class YieldDatabase : RoomDatabase() {
@@ -141,6 +141,15 @@ abstract class YieldDatabase : RoomDatabase() {
             }
         }
 
+        // ── Migration: v7 → v8 ───────────────────────────────────────────────────
+        // AIC-11: answers keep their sources across a restart. Nullable with no
+        // DEFAULT, matching the entity (the MIGRATION_5_6 rule).
+        private val MIGRATION_7_8: Migration = object : Migration(7, 8) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE `chat_messages` ADD COLUMN `sources` TEXT")
+            }
+        }
+
         // ── Singleton factory ─────────────────────────────────────────────────────
 
         @JvmStatic
@@ -150,7 +159,7 @@ abstract class YieldDatabase : RoomDatabase() {
                 YieldDatabase::class.java,
                 "yield_database"
             )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
                 // Safety net: if migration path is still missing, wipe and rebuild.
                 // All data is re-fetched from APIs so no data loss in practice.
                 .fallbackToDestructiveMigration()

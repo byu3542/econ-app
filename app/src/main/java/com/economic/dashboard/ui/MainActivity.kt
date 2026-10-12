@@ -919,7 +919,9 @@ class MainActivity : AppCompatActivity() {
         const val WELCOME_TEXT =
             "Hello! I am your Econ Analyst, powered by Claude. " +
                 "I can see all of the dashboard's live data — ask me anything about it. " +
-                "Tip: long-press any card on the Overview screen to ask about that metric."
+                "Tip: long-press any card on the Overview screen to ask about that metric.\n\n" +
+                "Answers are AI-generated and can be wrong — verify anything important " +
+                "before acting on it."
 
         /** Newest rows kept in the persisted chat table. */
         private const val CHAT_PERSIST_LIMIT = 200
