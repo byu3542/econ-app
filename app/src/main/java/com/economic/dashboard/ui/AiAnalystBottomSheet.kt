@@ -636,6 +636,19 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
         if (spoken.isNotEmpty()) b.root.announceForAccessibility(spoken)
     }
 
+    /** AIC-07: error bubbles are read aloud too, not just finished answers. */
+    private fun addErrorBubble(text: String) {
+        chatAdapter().addMessage(ChatMessage(text, false, false, true))
+        announceAnswer(text)
+    }
+
+    /** True when no network can reach the internet; safe off the main thread. */
+    private fun isOffline(): Boolean {
+        val cm = context?.getSystemService(android.net.ConnectivityManager::class.java) ?: return false
+        val caps = cm.getNetworkCapabilities(cm.activeNetwork) ?: return true
+        return !caps.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET)
+    }
+
     /** Send button doubles as Stop while a response is streaming. */
     private fun refreshSendEnabled() {
         val b = binding ?: return
@@ -1171,10 +1184,12 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
                         }, 1500)
                         return
                     }
+                    Log.w(TAG, "request failed after retry", e)
+                    val plain = plainError(null, e, isOffline())
                     runOnUi {
                         requestFinished()
                         chatAdapter().removeTypingIndicator()
-                        chatAdapter().addMessage(ChatMessage("Connection failed.", false, false, true))
+                        addErrorBubble(plain)
                         maybeScrollToBottom(false)
                     }
                 }
@@ -1204,10 +1219,12 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
                                 }
                             } else {
                                 val apiMsg = readApiError(r)
+                                Log.w(TAG, apiMsg)
+                                val plain = plainError(r.code, IOException(apiMsg), false)
                                 runOnUi {
                                     requestFinished()
                                     chatAdapter().removeTypingIndicator()
-                                    chatAdapter().addMessage(ChatMessage(apiMsg, false, false, true))
+                                    addErrorBubble(plain)
                                     maybeScrollToBottom(false)
                                 }
                             }
@@ -1240,7 +1257,7 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
                                 1200)
                             return
                         }
-                        val friendly = friendlyError(e)
+                        val friendly = plainError(null, e, isOffline())
                         runOnUi {
                             requestFinished()
                             chatAdapter().removeTypingIndicator()
@@ -1248,8 +1265,7 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
                             // keep saying "Checking the data…" next to an error.
                             if (st.streamIdx >= 0)
                                 chatAdapter().updateMessageText(st.streamIdx, st.acc.toString())
-                            if (!call.isCanceled())
-                                chatAdapter().addMessage(ChatMessage(friendly, false, false, true))
+                            if (!call.isCanceled()) addErrorBubble(friendly)
                             maybeScrollToBottom(false)
                         }
                     }
@@ -2237,6 +2253,28 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
             if (e is IOException)
                 return "The connection dropped while receiving the response — please try again."
             return "Couldn't read the response — please try again."
+        }
+
+        /**
+         * AIC-07: the text shown in an error bubble. Raw server wording
+         * ("API error 429", "overloaded_error") stays in Log.w only; the thrown
+         * IOException messages are untouched because isTransientFailure parses them.
+         */
+        @JvmStatic
+        fun plainError(code: Int?, e: Exception?, offline: Boolean): String {
+            val m = e?.message ?: ""
+            if (offline || e is java.net.UnknownHostException || e is java.net.ConnectException
+                || e is java.net.NoRouteToHostException)
+                return "You're offline. Check your connection and try again."
+            if (code == 429 || m.contains("rate_limit_error"))
+                return "The analyst is busy. Try again in a minute."
+            if ((code != null && code >= 500) || m.contains("overloaded_error")
+                || m.contains("api_error"))
+                return "The analyst service is down. Please try again shortly."
+            if (e is java.net.SocketTimeoutException) return friendlyError(e)
+            if (code == null && e is IOException && !m.startsWith("Econ Analyst service error"))
+                return friendlyError(e)
+            return "Something went wrong. Please try again."
         }
 
         /** Extracts the server's error message from a non-2xx response body, if present. */
