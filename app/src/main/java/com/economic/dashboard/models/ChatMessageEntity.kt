@@ -27,11 +27,16 @@ data class ChatMessageEntity(
     /** AIC-08: true once New chat has archived this row's thread. Schema v7
      *  (MIGRATION_6_7); the default matches the migration's column. */
     @ColumnInfo(defaultValue = "0")
-    var archived: Boolean = false
+    var archived: Boolean = false,
+    /** AIC-11: what the answer fetched (MOT-04 sources), as a JSON array, so
+     *  the sources stack survives a restart. Schema v8 (MIGRATION_7_8);
+     *  nullable, and a decode failure degrades to no sources. */
+    var sources: String? = null
 ) {
     fun toChatMessage(): ChatMessage {
         val m = ChatMessage(text, isUser, false, false, timeMillis)
         m.charts = decodeCharts(charts)
+        m.sources = decodeSources(sources)
         return m
     }
 
@@ -40,8 +45,46 @@ data class ChatMessageEntity(
         fun from(m: ChatMessage): ChatMessageEntity =
             ChatMessageEntity(
                 text = m.text, isUser = m.isUser, timeMillis = m.timeMillis,
-                charts = encodeCharts(m.charts)
+                charts = encodeCharts(m.charts),
+                sources = encodeSources(m.sources)
             )
+
+        /** AIC-11: null for an empty list, like [encodeCharts]. */
+        @JvmStatic
+        fun encodeSources(sources: List<TurnSource>?): String? {
+            if (sources == null || sources.isEmpty()) return null
+            val arr = JSONArray()
+            for (s in sources)
+                arr.put(JSONObject().put("kind", s.kind.name).put("key", s.key)
+                    .put("title", s.title).put("provider", s.provider)
+                    .put("series_id", s.seriesId).put("url", s.url))
+            return arr.toString()
+        }
+
+        /** AIC-11: tolerant like [decodeCharts] — a bad entry is dropped. */
+        @JvmStatic
+        fun decodeSources(json: String?): List<TurnSource> {
+            if (json.isNullOrEmpty()) return emptyList()
+            return try {
+                val arr = JSONArray(json)
+                val out = ArrayList<TurnSource>(arr.length())
+                for (i in 0 until arr.length()) {
+                    val o = arr.optJSONObject(i) ?: continue
+                    val kind = try {
+                        TurnSource.Kind.valueOf(o.optString("kind"))
+                    } catch (e: IllegalArgumentException) { continue }
+                    val key = o.optString("key", "")
+                    if (key.isEmpty()) continue
+                    out.add(TurnSource(kind, key, o.optString("title", ""),
+                        o.optString("provider", ""),
+                        o.optString("series_id", "").ifEmpty { null },
+                        o.optString("url", "").ifEmpty { null }))
+                }
+                out
+            } catch (ignored: Exception) {
+                emptyList()
+            }
+        }
 
         /** Null for an empty list, so unchanged rows stay NULL rather than "[]". */
         @JvmStatic

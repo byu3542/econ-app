@@ -86,7 +86,7 @@ class ChatMessage @JvmOverloads constructor(
 
     val isTraceRunning: Boolean get() = isTrace && traceElapsedMs < 0
 
-    // ── MOT-04: sources stack. Transient — never persisted to Room. ───────────
+    // ── MOT-04: sources stack. AIC-11: persisted (ChatMessageEntity.sources). ──
 
     /** What this answer's turn actually fetched, in fetch order. */
     var sources: List<TurnSource> = emptyList()
