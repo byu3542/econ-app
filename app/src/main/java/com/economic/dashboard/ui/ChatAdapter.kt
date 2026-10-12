@@ -844,16 +844,17 @@ class ChatAdapter(
             }
         }
 
-        // Long-press → copy / share (any real message)
-        val text = m.text
-        if (!m.isTyping && !text.isNullOrEmpty()) {
-            val fromAnalyst = !m.isUser && !m.isError
-            holder.llBubbleContainer.setOnLongClickListener {
-                showMessageMenu(it, text, fromAnalyst)
-                true
-            }
-        } else {
-            holder.llBubbleContainer.setOnLongClickListener(null)
+        // Long-press → copy / share (any real message). AIC-04: streaming updates
+        // arrive as PAYLOAD_TEXT partial binds, so read the item at click time
+        // instead of capturing the text from this full bind.
+        holder.llBubbleContainer.setOnLongClickListener { v ->
+            val pos = holder.bindingAdapterPosition
+            if (pos == RecyclerView.NO_POSITION) return@setOnLongClickListener false
+            val cur = messages[pos]
+            val text = cur.text
+            if (cur.isTyping || text.isNullOrEmpty()) return@setOnLongClickListener false
+            showMessageMenu(v, text, !cur.isUser && !cur.isError)
+            true
         }
 
         holder.llBubbleContainer.layoutParams = bubbleParams
