@@ -49,7 +49,6 @@ import com.economic.dashboard.utils.AppExecutors
 import com.economic.dashboard.utils.HapticUtil
 import com.economic.dashboard.utils.ImageUtils
 import com.economic.dashboard.utils.SettingsManager
-import com.economic.dashboard.utils.markDestructive
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -406,15 +405,7 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
         // TICKET-P2-8: the header identity block is the marker's tap target.
         b.llAnalystIdentity.setOnClickListener { AnalystIdentity.showAbout(requireContext()) }
 
-        b.btnClearChat.setOnClickListener {
-            MaterialAlertDialogBuilder(requireContext())
-                .setTitle("Clear conversation")
-                .setMessage("Delete the full chat history? This can't be undone.")
-                .setPositiveButton("Clear") { _, _ -> host().clearChatHistory() }
-                .setNegativeButton(android.R.string.cancel, null)
-                .show()
-                .markDestructive()
-        }
+        b.btnClearChat.setOnClickListener { confirmNewChat() }
 
         // ── Prefill / shared-image entry points ────────────────────────────────
         val args = arguments
@@ -558,13 +549,29 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
         }
     }
 
+    /** AIC-08: New chat archives the thread (kept in Room), so it is not
+     *  destructive and needs no red button. */
+    private fun confirmNewChat() {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("New chat")
+            .setMessage("Start a new chat? The current one is archived.")
+            .setPositiveButton("New chat") { _, _ -> host().clearChatHistory(archive = true) }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
     /** Shows the empty state on a fresh chat. Quick-ask chips stay visible
      *  whenever the setting is on — chat history persists across sessions,
      *  so tying them to an empty conversation would hide them forever. */
     private fun updateConversationStateViews() {
         val b = binding ?: return
         if (activity == null) return
-        val hasMessages = chatAdapter().itemCount > 0
+        // AIC-08: the welcome message alone still counts as a fresh chat.
+        val adapter = chatAdapter()
+        val hasMessages = adapter.itemCount > 1 ||
+            (adapter.itemCount == 1 && adapter.messageAt(0)?.text != MainActivity.WELCOME_TEXT)
+        // Posted: this runs inside the adapter's own notify dispatch.
+        b.rvChat.post { if (activity != null) chatAdapter().refreshHistoryCut(HISTORY_CAP / 2) }
         // MOT-03: play the centre-out reveal each time the empty state appears.
         val showEmpty = !hasMessages
         if (showEmpty && b.llEmptyState.visibility != View.VISIBLE)
@@ -754,6 +761,7 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
     private val turnActions = object : ChatAdapter.TurnActions {
         override fun isBusy(): Boolean = awaitingResponse
         override fun onRegenerate() = regenerate()
+        override fun onStartNewChat() = confirmNewChat()
         override fun onContinue() = sendQuery(CONTINUE_PROMPT)
         override fun onVariantShown(text: String?) = syncHistoryToVariant(text)
     }

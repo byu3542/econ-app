@@ -8,6 +8,24 @@
     android:clipChildren="false"
     android:clipToPadding="false">
 
+    <!-- AIC-08: history-cut divider, above the oldest question still sent to the analyst -->
+    <TextView
+        android:id="@+id/tvHistoryCut"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:minHeight="48dp"
+        android:gravity="center"
+        android:paddingVertical="@dimen/space_sm"
+        android:layout_marginBottom="@dimen/space_sm"
+        android:text="@string/chat_history_cut"
+        android:textColor="@color/text_muted"
+        android:textSize="@dimen/text_caption"
+        android:background="?attr/selectableItemBackground"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
     <!-- Sender Label (YOU / ECON ANALYST) — shown only on the first message of a run -->
     <TextView
         android:id="@+id/tvSenderLabel"
@@ -19,7 +37,7 @@
         android:textStyle="bold"
         android:letterSpacing="0.1"
         android:layout_marginBottom="@dimen/space_xs"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvHistoryCut"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0" />
