@@ -222,4 +222,6 @@
     <string name="analyst_about_body">The Econ Analyst is an AI analyst powered by Claude, built into this app.\n\nThe figures it cites come from the app\'s own data: official series fetched from the U.S. Bureau of Labor Statistics, FRED (Federal Reserve Bank of St. Louis), the U.S. Treasury, and market data feeds. The model is handed these exact numbers — it does not look them up elsewhere.\n\nIts analysis is AI-generated and can be wrong. Verify anything important before acting on it.</string>
     <string name="about_version_label">Version %1$s</string>
     <string name="about_privacy">Data sources and AI information</string>
+    <!-- 2026-10-12 analyst cards -->
+    <string name="chat_card_open_chart">Open chart</string>
 </resources>

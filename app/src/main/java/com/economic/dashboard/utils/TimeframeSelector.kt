@@ -36,13 +36,17 @@ object TimeframeSelector {
         selector: SegmentedView?,
         chartId: String,
         minMonths: Int = ChartCadence.minMonths(chartId),
+        // 2026-10-12: show this window instead of the remembered one, without
+        // persisting it (a chat card opens the sheet at its own window). Null
+        // keeps today's behavior; a later tap persists as usual.
+        initialMonths: Int? = null,
         cb: OnTimeframeChange?
     ) {
         if (selector == null) return
         val ctx: Context = selector.context
         // Already clamped to ChartCadence's floor by SettingsManager; clamp
         // again here in case a caller passed a stricter minMonths.
-        val stored = maxOf(SettingsManager.getChartTimeframeMonths(ctx, chartId), minMonths)
+        val stored = maxOf(initialMonths ?: SettingsManager.getChartTimeframeMonths(ctx, chartId), minMonths)
 
         val reason: CharSequence? = ChartCadence.of(chartId).floorReasonRes
             .takeIf { it != 0 }?.let { ctx.getString(it) }

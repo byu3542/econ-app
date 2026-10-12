@@ -67,8 +67,24 @@ object AxisDateFormat {
      */
     @JvmStatic
     fun attach(chart: LineChart?, ctx: Context, chartId: String, isoDates: List<String>) {
+        attachLabels(chart, axisLabels(ctx, chartId, isoDates))
+    }
+
+    /** 2026-10-12: same, for a window the caller holds rather than the
+     *  persisted one (a sheet opened from a chat card). */
+    @JvmStatic
+    fun attach(chart: LineChart?, chartId: String, windowMonths: Int, isoDates: List<String>) {
+        val pattern = axisPattern(ChartCadence.of(chartId), windowMonths)
+        attachLabels(chart, isoDates.map { axisLabel(it, pattern) })
+    }
+
+    /** Chat chart card x labels: `Aug '24`. */
+    const val COMPACT = "MMM ''yy"
+
+    /** Index → label formatter for entries whose x is the position in [labels]. */
+    @JvmStatic
+    fun attachLabels(chart: LineChart?, labels: List<String>) {
         if (chart == null) return
-        val labels = axisLabels(ctx, chartId, isoDates)
         chart.xAxis.setValueFormatter(object : ValueFormatter() {
             override fun getFormattedValue(value: Float): String {
                 val idx = Math.round(value)

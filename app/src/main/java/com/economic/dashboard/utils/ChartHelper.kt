@@ -353,6 +353,77 @@ object ChartHelper {
     }
 
     /**
+     * 2026-10-12 analyst cards: the metric sheet's chart ([styleLineChart] +
+     * [attachCrosshair]) shrunk for a chat bubble. No zoom; 3–4 y ticks; x
+     * labels at start, middle and end; horizontal and vertical gridlines in the
+     * sheet's own `chart_grid` token. The marker stays up after a drag (the
+     * sheet clears it via AskAnalyst's gesture listener, which isn't wired
+     * here) and tap-to-highlight is off so a stray tap can't drop it.
+     *
+     * A drag that turns mostly horizontal claims the gesture from the chat
+     * list (`requestDisallowInterceptTouchEvent`); a vertical one leaves it,
+     * so the list still scrolls over the card.
+     */
+    @JvmStatic
+    fun styleCompactChart(chart: LineChart, yFormatter: ValueFormatter) {
+        styleLineChart(chart, "", "", "")
+        attachCrosshair(chart)
+        chart.setScaleEnabled(false)
+        chart.setPinchZoom(false)
+        chart.setDoubleTapToZoomEnabled(false)
+        chart.setHighlightPerTapEnabled(false)
+        chart.setNoDataText("")
+        chart.setExtraBottomOffset(4f)
+        chart.setExtraTopOffset(8f)
+        chart.setExtraRightOffset(12f)
+        chart.setExtraLeftOffset(0f)
+
+        val gridColor = ContextCompat.getColor(chart.context, R.color.chart_grid)
+        val x = chart.xAxis
+        x.setLabelRotationAngle(0f)
+        x.setLabelCount(3, true)
+        x.setDrawGridLines(true)
+        x.setGridColor(gridColor)
+        x.setGridLineWidth(0.4f)
+        x.enableGridDashedLine(6f, 4f, 0f)
+        x.setAvoidFirstLastClipping(true)
+        x.setGranularityEnabled(false)
+
+        val y = chart.axisLeft
+        y.setDrawGridLines(true)
+        y.setLabelCount(4, false)
+        y.setValueFormatter(yFormatter)
+
+        val slop = android.view.ViewConfiguration.get(chart.context).scaledTouchSlop
+        var downX = 0f
+        var downY = 0f
+        chart.setOnTouchListener { v, ev ->
+            when (ev.actionMasked) {
+                android.view.MotionEvent.ACTION_DOWN -> {
+                    downX = ev.x; downY = ev.y
+                }
+                android.view.MotionEvent.ACTION_MOVE -> {
+                    val dx = Math.abs(ev.x - downX)
+                    val dy = Math.abs(ev.y - downY)
+                    if (dx > slop && dx > dy) v.parent?.requestDisallowInterceptTouchEvent(true)
+                }
+                android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL ->
+                    v.parent?.requestDisallowInterceptTouchEvent(false)
+            }
+            false // MPAndroidChart's own listener still runs
+        }
+    }
+
+    /** Puts the crosshair on the newest point, the card's resting state. */
+    @JvmStatic
+    fun highlightLatest(chart: LineChart) {
+        val ds = chart.data?.getDataSetByIndex(0) ?: return
+        if (ds.entryCount == 0) return
+        val last = ds.getEntryForIndex(ds.entryCount - 1)
+        chart.highlightValue(Highlight(last.x, last.y, 0), false)
+    }
+
+    /**
      * Read-out bubble drawn at the touched point. Reuses the chart's own axis
      * value formatters so the date and unit match what's already on the axes;
      * falls back to [NumberFormatUtil] when a chart has no left-axis

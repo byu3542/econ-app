@@ -39,8 +39,15 @@ import java.util.Locale
  */
 object MetricPopupController {
 
+    /**
+     * @param pane   2026-10-12: "graph" or "table" to open the DATA pane on;
+     *               null keeps the default (graph).
+     * @param months 2026-10-12: window to open at, not persisted (a chat card
+     *               opening its own window). Null keeps the remembered one.
+     */
     @JvmStatic
-    fun show(ctx: Context, vm: EconomicViewModel, id: String) {
+    @JvmOverloads
+    fun show(ctx: Context, vm: EconomicViewModel, id: String, pane: String? = null, months: Int? = null) {
         val spec = MetricPopupRegistry.byId(id) ?: return
 
         // History is resolved before the sheet is shown because the add-alert
@@ -100,6 +107,11 @@ object MetricPopupController {
                 setPaneActive(paneGraph, tag == "graph")
             }
             switchSecondary.select("graph", animate = false)
+            if (pane == "table") {
+                switchSecondary.select("table", animate = false)
+                setPaneActive(paneTable, true)
+                setPaneActive(paneGraph, false)
+            }
         }
 
         val rv: RecyclerView? = content.findViewById(R.id.rvMetricHistory)
@@ -130,10 +142,13 @@ object MetricPopupController {
         // Third row of the DATA pane: subordinate to DATA / BENCHMARKS, same
         // weight as GRAPH / TABLE above it (TICKET-55 step 5).
         tfSelector?.emphasis = SegmentedView.Emphasis.SUBTLE
-        TimeframeSelector.attach(tfSelector, spec.chartId) {
-            val windowed = EconomicViewModel.filterByTimeframe(ctx, fullHistory, spec.chartId)
+        TimeframeSelector.attach(tfSelector, spec.chartId, initialMonths = months) { m ->
+            // An override window isn't persisted, so read it from the callback
+            // rather than from the setting; without one, unchanged.
+            val windowed = if (months != null) EconomicViewModel.filterByMonths(fullHistory, m)
+                else EconomicViewModel.filterByTimeframe(ctx, fullHistory, spec.chartId)
             adapter.setData(windowed)
-            buildChart(chart, windowed, spec)
+            buildChart(chart, windowed, spec, if (months != null) m else null)
         }
     }
 
@@ -199,7 +214,10 @@ object MetricPopupController {
         }
     }
 
-    private fun buildChart(chart: LineChart?, rows: List<EconomicDataPoint>, spec: MetricPopupRegistry.MetricPopupSpec) {
+    private fun buildChart(
+        chart: LineChart?, rows: List<EconomicDataPoint>,
+        spec: MetricPopupRegistry.MetricPopupSpec, windowMonths: Int? = null
+    ) {
         if (chart == null) return
         if (rows.isEmpty()) {
             chart.clear()
@@ -211,7 +229,8 @@ object MetricPopupController {
             entries.add(Entry(i.toFloat(), rows[i].value.toFloat()))
             dates.add(rows[i].date)
         }
-        AxisDateFormat.attach(chart, chart.context, spec.chartId, dates) // TICKET-57
+        if (windowMonths != null) AxisDateFormat.attach(chart, spec.chartId, windowMonths, dates)
+        else AxisDateFormat.attach(chart, chart.context, spec.chartId, dates) // TICKET-57
         val ds = LineDataSet(entries, spec.title)
         ChartHelper.styleLineSeries(ds, ContextCompat.getColor(chart.context, R.color.sheet_accent))
         ChartHelper.setLineData(chart, LineData(ds))

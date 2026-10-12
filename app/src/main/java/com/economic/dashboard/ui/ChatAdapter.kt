@@ -39,11 +39,10 @@ import androidx.recyclerview.widget.RecyclerView
 import com.economic.dashboard.R
 import com.economic.dashboard.analyst.AnalystIdentity
 import com.economic.dashboard.analyst.AnalystToolExecutor
+import com.economic.dashboard.analyst.ChatSeriesData
 import com.economic.dashboard.analyst.EconomicSeriesRegistry
-import com.economic.dashboard.database.YieldDatabase
 import com.economic.dashboard.models.ChatChart
 import com.economic.dashboard.models.ChatMessage
-import com.economic.dashboard.models.EconomicDataPoint
 import com.economic.dashboard.models.TraceStep
 import com.economic.dashboard.models.TurnSource
 import com.economic.dashboard.news.NewsAdapter
@@ -51,11 +50,15 @@ import com.economic.dashboard.ui.views.SourceStackView
 import com.economic.dashboard.ui.views.StepStatusView
 import com.economic.dashboard.utils.AppExecutors
 import com.economic.dashboard.utils.MotionUtil
-import com.economic.dashboard.views.SparklineView
+import com.economic.dashboard.utils.AxisDateFormat
+import com.economic.dashboard.utils.ChartHelper
+import com.github.mikephil.charting.charts.LineChart
+import com.github.mikephil.charting.data.Entry
+import com.github.mikephil.charting.data.LineData
+import com.github.mikephil.charting.data.LineDataSet
+import com.github.mikephil.charting.formatter.ValueFormatter
 import com.facebook.shimmer.ShimmerFrameLayout
 import io.noties.markwon.Markwon
-import java.text.SimpleDateFormat
-import java.util.Calendar
 import java.util.Collections
 import java.util.Locale
 import java.util.WeakHashMap
@@ -86,6 +89,15 @@ class ChatAdapter(
         /** MOT-04: a series row in the sources stack was tapped — open that
          *  metric's popup. */
         fun onOpenMetricPopup(popupId: String)
+
+        /** 2026-10-12 analyst cards: open a metric sheet on a pane ("graph" /
+         *  "table") at a window, over the chat. The sheet rounds [months] up
+         *  to the nearest window it offers, past the cadence floor. */
+        fun onOpenMetricSheet(popupId: String, pane: String?, months: Int?) = onOpenMetricPopup(popupId)
+
+        /** The ViewModel chat cards read sheet history from; null → cards
+         *  draw registry values with no pill. */
+        fun metricViewModel(): EconomicViewModel? = null
     }
 
     /** AIC-05: what the row under an answer can do, served by the open
@@ -646,103 +658,89 @@ class ChatAdapter(
             container.addView(inflater.inflate(R.layout.view_chat_chart, container, false))
 
         for (i in charts.indices) {
-            val row = container.getChildAt(i)
-            bindOneChart(
-                row.findViewById(R.id.sparklineChart),
-                row.findViewById(R.id.tvChartCaption),
-                charts[i], holder, token
-            )
+            bindOneChart(container.getChildAt(i), charts[i], holder, token)
         }
     }
 
-    private fun bindOneChart(
-        spark: SparklineView, caption: TextView,
-        chart: ChatChart, holder: ViewHolder, token: Long
-    ) {
-        // A series with no registry label still charts — the id is a worse
-        // caption than a name, but a silently missing chart is worse than both.
-        caption.text = String.format(
-            Locale.US, "%s — last %d months",
-            SERIES_LABELS[chart.seriesId] ?: chart.seriesId, chart.months
-        )
-        spark.setLineColor(ContextCompat.getColor(spark.context, R.color.gold_ink))
+    /**
+     * 2026-10-12 analyst cards T1: one chart card. Numbers come from
+     * [ChatSeriesData] (sheet history + grade when the series has a sheet), so
+     * the card, the prose and the sheet agree. The resolve runs off the main
+     * thread; the per-bind token drops a result that lands after the row was
+     * rebound to another message.
+     */
+    private fun bindOneChart(row: View, chart: ChatChart, holder: ViewHolder, token: Long) {
+        val lineChart: LineChart = row.findViewById(R.id.chatLineChart)
+        if (lineChart.getTag(R.id.chatLineChart) == null) {
+            lineChart.setTag(R.id.chatLineChart, true)
+            ChartHelper.styleCompactChart(lineChart, object : ValueFormatter() {})
+        }
+        row.findViewById<TextView>(R.id.tvChartLabel).text =
+            SERIES_LABELS[chart.seriesId] ?: chart.seriesId
 
         val cacheKey = "${chart.seriesId}:${chart.months}"
-        val cached: List<Double>?
+        val cached: ChatSeriesData.Card?
         synchronized(seriesCache) { cached = seriesCache[cacheKey] }
-        if (cached != null) { applyChartValues(spark, caption, cached); return }
+        if (cached != null) { applyChartCard(row, cached); return }
 
-        val appCtx = spark.context.applicationContext
+        row.visibility = View.INVISIBLE
+        val appCtx = row.context.applicationContext
+        val vm = actionListener?.metricViewModel()
         AppExecutors.diskIO().execute {
-            val values = loadSeriesValues(appCtx, chart.seriesId, chart.months)
-            synchronized(seriesCache) { seriesCache[cacheKey] = values }
-            spark.post {
-                if (token == holder.chartBindToken) applyChartValues(spark, caption, values)
-            }
+            val card = ChatSeriesData.resolve(appCtx, vm, chart.seriesId, chart.months)
+            // Don't pin a pre-load fallback: a sheet series resolved before
+            // its ViewModel data arrived must resolve again on the next bind.
+            if (card.popupId == null || card.grade != null)
+                synchronized(seriesCache) { seriesCache[cacheKey] = card }
+            row.post { if (token == holder.chartBindToken) applyChartCard(row, card) }
         }
     }
 
     /** Fewer than two points can't draw a line — hide the row instead of
      *  leaving an empty box under the answer (degrade to text, never to a
      *  visible artifact). */
-    private fun applyChartValues(spark: SparklineView, caption: TextView, values: List<Double>) {
-        if (values.size >= 2) {
-            spark.visibility = View.VISIBLE
-            caption.visibility = View.VISIBLE
-            spark.setData(values)
-        } else {
-            spark.visibility = View.GONE
-            caption.visibility = View.GONE
+    private fun applyChartCard(row: View, card: ChatSeriesData.Card) {
+        if (card.points.size < 2) {
+            row.visibility = View.GONE
+            return
+        }
+        row.visibility = View.VISIBLE
+        val ctx = row.context
+        row.findViewById<TextView>(R.id.tvChartLabel).text = card.label
+        row.findViewById<TextView>(R.id.tvChartValue).text = card.latestText()
+        bindPill(row.findViewById(R.id.llChartPill), row.findViewById(R.id.viewChartPillDot),
+            row.findViewById(R.id.tvChartPill), card)
+        row.findViewById<TextView>(R.id.tvChartCaption).text = card.windowText()
+
+        val lineChart: LineChart = row.findViewById(R.id.chatLineChart)
+        lineChart.axisLeft.valueFormatter = object : ValueFormatter() {
+            override fun getFormattedValue(value: Float): String = card.format(value.toDouble())
+        }
+        val entries = ArrayList<Entry>(card.points.size)
+        for (i in card.points.indices) entries.add(Entry(i.toFloat(), card.points[i].value.toFloat()))
+        AxisDateFormat.attachLabels(lineChart,
+            card.points.map { AxisDateFormat.axisLabel(it.date, AxisDateFormat.COMPACT) })
+        val ds = LineDataSet(entries, card.label)
+        ChartHelper.styleLineSeries(ds, ContextCompat.getColor(ctx, R.color.sheet_accent))
+        ChartHelper.setLineData(lineChart, LineData(ds))
+        ChartHelper.highlightLatest(lineChart)
+
+        val open: TextView = row.findViewById(R.id.btnChartOpen)
+        val popupId = card.popupId
+        open.visibility = if (popupId != null) View.VISIBLE else View.GONE
+        open.setOnClickListener {
+            if (popupId != null) actionListener?.onOpenMetricSheet(popupId, "graph", card.months)
         }
     }
 
-    /** Off-thread series load, shared by every chart row. Unchanged from the
-     *  tag-era renderer: same two sources, same order, so a chart still draws
-     *  the points get_series serves (AI Law 13). */
-    private fun loadSeriesValues(appCtx: Context, seriesId: String, months: Int): List<Double> {
-        val cal = Calendar.getInstance()
-        cal.add(Calendar.MONTH, -months)
-        val cutoff = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(cal.time)
-        val values = ArrayList<Double>()
-        if (AnalystToolExecutor.LIVE_SERIES.containsKey(seriesId)) {
-            // TICKET-2 (AI Law 13): live ViewModel-backed series chart from
-            // the same provider the get_series tool reads, so analysis and
-            // visualization cover the same metrics. LiveData.getValue() is
-            // safe off the main thread. The Room path below is untouched.
-            val pts: List<EconomicDataPoint>? = AnalystToolExecutor.getLiveSeriesPoints(seriesId)
-            if (pts != null) {
-                for (dp in pts) {
-                    val d = dp.date
-                    // "yyyy-MM" dates pad to a late day so the month survives
-                    // a lexicographic compare against the cutoff; unparseable
-                    // dates pass (matches AnalystToolExecutor.getLiveSeries).
-                    val norm = if (d.length == 7) "$d-28" else d
-                    if (norm.length < 10 || norm.compareTo(cutoff) >= 0) values.add(dp.value)
-                }
-            }
-        } else {
-            val rows = YieldDatabase.getInstance(appCtx).economicHistoryDao().getSeriesSync(seriesId)
-            for (row in rows) {
-                if (row.date.compareTo(cutoff) >= 0) values.add(row.value)
-            }
-            if (values.size < 2) {
-                // Cache-cold fallback (mirrors AnalystToolExecutor.getCachedSeries):
-                // every series is Room-backed since the 2026-07-30 cache
-                // expansion, but the catalog refresh is asynchronous, so on a
-                // first launch the table can still be empty while the dashboard
-                // already holds points in memory. Draw those rather than nothing.
-                val pts: List<EconomicDataPoint>? = AnalystToolExecutor.getLiveSeriesPoints(seriesId)
-                if (pts != null) {
-                    values.clear()
-                    for (dp in pts) {
-                        val d = dp.date
-                        val norm = if (d.length == 7) "$d-28" else d
-                        if (norm.length < 10 || norm.compareTo(cutoff) >= 0) values.add(dp.value)
-                    }
-                }
-            }
-        }
-        return values
+    /** Status pill: tier dot + word, graded series only. Tier color on the dot,
+     *  never the text — same rule as the sheet's subtitle and bands. */
+    private fun bindPill(pill: View, dot: View, word: TextView, card: ChatSeriesData.Card) {
+        val g = card.grade
+        if (g == null) { pill.visibility = View.GONE; return }
+        pill.visibility = View.VISIBLE
+        BenchmarkStyle.tintDot(dot, pill.context, g.tier)
+        word.text = card.pillText()
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int, payloads: List<Any>) {
@@ -1251,7 +1249,7 @@ class ChatAdapter(
         }
 
         /** Series data cache so recycled rows don't re-query Room. */
-        private val seriesCache = HashMap<String, List<Double>>()
+        private val seriesCache = HashMap<String, ChatSeriesData.Card>()
 
         /** Removes legacy [CHART:...] tags from pre-P2-2 persisted text so old
          *  conversations restore cleanly (see CHART_TAG). New replies never

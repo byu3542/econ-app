@@ -1,24 +1,92 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- TICKET-P2-2: one chart inside an analyst bubble — a sparkline plus its
-     caption. Inflated once per render_chart call into llChartContainer, so a
-     reply can carry several. Replaces the single fixed sparkline the old
-     [CHART:...] tag could address. -->
+<!-- 2026-10-12 analyst cards: one chart inside an analyst bubble, a compact
+     copy of the metric sheet's chart (ChartHelper.styleCompactChart). Header:
+     label, status pill (graded series only), latest value. Footer: window and
+     Open chart. Inflated once per render_chart call into llChartContainer.
+     Replaces the TICKET-P2-2 sparkline row. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/chatChartCard"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:layout_marginTop="@dimen/space_sm"
     android:orientation="vertical">
 
-    <com.economic.dashboard.views.SparklineView
-        android:id="@+id/sparklineChart"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="72dp"
-        android:layout_marginTop="@dimen/space_sm" />
-
-    <TextView
-        android:id="@+id/tvChartCaption"
-        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/space_xs"
-        android:textColor="@color/text_muted"
-        android:textSize="@dimen/text_caption" />
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/tvChartLabel"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/text_navy"
+            android:textSize="@dimen/text_caption"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:id="@+id/llChartPill"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/space_sm"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <View
+                android:id="@+id/viewChartPillDot"
+                android:layout_width="@dimen/dot_status"
+                android:layout_height="@dimen/dot_status"
+                android:layout_marginEnd="@dimen/space_xs"
+                android:background="@drawable/dot_neutral"
+                android:importantForAccessibility="no" />
+
+            <TextView
+                android:id="@+id/tvChartPill"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/text_muted"
+                android:textSize="@dimen/text_caption"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvChartValue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/space_sm"
+            android:textColor="@color/text_navy"
+            android:textSize="@dimen/text_caption"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <com.github.mikephil.charting.charts.LineChart
+        android:id="@+id/chatLineChart"
+        android:layout_width="match_parent"
+        android:layout_height="160dp"
+        android:layout_marginTop="@dimen/space_xs" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/tvChartCaption"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textColor="@color/text_muted"
+            android:textSize="@dimen/text_caption" />
+
+        <TextView
+            android:id="@+id/btnChartOpen"
+            style="@style/ChatAnswerAction"
+            android:text="@string/chat_card_open_chart" />
+    </LinearLayout>
 </LinearLayout>

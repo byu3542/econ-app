@@ -200,6 +200,11 @@ class MainActivity : AppCompatActivity() {
                 override fun onOpenMetricPopup(popupId: String) {
                     MetricPopupController.show(this@MainActivity, viewModel, popupId)
                 }
+                // 2026-10-12 analyst cards: card "Open chart" / table tap.
+                override fun onOpenMetricSheet(popupId: String, pane: String?, months: Int?) {
+                    MetricPopupController.show(this@MainActivity, viewModel, popupId, pane, months)
+                }
+                override fun metricViewModel(): EconomicViewModel = viewModel
                 override fun onAskAi(query: String) {
                     AskAnalyst.openWithQuery(this@MainActivity, query)
                 }
