@@ -622,6 +622,18 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
             chatAdapter().addMessage(msg)
         }
         host().persistChatMessage(msg)
+        announceAnswer(text)
+    }
+
+    /**
+     * AIC-06: streamed text is deliberately not a live region (it would read
+     * every partial update), so TalkBack users get the finished answer read
+     * once here. Markdown markers are dropped so they aren't spoken.
+     */
+    private fun announceAnswer(text: String) {
+        val b = binding ?: return
+        val spoken = text.replace(Regex("[*_#`>|]+"), "").replace(Regex("\\s+"), " ").trim()
+        if (spoken.isNotEmpty()) b.root.announceForAccessibility(spoken)
     }
 
     /** Send button doubles as Stop while a response is streaming. */
@@ -1610,6 +1622,7 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
             if (st.gestureTurn) showFollowUpChips(finalText)
             showFollowUpPrompts(finalText) // MOT-03
             maybeScrollToBottom(false)
+            announceAnswer(finalText) // AIC-06
         }
     }
 
