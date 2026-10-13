@@ -226,4 +226,11 @@
     <string name="about_privacy">Data sources and AI information</string>
     <!-- 2026-10-12 analyst cards -->
     <string name="chat_card_open_chart">Open chart</string>
+    <!-- Pantrii port U3: assistant header -->
+    <string name="assistant_wordmark_brand">economii</string>
+    <string name="assistant_wordmark_role">Analyst</string>
+    <string name="assistant_back">Back</string>
+    <string name="assistant_about">About economii Analyst</string>
+    <string name="assistant_history">Chat history</string>
+    <string name="assistant_new_chat">New chat</string>
 </resources>

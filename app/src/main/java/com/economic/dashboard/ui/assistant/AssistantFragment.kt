@@ -59,6 +59,7 @@ import com.economic.dashboard.models.TurnSources
 import com.economic.dashboard.news.NewsItem
 import com.economic.dashboard.news.NewsRepository
 import com.economic.dashboard.ui.views.CentreOutStagger
+import com.economic.dashboard.ui.views.PressFeedback
 import com.economic.dashboard.utils.AppExecutors
 import com.economic.dashboard.utils.HapticUtil
 import com.economic.dashboard.utils.ImageUtils
@@ -293,6 +294,9 @@ class AssistantFragment : Fragment() {
         // resizes it; the root pads itself clear of the keyboard and the system
         // bars. MainActivity consumes insets at its root, so it forwards them
         // here explicitly (see MainActivity's insets listener).
+        // U3: the assistant sits on the light ground, not the navy header,
+        // so the status-bar icons go dark while it is up (light theme only).
+        setLightSystemBars(true)
         view.post {
             val root = binding?.root ?: return@post
             val padTop = root.paddingTop
@@ -386,6 +390,9 @@ class AssistantFragment : Fragment() {
         b.llAnalystIdentity.setOnClickListener { AnalystIdentity.showAbout(requireContext()) }
 
         b.btnClearChat.setOnClickListener { confirmNewChat() }
+        // U3: same spring press as the FAB and KPI badges.
+        PressFeedback.attach(b.btnClose)
+        PressFeedback.attach(b.btnClearChat)
 
         // ── Prefill / shared-image entry points ────────────────────────────────
         val args = arguments
@@ -2030,6 +2037,18 @@ class AssistantFragment : Fragment() {
         return sb.toString()
     }
 
+    /** Dark status/nav icons over the light ground while the assistant is up;
+     *  restored on the way out. Night mode keeps light icons on dark ground. */
+    private fun setLightSystemBars(assistantUp: Boolean) {
+        val window = activity?.window ?: return
+        val night = (resources.configuration.uiMode and
+            android.content.res.Configuration.UI_MODE_NIGHT_MASK) ==
+            android.content.res.Configuration.UI_MODE_NIGHT_YES
+        val controller = androidx.core.view.WindowCompat.getInsetsController(window, window.decorView)
+        controller.isAppearanceLightStatusBars = assistantUp && !night
+        if (android.os.Build.VERSION.SDK_INT >= 29) window.isStatusBarContrastEnforced = false
+    }
+
     /** Leaves the full-screen assistant: pops its back-stack entry, and
      *  MainActivity restores the header, bottom nav and FAB. */
     fun close() {
@@ -2041,6 +2060,7 @@ class AssistantFragment : Fragment() {
         // the sheet is gone — otherwise a scheduled retry can still run to
         // completion (or crash on requireActivity()) for a result nobody sees.
         cancelCurrentCall()
+        setLightSystemBars(false)
         try {
             chatAdapter().unregisterAdapterDataObserver(conversationObserver)
             if (chatAdapter().turnActions === turnActions) chatAdapter().turnActions = null
