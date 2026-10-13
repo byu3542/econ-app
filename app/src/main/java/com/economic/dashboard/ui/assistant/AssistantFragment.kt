@@ -820,7 +820,6 @@ class AssistantFragment : Fragment() {
     private fun requestFinished() {
         awaitingResponse = false
         refreshSendEnabled()
-        if (activity != null) chatAdapter().refreshActionRows() // AIC-05
         // MOT-02 backstop: every exit path (success, error, cancel) lands here,
         // so the trace can never be left "Thinking". Success paths finish it
         // first with "Thought"; anything still running here was cut short.
@@ -910,7 +909,6 @@ class AssistantFragment : Fragment() {
         setLastUserQuery(userQuery)
         awaitingResponse = true
         refreshSendEnabled()
-        chatAdapter().refreshActionRows() // AIC-05: older answers lose Regenerate
         // MOT-02: a timed "Thinking" trace replaces the anonymous typing dots.
         chatAdapter().addTrace(System.currentTimeMillis())
         maybeScrollToBottom(false)
@@ -1735,16 +1733,20 @@ class AssistantFragment : Fragment() {
         group.removeAllViews()
         val ctx = requireContext()
         val res = resources
-        val padH = res.getDimensionPixelSize(R.dimen.space_lg)
+        // Pantrii port U6 (R6): pills on one scrolling line (cgFollowUps is
+        // singleLine inside hsvFollowUps), surface fill, line stroke, ink text.
+        val padH = (14 * res.displayMetrics.density + 0.5f).toInt()
         val padV = res.getDimensionPixelSize(R.dimen.space_sm)
         for (prompt in prompts.take(MAX_PROMPT_CHIPS)) {
             val chip = TextView(ctx)
             chip.text = prompt
+            chip.maxLines = 1
             chip.setBackgroundResource(R.drawable.bg_chip_outline)
             chip.setPadding(padH, padV, padH, padV)
             chip.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX,
                 res.getDimension(R.dimen.text_secondary))
-            chip.setTextColor(ContextCompat.getColor(ctx, R.color.text_secondary))
+            chip.setTypeface(chip.typeface, android.graphics.Typeface.BOLD)
+            chip.setTextColor(ContextCompat.getColor(ctx, R.color.ink))
             chip.isClickable = true
             chip.isFocusable = true
             chip.setOnClickListener { fillComposer(prompt) }

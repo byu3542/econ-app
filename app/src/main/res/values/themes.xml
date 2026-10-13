@@ -288,6 +288,17 @@
         <item name="fontFamily">@font/plus_jakarta_sans</item>
     </style>
 
+    <!-- Pantrii port U6 (KTD6): the answer actions sheet. Surface fill set via
+         backgroundTint for the reason given on EconomicBottomSheetStyle24. -->
+    <style name="Econ.AnswerSheetStyle" parent="Widget.MaterialComponents.BottomSheet.Modal">
+        <item name="backgroundTint">@color/surface</item>
+        <item name="shapeAppearanceOverlay">@style/BottomSheetRoundedCorners24</item>
+    </style>
+
+    <style name="Theme.Econ.AnswerSheet" parent="Theme.EconomicDashboard.BottomSheet24">
+        <item name="bottomSheetStyle">@style/Econ.AnswerSheetStyle</item>
+    </style>
+
     <!-- Fed Funds hero card — navy background, overrides the app's default card colour -->
     <style name="FedFundsHeroCard" parent="Widget.MaterialComponents.CardView">
         <item name="cardBackgroundColor">#0f1729</item>

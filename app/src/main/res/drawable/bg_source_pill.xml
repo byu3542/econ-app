@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Pantrii port U6: pill shell behind the source stack header. Inset so the
+     pill reads ~30dp tall while the header keeps its 44dp touch target. -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="?attr/colorControlHighlight">
+    <item android:top="7dp" android:bottom="7dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/surface_2" />
+            <stroke android:width="1dp" android:color="@color/line" />
+            <corners android:radius="@dimen/radius_pill" />
+        </shape>
+    </item>
+</ripple>

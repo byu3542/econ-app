@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Pantrii port U6 (KTD6): one row in the answer actions sheet. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:minHeight="56dp"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingHorizontal="@dimen/space_xs"
+    android:background="?attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true">
+
+    <ImageView
+        android:id="@+id/ivAnswerAction"
+        android:layout_width="34dp"
+        android:layout_height="34dp"
+        android:background="@drawable/bg_icon_tile"
+        android:padding="8dp"
+        app:tint="@color/accent"
+        android:importantForAccessibility="no" />
+
+    <TextView
+        android:id="@+id/tvAnswerAction"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="14dp"
+        android:textAppearance="@style/TextAppearance.Econ"
+        android:textSize="@dimen/text_body"
+        android:textStyle="bold"
+        android:textColor="@color/ink" />
+
+    <TextView
+        android:id="@+id/tvAnswerActionMeta"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/space_sm"
+        android:textAppearance="@style/TextAppearance.Econ"
+        android:textSize="@dimen/text_secondary"
+        android:textColor="@color/muted"
+        android:visibility="gone" />
+
+</LinearLayout>

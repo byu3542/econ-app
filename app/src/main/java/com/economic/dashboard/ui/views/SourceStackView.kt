@@ -85,7 +85,8 @@ class SourceStackView @JvmOverloads constructor(
         header.clipToPadding = false
         header.isClickable = true
         header.isFocusable = true
-        header.setBackgroundResource(rippleRes())
+        // Pantrii port U6: the header sits in a pill (surface_2, line stroke).
+        header.setBackgroundResource(R.drawable.bg_source_pill)
         header.setOnClickListener { onToggle?.invoke() }
         addView(header, LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT))
 
@@ -93,8 +94,9 @@ class SourceStackView @JvmOverloads constructor(
         stack.importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
         header.addView(stack, LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT))
 
-        tvCount.setTextColor(ContextCompat.getColor(context, R.color.text_secondary))
-        tvCount.setTextSize(TypedValue.COMPLEX_UNIT_PX, resources.getDimension(R.dimen.text_caption))
+        tvCount.setTextColor(ContextCompat.getColor(context, R.color.muted))
+        tvCount.setTextSize(TypedValue.COMPLEX_UNIT_SP, COUNT_TEXT_SP)
+        tvCount.setTypeface(tvCount.typeface, Typeface.BOLD)
         tvCount.importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
         val countLp = LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT)
         countLp.marginStart = dp(COUNT_GAP_DP)
@@ -206,8 +208,10 @@ class SourceStackView @JvmOverloads constructor(
         val count = if (sources.size == 1) "1 source" else "${sources.size} sources"
         tvCount.text = count
         header.contentDescription = count + ": " + providers.joinToString(", ")
-        // Reserve the fully spread width so the count never draws past the bubble.
-        header.setPaddingRelative(0, 0, (stack.childCount - 1) * spreadPx(), 0)
+        // Pill insets, plus the fully spread width reserved at the end so the
+        // count never draws past the pill.
+        header.setPaddingRelative(dp(PILL_START_DP), 0,
+            dp(PILL_END_DP) + (stack.childCount - 1) * spreadPx(), 0)
     }
 
     private fun buildRows() {
@@ -227,8 +231,8 @@ class SourceStackView @JvmOverloads constructor(
         val bg = GradientDrawable()
         bg.shape = GradientDrawable.OVAL
         bg.setColor(colour)
-        // Ring in the bubble colour, so an overlapped badge reads as a separate disc.
-        bg.setStroke(dp(RING_DP), ContextCompat.getColor(context, R.color.surface_card))
+        // Ring in the pill colour, so an overlapped badge reads as a separate disc.
+        bg.setStroke(dp(RING_DP), ContextCompat.getColor(context, R.color.surface_2))
         tv.background = bg
         return tv
     }
@@ -343,6 +347,9 @@ class SourceStackView @JvmOverloads constructor(
         private const val GAP_DP = 2f
         private const val BADGE_TEXT_SP = 8.5f
         private const val COUNT_GAP_DP = 8f
+        private const val COUNT_TEXT_SP = 12f
+        private const val PILL_START_DP = 6f
+        private const val PILL_END_DP = 12f
         private const val HEADER_MIN_DP = 44f
         private const val ROW_MIN_DP = 48f
 

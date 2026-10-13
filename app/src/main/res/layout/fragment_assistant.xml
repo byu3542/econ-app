@@ -295,16 +295,28 @@
 
     </FrameLayout>
 
-    <!-- MOT-03: follow-up prompts under a finished answer (fill, never send) -->
-    <com.google.android.material.chip.ChipGroup
-        android:id="@+id/cgFollowUps"
+    <!-- MOT-03: follow-up prompts under a finished answer (fill, never send).
+         Pantrii port U6 (R6): one horizontally scrolling line of pills. The
+         scroller has no padding of its own, so it collapses to nothing while
+         cgFollowUps is GONE. -->
+    <HorizontalScrollView
+        android:id="@+id/hsvFollowUps"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingHorizontal="@dimen/space_lg"
-        android:paddingTop="@dimen/space_sm"
-        android:visibility="gone"
-        app:chipSpacingHorizontal="@dimen/space_sm"
-        app:chipSpacingVertical="@dimen/space_sm" />
+        android:scrollbars="none"
+        android:overScrollMode="never">
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/cgFollowUps"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="@dimen/space_lg"
+            android:paddingTop="@dimen/space_sm"
+            android:paddingBottom="@dimen/space_xs"
+            android:visibility="gone"
+            app:singleLine="true"
+            app:chipSpacingHorizontal="@dimen/space_sm" />
+    </HorizontalScrollView>
 
     <!-- Input area -->
 

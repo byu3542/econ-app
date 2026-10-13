@@ -1,14 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 2026-10-12 analyst cards: one chart inside an analyst bubble, a compact
-     copy of the metric sheet's chart (ChartHelper.styleCompactChart). Header:
-     label, status pill (graded series only), latest value. Footer: window and
-     Open chart. Inflated once per render_chart call into llChartContainer.
-     Replaces the TICKET-P2-2 sparkline row. -->
+<!-- 2026-10-12 analyst cards: one chart under an analyst answer, a compact
+     copy of the metric sheet's chart (ChartHelper.styleCompactChart).
+     Inflated once per render_chart call into llChartContainer.
+     Pantrii port U6 (R6, R13, KTD11): the chart sits in a card shell (surface,
+     line hairline, 20dp radius, 14dp padding) with an icon tile + title row:
+     label left, status pill over the latest value right. The plot itself is
+     unchanged: same LineChart, same styling, same 160dp height. clipChildren /
+     clipToPadding are off so nothing near the card edge gets cut. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/chatChartCard"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginTop="@dimen/space_sm"
+    android:layout_marginTop="@dimen/space_md"
+    android:background="@drawable/bg_chat_card"
+    android:padding="14dp"
+    android:clipChildren="false"
+    android:clipToPadding="false"
     android:orientation="vertical">
 
     <LinearLayout
@@ -17,58 +25,81 @@
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
+        <ImageView
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="@drawable/bg_icon_tile"
+            android:padding="9dp"
+            android:src="@drawable/ic_trending_up"
+            app:tint="@color/accent"
+            android:importantForAccessibility="no" />
+
         <TextView
             android:id="@+id/tvChartLabel"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:layout_marginStart="@dimen/space_md"
             android:ellipsize="end"
             android:maxLines="1"
-            android:textColor="@color/text_navy"
-            android:textSize="@dimen/text_caption"
-            android:textStyle="bold" />
+            android:textAppearance="@style/TextAppearance.Econ"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/ink" />
 
         <LinearLayout
-            android:id="@+id/llChartPill"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="@dimen/space_sm"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:visibility="gone">
+            android:gravity="end"
+            android:orientation="vertical">
 
-            <View
-                android:id="@+id/viewChartPillDot"
-                android:layout_width="@dimen/dot_pill"
-                android:layout_height="@dimen/dot_pill"
-                android:layout_marginEnd="@dimen/space_xs"
-                android:background="@drawable/dot_neutral"
-                android:importantForAccessibility="no" />
-
-            <TextView
-                android:id="@+id/tvChartPill"
+            <LinearLayout
+                android:id="@+id/llChartPill"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="@color/text_muted"
-                android:textSize="@dimen/text_caption"
-                android:textStyle="bold" />
-        </LinearLayout>
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:visibility="gone">
 
-        <TextView
-            android:id="@+id/tvChartValue"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/space_sm"
-            android:textColor="@color/text_navy"
-            android:textSize="@dimen/text_caption"
-            android:textStyle="bold" />
+                <View
+                    android:id="@+id/viewChartPillDot"
+                    android:layout_width="@dimen/dot_pill"
+                    android:layout_height="@dimen/dot_pill"
+                    android:layout_marginEnd="@dimen/space_xs"
+                    android:background="@drawable/dot_neutral"
+                    android:importantForAccessibility="no" />
+
+                <TextView
+                    android:id="@+id/tvChartPill"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="@style/TextAppearance.Econ.Label"
+                    android:letterSpacing="0.03"
+                    android:textColor="@color/muted" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvChartValue"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="@style/TextAppearance.Econ.Number"
+                android:textSize="17sp"
+                android:textColor="@color/ink" />
+        </LinearLayout>
     </LinearLayout>
 
     <com.github.mikephil.charting.charts.LineChart
         android:id="@+id/chatLineChart"
         android:layout_width="match_parent"
         android:layout_height="160dp"
-        android:layout_marginTop="@dimen/space_xs" />
+        android:layout_marginTop="@dimen/space_md" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="@dimen/space_sm"
+        android:background="@color/line" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -81,12 +112,15 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textColor="@color/text_muted"
-            android:textSize="@dimen/text_caption" />
+            android:textAppearance="@style/TextAppearance.Econ"
+            android:textSize="@dimen/text_caption"
+            android:textColor="@color/muted" />
 
         <TextView
             android:id="@+id/btnChartOpen"
             style="@style/ChatAnswerAction"
+            android:layout_marginEnd="-8dp"
+            android:textColor="@color/ink"
             android:text="@string/chat_card_open_chart" />
     </LinearLayout>
 </LinearLayout>

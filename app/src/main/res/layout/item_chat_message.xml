@@ -1,10 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Pantrii port U6 (R4, KTD6): one thread row. User messages are an accent
+     bubble on the right; analyst answers are plain full-width text with no
+     bubble, sender label or action row. Copy, regenerate, variants, the model
+     label and the time open from a long-press sheet (AnswerActionsSheet).
+     ChatAdapter sets the bubble's background, padding and width per row. -->
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:paddingHorizontal="@dimen/space_lg"
-    android:paddingVertical="@dimen/space_sm"
+    android:paddingVertical="7dp"
     android:clipChildren="false"
     android:clipToPadding="false">
 
@@ -18,7 +23,7 @@
         android:paddingVertical="@dimen/space_sm"
         android:layout_marginBottom="@dimen/space_sm"
         android:text="@string/chat_history_cut"
-        android:textColor="@color/text_muted"
+        android:textColor="@color/muted"
         android:textSize="@dimen/text_caption"
         android:background="?attr/selectableItemBackground"
         android:visibility="gone"
@@ -26,35 +31,15 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Sender Label (YOU / ECON ANALYST) — shown only on the first message of a run -->
-    <TextView
-        android:id="@+id/tvSenderLabel"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="YOU"
-        android:textColor="@color/text_muted"
-        android:textSize="@dimen/text_caption"
-        android:textStyle="bold"
-        android:letterSpacing="0.1"
-        android:layout_marginBottom="@dimen/space_xs"
-        app:layout_constraintTop_toBottomOf="@id/tvHistoryCut"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0" />
-
-    <!-- Message Bubble -->
+    <!-- Message: a bubble for user and error rows, bare for answers -->
     <LinearLayout
         android:id="@+id/llBubbleContainer"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:paddingHorizontal="@dimen/space_lg"
-        android:paddingVertical="@dimen/space_md"
-        android:minWidth="60dp"
         android:orientation="vertical"
         android:clipChildren="false"
         android:clipToPadding="false"
-        android:layout_marginTop="@dimen/space_hairline"
-        app:layout_constraintTop_toBottomOf="@id/tvSenderLabel"
+        app:layout_constraintTop_toBottomOf="@id/tvHistoryCut"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0"
@@ -67,8 +52,8 @@
             android:id="@+id/tvMessage"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/text_navy"
-            android:textSize="@dimen/text_body"
+            android:textAppearance="@style/TextAppearance.Econ.Body"
+            android:textColor="@color/ink"
             android:textIsSelectable="false"
             android:lineSpacingExtra="4dp" />
 
@@ -90,20 +75,22 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
+            android:clipChildren="false"
+            android:clipToPadding="false"
             android:visibility="gone" />
 
-        <!-- MOT-04: sources the turn's tools actually fetched (finished answers
-             only). Builds its own children; hidden when there are none. -->
         <!-- AIC-11: a newer release of a series this answer used is out -->
         <TextView
             android:id="@+id/tvStaleData"
             style="@style/Badge.Status"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/space_xs"
+            android:layout_marginTop="@dimen/space_sm"
             android:text="@string/chat_stale_data"
             android:visibility="gone" />
 
+        <!-- MOT-04: sources the turn's tools actually fetched (finished answers
+             only). Builds its own children; hidden when there are none. -->
         <com.economic.dashboard.ui.views.SourceStackView
             android:id="@+id/sourceStack"
             android:layout_width="wrap_content"
@@ -117,13 +104,15 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/space_sm"
+            android:minHeight="36dp"
+            android:gravity="center_vertical"
             android:text="↻  Retry"
+            android:textAppearance="@style/TextAppearance.Econ"
             android:textSize="@dimen/text_secondary"
             android:textStyle="bold"
             android:textColor="@color/error_text"
             android:background="@drawable/bg_retry_pill"
             android:paddingHorizontal="@dimen/space_md"
-            android:paddingVertical="@dimen/space_xs"
             android:clickable="true"
             android:focusable="true"
             android:visibility="gone" />
@@ -146,7 +135,7 @@
                 android:layout_width="6dp"
                 android:layout_height="6dp"
                 android:background="@drawable/dot_neutral"
-                android:backgroundTint="@color/text_navy"
+                android:backgroundTint="@color/ink"
                 android:layout_marginEnd="@dimen/space_xs" />
 
             <View
@@ -154,7 +143,7 @@
                 android:layout_width="6dp"
                 android:layout_height="6dp"
                 android:background="@drawable/dot_neutral"
-                android:backgroundTint="@color/text_navy"
+                android:backgroundTint="@color/ink"
                 android:layout_marginEnd="@dimen/space_xs" />
 
             <View
@@ -162,82 +151,10 @@
                 android:layout_width="6dp"
                 android:layout_height="6dp"
                 android:background="@drawable/dot_neutral"
-                android:backgroundTint="@color/text_navy" />
+                android:backgroundTint="@color/ink" />
 
         </LinearLayout>
 
     </LinearLayout>
-
-    <!-- AIC-05: action row under a finished analyst answer -->
-    <LinearLayout
-        android:id="@+id/llAnswerActions"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:visibility="gone"
-        app:layout_constraintTop_toBottomOf="@id/llBubbleContainer"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0">
-
-        <TextView
-            android:id="@+id/btnAnswerCopy"
-            style="@style/ChatAnswerAction"
-            android:text="Copy" />
-
-        <TextView
-            android:id="@+id/btnAnswerRegenerate"
-            style="@style/ChatAnswerAction"
-            android:text="Regenerate" />
-
-        <TextView
-            android:id="@+id/btnAnswerContinue"
-            style="@style/ChatAnswerAction"
-            android:text="Continue" />
-
-        <TextView
-            android:id="@+id/btnVariantPrev"
-            style="@style/ChatAnswerAction"
-            android:contentDescription="Previous answer"
-            android:text="‹" />
-
-        <TextView
-            android:id="@+id/tvVariantCount"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@color/text_muted"
-            android:textSize="@dimen/text_caption"
-            android:text="1/2" />
-
-        <TextView
-            android:id="@+id/btnVariantNext"
-            style="@style/ChatAnswerAction"
-            android:contentDescription="Next answer"
-            android:text="›" />
-
-        <TextView
-            android:id="@+id/tvAnswerModel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/space_xs"
-            android:textColor="@color/text_muted"
-            android:textSize="@dimen/text_caption"
-            android:text="Haiku 4.5" />
-    </LinearLayout>
-
-    <!-- Timestamp -->
-    <TextView
-        android:id="@+id/tvTimestamp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="9:38 AM"
-        android:textColor="@color/text_muted"
-        android:textSize="@dimen/text_caption"
-        android:layout_marginTop="@dimen/space_xs"
-        app:layout_constraintTop_toBottomOf="@id/llAnswerActions"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

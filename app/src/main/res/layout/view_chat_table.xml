@@ -1,14 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 2026-10-12 analyst cards T2: one table inside an analyst bubble, from a
-     render_table call. Header: label + status pill; "Last 5 of N months";
-     rows (month, value, change vs previous) newest first, built in
-     ChatAdapter.applyTableCard. Tapping opens the metric sheet on Table. -->
+<!-- 2026-10-12 analyst cards T2: one table under an analyst answer, from a
+     render_table call. Rows (month, value, change vs previous) newest first,
+     built in ChatAdapter.applyTableCard. Tapping opens the metric sheet on Table.
+     Pantrii port U6 (R6, R13): same card shell and title row as the chart card;
+     the three columns are unchanged. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/chatTableCard"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginTop="@dimen/space_sm"
-    android:background="?attr/selectableItemBackground"
+    android:layout_marginTop="@dimen/space_md"
+    android:background="@drawable/bg_chat_card"
+    android:padding="14dp"
     android:orientation="vertical">
 
     <LinearLayout
@@ -17,16 +20,27 @@
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
+        <ImageView
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="@drawable/bg_icon_tile"
+            android:padding="9dp"
+            android:src="@drawable/ic_table"
+            app:tint="@color/accent"
+            android:importantForAccessibility="no" />
+
         <TextView
             android:id="@+id/tvTableLabel"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:layout_marginStart="@dimen/space_md"
             android:ellipsize="end"
             android:maxLines="1"
-            android:textColor="@color/text_navy"
-            android:textSize="@dimen/text_caption"
-            android:textStyle="bold" />
+            android:textAppearance="@style/TextAppearance.Econ"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/ink" />
 
         <LinearLayout
             android:id="@+id/llTablePill"
@@ -49,9 +63,9 @@
                 android:id="@+id/tvTablePill"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="@color/text_muted"
-                android:textSize="@dimen/text_caption"
-                android:textStyle="bold" />
+                android:textAppearance="@style/TextAppearance.Econ.Label"
+                android:letterSpacing="0.03"
+                android:textColor="@color/muted" />
         </LinearLayout>
     </LinearLayout>
 
@@ -59,14 +73,15 @@
         android:id="@+id/tvTableCaption"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/space_xs"
-        android:textColor="@color/text_muted"
-        android:textSize="@dimen/text_caption" />
+        android:layout_marginTop="@dimen/space_sm"
+        android:textAppearance="@style/TextAppearance.Econ"
+        android:textSize="@dimen/text_caption"
+        android:textColor="@color/muted" />
 
     <LinearLayout
         android:id="@+id/llTableRows"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/space_xs"
+        android:layout_marginTop="@dimen/space_sm"
         android:orientation="vertical" />
 </LinearLayout>

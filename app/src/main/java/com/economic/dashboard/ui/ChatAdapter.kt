@@ -7,7 +7,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
-import android.graphics.Color
+import android.content.res.Resources
 import android.graphics.Typeface
 import android.text.Spannable
 import android.text.TextPaint
@@ -17,7 +17,6 @@ import android.text.style.ForegroundColorSpan
 import android.text.style.StyleSpan
 import android.transition.AutoTransition
 import android.transition.TransitionManager
-import android.util.DisplayMetrics
 import android.util.TypedValue
 import android.view.ActionMode
 import android.view.Gravity
@@ -29,7 +28,6 @@ import android.view.ViewGroup
 import android.view.animation.DecelerateInterpolator
 import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.PopupMenu
 import android.widget.TextView
 import android.widget.Toast
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -140,11 +138,8 @@ class ChatAdapter(
             if (show) View.OnClickListener { turnActions?.onStartNewChat() } else null)
     }
 
+    /** Read when the long-press sheet opens (KTD6), so nothing redraws on change. */
     var turnActions: TurnActions? = null
-        set(value) {
-            field = value
-            refreshActionRows()
-        }
 
     private val messages = ArrayList<ChatMessage>()
     private var markwon: Markwon? = null
@@ -297,12 +292,6 @@ class ChatAdapter(
             notifyItemRemoved(i - 1)
         }
         return m
-    }
-
-    /** AIC-05: busy state or the newest answer changed — redraw every row's
-     *  action strip without touching text or charts. */
-    fun refreshActionRows() {
-        if (messages.isNotEmpty()) notifyItemRangeChanged(0, messages.size, PAYLOAD_ACTIONS)
     }
 
     fun removeTypingIndicator() {
@@ -824,8 +813,8 @@ class ChatAdapter(
         val rows: LinearLayout = row.findViewById(R.id.llTableRows)
         rows.removeAllViews()
         val size = ctx.resources.getDimension(R.dimen.text_caption)
-        val navy = ContextCompat.getColor(ctx, R.color.text_navy)
-        val muted = ContextCompat.getColor(ctx, R.color.text_muted)
+        val ink = ContextCompat.getColor(ctx, R.color.ink)
+        val muted = ContextCompat.getColor(ctx, R.color.muted)
         for (k in 0 until shown) {
             val idx = months.size - 1 - k
             val cur = months[idx]
@@ -842,8 +831,8 @@ class ChatAdapter(
                         LinearLayout.LayoutParams.WRAP_CONTENT, weight)
                 }
             line.addView(cell(AxisDateFormat.axisLabel(cur.key + "-01", "MMM yyyy"),
-                1.2f, Gravity.START, navy))
-            line.addView(cell(card.format(cur.value), 1f, Gravity.END, navy))
+                1.2f, Gravity.START, ink))
+            line.addView(cell(card.format(cur.value), 1f, Gravity.END, ink))
             line.addView(cell(change?.let { signedChange(it) } ?: "—", 1f, Gravity.END, muted))
             rows.addView(line)
         }
@@ -973,7 +962,6 @@ class ChatAdapter(
         }
         if (payloads.contains(PAYLOAD_SOURCES)) bindSources(holder, m, false)
         else if (payloads.contains(PAYLOAD_SOURCES_TOGGLE)) bindSources(holder, m, true)
-        if (text || payloads.contains(PAYLOAD_ACTIONS)) bindActions(holder, position)
         if (payloads.contains(PAYLOAD_CUT)) bindHistoryCut(holder, position)
     }
 
@@ -1023,111 +1011,75 @@ class ChatAdapter(
             holder.ivChatImage.setImageDrawable(null)
         }
 
-        // Run grouping: label only on the first message of a run from the same
-        // sender; timestamp only at the end of a run AND when a real time break
-        // follows (or it's the newest message) — keeps the transcript quiet.
-        val runStart = position == 0 ||
-            messages[position - 1].isUser != m.isUser ||
-            messages[position - 1].isTyping
-        val runEnd = position == messages.size - 1 || messages[position + 1].isUser != m.isUser
-        val showTime = runEnd && !m.isTyping &&
-            (position == messages.size - 1 ||
-                messages[position + 1].timeMillis - m.timeMillis > TIME_GAP_MS)
-        holder.tvSenderLabel.visibility = if (runStart) View.VISIBLE else View.GONE
-        holder.tvTimestamp.visibility = if (showTime) View.VISIBLE else View.GONE
-        holder.tvTimestamp.text = m.timestamp
-
-        val dm: DisplayMetrics = holder.itemView.resources.displayMetrics
-        // Short user questions read better narrower; analyst prose gets more room.
-        val maxBubbleWidth = (dm.widthPixels * (if (m.isUser) 0.72f else 0.80f)).toInt()
-
-        val bubbleParams = holder.llBubbleContainer.layoutParams as ConstraintLayout.LayoutParams
-        bubbleParams.matchConstraintMaxWidth = maxBubbleWidth
-        val labelParams = holder.tvSenderLabel.layoutParams as ConstraintLayout.LayoutParams
-        val timeParams = holder.tvTimestamp.layoutParams as ConstraintLayout.LayoutParams
+        // Pantrii port U6 (R4): user and error rows are bubbles capped at 82%
+        // of the thread width; an answer is bare, full-width text. No sender
+        // label or timestamp on the row; the time is in the long-press sheet.
+        val ctx = holder.itemView.context
+        val res = holder.itemView.resources
+        val bubble = holder.llBubbleContainer
+        val bubbleParams = bubble.layoutParams as ConstraintLayout.LayoutParams
+        val threadWidth = res.displayMetrics.widthPixels -
+            2 * res.getDimensionPixelSize(R.dimen.space_lg)
+        val bubbleMax = (threadWidth * BUBBLE_MAX_FRACTION).toInt()
 
         if (m.isUser) {
-            holder.tvSenderLabel.text = "YOU"
-            holder.tvSenderLabel.setOnClickListener(null)
-            holder.tvSenderLabel.isClickable = false
+            bubbleParams.matchConstraintDefaultWidth = ConstraintLayout.LayoutParams.MATCH_CONSTRAINT_WRAP
+            bubbleParams.matchConstraintMaxWidth = bubbleMax
             bubbleParams.horizontalBias = 1.0f
-            labelParams.horizontalBias = 1.0f
-            timeParams.horizontalBias = 1.0f
-            holder.llBubbleContainer.setBackgroundResource(R.drawable.bg_chat_bubble_user)
-            holder.tvMessage.setTextColor(Color.WHITE)
+            bubble.setBackgroundResource(R.drawable.bg_chat_bubble_user)
+            bubble.setPadding(dp(res, 15f), dp(res, 11f), dp(res, 15f), dp(res, 11f))
+            holder.tvMessage.setTextColor(ContextCompat.getColor(ctx, R.color.on_accent))
             holder.tvMessage.setTextIsSelectable(false)
             holder.tvMessage.customSelectionActionModeCallback = null
             holder.tvRetry.visibility = View.GONE
-            holder.llBubbleContainer.isClickable = false
-            holder.llBubbleContainer.setOnClickListener(null)
-        } else {
-            // TICKET-P2-8: the ✨-marked label is the identity marker on
-            // AI-generated content; tapping it explains what the analyst is
-            // and where its numbers come from. Reset on the error branch —
-            // views recycle.
-            if (m.isError) {
-                holder.tvSenderLabel.text = "ERROR"
-                holder.tvSenderLabel.setOnClickListener(null)
-                holder.tvSenderLabel.isClickable = false
-            } else {
-                holder.tvSenderLabel.text = AnalystIdentity.MARKER + " " +
-                    AnalystIdentity.NAME.uppercase(Locale.US)
-                holder.tvSenderLabel.setOnClickListener {
-                    AnalystIdentity.showAbout(it.context)
-                }
-            }
+            bubble.isClickable = false
+            bubble.setOnClickListener(null)
+        } else if (m.isError) {
+            bubbleParams.matchConstraintDefaultWidth = ConstraintLayout.LayoutParams.MATCH_CONSTRAINT_WRAP
+            bubbleParams.matchConstraintMaxWidth = bubbleMax
             bubbleParams.horizontalBias = 0.0f
-            labelParams.horizontalBias = 0.0f
-            timeParams.horizontalBias = 0.0f
-            if (m.isError) {
-                holder.llBubbleContainer.setBackgroundResource(R.drawable.bg_chat_bubble_error)
-                holder.tvMessage.setTextColor(
-                    ContextCompat.getColor(holder.itemView.context, R.color.error_text)
-                )
+            bubble.setBackgroundResource(R.drawable.bg_chat_bubble_error)
+            val padH = res.getDimensionPixelSize(R.dimen.space_lg)
+            val padV = res.getDimensionPixelSize(R.dimen.space_md)
+            bubble.setPadding(padH, padV, padH, padV)
+            holder.tvMessage.setTextColor(ContextCompat.getColor(ctx, R.color.error_text))
+            holder.tvMessage.setTextIsSelectable(false)
+            holder.tvRetry.visibility = View.VISIBLE
+            val retry = retryListener
+            if (retry != null) {
+                holder.tvRetry.setOnClickListener { retry.onRetry() }
+                bubble.isClickable = true
+                bubble.setOnClickListener { retry.onRetry() }
+            }
+        } else {
+            bubbleParams.matchConstraintDefaultWidth = ConstraintLayout.LayoutParams.MATCH_CONSTRAINT_SPREAD
+            bubbleParams.matchConstraintMaxWidth = 0
+            bubbleParams.horizontalBias = 0.0f
+            bubble.background = null
+            bubble.setPadding(0, 0, 0, 0)
+            holder.tvMessage.setTextColor(ContextCompat.getColor(ctx, R.color.ink))
+            holder.tvRetry.visibility = View.GONE
+            bubble.isClickable = false
+            bubble.setOnClickListener(null)
+            if (!m.isTyping) {
+                // Toggle off/on so selection keeps working on recycled views
                 holder.tvMessage.setTextIsSelectable(false)
-                holder.tvRetry.visibility = View.VISIBLE
-                val retry = retryListener
-                if (retry != null) {
-                    holder.tvRetry.setOnClickListener { retry.onRetry() }
-                    holder.llBubbleContainer.isClickable = true
-                    holder.llBubbleContainer.setOnClickListener { retry.onRetry() }
-                }
-            } else {
-                holder.llBubbleContainer.setBackgroundResource(R.drawable.bg_chat_bubble_analyst)
-                holder.tvMessage.setTextColor(
-                    ContextCompat.getColor(holder.itemView.context, R.color.text_navy)
-                )
-                holder.tvRetry.visibility = View.GONE
-                holder.llBubbleContainer.isClickable = false
-                holder.llBubbleContainer.setOnClickListener(null)
-                if (!m.isTyping) {
-                    // Toggle off/on so selection keeps working on recycled views
-                    holder.tvMessage.setTextIsSelectable(false)
-                    holder.tvMessage.setTextIsSelectable(true)
-                    attachAskAiSelection(holder.tvMessage)
-                    maybeRevealInsight(holder, m)
-                }
+                holder.tvMessage.setTextIsSelectable(true)
+                attachAskAiSelection(holder.tvMessage)
+                maybeRevealInsight(holder, m)
             }
         }
 
-        // Long-press → copy / share (any real message). AIC-04: streaming updates
-        // arrive as PAYLOAD_TEXT partial binds, so read the item at click time
-        // instead of capturing the text from this full bind.
-        holder.llBubbleContainer.setOnLongClickListener { v ->
-            val pos = holder.bindingAdapterPosition
-            if (pos == RecyclerView.NO_POSITION) return@setOnLongClickListener false
-            val cur = messages[pos]
-            val text = cur.text
-            if (cur.isTyping || text.isNullOrEmpty()) return@setOnLongClickListener false
-            showMessageMenu(v, text, !cur.isUser && !cur.isError)
-            true
-        }
+        // KTD6: long-press anywhere on the message opens its actions sheet. On
+        // the text itself this listener wins over the selection long-press;
+        // "Select text" in the sheet hands one long-press back to selection.
+        // AIC-04: streaming updates arrive as partial binds, so the handler
+        // reads the item at press time instead of capturing it here.
+        val longPress = View.OnLongClickListener { openActions(holder) }
+        bubble.setOnLongClickListener(longPress)
+        holder.tvMessage.setOnLongClickListener(longPress)
 
-        bindActions(holder, position)
-
-        holder.llBubbleContainer.layoutParams = bubbleParams
-        holder.tvSenderLabel.layoutParams = labelParams
-        holder.tvTimestamp.layoutParams = timeParams
+        bubble.layoutParams = bubbleParams
     }
 
     /**
@@ -1193,52 +1145,76 @@ class ChatAdapter(
     }
 
     /**
-     * AIC-05: Copy · Regenerate · Continue · variant toggle · model label under
-     * a finished analyst answer. Regenerate and Continue only on the newest
-     * answer, and nothing on the newest while it is still streaming.
+     * KTD6 (was AIC-05's row under each answer): the long-press sheet. Any
+     * real message gets Copy and Share. A finished answer also gets Regenerate
+     * and Continue (newest answer only, not while busy), the variant steps,
+     * Select text and About; its quote line carries the model label.
      */
-    private fun bindActions(holder: ViewHolder, position: Int) {
-        val m = messages[position]
-        val actions = turnActions
-        val newest = position == lastAnswerIndex()
-        val busy = actions?.isBusy() == true
-        if (!isAnswer(m) || m.text.isNullOrEmpty() || (newest && busy) ||
-            questionFor(position) == null) {
-            holder.llAnswerActions.visibility = View.GONE
-            return
-        }
-        holder.llAnswerActions.visibility = View.VISIBLE
-        holder.btnAnswerCopy.setOnClickListener { v ->
-            val text = currentAt(holder)?.text
-            if (!text.isNullOrEmpty()) copyToClipboard(v.context, text)
-        }
-        val canAct = newest && actions != null && !busy
-        holder.btnAnswerRegenerate.visibility = if (canAct) View.VISIBLE else View.GONE
-        holder.btnAnswerRegenerate.setOnClickListener { turnActions?.onRegenerate() }
-        holder.btnAnswerContinue.visibility = if (canAct && m.isStopped) View.VISIBLE else View.GONE
-        holder.btnAnswerContinue.setOnClickListener { turnActions?.onContinue() }
+    private fun openActions(holder: ViewHolder): Boolean {
+        val pos = holder.bindingAdapterPosition
+        if (pos == RecyclerView.NO_POSITION) return false
+        val m = messages[pos]
+        val text = m.text
+        if (m.isTyping || m.isTrace || text.isNullOrEmpty()) return false
+        val ctx = holder.itemView.context
+        val fromAnalyst = !m.isUser && !m.isError
+        val actions = ArrayList<AnswerActionsSheet.Action>()
+        actions.add(AnswerActionsSheet.Action(R.drawable.ic_copy,
+            if (fromAnalyst) "Copy answer" else "Copy") {
+            currentAt(holder)?.text?.takeIf { it.isNotEmpty() }?.let { copyToClipboard(ctx, it) }
+        })
+        actions.add(AnswerActionsSheet.Action(R.drawable.ic_share, "Share") {
+            currentAt(holder)?.text?.takeIf { it.isNotEmpty() }?.let { shareMessage(ctx, it, fromAnalyst) }
+        })
 
-        val n = m.variants.size
-        val toggle = if (n > 1) View.VISIBLE else View.GONE
-        holder.btnVariantPrev.visibility = toggle
-        holder.tvVariantCount.visibility = toggle
-        holder.btnVariantNext.visibility = toggle
-        if (n > 1) {
-            val i = m.variantIndex
-            holder.tvVariantCount.text = "${i + 1}/$n"
-            holder.tvVariantCount.contentDescription = "Answer ${i + 1} of $n"
-            holder.btnVariantPrev.isEnabled = i > 0
-            holder.btnVariantPrev.alpha = if (i > 0) 1f else 0.3f
-            holder.btnVariantNext.isEnabled = i < n - 1
-            holder.btnVariantNext.alpha = if (i < n - 1) 1f else 0.3f
-            holder.btnVariantPrev.setOnClickListener { showVariant(holder, -1) }
-            holder.btnVariantNext.setOnClickListener { showVariant(holder, +1) }
+        val answer = isAnswer(m) && questionFor(pos) != null
+        if (answer) {
+            val actionsHost = turnActions
+            val canAct = pos == lastAnswerIndex() && actionsHost != null && !actionsHost.isBusy()
+            if (canAct) {
+                actions.add(AnswerActionsSheet.Action(R.drawable.ic_regenerate, "Regenerate") {
+                    turnActions?.onRegenerate()
+                })
+                if (m.isStopped) actions.add(AnswerActionsSheet.Action(R.drawable.ic_arrow_forward, "Continue") {
+                    turnActions?.onContinue()
+                })
+            }
+            val n = m.variants.size
+            if (n > 1) {
+                val i = m.variantIndex
+                val of = "${i + 1} of $n"
+                if (i > 0) actions.add(AnswerActionsSheet.Action(R.drawable.ic_chevron_left,
+                    "Previous answer", of) { showVariant(holder, -1) })
+                if (i < n - 1) actions.add(AnswerActionsSheet.Action(R.drawable.ic_chevron_right,
+                    "Next answer", of) { showVariant(holder, +1) })
+            }
+        }
+        if (fromAnalyst) {
+            actions.add(AnswerActionsSheet.Action(R.drawable.ic_select_text, "Select text") {
+                startTextSelection(holder)
+            })
+            // TICKET-P2-8: the about entry the removed sender label used to open.
+            actions.add(AnswerActionsSheet.Action(R.drawable.ic_set_info,
+                "About " + AnalystIdentity.NAME) { AnalystIdentity.showAbout(ctx) })
         }
 
-        val label = m.modelLabel
-        holder.tvAnswerModel.visibility = if (label.isNullOrEmpty()) View.GONE else View.VISIBLE
-        holder.tvAnswerModel.text = label
-        holder.tvAnswerModel.contentDescription = label?.let { "Answered by $it" }
+        val quote = AnswerActionsSheet.quoteLine(holder.tvMessage.text, m.timestamp,
+            if (answer) m.modelLabel else null)
+        AnswerActionsSheet.show(ctx, quote, actions)
+        return true
+    }
+
+    /** "Select text" from the sheet: replays the long-press on the text with
+     *  the sheet's listener off, so the TextView starts its own selection (and
+     *  the "Ask Econ Analyst" item) at the word that was pressed. */
+    private fun startTextSelection(holder: ViewHolder) {
+        val tv = holder.tvMessage
+        tv.post {
+            if (!tv.isTextSelectable) return@post
+            tv.setOnLongClickListener(null)
+            tv.performLongClick()
+            tv.setOnLongClickListener { openActions(holder) }
+        }
     }
 
     /** AIC-05: steps the answer under [holder] to its previous / next variant. */
@@ -1269,32 +1245,14 @@ class ChatAdapter(
         Toast.makeText(ctx, "Copied", Toast.LENGTH_SHORT).show()
     }
 
-    private fun showMessageMenu(anchor: View, text: String, fromAnalyst: Boolean) {
-        val ctx = anchor.context
-        val menu = PopupMenu(ctx, anchor)
-        menu.menu.add(0, 1, 0, "Copy")
-        menu.menu.add(0, 2, 1, "Share")
-        menu.setOnMenuItemClickListener { item ->
-            when (item.itemId) {
-                1 -> {
-                    copyToClipboard(ctx, text)
-                    true
-                }
-                2 -> {
-                    val share = Intent(Intent.ACTION_SEND)
-                    share.type = "text/plain"
-                    // TICKET-P2-8: analyst content leaving the app carries its
-                    // marker; Copy stays raw — clipboard users expect verbatim.
-                    val shared = if (fromAnalyst)
-                        AnalystIdentity.shareAttribution() + text else text
-                    share.putExtra(Intent.EXTRA_TEXT, shared)
-                    ctx.startActivity(Intent.createChooser(share, "Share message"))
-                    true
-                }
-                else -> false
-            }
-        }
-        menu.show()
+    private fun shareMessage(ctx: Context, text: String, fromAnalyst: Boolean) {
+        val share = Intent(Intent.ACTION_SEND)
+        share.type = "text/plain"
+        // TICKET-P2-8: analyst content leaving the app carries its marker;
+        // Copy stays raw — clipboard users expect verbatim.
+        val shared = if (fromAnalyst) AnalystIdentity.shareAttribution() + text else text
+        share.putExtra(Intent.EXTRA_TEXT, shared)
+        ctx.startActivity(Intent.createChooser(share, "Share message"))
     }
 
     private fun startDancingDots(holder: ViewHolder) {
@@ -1344,9 +1302,7 @@ class ChatAdapter(
         val llBubbleContainer: LinearLayout = v.findViewById(R.id.llBubbleContainer)
         val llTypingIndicator: LinearLayout = v.findViewById(R.id.llTypingIndicator)
         val tvMessage: TextView = v.findViewById(R.id.tvMessage)
-        val tvSenderLabel: TextView = v.findViewById(R.id.tvSenderLabel)
         val tvHistoryCut: TextView = v.findViewById(R.id.tvHistoryCut)
-        val tvTimestamp: TextView = v.findViewById(R.id.tvTimestamp)
         val tvRetry: TextView = v.findViewById(R.id.tvRetry)
         val ivChatImage: ImageView = v.findViewById(R.id.ivChatImage)
         val llChartContainer: LinearLayout = v.findViewById(R.id.llChartContainer)
@@ -1363,15 +1319,6 @@ class ChatAdapter(
         // MOT-04: sources the turn's tools read
         val sourceStack: SourceStackView = v.findViewById(R.id.sourceStack)
         val tvStaleData: TextView = v.findViewById(R.id.tvStaleData)
-        // AIC-05: action row under an answer
-        val llAnswerActions: LinearLayout = v.findViewById(R.id.llAnswerActions)
-        val btnAnswerCopy: TextView = v.findViewById(R.id.btnAnswerCopy)
-        val btnAnswerRegenerate: TextView = v.findViewById(R.id.btnAnswerRegenerate)
-        val btnAnswerContinue: TextView = v.findViewById(R.id.btnAnswerContinue)
-        val btnVariantPrev: TextView = v.findViewById(R.id.btnVariantPrev)
-        val tvVariantCount: TextView = v.findViewById(R.id.tvVariantCount)
-        val btnVariantNext: TextView = v.findViewById(R.id.btnVariantNext)
-        val tvAnswerModel: TextView = v.findViewById(R.id.tvAnswerModel)
 
         /** Recycling guard for async chart loads (TICKET-P2-2): bumped on every
          *  bindCharts, checked when a background load posts back. Replaces the
@@ -1391,9 +1338,6 @@ class ChatAdapter(
 
         /** Partial-bind payload: only the message text changed (SSE streaming). */
         private val PAYLOAD_TEXT = Any()
-
-        /** AIC-05: partial-bind payload — only the action row changed. */
-        private val PAYLOAD_ACTIONS = Any()
 
         /** AIC-05: a real analyst answer, as opposed to a trace, typing dots,
          *  an error bubble or a user message. */
@@ -1426,8 +1370,11 @@ class ChatAdapter(
         private const val ROW_DAMPING = 0.75f
         private const val ROW_STIFFNESS = 1200f
 
-        /** Timestamps only render when the next message is at least this far away. */
-        private const val TIME_GAP_MS = 15 * 60 * 1000L
+        /** U6 (R4): user and error bubbles are at most this share of the thread width. */
+        private const val BUBBLE_MAX_FRACTION = 0.82f
+
+        private fun dp(res: Resources, v: Float): Int =
+            (v * res.displayMetrics.density + 0.5f).toInt()
 
         /**
          * LEGACY (TICKET-P2-2): the model no longer emits [CHART:...] tags —
