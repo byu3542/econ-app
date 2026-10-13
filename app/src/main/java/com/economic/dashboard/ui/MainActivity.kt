@@ -5,6 +5,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import com.economic.dashboard.ui.assistant.AssistantFragment
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -152,6 +153,10 @@ class MainActivity : AppCompatActivity() {
             // this (see EdgeToEdgeInsets) so content clears both translucent
             // bars and can still scroll underneath them.
             EdgeToEdgeInsets.update(bars.top, bars.bottom)
+            // U3: the full-screen assistant pads itself for the bars and the
+            // IME, but consuming here stops dispatch — hand it the insets first.
+            supportFragmentManager.findFragmentByTag(AssistantFragment.TAG)?.view
+                ?.let { ViewCompat.dispatchApplyWindowInsets(it, insets) }
             WindowInsetsCompat.CONSUMED
         }
 
@@ -233,7 +238,9 @@ class MainActivity : AppCompatActivity() {
         // back gesture on their own Window and never reach this dispatcher.
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                if (isSettingsShowing()) {
+                if (isAssistantShowing()) {
+                    supportFragmentManager.popBackStack()
+                } else if (isSettingsShowing()) {
                     handleSettingsBackOrClose()
                 } else if (binding.bottomNav.selectedItemId != R.id.nav_overview) {
                     binding.bottomNav.selectedItemId = R.id.nav_overview
@@ -249,9 +256,9 @@ class MainActivity : AppCompatActivity() {
         PressFeedback.attach(binding.fabAiAnalyst) // same bouncy spring feedback as the overview KPI badges
         binding.fabAiAnalyst.setOnClickListener {
             markAnalystSeen(); clearAnalystBadge() // TICKET-26: opening Analyst clears its badge
-            if (supportFragmentManager.findFragmentByTag(AiAnalystBottomSheet.TAG) == null) {
+            if (!isAssistantShowing()) {
                 HapticUtil.confirm(binding.fabAiAnalyst) // firmer pulse — primary action, not a tab switch
-                AiAnalystBottomSheet().show(supportFragmentManager, AiAnalystBottomSheet.TAG)
+                AssistantFragment.show(supportFragmentManager, AssistantFragment())
             }
         }
         // Don't clobber the back-chevron handler applySettingsChrome() just
@@ -520,9 +527,8 @@ class MainActivity : AppCompatActivity() {
 
         if (type.startsWith("image/")) {
             val uri: Uri = intent.getParcelableExtra(Intent.EXTRA_STREAM) ?: return
-            if (supportFragmentManager.findFragmentByTag(AiAnalystBottomSheet.TAG) == null)
-                AiAnalystBottomSheet.newInstanceForImage(uri, null)
-                    .show(supportFragmentManager, AiAnalystBottomSheet.TAG)
+            AssistantFragment.show(supportFragmentManager,
+                AssistantFragment.newInstanceForImage(uri, null))
         } else if ("text/plain" == type) {
             val shared = intent.getStringExtra(Intent.EXTRA_TEXT)
             if (shared == null || shared.trim().isEmpty()) return
@@ -629,8 +635,10 @@ class MainActivity : AppCompatActivity() {
 
     /** Metric citation tapped in chat — close the sheet and jump to that tab. */
     fun navigateToTab(tabKey: String) {
-        val sheet = supportFragmentManager.findFragmentByTag(AiAnalystBottomSheet.TAG)
-        if (sheet is AiAnalystBottomSheet && sheet.isAdded) sheet.dismiss()
+        // Pop synchronously so the tab replace below lands on the restored tab.
+        if (isAssistantShowing())
+            supportFragmentManager.popBackStackImmediate(
+                AssistantFragment.TAG, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE)
         val targetId =
             if ("markets" == tabKey) R.id.nav_markets
             else if ("economy" == tabKey) R.id.nav_economy
@@ -676,7 +684,36 @@ class MainActivity : AppCompatActivity() {
             (index * itemWidth + (itemWidth * 0.2f).toInt()).toFloat()
     }
 
+    private fun isAssistantShowing(): Boolean =
+        supportFragmentManager.findFragmentByTag(AssistantFragment.TAG) != null
+
+    /** U3 (KTD1): the assistant is full screen, so the header, bottom nav and
+     *  FAB hide while it is up. Driven by the back stack, so every way in
+     *  (FAB, long-press ask, share) and out (back, close, citation tap) and an
+     *  Activity recreate all land on the same chrome. */
+    private fun applyAssistantChrome() {
+        if (isAssistantShowing()) {
+            binding.headerContainer.visibility = View.GONE
+            binding.bottomNavWrapper.visibility = View.GONE
+            binding.navScrim.visibility = View.GONE
+            binding.fabAiAnalyst.visibility = View.GONE
+            ViewCompat.requestApplyInsets(binding.root)
+            return
+        }
+        binding.headerContainer.visibility = View.VISIBLE
+        if (isSettingsShowing()) {
+            applySettingsChrome()
+        } else {
+            binding.bottomNavWrapper.visibility = View.VISIBLE
+            binding.navScrim.visibility = View.VISIBLE
+            binding.fabAiAnalyst.visibility = View.VISIBLE
+            updateEditCardsButton()
+        }
+    }
+
     private fun setupBottomNav() {
+        supportFragmentManager.addOnBackStackChangedListener { applyAssistantChrome() }
+        if (isAssistantShowing()) binding.root.post { applyAssistantChrome() }
         // On an Activity recreate with Settings open, the FragmentManager has
         // already restored SettingsFragment into fragmentContainer — but the
         // "overview" tag is absent (Settings replaced it), so loadFragment's
@@ -699,7 +736,9 @@ class MainActivity : AppCompatActivity() {
             // loadFragment() early-returns on a matching tag, so the FragmentManager's
             // own restored fragment is kept rather than replaced with a blank one.
             binding.bottomNav.post {
-                loadFragmentForNavId(binding.bottomNav.selectedItemId)
+                // U3: a restored assistant sits on the back stack over the tab;
+                // loading the tab here would replace it.
+                if (!isAssistantShowing()) loadFragmentForNavId(binding.bottomNav.selectedItemId)
                 updateEditCardsButton()
             }
         }
@@ -844,8 +883,8 @@ class MainActivity : AppCompatActivity() {
 
     /** Tap-to-retry on an error bubble — resends via the open analyst sheet. */
     private fun retryLastQuery() {
-        val f = supportFragmentManager.findFragmentByTag(AiAnalystBottomSheet.TAG)
-        if (f is AiAnalystBottomSheet && f.isAdded) f.resendLastQuery()
+        val f = supportFragmentManager.findFragmentByTag(AssistantFragment.TAG)
+        if (f is AssistantFragment && f.isAdded) f.resendLastQuery()
     }
 
     private fun observeViewModel() {

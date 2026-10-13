@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Bottom-sheet layout for the AI Economic Analyst panel.
-  Height is set programmatically in AiAnalystBottomSheet (full screen,
-  keyboard-aware). Vertical LinearLayout so the chat area can flex.
+  Full-screen AI Econ Analyst (AssistantFragment, Pantrii port U3), pushed
+  onto MainActivity's fragmentContainer. Root pads itself for system bars and
+  the IME. Vertical LinearLayout so the chat area can flex.
 -->
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
@@ -10,7 +10,9 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/bg_warm_off_white">
+    android:background="@color/bg_warm_off_white"
+    android:clickable="true"
+    android:focusable="false">
 
     <!-- Header area with Navy background -->
     <LinearLayout

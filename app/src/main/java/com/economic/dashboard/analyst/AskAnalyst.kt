@@ -16,7 +16,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat.AccessibilityActionCompat
 import androidx.fragment.app.FragmentActivity
 
-import com.economic.dashboard.ui.AiAnalystBottomSheet
+import com.economic.dashboard.ui.assistant.AssistantFragment
 import com.economic.dashboard.ui.views.RollingNumberView
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.listener.ChartTouchListener
@@ -58,12 +58,11 @@ object AskAnalyst {
     ) {
         if (activity == null || query == null || query.trim().isEmpty()) return
         val fm = activity.supportFragmentManager
-        val existing = fm.findFragmentByTag(AiAnalystBottomSheet.TAG)
-        if (existing is AiAnalystBottomSheet && existing.isAdded) {
+        val existing = fm.findFragmentByTag(AssistantFragment.TAG)
+        if (existing is AssistantFragment && existing.isAdded) {
             existing.submitExternalQuery(query, screenContext, concise)
         } else {
-            AiAnalystBottomSheet.newInstanceForGesture(query, screenContext, concise)
-                .show(fm, AiAnalystBottomSheet.TAG)
+            AssistantFragment.show(fm, AssistantFragment.newInstanceForGesture(query, screenContext, concise))
         }
     }
 
