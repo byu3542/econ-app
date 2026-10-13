@@ -69,7 +69,6 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/space_xs"
                 android:textSize="@dimen/text_secondary"
-                android:fontFamily="serif"
                 android:textColor="@color/text_navy"
                 android:lineHeight="18sp"
                 android:maxLines="2"

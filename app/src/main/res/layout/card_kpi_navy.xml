@@ -61,7 +61,7 @@
                 android:text="0.0%"
                 android:textColor="@color/text_navy"
                 android:textSize="@dimen/text_display_lg"
-                android:fontFamily="serif"
+                android:textAppearance="@style/TextAppearance.Econ.Number"
                 android:textStyle="bold" />
 
             <TextView

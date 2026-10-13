@@ -21,7 +21,6 @@
             android:layout_weight="1"
             android:text="Label"
             android:textColor="@color/text_navy"
-            android:fontFamily="sans-serif"
             android:textSize="@dimen/text_body" />
 
         <!-- Direction vs. prior reading, same ▲/▼ glyph + color as the Overview badges -->
@@ -50,7 +49,6 @@
                 android:text="0.00%"
                 android:textColor="@color/text_navy"
                 android:textSize="@dimen/text_title"
-                android:fontFamily="sans-serif"
                 android:textStyle="bold" />
 
             <TextView
@@ -60,7 +58,6 @@
                 android:text="2026-02-24"
                 android:textColor="@color/text_muted"
                 android:textSize="@dimen/text_caption"
-                android:fontFamily="sans-serif"
                 android:letterSpacing="0.05" />
         </LinearLayout>
     </LinearLayout>

@@ -21,8 +21,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:textColor="@color/sheet_text_primary"
-            android:textSize="@dimen/text_secondary"
-            android:fontFamily="sans-serif-light" />
+            android:textSize="@dimen/text_secondary" />
 
         <TextView
             android:id="@+id/tvHistoryValue"

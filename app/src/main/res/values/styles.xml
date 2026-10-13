@@ -38,26 +38,55 @@
         <item name="android:letterSpacing">0.08</item>
     </style>
 
-    <!-- IOS-03: tabular (fixed-width) digits, so a count-up value or a column
-         of numbers never shifts horizontally. The app theme's default
-         TextView style (Widget.Econ.TextView, themes.xml) already carries
-         this attribute for every plain TextView; apply this style explicitly
-         to a value/delta TextView that uses some other style/TextAppearance
-         and would otherwise not inherit it. -->
-    <style name="TextAppearance.Econ.Value" parent="android:TextAppearance">
+    <!-- ── Type roles (Pantrii port U2) ─────────────────────────────────────
+         One typeface, Plus Jakarta Sans, everywhere — figures included
+         (decided 2026-10-13: no serif numerals). The theme already sets the
+         family; these roles fix size and weight per job. Colour is left to
+         the call site. Weight comes from textStyle (normal 400, bold 700):
+         a theme-level fontFamily outranks the one inside a textAppearance,
+         so a role cannot pick 500/600/800 by family — set that on the view. -->
+    <style name="TextAppearance.Econ" parent="android:TextAppearance">
+        <item name="android:fontFamily">@font/plus_jakarta_sans</item>
+    </style>
+    <style name="TextAppearance.Econ.Display">
+        <item name="android:textSize">@dimen/text_display</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">-0.02</item>
+    </style>
+    <style name="TextAppearance.Econ.Title">
+        <item name="android:textSize">@dimen/text_title</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+    <style name="TextAppearance.Econ.Body">
+        <item name="android:textSize">@dimen/text_body</item>
+    </style>
+    <style name="TextAppearance.Econ.Caption">
+        <item name="android:textSize">@dimen/text_secondary</item>
+    </style>
+    <style name="TextAppearance.Econ.Label">
+        <item name="android:textSize">@dimen/text_caption</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.08</item>
+    </style>
+    <!-- The number role: every figure. Tabular digits so a count-up value or
+         a column of numbers never shifts horizontally. Switching this one
+         style re-sets every figure that uses it. -->
+    <style name="TextAppearance.Econ.Number">
+        <item name="android:textStyle">bold</item>
         <item name="android:fontFeatureSettings">tnum</item>
     </style>
 
-    <!-- TICKET-57: the one chart-card / panel title. Serif bold in card_white on
-         the navy panels — the news headlines' face, the Alabaster identity. Was
-         inline on nine TextViews across eight leaf layouts, five serif and three
-         sans, two sizes. Apply with android:textAppearance and set NO inline
-         textColor / textSize / fontFamily / textStyle on the same view (those
-         override the appearance silently). -->
-    <style name="TextAppearance.Econ.PanelTitle" parent="android:TextAppearance">
-        <item name="android:fontFamily">serif</item>
-        <item name="android:textStyle">bold</item>
-        <item name="android:textSize">@dimen/text_title</item>
+    <!-- IOS-03: tabular (fixed-width) digits for a value/delta TextView that
+         uses some other style and would not inherit Widget.Econ.TextView's
+         tnum. Now an alias of the number role. -->
+    <style name="TextAppearance.Econ.Value" parent="TextAppearance.Econ.Number" />
+
+    <!-- TICKET-57: the one chart-card / panel title, bold in card_white on the
+         navy panels. Was serif until the Pantrii port; now the title role.
+         Apply with android:textAppearance and set NO inline textColor /
+         textSize / fontFamily / textStyle on the same view (those override
+         the appearance silently). -->
+    <style name="TextAppearance.Econ.PanelTitle" parent="TextAppearance.Econ.Title">
         <item name="android:textColor">@color/card_white</item>
     </style>
 

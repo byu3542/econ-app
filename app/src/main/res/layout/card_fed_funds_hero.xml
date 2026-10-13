@@ -73,8 +73,7 @@
                     android:layout_marginTop="@dimen/space_sm"
                     android:text="View history →"
                     android:textSize="@dimen/text_caption"
-                    android:textColor="@color/text_on_navy_muted"
-                    android:fontFamily="sans-serif" />
+                    android:textColor="@color/text_on_navy_muted" />
 
                 <!-- Shown only when the Fed Funds series fails to refresh; the
                      cached rate above stays visible. Tapping re-fetches it. -->
@@ -123,7 +122,6 @@
                     android:layout_height="wrap_content"
                     android:textColor="@color/text_on_navy_secondary"
                     android:textSize="@dimen/text_caption"
-                    android:fontFamily="serif"
                     android:textStyle="italic"
                     android:visibility="gone" />
 

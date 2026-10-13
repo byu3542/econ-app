@@ -56,6 +56,10 @@ class RollingNumberView @JvmOverloads constructor(
     private var textStyle: Int = Typeface.NORMAL
     private val pending = ArrayList<Runnable>()
     private val measurePaint = TextPaint(TextPaint.ANTI_ALIAS_FLAG)
+    // The face the child TextViews resolve from the theme (Plus Jakarta Sans
+    // since the Pantrii port U2). Shrink-to-fit must measure with the same
+    // face the digits draw in, or the fit is computed for the wrong widths.
+    private val themeTypeface: Typeface by lazy { TextView(context).typeface ?: Typeface.DEFAULT }
 
     init {
         orientation = HORIZONTAL
@@ -232,7 +236,7 @@ class RollingNumberView @JvmOverloads constructor(
         if (MeasureSpec.getMode(widthMeasureSpec) != MeasureSpec.UNSPECIFIED
             && avail > 0 && minTextPx < maxTextPx && current.isNotEmpty()) {
             measurePaint.textSize = maxTextPx
-            measurePaint.typeface = Typeface.create(Typeface.DEFAULT, textStyle)
+            measurePaint.typeface = Typeface.create(themeTypeface, textStyle)
             measurePaint.fontFeatureSettings = "tnum"
             val w = measurePaint.measureText(current)
             val fit = if (w > avail) (maxTextPx * avail / w).coerceAtLeast(minTextPx) else maxTextPx

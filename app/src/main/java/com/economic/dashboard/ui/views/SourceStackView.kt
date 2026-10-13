@@ -223,7 +223,7 @@ class SourceStackView @JvmOverloads constructor(
         tv.includeFontPadding = false
         tv.setTextColor(Color.WHITE)
         tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, BADGE_TEXT_SP)
-        tv.typeface = Typeface.DEFAULT_BOLD
+        tv.setTypeface(tv.typeface, Typeface.BOLD) // theme face (Jakarta), bold
         val bg = GradientDrawable()
         bg.shape = GradientDrawable.OVAL
         bg.setColor(colour)

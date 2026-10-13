@@ -15,7 +15,6 @@
         android:text="@string/watchlist_title"
         android:textColor="@color/card_white"
         android:textSize="@dimen/text_title"
-        android:fontFamily="serif"
         android:textStyle="bold" />
 
     <TextView

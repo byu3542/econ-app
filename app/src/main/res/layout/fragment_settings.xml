@@ -167,7 +167,6 @@
                 android:layout_marginBottom="@dimen/space_sm"
                 android:textSize="@dimen/text_title"
                 android:textStyle="bold"
-                android:fontFamily="serif"
                 android:textColor="@color/text_navy"
                 tools:text="Appearance"/>
 

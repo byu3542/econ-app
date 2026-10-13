@@ -106,7 +106,6 @@
             android:layout_marginHorizontal="@dimen/space_lg"
             android:layout_marginTop="@dimen/space_sm"
             android:textSize="@dimen/text_body"
-            android:fontFamily="serif"
             android:textStyle="bold"
             android:textColor="@color/text_navy"
             android:lineHeight="22sp"

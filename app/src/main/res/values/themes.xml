@@ -42,6 +42,16 @@
              non-numeric text — so this is safe app-wide rather than hand-picking
              every value/delta TextView and risking missing one. -->
         <item name="android:textViewStyle">@style/Widget.Econ.TextView</item>
+
+        <!-- Pantrii port U2: Plus Jakarta Sans app-wide. A theme-level
+             fontFamily is the last fallback TextView reads, and it beats the
+             fontFamily inside a textAppearance — so Material buttons, chips
+             and tabs (whose fonts live in their text appearances) switch too.
+             A view or its style setting fontFamily itself still wins. Weight
+             comes from textStyle: normal = 400, bold = 700. The app: twin is
+             what AppCompat's text helper reads. -->
+        <item name="android:fontFamily">@font/plus_jakarta_sans</item>
+        <item name="fontFamily">@font/plus_jakarta_sans</item>
     </style>
 
     <!-- IOS-03: default TextView style carrying tabular figures app-wide. Only
@@ -50,6 +60,7 @@
          Material default-style attrs and are untouched by this. -->
     <style name="Widget.Econ.TextView" parent="android:Widget.TextView">
         <item name="android:fontFeatureSettings">tnum</item>
+        <item name="android:fontFamily">@font/plus_jakarta_sans</item>
     </style>
 
     <style name="RoundedPopupMenu" parent="Widget.MaterialComponents.PopupMenu">
@@ -151,6 +162,9 @@
         <!-- TICKET-54: sibling branch of Theme.EconomicDashboard, so it must
              carry the dialog theme itself — see the comment on that theme. -->
         <item name="materialAlertDialogTheme">@style/ThemeOverlay.Econ.MaterialAlertDialog</item>
+        <!-- U2: same sibling-branch reason — carry the suite typeface. -->
+        <item name="android:fontFamily">@font/plus_jakarta_sans</item>
+        <item name="fontFamily">@font/plus_jakarta_sans</item>
     </style>
 
     <style name="EconomicBottomSheetStyle" parent="Widget.MaterialComponents.BottomSheet.Modal">
@@ -270,6 +284,8 @@
         <!-- TICKET-54: sibling branch of Theme.EconomicDashboard, so it must
              carry the dialog theme itself — see the comment on that theme. -->
         <item name="materialAlertDialogTheme">@style/ThemeOverlay.Econ.MaterialAlertDialog</item>
+        <item name="android:fontFamily">@font/plus_jakarta_sans</item>
+        <item name="fontFamily">@font/plus_jakarta_sans</item>
     </style>
 
     <!-- Fed Funds hero card — navy background, overrides the app's default card colour -->
