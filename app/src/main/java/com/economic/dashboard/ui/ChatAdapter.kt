@@ -1,8 +1,5 @@
 package com.economic.dashboard.ui
 
-import android.animation.ObjectAnimator
-import android.animation.PropertyValuesHolder
-import android.animation.ValueAnimator
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -13,10 +10,6 @@ import android.text.Spannable
 import android.text.TextPaint
 import android.text.method.LinkMovementMethod
 import android.text.style.ClickableSpan
-import android.text.style.ForegroundColorSpan
-import android.text.style.StyleSpan
-import android.transition.AutoTransition
-import android.transition.TransitionManager
 import android.util.TypedValue
 import android.view.ActionMode
 import android.view.Gravity
@@ -32,9 +25,6 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
-import androidx.core.graphics.ColorUtils
-import androidx.dynamicanimation.animation.DynamicAnimation
-import androidx.dynamicanimation.animation.SpringAnimation
 import androidx.recyclerview.widget.RecyclerView
 import com.economic.dashboard.analyst.ReleaseCalendar
 import com.economic.dashboard.R
@@ -44,11 +34,10 @@ import com.economic.dashboard.analyst.ChatSeriesData
 import com.economic.dashboard.analyst.EconomicSeriesRegistry
 import com.economic.dashboard.models.ChatChart
 import com.economic.dashboard.models.ChatMessage
-import com.economic.dashboard.models.TraceStep
 import com.economic.dashboard.models.TurnSource
 import com.economic.dashboard.news.NewsAdapter
+import com.economic.dashboard.ui.assistant.AssistantLoaderView
 import com.economic.dashboard.ui.views.SourceStackView
-import com.economic.dashboard.ui.views.StepStatusView
 import com.economic.dashboard.utils.AppExecutors
 import com.economic.dashboard.utils.MotionUtil
 import com.economic.dashboard.utils.AxisDateFormat
@@ -58,7 +47,6 @@ import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.formatter.ValueFormatter
-import com.facebook.shimmer.ShimmerFrameLayout
 import io.noties.markwon.Markwon
 import java.util.Collections
 import java.util.Locale
@@ -144,9 +132,6 @@ class ChatAdapter(
     private val messages = ArrayList<ChatMessage>()
     private var markwon: Markwon? = null
 
-    /** AIC-09: dims the streaming caret after [CARET_IDLE_MS] without text. */
-    private val caretHandler = android.os.Handler(android.os.Looper.getMainLooper())
-
     /** TICKET-12 (Peak): analyst insights we've already played the reveal for,
      *  so each insight animates in exactly once (WeakHashMap avoids leaks). */
     private val revealed: MutableSet<ChatMessage> = Collections.newSetFromMap(WeakHashMap())
@@ -166,60 +151,67 @@ class ChatAdapter(
         notifyDataSetChanged()
     }
 
-    /** Streams new text into an existing bubble (SSE partials) via a payload bind.
-     *  AIC-09: [streaming] repaints the text only (no charts) and keeps the
-     *  caret; any other update is final for now and drops the caret. */
-    fun updateMessageText(index: Int, text: String?, streaming: Boolean = false) {
-        if (index < 0 || index >= messages.size) return
-        val m = messages[index]
-        m.text = text
-        m.isStreaming = streaming
-        caretHandler.removeCallbacksAndMessages(null)
-        if (streaming) {
-            m.streamTouchMs = System.currentTimeMillis()
-            // Repaint once the text goes quiet, so the caret can dim.
-            caretHandler.postDelayed({
-                val i = messages.indexOf(m)
-                if (i >= 0 && m.isStreaming) notifyItemChanged(i, PAYLOAD_STREAM)
-            }, CARET_IDLE_MS)
+    // ── U7 (R5, KTD2): one loader row stands in for a pending reply ──────────
+
+    private fun loaderIndex(): Int {
+        for (i in messages.indices.reversed()) if (messages[i].isLoader) return i
+        return -1
+    }
+
+    /** Adds the loader row for a reply that has just been asked for. */
+    fun showLoader() {
+        if (loaderIndex() < 0) addMessage(ChatMessage("", false, isLoader = true))
+    }
+
+    /** AE1: [phrase] replaces the themed rotation while a tool runs; null
+     *  hands back to it. */
+    fun setLoaderTool(phrase: String?) {
+        val i = loaderIndex()
+        if (i < 0 || messages[i].loaderTool == phrase) return
+        messages[i].loaderTool = phrase
+        notifyItemChanged(i, PAYLOAD_LOADER)
+    }
+
+    /**
+     * The finished answer, a stopped partial or an error bubble takes the
+     * loader's place in one full bind, so its text, charts and sources appear
+     * in the same frame and no partial text is ever on screen (AE2). With no
+     * loader showing, [m] is added at the end.
+     */
+    fun replaceLoader(m: ChatMessage) {
+        val i = loaderIndex()
+        if (i < 0) {
+            addMessage(m)
+            return
         }
-        notifyItemChanged(index, if (streaming) PAYLOAD_STREAM else PAYLOAD_TEXT)
+        messages[i] = m
+        notifyItemChanged(i)
     }
 
-    /** TICKET-P2-2: a render_chart call landed for the streaming bubble — set
-     *  the typed chart list and redraw only the chart container. */
-    fun updateMessageCharts(index: Int, charts: List<ChatChart>) {
-        if (index < 0 || index >= messages.size) return
-        messages[index].charts = charts
-        notifyItemChanged(index, PAYLOAD_CHARTS)
+    /** Backstop for every way a request ends: no spinner is left behind. */
+    fun removeLoader() {
+        val i = loaderIndex()
+        if (i < 0) return
+        messages.removeAt(i)
+        notifyItemRemoved(i)
     }
 
-    /** MOT-04: the turn finished — attach the sources its tools read and
-     *  redraw only the stack, closed. */
-    fun updateMessageSources(index: Int, sources: List<TurnSource>) {
-        if (index < 0 || index >= messages.size) return
-        val m = messages[index]
-        m.sources = sources
-        m.sourcesExpanded = false
-        notifyItemChanged(index, PAYLOAD_SOURCES)
-    }
-
-    /** MOT-04: binds the sources stack. [toggled] animates an open/close of
-     *  the already-bound stack; otherwise it is a full bind with no motion. */
     /** AIC-11: "newer data out" chip when a series this answer used has had a
      *  newer release since it was fetched. Checked at bind, so a restored
      *  answer goes stale on its own as release dates pass. */
     private fun bindStale(holder: ViewHolder, m: ChatMessage) {
-        val stale = !m.isUser && !m.isTrace && m.sources.any {
+        val stale = !m.isUser && !m.isLoader && m.sources.any {
             it.kind == TurnSource.Kind.SERIES && ReleaseCalendar.isStale(it.seriesId, it.latestDate)
         }
         holder.tvStaleData.visibility = if (stale) View.VISIBLE else View.GONE
     }
 
+    /** MOT-04: binds the sources stack. [toggled] animates an open/close of
+     *  the already-bound stack; otherwise it is a full bind with no motion. */
     private fun bindSources(holder: ViewHolder, m: ChatMessage, toggled: Boolean) {
         bindStale(holder, m)
         val stack = holder.sourceStack
-        if (m.isUser || m.isError || m.isTrace || m.isTyping || m.sources.isEmpty()) {
+        if (m.isUser || m.isError || m.isLoader || m.sources.isEmpty()) {
             stack.clear()
             return
         }
@@ -247,16 +239,6 @@ class ChatAdapter(
         }
     }
 
-    fun getLastIndex(): Int = messages.size - 1
-
-    /** T4: drops a streaming bubble whose only text was held back before a
-     *  tool call, so no empty bubble sits under the trace row. */
-    fun removeMessageAt(index: Int) {
-        if (index < 0 || index >= messages.size) return
-        messages.removeAt(index)
-        notifyItemRemoved(index)
-    }
-
     fun messageAt(index: Int): ChatMessage? = messages.getOrNull(index)
 
     /** AIC-05: the question the answer at [index] replies to, or null (the
@@ -267,7 +249,7 @@ class ChatAdapter(
         return null
     }
 
-    /** AIC-05: index of the newest finished-or-streaming analyst answer, or -1. */
+    /** AIC-05: index of the newest analyst answer, or -1. */
     fun lastAnswerIndex(): Int {
         for (i in messages.indices.reversed()) {
             val m = messages[i]
@@ -278,8 +260,7 @@ class ChatAdapter(
     }
 
     /**
-     * AIC-05: Regenerate takes the newest answer (and the trace row above it)
-     * off screen and returns it, so the sheet can carry it as a variant of the
+     * AIC-05: Regenerate takes the newest answer off screen and returns it, so the sheet can carry it as a variant of the
      * replacement. Null when there is no answer to replace.
      */
     fun removeLastAnswer(): ChatMessage? {
@@ -287,310 +268,7 @@ class ChatAdapter(
         if (i < 0) return null
         val m = messages.removeAt(i)
         notifyItemRemoved(i)
-        if (i > 0 && messages[i - 1].isTrace) {
-            messages.removeAt(i - 1)
-            notifyItemRemoved(i - 1)
-        }
         return m
-    }
-
-    fun removeTypingIndicator() {
-        // MOT-02: every call site is "first output arrived" or a terminal
-        // path. AIC-09: the trace stays open while tool steps are still due;
-        // terminal paths finish it themselves.
-        finishTraceIfIdle()
-        for (i in messages.indices.reversed()) {
-            if (messages[i].isTyping) {
-                messages.removeAt(i)
-                notifyItemRemoved(i)
-                break
-            }
-        }
-    }
-
-    // ── MOT-02: thinking trace ──────────────────────────────────────────────────
-
-    /** Adds a running "Thinking" trace row, timed from [startMs] (send). */
-    fun addTrace(startMs: Long) {
-        val t = ChatMessage("", false)
-        t.isTrace = true
-        t.traceStartMs = startMs
-        t.traceTurnOpen = true // MOT-05
-        addMessage(t)
-    }
-
-    private fun runningTraceIndex(): Int {
-        for (i in messages.indices.reversed()) {
-            if (messages[i].isTraceRunning) return i
-        }
-        return -1
-    }
-
-    /**
-     * MOT-05: the trace of the turn still in flight. Unlike [runningTraceIndex]
-     * this survives first output, so tool rounds after the answer has started
-     * still land as rows in the (collapsed) trace.
-     */
-    private fun openTraceIndex(): Int {
-        for (i in messages.indices.reversed()) {
-            val m = messages[i]
-            if (m.isTrace && m.traceTurnOpen) return i
-        }
-        return -1
-    }
-
-    /** MOT-05: adds a pending step for tool call [id] to this turn's trace. */
-    fun addTraceStep(id: String, label: String) {
-        val i = openTraceIndex()
-        if (i < 0) return
-        val steps = messages[i].traceSteps
-        if (steps.size >= MAX_TRACE_STEPS || steps.any { it.id == id }) return
-        steps.add(TraceStep(id, label))
-        // AIC-09: a tool round after preamble text reopens the trace, so the
-        // steps show while they run instead of landing in a collapsed row.
-        if (messages[i].traceElapsedMs >= 0) messages[i].traceElapsedMs = -1L
-        notifyItemChanged(i, PAYLOAD_TRACE)
-    }
-
-    /**
-     * MOT-05: changes step [id]'s state, label and/or duration. Matched by
-     * tool_use id. A no-op once the turn is closed, so a tool that finishes
-     * after Stop cannot repaint a closed trace.
-     */
-    fun updateTraceStep(
-        id: String, state: TraceStep.State? = null,
-        label: String? = null, durationMs: Long = -1L
-    ) {
-        val i = openTraceIndex()
-        if (i < 0) return
-        val s = messages[i].traceSteps.firstOrNull { it.id == id } ?: return
-        if (state != null) s.state = state
-        if (label != null) s.label = label
-        if (durationMs >= 0) s.durationMs = durationMs
-        notifyItemChanged(i, PAYLOAD_TRACE)
-    }
-
-    /**
-     * MOT-05: a round is being re-streamed after a mid-stream failure. Its
-     * steps never ran and the retry re-announces them under new ids, so drop
-     * them instead of leaving orphans pending.
-     */
-    fun dropPendingTraceSteps() {
-        val i = openTraceIndex()
-        if (i < 0) return
-        if (messages[i].traceSteps.removeAll { it.state == TraceStep.State.PENDING })
-            notifyItemChanged(i, PAYLOAD_TRACE)
-    }
-
-    /**
-     * MOT-05: ends the turn's step list. A step still running was cut short
-     * (Stop or error) and becomes failed; a step still pending never ran (past
-     * the depth cap, or never reached) and is removed rather than shown as an
-     * error. Only now does the label gain " · K steps". Idempotent.
-     *
-     * Returns true when a successful multi-step turn just closed — the caller
-     * fires the one confirm haptic.
-     */
-    fun closeTraceTurn(success: Boolean): Boolean {
-        val i = openTraceIndex()
-        if (i < 0) return false
-        val m = messages[i]
-        m.traceTurnOpen = false
-        m.traceSteps.removeAll { it.state == TraceStep.State.PENDING }
-        for (s in m.traceSteps)
-            if (s.state == TraceStep.State.RUNNING) s.state = TraceStep.State.FAILED
-        notifyItemChanged(i, PAYLOAD_TRACE)
-        return success && m.traceSteps.size >= CHECKLIST_MIN_STEPS
-    }
-
-    /**
-     * Ends the running trace, if any: stops the shimmer, collapses the steps
-     * and swaps the label to "<verb> for N.Ns". Idempotent — every exit path
-     * of a request may call it; only the first call lands.
-     */
-    fun finishTrace(verb: String) {
-        val i = runningTraceIndex()
-        if (i < 0) return
-        val m = messages[i]
-        m.traceElapsedMs = Math.max(0L, System.currentTimeMillis() - m.traceStartMs)
-        m.traceVerb = verb
-        m.traceExpanded = false
-        notifyItemChanged(i, PAYLOAD_TRACE)
-    }
-
-    /** AIC-09: finishes the running trace once no tool step is pending or
-     *  running — the answer text that follows the last tool round. */
-    fun finishTraceIfIdle() {
-        val i = runningTraceIndex()
-        if (i < 0) return
-        if (messages[i].traceSteps.any {
-                it.state == TraceStep.State.PENDING || it.state == TraceStep.State.RUNNING })
-            return
-        finishTrace("Thought")
-    }
-
-    private fun bindTrace(holder: ViewHolder, m: ChatMessage, animate: Boolean) {
-        val motion = MotionUtil.animationsEnabled(holder.itemView.context)
-        val running = m.traceElapsedMs < 0
-        val hasSteps = m.traceSteps.isNotEmpty()
-        val stepsVisible = hasSteps && (running || m.traceExpanded)
-        val steps = holder.llTraceSteps
-        // MOT-05: only a collapse/expand gets the AutoTransition. Row state
-        // changes arrive many times a turn and animate themselves; a 220ms
-        // transition on each would fight the row springs.
-        if (animate && motion && (steps.visibility == View.VISIBLE) != stepsVisible) {
-            TransitionManager.beginDelayedTransition(
-                holder.itemView as ViewGroup, AutoTransition().setDuration(TRACE_COLLAPSE_MS))
-        }
-        holder.tvTraceLabel.text = traceLabel(m)
-        // Bound to stream state only: runs exactly while the trace is running.
-        if (running && motion) holder.shimmerTrace.startShimmer()
-        else holder.shimmerTrace.stopShimmer()
-
-        // Collapsed rows (later tool rounds) update silently: no spin out of sight.
-        bindTraceSteps(steps, m.traceSteps, motion && stepsVisible, animate && stepsVisible)
-        steps.visibility = if (stepsVisible) View.VISIBLE else View.GONE
-        holder.tvTraceChevron.visibility = if (hasSteps && !running) View.VISIBLE else View.GONE
-        holder.tvTraceChevron.rotation = if (m.traceExpanded) 0f else -90f
-        if (hasSteps && !running) {
-            holder.traceRow.setOnClickListener {
-                val pos = holder.bindingAdapterPosition
-                if (pos == RecyclerView.NO_POSITION) return@setOnClickListener
-                m.traceExpanded = !m.traceExpanded
-                notifyItemChanged(pos, PAYLOAD_TRACE)
-            }
-        } else {
-            holder.traceRow.setOnClickListener(null)
-            holder.traceRow.isClickable = false
-        }
-    }
-
-    /**
-     * "Thinking" while running; "Thought for N.Ns" / "Stopped after N.Ns" once
-     * finished. MOT-05: " · K steps" only after the turn closes — the model
-     * reveals each call as it makes it, so no total is known before then.
-     */
-    private fun traceLabel(m: ChatMessage): String {
-        if (m.traceElapsedMs < 0) return "Thinking"
-        val joiner = if (m.traceVerb == "Stopped") "after" else "for"
-        val base = String.format(Locale.US, "%s %s %.1fs", m.traceVerb, joiner, m.traceElapsedMs / 1000.0)
-        val k = m.traceSteps.size
-        return if (!m.traceTurnOpen && k >= CHECKLIST_MIN_STEPS) "$base · $k steps" else base
-    }
-
-    /**
-     * MOT-05: reconciles the step rows in place, keyed by tool_use id (the
-     * row's tag), so a state change never rebuilds the list — spinners keep
-     * spinning and only genuinely new rows spring in. With fewer than
-     * [CHECKLIST_MIN_STEPS] steps each row is the plain MOT-02 line: no icon,
-     * no duration.
-     */
-    private fun bindTraceSteps(
-        container: LinearLayout, steps: List<TraceStep>, motion: Boolean, live: Boolean
-    ) {
-        for (c in container.childCount - 1 downTo 0) {
-            val id = container.getChildAt(c).tag
-            if (steps.none { it.id == id }) container.removeViewAt(c) // detaching stops its icon
-        }
-        val checklist = steps.size >= CHECKLIST_MIN_STEPS
-        for ((idx, s) in steps.withIndex()) {
-            var row = container.getChildAt(idx)
-            if (row == null || row.tag != s.id) {
-                row = newStepRow(container)
-                row.tag = s.id
-                container.addView(row, idx)
-                if (live && motion) springIn(row)
-            }
-            bindStepRow(row as LinearLayout, s, checklist, motion, live)
-        }
-    }
-
-    private fun newStepRow(parent: ViewGroup): LinearLayout {
-        val ctx = parent.context
-        val res = ctx.resources
-        val caption = res.getDimension(R.dimen.text_caption)
-        val row = LinearLayout(ctx)
-        row.orientation = LinearLayout.HORIZONTAL
-        row.gravity = android.view.Gravity.CENTER_VERTICAL
-        row.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
-
-        val icon = StepStatusView(ctx)
-        val iconLp = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
-        iconLp.marginEnd = res.getDimensionPixelSize(R.dimen.space_sm)
-        row.addView(icon, iconLp)
-
-        val label = TextView(ctx)
-        label.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, caption)
-        label.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
-        row.addView(label)
-
-        val ms = TextView(ctx)
-        ms.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, caption)
-        ms.setTextColor(ContextCompat.getColor(ctx, R.color.text_muted))
-        ms.fontFeatureSettings = "tnum"
-        ms.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
-        val msLp = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
-        msLp.marginStart = res.getDimensionPixelSize(R.dimen.space_md)
-        row.addView(ms, msLp)
-        return row
-    }
-
-    private fun bindStepRow(
-        row: LinearLayout, s: TraceStep, checklist: Boolean, motion: Boolean, live: Boolean
-    ) {
-        val ctx = row.context
-        val icon = row.getChildAt(0) as StepStatusView
-        val label = row.getChildAt(1) as TextView
-        val ms = row.getChildAt(2) as TextView
-        val pad = if (checklist) ctx.resources.getDimensionPixelSize(R.dimen.space_xs) / 2 else 0
-        row.setPadding(0, pad, 0, pad)
-
-        label.text = s.label
-        label.setTextColor(ContextCompat.getColor(ctx,
-            if (checklist && s.state == TraceStep.State.RUNNING) R.color.text_secondary
-            else R.color.text_muted))
-
-        icon.visibility = if (checklist) View.VISIBLE else View.GONE
-        // A hidden icon must not spin, so motion is off for it in MOT-02 mode.
-        icon.setState(s.state, motion && checklist, live)
-
-        val showMs = checklist && s.durationMs >= 0
-        ms.visibility = if (showMs) View.VISIBLE else View.GONE
-        if (showMs) ms.text = String.format(Locale.US, "%d ms", s.durationMs)
-
-        row.contentDescription = if (!checklist) s.label else {
-            val state = when (s.state) {
-                TraceStep.State.PENDING -> "waiting"
-                TraceStep.State.RUNNING -> "in progress"
-                TraceStep.State.DONE -> "done"
-                TraceStep.State.FAILED -> "failed"
-            }
-            if (showMs) "${s.label}, $state, ${s.durationMs} milliseconds" else "${s.label}, $state"
-        }
-    }
-
-    /**
-     * MOT-05: on recycle, drop the rows outright. Detaching stops each icon's
-     * spinner and check, and the next bind rebuilds rows in their current state
-     * (stopping them in place would leave a running row frozen on rebind,
-     * because setState skips an unchanged state).
-     */
-    private fun stopTraceSteps(holder: ViewHolder) {
-        val steps = holder.llTraceSteps
-        for (c in 0 until steps.childCount) steps.getChildAt(c).animate().cancel()
-        steps.removeAllViews()
-    }
-
-    /** MOT-05: a new row rises 6dp on the app's 0.75 / 1200 spring and fades in. */
-    private fun springIn(row: View) {
-        row.alpha = 0f
-        row.translationY = 6f * row.resources.displayMetrics.density
-        row.animate().alpha(1f).setDuration(ROW_FADE_MS).start()
-        val spring = SpringAnimation(row, DynamicAnimation.TRANSLATION_Y, 0f)
-        spring.spring.setDampingRatio(ROW_DAMPING).setStiffness(ROW_STIFFNESS)
-        spring.start()
     }
 
     /** Removes the most recent error bubble (before a retry). */
@@ -616,65 +294,23 @@ class ChatAdapter(
         markwon = Markwon.builder(ctx).build()
     }
 
-    /**
-     * AIC-09: a caret after streaming text, dimmed once no text has arrived for
-     * [CARET_IDLE_MS]. Render-only: the stored text never holds it, and the
-     * content description keeps TalkBack from reading it.
-     */
-    private fun appendCaret(tv: TextView, m: ChatMessage) {
-        if (!m.isStreaming) {
-            tv.contentDescription = null
-            return
-        }
-        val body = tv.text
-        val sb = android.text.SpannableStringBuilder(body).append(CARET)
-        if (System.currentTimeMillis() - m.streamTouchMs >= CARET_IDLE_MS) {
-            val dim = (tv.currentTextColor and 0x00FFFFFF) or 0x40000000
-            sb.setSpan(android.text.style.ForegroundColorSpan(dim), sb.length - CARET.length,
-                sb.length, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-        }
-        tv.text = sb
-        tv.contentDescription = body
-    }
-
     private fun renderText(holder: ViewHolder, m: ChatMessage) {
         if (!m.isUser && !m.isError) {
-            // ensureMarkwon() always runs before renderText() at both call sites
-            // (onBindViewHolder, the PAYLOAD_TEXT path) — fail loudly if that
-            // invariant is ever broken, same as the original's implicit trust.
+            // ensureMarkwon() always runs before renderText() in onBindViewHolder
+            // — fail loudly if that invariant is ever broken.
             val mw = checkNotNull(markwon) { "ensureMarkwon() must run before renderText()" }
             // stripStrayMarkdown's signature stays nullable-in/nullable-out because
             // ChatAdapterTest calls it directly with null and asserts a null result.
             // stripChartTags always returns non-null, so this fallback is unreachable
             // in practice — it just satisfies the compiler without loosening that contract.
-            // AIC-09: a half-streamed **bold** would show raw asterisks; close it
-            // in this render copy only, never in the stored text.
+            // AIC-09: an answer cut short by Stop can end mid-**bold**; close
+            // it in this render copy only, never in the stored text.
             val display = closeDanglingBold(stripStrayMarkdown(stripChartTags(m.text))) ?: ""
             mw.setMarkdown(holder.tvMessage, display)
             addMetricCitations(holder.tvMessage)
-            styleToolRoundStatus(holder.tvMessage)
-            appendCaret(holder.tvMessage, m)
         } else {
             holder.tvMessage.text = m.text
         }
-    }
-
-    /**
-     * TICKET-6 (AI Law 11): while a tool round runs, the bubble ends with the
-     * display-only TOOL_STATUS line. Render that trailing line italic and
-     * subdued so "fetching" reads visibly differently from "answering". The
-     * status is never committed to the answer, so finished replies never
-     * carry the style.
-     */
-    private fun styleToolRoundStatus(tv: TextView) {
-        val cs = tv.text
-        if (cs !is Spannable) return
-        val s = cs.toString()
-        if (!s.endsWith(TOOL_STATUS)) return
-        val start = s.length - TOOL_STATUS.length
-        cs.setSpan(StyleSpan(Typeface.ITALIC), start, s.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-        val muted = ColorUtils.setAlphaComponent(tv.currentTextColor, 0x99)
-        cs.setSpan(ForegroundColorSpan(muted), start, s.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
     }
 
     /**
@@ -726,7 +362,7 @@ class ChatAdapter(
      */
     private fun bindCharts(holder: ViewHolder, m: ChatMessage) {
         val container = holder.llChartContainer
-        val charts = if (m.isUser || m.isError || m.isTyping) emptyList() else m.charts
+        val charts = if (m.isUser || m.isError || m.isLoader) emptyList() else m.charts
 
         // Invalidate any load still in flight for this holder. The old guard
         // compared a cache key against a single SparklineView's `tag`, which
@@ -744,9 +380,8 @@ class ChatAdapter(
         }
         container.visibility = View.VISIBLE
 
-        // Reuse rows rather than rebuilding: a streaming reply rebinds on every
-        // text delta, and re-inflating N charts each time would churn views for
-        // the whole answer.
+        // Reuse rows rather than rebuilding: a recycled holder keeps its chart
+        // rows, and re-inflating N charts on every rebind would churn views.
         while (container.childCount > charts.size)
             container.removeViewAt(container.childCount - 1)
         val inflater = LayoutInflater.from(container.context)
@@ -936,32 +571,9 @@ class ChatAdapter(
             super.onBindViewHolder(holder, position, payloads)
             return
         }
-        // MOT-04: handle every payload present, not just the first —
-        // finalizeTurn sends TEXT + CHARTS + SOURCES in the same frame.
         val m = messages[position]
-        val text = payloads.contains(PAYLOAD_TEXT)
-        if (!text && payloads.contains(PAYLOAD_STREAM)) {
-            // AIC-09: streaming repaint — text and caret only, charts untouched.
-            ensureMarkwon(holder.itemView.context)
-            renderText(holder, m)
-        }
-        if (text) {
-            // Streaming update: swap the text only — no full rebind, no flicker.
-            ensureMarkwon(holder.itemView.context)
-            renderText(holder, m)
-            bindCharts(holder, m)
-        }
-        if (payloads.contains(PAYLOAD_TRACE)) {
-            // MOT-02: state change on the trace row — animate the collapse.
-            bindTrace(holder, m, true)
-        }
-        if (!text && payloads.contains(PAYLOAD_CHARTS)) {
-            // A render_chart landed mid-stream: draw it without touching the
-            // text, so the prose keeps streaming uninterrupted.
-            bindCharts(holder, m)
-        }
-        if (payloads.contains(PAYLOAD_SOURCES)) bindSources(holder, m, false)
-        else if (payloads.contains(PAYLOAD_SOURCES_TOGGLE)) bindSources(holder, m, true)
+        if (payloads.contains(PAYLOAD_LOADER) && m.isLoader) holder.loader.bind(m.loaderTool) // AE1
+        if (payloads.contains(PAYLOAD_SOURCES_TOGGLE)) bindSources(holder, m, true)
         if (payloads.contains(PAYLOAD_CUT)) bindHistoryCut(holder, position)
     }
 
@@ -970,31 +582,15 @@ class ChatAdapter(
         ensureMarkwon(holder.itemView.context)
         bindHistoryCut(holder, position)
 
-        // MOT-02: a trace row shows only the trace inside the bubble.
-        holder.traceRow.visibility = if (m.isTrace) View.VISIBLE else View.GONE
-        if (m.isTrace) {
+        // U7 (R5): a pending reply is the loader alone — no text, caret or dots.
+        if (m.isLoader) {
             holder.tvMessage.visibility = View.GONE
-            holder.llTypingIndicator.visibility = View.GONE
-            stopDancingDots(holder)
-            bindTrace(holder, m, false)
+            holder.loader.visibility = View.VISIBLE
+            holder.loader.bind(m.loaderTool)
         } else {
-            holder.shimmerTrace.stopShimmer()
-            holder.traceRow.setOnClickListener(null)
-            // MOT-05: a GONE trace row stays attached, so its rows would keep
-            // spinning out of sight; removing them detaches and stops them.
-            holder.llTraceSteps.removeAllViews()
-        }
-
-        if (m.isTrace) {
-            // handled above
-        } else if (m.isTyping) {
-            holder.tvMessage.visibility = View.GONE
-            holder.llTypingIndicator.visibility = View.VISIBLE
-            startDancingDots(holder)
-        } else {
+            holder.loader.stop()
+            holder.loader.visibility = View.GONE
             holder.tvMessage.visibility = View.VISIBLE
-            holder.llTypingIndicator.visibility = View.GONE
-            stopDancingDots(holder)
             renderText(holder, m)
         }
 
@@ -1061,7 +657,7 @@ class ChatAdapter(
             holder.tvRetry.visibility = View.GONE
             bubble.isClickable = false
             bubble.setOnClickListener(null)
-            if (!m.isTyping) {
+            if (!m.isLoader) {
                 // Toggle off/on so selection keeps working on recycled views
                 holder.tvMessage.setTextIsSelectable(false)
                 holder.tvMessage.setTextIsSelectable(true)
@@ -1073,8 +669,8 @@ class ChatAdapter(
         // KTD6: long-press anywhere on the message opens its actions sheet. On
         // the text itself this listener wins over the selection long-press;
         // "Select text" in the sheet hands one long-press back to selection.
-        // AIC-04: streaming updates arrive as partial binds, so the handler
-        // reads the item at press time instead of capturing it here.
+        // AIC-04: the handler reads the item at press time instead of
+        // capturing it here, so a replaced row never acts on the old message.
         val longPress = View.OnLongClickListener { openActions(holder) }
         bubble.setOnLongClickListener(longPress)
         holder.tvMessage.setOnLongClickListener(longPress)
@@ -1106,7 +702,7 @@ class ChatAdapter(
     }
 
     /** Adds an "Ask AI" item to the text-selection toolbar of analyst bubbles. */
-    private fun attachAskAiSelection(tv: TextView) {
+    private fun attachAskAiSelection(tv: TextView, afterAsk: (() -> Unit)? = null) {
         val listener = actionListener ?: return
         tv.customSelectionActionModeCallback = object : ActionMode.Callback {
             override fun onCreateActionMode(mode: ActionMode, menu: Menu): Boolean {
@@ -1138,6 +734,7 @@ class ChatAdapter(
                     }
                 }
                 mode.finish()
+                afterAsk?.invoke()
                 return true
             }
             override fun onDestroyActionMode(mode: ActionMode) {}
@@ -1155,7 +752,7 @@ class ChatAdapter(
         if (pos == RecyclerView.NO_POSITION) return false
         val m = messages[pos]
         val text = m.text
-        if (m.isTyping || m.isTrace || text.isNullOrEmpty()) return false
+        if (m.isLoader || text.isNullOrEmpty()) return false
         val ctx = holder.itemView.context
         val fromAnalyst = !m.isUser && !m.isError
         val actions = ArrayList<AnswerActionsSheet.Action>()
@@ -1204,16 +801,12 @@ class ChatAdapter(
         return true
     }
 
-    /** "Select text" from the sheet: replays the long-press on the text with
-     *  the sheet's listener off, so the TextView starts its own selection (and
-     *  the "Ask Econ Analyst" item) at the word that was pressed. */
+    /** "Select text" from the sheet: the answer opens in a selection sheet
+     *  whose toolbar keeps "Ask Econ Analyst"; asking closes that sheet. */
     private fun startTextSelection(holder: ViewHolder) {
-        val tv = holder.tvMessage
-        tv.post {
-            if (!tv.isTextSelectable) return@post
-            tv.setOnLongClickListener(null)
-            tv.performLongClick()
-            tv.setOnLongClickListener { openActions(holder) }
+        val text = holder.tvMessage.text
+        AnswerActionsSheet.showSelectable(holder.itemView.context, text) { tv, close ->
+            attachAskAiSelection(tv, close)
         }
     }
 
@@ -1255,44 +848,9 @@ class ChatAdapter(
         ctx.startActivity(Intent.createChooser(share, "Share message"))
     }
 
-    private fun startDancingDots(holder: ViewHolder) {
-        stopDancingDots(holder)
-        holder.dotAnimators.add(animateDot(holder.dot1, 0))
-        holder.dotAnimators.add(animateDot(holder.dot2, 200))
-        holder.dotAnimators.add(animateDot(holder.dot3, 400))
-    }
-
-    /**
-     * ObjectAnimators are not stopped by View.clearAnimation() — they must be
-     * cancelled explicitly, otherwise they run forever on recycled views.
-     */
-    private fun stopDancingDots(holder: ViewHolder) {
-        for (a in holder.dotAnimators) a.cancel()
-        holder.dotAnimators.clear()
-        holder.dot1.translationY = 0f
-        holder.dot2.translationY = 0f
-        holder.dot3.translationY = 0f
-    }
-
-    private fun animateDot(dot: View, delay: Long): ObjectAnimator {
-        // Use dp-based pixels so bounce scales correctly across all screen densities
-        val bouncePx = 8f * dot.resources.displayMetrics.density
-        val animator = ObjectAnimator.ofPropertyValuesHolder(
-            dot,
-            PropertyValuesHolder.ofFloat("translationY", 0f, -bouncePx, 0f)
-        )
-        animator.duration = 600
-        animator.startDelay = delay
-        animator.repeatCount = ValueAnimator.INFINITE
-        animator.start()
-        return animator
-    }
-
     override fun onViewRecycled(holder: ViewHolder) {
         super.onViewRecycled(holder)
-        stopDancingDots(holder)
-        holder.shimmerTrace.stopShimmer() // MOT-02
-        stopTraceSteps(holder) // MOT-05
+        holder.loader.stop() // U7
         holder.sourceStack.cancelMotion() // MOT-04
     }
 
@@ -1300,22 +858,13 @@ class ChatAdapter(
 
     class ViewHolder(v: View) : RecyclerView.ViewHolder(v) {
         val llBubbleContainer: LinearLayout = v.findViewById(R.id.llBubbleContainer)
-        val llTypingIndicator: LinearLayout = v.findViewById(R.id.llTypingIndicator)
         val tvMessage: TextView = v.findViewById(R.id.tvMessage)
         val tvHistoryCut: TextView = v.findViewById(R.id.tvHistoryCut)
         val tvRetry: TextView = v.findViewById(R.id.tvRetry)
         val ivChatImage: ImageView = v.findViewById(R.id.ivChatImage)
         val llChartContainer: LinearLayout = v.findViewById(R.id.llChartContainer)
-        val dot1: View = v.findViewById(R.id.dot1)
-        val dot2: View = v.findViewById(R.id.dot2)
-        val dot3: View = v.findViewById(R.id.dot3)
-        val dotAnimators: MutableList<ObjectAnimator> = ArrayList()
-        // MOT-02: thinking trace (item_chat_trace, included in the bubble)
-        val traceRow: LinearLayout = v.findViewById(R.id.traceRow)
-        val tvTraceChevron: TextView = v.findViewById(R.id.tvTraceChevron)
-        val shimmerTrace: ShimmerFrameLayout = v.findViewById(R.id.shimmerTrace)
-        val tvTraceLabel: TextView = v.findViewById(R.id.tvTraceLabel)
-        val llTraceSteps: LinearLayout = v.findViewById(R.id.llTraceSteps)
+        // U7: the loader row's spinner and phrase (view_assistant_loader)
+        val loader: AssistantLoaderView = v.findViewById(R.id.loaderRow)
         // MOT-04: sources the turn's tools read
         val sourceStack: SourceStackView = v.findViewById(R.id.sourceStack)
         val tvStaleData: TextView = v.findViewById(R.id.tvStaleData)
@@ -1331,44 +880,18 @@ class ChatAdapter(
         /** Rows a table card shows (T2). */
         private const val TABLE_ROWS = 5
 
-        /** Display-only status the analyst bubble shows while a tool round runs
-         *  (AI Law 11). Rendered italic + subdued (TICKET-6); never committed. */
-        @JvmField
-        val TOOL_STATUS = "Checking the data…"
-
-        /** Partial-bind payload: only the message text changed (SSE streaming). */
-        private val PAYLOAD_TEXT = Any()
-
-        /** AIC-05: a real analyst answer, as opposed to a trace, typing dots,
-         *  an error bubble or a user message. */
+        /** AIC-05: a real analyst answer, as opposed to the loader, an error
+         *  bubble or a user message. */
         private fun isAnswer(m: ChatMessage): Boolean =
-            !m.isUser && !m.isTrace && !m.isTyping && !m.isError
+            !m.isUser && !m.isLoader && !m.isError
 
-        /** Partial-bind payload: only the chart list changed (TICKET-P2-2). */
-        private val PAYLOAD_CHARTS = Any()
-
-        /** MOT-02: partial-bind payload — only the trace row's state changed. */
-        private val PAYLOAD_TRACE = Any()
-        /** AIC-09: streaming text repaint — no charts, no action row. */
-        private val PAYLOAD_STREAM = Any()
-        private const val CARET = "\u258D"
-        private const val CARET_IDLE_MS = 1500L
+        /** U7 (AE1): the loader's tool phrase changed. */
+        private val PAYLOAD_LOADER = Any()
         /** AIC-08: the history-cut divider moved onto or off this row. */
         private val PAYLOAD_CUT = Any()
 
-        /** MOT-04: sources attached (full stack bind) / stack opened or closed. */
-        private val PAYLOAD_SOURCES = Any()
+        /** MOT-04: the sources stack was opened or closed. */
         private val PAYLOAD_SOURCES_TOGGLE = Any()
-        /** MOT-05: was 3 (MOT-02 kept the last three), which would hide
-         *  checklist rows. Now a safety cap only — MAX_TOOL_DEPTH rounds plus
-         *  chart rounds stay well under it. */
-        private const val MAX_TRACE_STEPS = 12
-        private const val TRACE_COLLAPSE_MS = 220L
-        /** MOT-05: below this many steps the trace keeps the MOT-02 plain line. */
-        private const val CHECKLIST_MIN_STEPS = 2
-        private const val ROW_FADE_MS = 200L
-        private const val ROW_DAMPING = 0.75f
-        private const val ROW_STIFFNESS = 1200f
 
         /** U6 (R4): user and error bubbles are at most this share of the thread width. */
         private const val BUBBLE_MAX_FRACTION = 0.82f
@@ -1432,6 +955,24 @@ class ChatAdapter(
         /** Series data cache so recycled rows don't re-query Room. */
         private val seriesCache = HashMap<String, ChatSeriesData.Card>()
 
+        /**
+         * U7 (AE1): resolves the cards for [charts] into the bind cache before
+         * the answer lands, so its chart and table cards draw in the same frame
+         * as its text rather than a load later. Same cache rules as the bind.
+         * Reads Room: call off the main thread.
+         */
+        @JvmStatic
+        fun prefetchCards(ctx: Context, vm: EconomicViewModel?, charts: List<ChatChart>) {
+            for (c in charts) {
+                val key = "${c.seriesId}:${c.months}"
+                val cached = synchronized(seriesCache) { seriesCache.containsKey(key) }
+                if (cached) continue
+                val card = ChatSeriesData.resolve(ctx, vm, c.seriesId, c.months)
+                if (card.popupId == null || card.grade != null)
+                    synchronized(seriesCache) { seriesCache[key] = card }
+            }
+        }
+
         /** Removes legacy [CHART:...] tags from pre-P2-2 persisted text so old
          *  conversations restore cleanly (see CHART_TAG). New replies never
          *  contain the tag. */
@@ -1461,8 +1002,8 @@ class ChatAdapter(
         }
 
         /**
-         * AIC-09: a streamed answer can stop mid-**bold**, and Markwon then
-         * shows the raw asterisks. An odd count of `**` gets a closing pair.
+         * AIC-09: an answer cut short by Stop can end mid-**bold**, and Markwon
+         * then shows the raw asterisks. An odd count of `**` gets a closing pair.
          * Render copy only — callers never store the result.
          */
         @JvmStatic

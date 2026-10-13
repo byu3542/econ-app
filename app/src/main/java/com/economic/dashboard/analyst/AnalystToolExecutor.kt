@@ -335,21 +335,16 @@ object AnalystToolExecutor {
     private fun failedCall(text: String) = ToolOutcome(text, emptyList(), true)
 
     /**
-     * MOT-05: the human label for a tool call's trace row. [input] is null
-     * while the call's arguments are still streaming, so `get_series` reads
-     * "Pull data" until its series id is known.
+     * Pantrii port U7 (AE1): the series a get_series call is pulling, as the
+     * loader names it ("CPI"); null while its arguments are still streaming
+     * or for any other tool.
      */
     @JvmStatic
-    fun stepLabel(name: String, input: JSONObject?): String = when (name) {
-        "get_series" -> {
-            val id = input?.optString("series_id", "") ?: ""
-            if (id.isEmpty()) "Pull data"
-            else "Pull " + (EconomicSeriesRegistry.byId(id)?.chartLabel ?: LIVE_SERIES[id] ?: id)
-        }
-        "get_headlines" -> "Check headlines"
-        RENDER_CHART -> "Drawing chart"
-        RENDER_TABLE -> "Building table"
-        else -> "Calling $name…"
+    fun seriesSubject(name: String, input: JSONObject?): String? {
+        if (name != "get_series") return null
+        val id = input?.optString("series_id", "") ?: ""
+        if (id.isEmpty()) return null
+        return EconomicSeriesRegistry.byId(id)?.chartLabel ?: LIVE_SERIES[id] ?: id
     }
 
     /** MOT-04: a get_series result that carried points. */

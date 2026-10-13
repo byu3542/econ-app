@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TextView
 import androidx.annotation.DrawableRes
 import androidx.core.content.ContextCompat
@@ -55,6 +56,31 @@ object AnswerActionsSheet {
             list.addView(row)
         }
         dialog.setContentView(content)
+        dialog.show()
+    }
+
+    /**
+     * "Select text": the whole message in a sheet as freely selectable text,
+     * so a real long-press there starts selection with its handles and toolbar.
+     * (Replaying a long-press on the thread text in code only highlighted one
+     * word: no handles, no toolbar.) [attach] adds the toolbar items and gets
+     * a way to close the sheet.
+     */
+    fun showSelectable(ctx: Context, text: CharSequence, attach: (TextView, () -> Unit) -> Unit) {
+        val dialog = BottomSheetDialog(ctx, R.style.Theme_Econ_AnswerSheet)
+        val c = dialog.context
+        val pad = (18 * c.resources.displayMetrics.density).toInt()
+        val tv = TextView(c)
+        tv.setTextAppearance(R.style.TextAppearance_Econ_Body)
+        tv.setTextColor(ContextCompat.getColor(c, R.color.ink))
+        tv.setLineSpacing(4 * c.resources.displayMetrics.density, 1f)
+        tv.setPadding(pad, pad, pad, pad * 2)
+        tv.text = text
+        tv.setTextIsSelectable(true)
+        attach(tv) { dialog.dismiss() }
+        val scroll = ScrollView(c)
+        scroll.addView(tv)
+        dialog.setContentView(scroll)
         dialog.show()
     }
 

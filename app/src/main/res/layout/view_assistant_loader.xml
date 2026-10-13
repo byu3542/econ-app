@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Pantrii port U7 (R5, KTD9): the one row that stands in for a pending
+     reply. A 16dp accent arc spins beside a phrase that rotates every 1.8 s;
+     a tool round swaps in its own phrase. ChatAdapter replaces the whole row
+     with the finished answer in one bind. Included in item_chat_message. -->
+<com.economic.dashboard.ui.assistant.AssistantLoaderView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/loaderRow"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:minHeight="32dp"
+    android:contentDescription="@string/assistant_loader_cd"
+    android:focusable="true"
+    android:visibility="gone">
+
+    <com.google.android.material.progressindicator.CircularProgressIndicator
+        android:id="@+id/loaderSpinner"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:indeterminate="true"
+        android:importantForAccessibility="no"
+        app:indicatorSize="16dp"
+        app:trackThickness="2dp"
+        app:indicatorColor="@color/accent"
+        app:trackColor="@android:color/transparent" />
+
+    <TextView
+        android:id="@+id/tvLoaderPhrase"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:textAppearance="@style/TextAppearance.Econ.Body"
+        android:textColor="@color/ink_2"
+        android:maxLines="1"
+        android:importantForAccessibility="no" />
+
+</com.economic.dashboard.ui.assistant.AssistantLoaderView>

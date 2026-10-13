@@ -3,6 +3,7 @@
      bubble on the right; analyst answers are plain full-width text with no
      bubble, sender label or action row. Copy, regenerate, variants, the model
      label and the time open from a long-press sheet (AnswerActionsSheet).
+     U7: a pending reply is one loader row; the answer replaces it whole.
      ChatAdapter sets the bubble's background, padding and width per row. -->
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -45,8 +46,8 @@
         app:layout_constraintHorizontal_bias="0"
         app:layout_constraintWidth_default="wrap">
 
-        <!-- MOT-02: thinking trace (trace rows only) -->
-        <include layout="@layout/item_chat_trace" />
+        <!-- U7 (R5): loader row only — spinner and rotating phrase -->
+        <include layout="@layout/view_assistant_loader" />
 
         <TextView
             android:id="@+id/tvMessage"
@@ -116,44 +117,6 @@
             android:clickable="true"
             android:focusable="true"
             android:visibility="gone" />
-
-        <!-- Typing Indicator Container -->
-        <LinearLayout
-            android:id="@+id/llTypingIndicator"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:paddingTop="@dimen/space_md"
-            android:paddingBottom="@dimen/space_xs"
-            android:clipChildren="false"
-            android:clipToPadding="false"
-            android:visibility="gone">
-
-            <View
-                android:id="@+id/dot1"
-                android:layout_width="6dp"
-                android:layout_height="6dp"
-                android:background="@drawable/dot_neutral"
-                android:backgroundTint="@color/ink"
-                android:layout_marginEnd="@dimen/space_xs" />
-
-            <View
-                android:id="@+id/dot2"
-                android:layout_width="6dp"
-                android:layout_height="6dp"
-                android:background="@drawable/dot_neutral"
-                android:backgroundTint="@color/ink"
-                android:layout_marginEnd="@dimen/space_xs" />
-
-            <View
-                android:id="@+id/dot3"
-                android:layout_width="6dp"
-                android:layout_height="6dp"
-                android:background="@drawable/dot_neutral"
-                android:backgroundTint="@color/ink" />
-
-        </LinearLayout>
 
     </LinearLayout>
 

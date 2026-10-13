@@ -22,7 +22,7 @@ import java.util.regex.Pattern
 class AiAnalystBottomSheet private constructor() {
 
     /**
-     * Carries streamed text across tool-use round-trips into one bubble.
+     * Carries streamed text across tool-use round-trips into one answer.
      *
      * Public (was package-private) and non-`inner` so AiAnalystBottomSheetTest
      * can still write `new AiAnalystBottomSheet.StreamState()`. Kotlin has no
@@ -34,13 +34,8 @@ class AiAnalystBottomSheet private constructor() {
      * getter/setter and no field at all, and the test stops compiling.
      */
     class StreamState {
+        /** The answer so far. U7 (KTD2): accumulated off screen, bound once. */
         @JvmField val acc = StringBuilder()
-        /** AIC-09: the first text delta has posted the bubble; later deltas
-         *  batch through scheduleStreamFlush. Touched on the stream thread only. */
-        @JvmField var bubblePosted = false
-        /** AIC-09: a batched text repaint is queued. */
-        @JvmField val flushScheduled = java.util.concurrent.atomic.AtomicBoolean(false)
-        @JvmField var streamIdx = -1
         /** AI Law 6: true when every round of this turn should use the stronger
          *  model (gesture-initiated, or the question looks tool-likely). */
         @JvmField var routeStrong = false
@@ -48,9 +43,9 @@ class AiAnalystBottomSheet private constructor() {
          *  sendTurn() invocation and tool-loop round. Capped at
          *  MAX_RETRIES_PER_TURN. */
         @JvmField var retryAttempts = 0
-        /** TICKET-P2-2: charts rendered so far this turn, in call order. Set on
-         *  the streaming bubble as each render_chart lands, and carried onto
-         *  the persisted message in finalizeTurn(). */
+        /** TICKET-P2-2: charts rendered so far this turn, in call order.
+         *  Carried onto the answer in finalizeTurn(), which binds them with
+         *  its text (U7). */
         @JvmField val charts = ArrayList<ChatChart>()
         /** Rounds this turn continued purely to acknowledge render_chart calls.
          *  Those rounds are exempt from MAX_TOOL_DEPTH (a rendering directive

@@ -16,7 +16,6 @@ import android.os.Bundle
 import android.view.KeyEvent
 import android.os.Handler
 import android.os.Looper
-import androidx.core.os.HandlerCompat
 import android.os.SystemClock
 import android.text.Editable
 import android.util.Log
@@ -29,6 +28,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 
 import androidx.core.content.ContextCompat
+import androidx.core.view.OneShotPreDrawListener
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 
@@ -54,14 +54,12 @@ import com.economic.dashboard.models.ChatChart
 import com.economic.dashboard.models.ChatMessage
 import com.economic.dashboard.models.TurnSource
 import com.economic.dashboard.models.EconomicDataPoint
-import com.economic.dashboard.models.TraceStep
 import com.economic.dashboard.models.TurnSources
 import com.economic.dashboard.news.NewsItem
 import com.economic.dashboard.news.NewsRepository
 import com.economic.dashboard.ui.views.CentreOutStagger
 import com.economic.dashboard.ui.views.PressFeedback
 import com.economic.dashboard.utils.AppExecutors
-import com.economic.dashboard.utils.HapticUtil
 import com.economic.dashboard.utils.ImageUtils
 import com.economic.dashboard.utils.SettingsManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -152,8 +150,20 @@ class AssistantFragment : Fragment() {
      *  Handler(...).postDelayed(...)` can't be cancelled from outside itself. */
     private val retryHandler = Handler(Looper.getMainLooper())
 
-    /** AIC-09: batches stream repaints; each StreamState is its own token. */
-    private val streamHandler = Handler(Looper.getMainLooper())
+    /** U7: holds a landing back until the loader has shown for
+     *  [LoadingPhrases.MIN_VISIBLE_MS]. */
+    private val loaderHandler = Handler(Looper.getMainLooper())
+
+    /** U7: when this turn's loader appeared (uptime millis). */
+    private var loaderShownAt = 0L
+
+    /** U7: the landing waiting on [loaderHandler]; Stop runs it at once. */
+    private var pendingLanding: Runnable? = null
+
+    /** U7 (AE1, KTD9): tool-round phrases, keyed by the executor's tool
+     *  names. Read from the stream thread, so built once in onViewCreated. */
+    @Volatile
+    private var toolPhrases: LoadingPhrases? = null
 
     /** Photo picker for the attach-image button. Registered in onCreate, which
      *  is the only point the Activity Result API allows. */
@@ -241,10 +251,18 @@ class AssistantFragment : Fragment() {
         rvChat.layoutManager = LinearLayoutManager(requireContext())
         rvChat.adapter = chatAdapter()
 
-        // Change animations off — streaming text rebinds would flicker otherwise
+        // Change animations off: the loader row turns into the answer in one
+        // instant bind (U7), never a crossfade through both
         val animator = rvChat.itemAnimator
         if (animator is androidx.recyclerview.widget.SimpleItemAnimator)
             animator.supportsChangeAnimations = false
+
+        val res = resources
+        toolPhrases = LoadingPhrases(res.getStringArray(R.array.assistant_loading_phrases).toList(), mapOf(
+            "get_series" to res.getString(R.string.assistant_tool_series),
+            "get_headlines" to res.getString(R.string.assistant_tool_headlines),
+            AnalystToolExecutor.RENDER_CHART to res.getString(R.string.assistant_tool_chart),
+            AnalystToolExecutor.RENDER_TABLE to res.getString(R.string.assistant_tool_table)))
 
         // Empty state + quick-ask chips react to conversation state
         chatAdapter().registerAdapterDataObserver(conversationObserver)
@@ -634,9 +652,9 @@ class AssistantFragment : Fragment() {
         // Restore the terminal UI state here; the callback-side resets stay as
         // an idempotent second pass for the genuinely in-flight case.
         if (isAdded) {
+            flushLanding() // a finished reply still waiting out the loader lands now
             keepStoppedAnswer()
             requestFinished()
-            chatAdapter().removeTypingIndicator()
         }
     }
 
@@ -646,6 +664,10 @@ class AssistantFragment : Fragment() {
      * it and a restart erased it. Keep it, mark it incomplete in the text
      * itself (so the label survives Room and the model sees it too), and
      * commit it like a finished answer.
+     *
+     * U7: nothing streamed was on screen, so Stop is the moment the partial
+     * answer appears, whole, in the loader's place, with Continue in its
+     * long-press sheet. Stopped before any answer text: the loader just goes.
      */
     private fun keepStoppedAnswer() {
         val t = activeTurn.get() ?: return
@@ -657,14 +679,8 @@ class AssistantFragment : Fragment() {
         commitToHistory(t.query, text)
         val msg = ChatMessage(text, false)
         msg.charts = ArrayList(st.charts)
-        if (st.streamIdx >= 0) {
-            chatAdapter().updateMessageText(st.streamIdx, text)
-            if (msg.charts.isNotEmpty()) chatAdapter().updateMessageCharts(st.streamIdx, msg.charts)
-            chatAdapter().messageAt(st.streamIdx)?.let { attachAnswerMeta(it, st) }
-        } else {
-            attachAnswerMeta(msg, st)
-            chatAdapter().addMessage(msg)
-        }
+        attachAnswerMeta(msg, st)
+        chatAdapter().replaceLoader(msg)
         host().persistChatMessage(msg)
         announceAnswer(text)
     }
@@ -680,10 +696,66 @@ class AssistantFragment : Fragment() {
         if (spoken.isNotEmpty()) b.root.announceForAccessibility(spoken)
     }
 
-    /** AIC-07: error bubbles are read aloud too, not just finished answers. */
-    private fun addErrorBubble(text: String) {
-        chatAdapter().addMessage(ChatMessage(text, false, false, true))
-        announceAnswer(text)
+    /**
+     * U7 (R5, AE2): whatever replaces the loader (the answer, an error bubble)
+     * lands through here, on the UI thread. A reply quicker than
+     * [LoadingPhrases.MIN_VISIBLE_MS] waits out the rest, so the loader shows
+     * one readable phrase instead of a flicker.
+     */
+    private fun land(landing: Runnable) {
+        flushLanding()
+        val wait = loaderShownAt + LoadingPhrases.MIN_VISIBLE_MS - SystemClock.uptimeMillis()
+        if (wait <= 0 || binding == null) {
+            landing.run()
+            return
+        }
+        pendingLanding = landing
+        loaderHandler.postDelayed({ flushLanding() }, wait)
+    }
+
+    /** Runs a landing still waiting on [loaderHandler], if any. */
+    private fun flushLanding() {
+        loaderHandler.removeCallbacksAndMessages(null)
+        val landing = pendingLanding ?: return
+        pendingLanding = null
+        landing.run()
+    }
+
+    /** The finished answer takes the loader's place with its charts, sources
+     *  and follow-up chips in the same frame (AE1). */
+    private fun landAnswer(msg: ChatMessage) {
+        val text = msg.text ?: ""
+        host().persistChatMessage(msg)
+        land {
+            chatAdapter().replaceLoader(msg)
+            requestFinished()
+            // TICKET-P2-4 / AIC-11: one follow-up row, built from this answer
+            // and its sources. MOT-03.
+            showFollowUpPrompts(text, msg.sources)
+            revealAnswer()
+            announceAnswer(text) // AIC-06
+            Log.d(TAG, "answer landed " + (SystemClock.uptimeMillis() - loaderShownAt) + "ms after send")
+        }
+    }
+
+    /** AE2 / AIC-07: a failure turns the loader into the error bubble with
+     *  Retry, read aloud. Text streamed before the failure is never shown. */
+    private fun landError(text: String) {
+        land {
+            chatAdapter().replaceLoader(ChatMessage(text, false, false, true))
+            requestFinished()
+            announceAnswer(text)
+            maybeScrollToBottom(false)
+        }
+    }
+
+    /** AE1: a tool round puts its own phrase in the loader; a null [name]
+     *  hands back to the themed rotation. Safe from the stream thread. */
+    private fun showToolPhrase(name: String?, input: JSONObject? = null) {
+        val phrase = if (name == null) null
+            else toolPhrases?.forTool(name, AnalystToolExecutor.seriesSubject(name, input))
+        Log.d(TAG, "loader phrase: " + (phrase ?: "themed"))
+        runOnUi { if (binding != null) chatAdapter().setLoaderTool(phrase) }
     }
 
     /** True when no network can reach the internet; safe off the main thread. */
@@ -820,32 +892,10 @@ class AssistantFragment : Fragment() {
     private fun requestFinished() {
         awaitingResponse = false
         refreshSendEnabled()
-        // MOT-02 backstop: every exit path (success, error, cancel) lands here,
-        // so the trace can never be left "Thinking". Success paths finish it
-        // first with "Thought"; anything still running here was cut short.
-        if (activity != null) {
-            chatAdapter().finishTrace("Stopped")
-            // MOT-05: same backstop for the step list — a running step was cut
-            // short and becomes failed. No-op after a successful close.
-            chatAdapter().closeTraceTurn(false)
-        }
-    }
-
-    /**
-     * MOT-05: closes the turn's step list after a successful answer, and fires
-     * the one confirm haptic for a multi-step turn. Fired here, not when a
-     * step ticks: the last step is only knowable once the turn is over.
-     */
-    private fun closeTurnSuccessfully() {
-        if (chatAdapter().closeTraceTurn(true)) HapticUtil.confirm(binding?.rvChat)
-    }
-
-    /** MOT-05: posts a step's state (and duration) from the tool thread. */
-    private fun markStep(id: String, state: TraceStep.State, durationMs: Long = -1L) {
-        runOnUi {
-            if (binding == null) return@runOnUi
-            chatAdapter().updateTraceStep(id, state, durationMs = durationMs)
-        }
+        // U7 backstop: every exit path (success, error, cancel) lands here, so
+        // the loader is never left spinning. Answer and error paths have
+        // already put their message in its place.
+        if (activity != null) chatAdapter().removeLoader()
     }
 
     /** A streamed tool call's accumulated input; `{}` when malformed. */
@@ -872,6 +922,29 @@ class AssistantFragment : Fragment() {
             scrollToAbsoluteBottom(rv)
         } else {
             b.pillNewReply.visibility = View.VISIBLE
+        }
+    }
+
+    /**
+     * U7: an answer now arrives whole, so one taller than the list is shown
+     * from its first line rather than scrolled to its last. Shorter answers
+     * keep the AIC-02 jump to the bottom.
+     */
+    private fun revealAnswer() {
+        val b = binding ?: return
+        if (!followStream) {
+            b.pillNewReply.visibility = View.VISIBLE
+            return
+        }
+        val rv = b.rvChat
+        val index = chatAdapter().lastAnswerIndex()
+        OneShotPreDrawListener.add(rv) {
+            if (binding == null) return@add
+            val lm = rv.layoutManager as? LinearLayoutManager
+            val row = if (index >= 0) lm?.findViewByPosition(index) else null
+            if (lm != null && row != null && row.height > rv.height - rv.paddingTop - rv.paddingBottom)
+                lm.scrollToPositionWithOffset(index, 0)
+            else scrollToAbsoluteBottom(rv)
         }
     }
 
@@ -909,8 +982,9 @@ class AssistantFragment : Fragment() {
         setLastUserQuery(userQuery)
         awaitingResponse = true
         refreshSendEnabled()
-        // MOT-02: a timed "Thinking" trace replaces the anonymous typing dots.
-        chatAdapter().addTrace(System.currentTimeMillis())
+        // U7 (R5): one loader row stands in until the whole reply is ready.
+        chatAdapter().showLoader()
+        loaderShownAt = SystemClock.uptimeMillis()
         maybeScrollToBottom(false)
 
         try {
@@ -965,9 +1039,7 @@ class AssistantFragment : Fragment() {
             activeTurn.set(ActiveTurn(userQuery, st))
             sendTurn(messages, systemPrompt, userQuery, st, 0)
         } catch (e: Exception) {
-            requestFinished()
-            chatAdapter().removeTypingIndicator()
-            chatAdapter().addMessage(ChatMessage("Error: " + e.message, false))
+            landError("Error: " + e.message)
         }
     }
 
@@ -1182,10 +1254,7 @@ class AssistantFragment : Fragment() {
                     // not what actually broke — this is the only record of that.
                     Log.w(TAG, "onFailure depth=$depth retries=${st.retryAttempts}", e)
                     if (call.isCanceled()) {
-                        runOnUi {
-                            requestFinished()
-                            chatAdapter().removeTypingIndicator()
-                        }
+                        runOnUi { requestFinished() }
                         return
                     }
                     // Mobile networks flake — retry once automatically before surfacing,
@@ -1207,12 +1276,7 @@ class AssistantFragment : Fragment() {
                     }
                     Log.w(TAG, "request failed after retry", e)
                     val plain = plainError(null, e, isOffline())
-                    runOnUi {
-                        requestFinished()
-                        chatAdapter().removeTypingIndicator()
-                        addErrorBubble(plain)
-                        maybeScrollToBottom(false)
-                    }
+                    runOnUi { landError(plain) }
                 }
 
                 override fun onResponse(call: Call, response: Response) {
@@ -1242,12 +1306,7 @@ class AssistantFragment : Fragment() {
                                 val apiMsg = readApiError(r)
                                 Log.w(TAG, apiMsg)
                                 val plain = plainError(r.code, IOException(apiMsg), false)
-                                runOnUi {
-                                    requestFinished()
-                                    chatAdapter().removeTypingIndicator()
-                                    addErrorBubble(plain)
-                                    maybeScrollToBottom(false)
-                                }
+                                runOnUi { landError(plain) }
                             }
                         }
                     } catch (e: Exception) {
@@ -1256,7 +1315,7 @@ class AssistantFragment : Fragment() {
                         // Streams that die partway through (timeout, dropped
                         // connection, transient server error) get one automatic
                         // retry of this round. Rewind the accumulated text so the
-                        // re-streamed round doesn't duplicate what already showed.
+                        // re-streamed round doesn't duplicate what already arrived.
                         // A read timeout costs a full 60s window per attempt, so
                         // burning the whole shared retry budget on timeouts makes
                         // the user wait minutes before seeing the error — one
@@ -1270,34 +1329,22 @@ class AssistantFragment : Fragment() {
                         ) {
                             st.retryAttempts++
                             st.acc.setLength(accLenAtSend)
-                            // MOT-05: the retry re-announces this round's calls
-                            // under new ids; drop the never-run originals.
-                            runOnUi { if (binding != null) chatAdapter().dropPendingTraceSteps() }
                             retryHandler.postDelayed(
                                 { if (isAdded) sendTurn(messages, systemPrompt, committedQuery, st, depth) },
                                 1200)
                             return
                         }
                         val friendly = plainError(null, e, isOffline())
+                        // AE2: the loader becomes the error bubble; the text
+                        // streamed before the failure is never shown.
                         runOnUi {
-                            requestFinished()
-                            chatAdapter().removeTypingIndicator()
-                            // Repaint the bubble from acc so a half-streamed
-                            // round doesn't linger next to the error.
-                            if (st.streamIdx >= 0)
-                                chatAdapter().updateMessageText(st.streamIdx, st.acc.toString())
-                            if (!call.isCanceled()) addErrorBubble(friendly)
-                            maybeScrollToBottom(false)
+                            if (call.isCanceled()) requestFinished() else landError(friendly)
                         }
                     }
                 }
             })
         } catch (e: Exception) {
-            runOnUi {
-                requestFinished()
-                chatAdapter().removeTypingIndicator()
-                chatAdapter().addMessage(ChatMessage("Error: " + e.message, false))
-            }
+            runOnUi { landError("Error: " + e.message) }
         }
     }
 
@@ -1311,7 +1358,8 @@ class AssistantFragment : Fragment() {
     }
 
     /**
-     * Reads Anthropic SSE events, appending text deltas to a live bubble.
+     * Reads Anthropic SSE events, accumulating text deltas off screen (U7:
+     * the answer shows only once it is whole).
      * Also accumulates tool_use blocks; when the message stops for tool use,
      * runs the tools locally and continues the conversation.
      */
@@ -1326,8 +1374,8 @@ class AssistantFragment : Fragment() {
         // round belongs in this round's assistant message.
         val roundStart = st.acc.length
         // T4: text streamed before this round's first tool call. It is held
-        // back from the bubble (the trace row is the progress signal) but
-        // still sent to the API as this round's assistant text.
+        // back from the answer but still sent to the API as this round's
+        // assistant text.
         val held = StringBuilder()
 
         val toolBlocks = LinkedHashMap<Int, ToolUseBlock>()
@@ -1364,27 +1412,14 @@ class AssistantFragment : Fragment() {
                     tb.id = block.optString("id")
                     tb.name = block.optString("name")
                     toolBlocks[evt.optInt("index")] = tb
-                    // MOT-02/MOT-05: the call becomes a pending step, keyed by
-                    // its tool_use id. Its arguments haven't streamed yet, so
-                    // the label is name-only until content_block_stop.
-                    val id = tb.id
-                    val step = AnalystToolExecutor.stepLabel(tb.name, null)
-                    runOnUi {
-                        if (binding == null) return@runOnUi
-                        chatAdapter().addTraceStep(id, step)
-                    }
+                    // AE1: the loader names the tool. Its arguments haven't
+                    // streamed yet, so no series until content_block_stop.
+                    showToolPhrase(tb.name)
                 }
             } else if ("content_block_stop" == type) {
-                // MOT-05: the call's input is complete — name the series.
+                // AE1: the call's input is complete — name the series.
                 val tb = toolBlocks[evt.optInt("index")]
-                if (tb != null) {
-                    val id = tb.id
-                    val label = AnalystToolExecutor.stepLabel(tb.name, parseToolInput(tb))
-                    runOnUi {
-                        if (binding == null) return@runOnUi
-                        chatAdapter().updateTraceStep(id, label = label)
-                    }
-                }
+                if (tb != null) showToolPhrase(tb.name, parseToolInput(tb))
             } else if ("content_block_delta" == type) {
                 val delta = evt.optJSONObject("delta") ?: continue
                 val deltaType = delta.optString("type")
@@ -1394,29 +1429,12 @@ class AssistantFragment : Fragment() {
                     continue
                 }
                 val text = delta.optString("text", "")
-                if (!text.isEmpty()) {
-                    synchronized(st.acc) { st.acc.append(text) }
-                    if (!st.bubblePosted) {
-                        // First text of the turn: show the bubble at once.
-                        st.bubblePosted = true
-                        val partial = synchronized(st.acc) { st.acc.toString() }
-                        runOnUi {
-                            if (binding == null) return@runOnUi
-                            if (st.streamIdx < 0) {
-                                chatAdapter().removeTypingIndicator()
-                                val m = ChatMessage(partial, false)
-                                m.isStreaming = true
-                                m.streamTouchMs = System.currentTimeMillis()
-                                chatAdapter().addMessage(m)
-                                st.streamIdx = chatAdapter().getLastIndex()
-                            } else {
-                                chatAdapter().updateMessageText(st.streamIdx, partial, streaming = true)
-                            }
-                            maybeScrollToBottom(false)
-                        }
-                    } else {
-                        scheduleStreamFlush(st) // AIC-09: one repaint per 50ms window
-                    }
+                // KTD2: keep accumulating, stop painting. finalizeTurn binds
+                // the whole answer once.
+                if (!text.isEmpty()) synchronized(st.acc) {
+                    if (st.acc.isEmpty()) Log.d(TAG, "first answer text held " +
+                        (SystemClock.uptimeMillis() - loaderShownAt) + "ms after send")
+                    st.acc.append(text)
                 }
             } else if ("message_delta" == type) {
                 val delta = evt.optJSONObject("delta")
@@ -1480,18 +1498,12 @@ class AssistantFragment : Fragment() {
                 if (!roundText.trim().isEmpty())
                     assistantContent.put(JSONObject().put("type", "text").put("text", roundText))
                 val toolResults = JSONArray()
-                var chartsChanged = false
                 for (tb in toolBlocks.values) {
                     val input = parseToolInput(tb)
                     assistantContent.put(JSONObject()
                         .put("type", "tool_use").put("id", tb.id)
                         .put("name", tb.name).put("input", input))
                     val result: String
-                    // MOT-05: running now; timed around the call itself.
-                    val stepId = tb.id
-                    markStep(stepId, TraceStep.State.RUNNING)
-                    val t0 = SystemClock.elapsedRealtime()
-                    val failed: Boolean
                     if (AnalystToolExecutor.isRenderTool(tb.name)) {
                         // Intercepted (not routed through execute()) so the
                         // resolved ChatChart survives — the app draws from its
@@ -1516,19 +1528,14 @@ class AssistantFragment : Fragment() {
                                     "points one by one."
                             }
                         }
-                        if (chart != null) { st.charts.add(chart); chartsChanged = true }
+                        if (chart != null) st.charts.add(chart)
                         result = message
-                        failed = chart == null
                     } else {
                         // MOT-04: keep what the call fetched for the sources stack.
                         val outcome = AnalystToolExecutor.executeWithSources(appCtx, tb.name, input)
                         st.sources.addAll(outcome.sources)
                         result = outcome.text
-                        failed = outcome.failed
                     }
-                    markStep(stepId,
-                        if (failed) TraceStep.State.FAILED else TraceStep.State.DONE,
-                        SystemClock.elapsedRealtime() - t0)
                     toolResults.put(JSONObject()
                         .put("type", "tool_result")
                         .put("tool_use_id", tb.id)
@@ -1536,16 +1543,6 @@ class AssistantFragment : Fragment() {
                 }
                 messages.put(JSONObject().put("role", "assistant").put("content", assistantContent))
                 messages.put(JSONObject().put("role", "user").put("content", toolResults))
-                // Draw new charts under the streaming bubble immediately — the
-                // prose keeps streaming around them (R12); an unknown series
-                // added nothing and degrades to text (R3).
-                if (chartsChanged) {
-                    val chartsSnapshot = ArrayList(st.charts)
-                    runOnUi {
-                        if (binding != null && st.streamIdx >= 0)
-                            chatAdapter().updateMessageCharts(st.streamIdx, chartsSnapshot)
-                    }
-                }
                 // AI Law 2: if this round's visible text was nothing but a lookup
                 // announcement ("Let me pull the history…"), drop it from the
                 // displayed reply — the real answer follows. Genuinely analytical
@@ -1556,14 +1553,13 @@ class AssistantFragment : Fragment() {
                     // guard can't be measured. Same tag at all three sites.
                     Log.d(TAG, "law1_guard fired: tool-round lead-in dropped (depth=$depth)")
                 }
-                // T4: no tool round's prose reaches the bubble — the next round
-                // answers on its own. The trace row carries progress instead of
-                // the old "Checking the data…" status (a deliberate departure
-                // from AI Law 11's status line, noted in the analyst-cards plan).
+                // T4: no tool round's prose reaches the answer — the next round
+                // answers on its own. The loader's tool phrase carried progress
+                // (AE1); the next round waits on themed phrases again.
                 synchronized(st.acc) { st.acc.setLength(roundStart) }
                 // Paragraph break so the next round's text doesn't run into this one.
                 if (st.acc.length > 0) st.acc.append("\n\n")
-                syncHeldBubble(st)
+                showToolPhrase(null)
                 if (!hasDataTool) st.chartRounds++
                 // Chart-only rounds re-enter at the SAME depth — the budget they
                 // are exempt from is the one this parameter carries.
@@ -1596,7 +1592,6 @@ class AssistantFragment : Fragment() {
                         "from the data in the system prompt. Do not announce lookups — " +
                         "just answer."))
                 synchronized(st.acc) { st.acc.setLength(roundStart) }
-                syncHeldBubble(st) // T4: no status line; the trace row shows progress
                 sendTurn(messages, systemPrompt, committedQuery, st, depth + 1)
                 return
             }
@@ -1605,66 +1600,17 @@ class AssistantFragment : Fragment() {
         finalizeTurn(committedQuery, call, st)
     }
 
-    /** Commits the finished answer to history + persistence. */
-    /**
-     * AIC-09: coalesces stream deltas into one text repaint per
-     * [STREAM_FLUSH_MS]. The flush reads the whole accumulated text, so no delta
-     * is lost; finalizeTurn and Stop write the final text themselves, and a
-     * flush that lands after either backs off because the turn is no longer
-     * active.
-     */
-    private fun scheduleStreamFlush(st: StreamState) {
-        if (!st.flushScheduled.compareAndSet(false, true)) return
-        HandlerCompat.postDelayed(streamHandler, {
-            st.flushScheduled.set(false)
-            if (binding == null || activity == null || st.streamIdx < 0) return@postDelayed
-            if (activeTurn.get()?.st !== st) return@postDelayed
-            val partial = synchronized(st.acc) { st.acc.toString() }
-            chatAdapter().updateMessageText(st.streamIdx, partial, streaming = true)
-            // MOT-05 + AIC-09: text after the last tool round closes the trace.
-            chatAdapter().finishTraceIfIdle()
-            maybeScrollToBottom(false)
-        }, st, STREAM_FLUSH_MS)
-    }
-
     /** T4: the first tool_use of a round moves the round's streamed text out
-     *  of [StreamState.acc] into [held] and repaints the bubble without it. */
+     *  of [StreamState.acc] into [held]: sent to the API, never shown. */
     private fun holdBackRoundText(st: StreamState, roundStart: Int, held: StringBuilder) {
         synchronized(st.acc) {
             if (st.acc.length <= roundStart) return
             held.append(st.acc, roundStart, st.acc.length)
             st.acc.setLength(roundStart)
         }
-        syncHeldBubble(st)
     }
 
-    /** T4: repaints the streaming bubble from [StreamState.acc]. A bubble left
-     *  with no text and no charts is removed, so the next text opens a fresh
-     *  one — the trace row stays as the only progress signal. */
-    private fun syncHeldBubble(st: StreamState) {
-        val text = synchronized(st.acc) { st.acc.toString() }
-        val drop = text.isBlank() && st.charts.isEmpty()
-        // Reset on the stream thread, so the next delta opens a new bubble
-        // instead of flushing into the one queued for removal below.
-        if (drop) st.bubblePosted = false
-        runOnUi {
-            if (binding == null || st.streamIdx < 0) return@runOnUi
-            cancelStreamFlush(st) // AIC-09: a queued delta must not repaint held text
-            if (drop) {
-                chatAdapter().removeMessageAt(st.streamIdx)
-                st.streamIdx = -1
-            } else {
-                chatAdapter().updateMessageText(st.streamIdx, text)
-            }
-        }
-    }
-
-    /** AIC-09: drops a queued flush, e.g. before a held-text repaint. */
-    private fun cancelStreamFlush(st: StreamState) {
-        streamHandler.removeCallbacksAndMessages(st)
-        st.flushScheduled.set(false)
-    }
-
+    /** Commits the finished answer to history + persistence, then lands it. */
     private fun finalizeTurn(committedQuery: String, call: Call?, st: StreamState) {
         // AI Law 1 fallback for rounds the auto-continue guard can't reach
         // (e.g. the forced-text final round): drop a trailing lookup
@@ -1676,10 +1622,7 @@ class AssistantFragment : Fragment() {
             Log.d(TAG, "law1_guard fired: dangling announcement stripped at finalize")
         if (finalText.isEmpty()) {
             if (call != null && call.isCanceled()) {
-                runOnUi {
-                    requestFinished()
-                    chatAdapter().removeTypingIndicator()
-                }
+                runOnUi { requestFinished() }
                 return
             }
             throw IOException("empty stream")
@@ -1693,33 +1636,13 @@ class AssistantFragment : Fragment() {
         // is what puts them in Room (via ChatMessageEntity.charts) so they
         // survive a restart, which the old in-text tag got for free.
         persisted.charts = ArrayList(st.charts)
-        // MOT-04: sources attach only to the finished answer, never mid-stream.
-        // Transient — persistChatMessage() ignores them.
+        // MOT-04: sources attach only to the finished answer.
         persisted.sources = st.sources.snapshot()
-        runOnUi {
-            chatAdapter().finishTrace("Thought") // MOT-02: success, not "Stopped"
-            closeTurnSuccessfully() // MOT-05
-            requestFinished()
-            // If no delta ever arrived on-screen (edge case), add the bubble now.
-            if (st.streamIdx < 0) {
-                chatAdapter().removeTypingIndicator()
-                attachAnswerMeta(persisted, st)
-                chatAdapter().addMessage(persisted)
-            } else {
-                chatAdapter().messageAt(st.streamIdx)?.let { attachAnswerMeta(it, st) }
-                // Sync the bubble in case a dangling announcement was stripped.
-                chatAdapter().updateMessageText(st.streamIdx, finalText)
-                chatAdapter().updateMessageCharts(st.streamIdx, persisted.charts)
-                chatAdapter().updateMessageSources(st.streamIdx, persisted.sources)
-            }
-            host().persistChatMessage(persisted)
-            // TICKET-P2-4: the gesture tier's deferred detail gets somewhere
-            // to go — chips derived from this answer, not from the screen.
-            // AIC-11: one follow-up row, built from this answer and its sources.
-            showFollowUpPrompts(finalText, persisted.sources) // MOT-03
-            maybeScrollToBottom(false)
-            announceAnswer(finalText) // AIC-06
-        }
+        attachAnswerMeta(persisted, st)
+        // AE1: resolve the chart and table cards now, so they bind in the same
+        // frame as the text instead of loading in after it.
+        appContext?.let { ChatAdapter.prefetchCards(it, viewModelOrNull(), persisted.charts) }
+        runOnUi { landAnswer(persisted) }
     }
 
     // ── MOT-03: starter / follow-up prompt chips ────────────────────────────────
@@ -1828,20 +1751,8 @@ class AssistantFragment : Fragment() {
                         // what the streamed path above already substitutes.
                         val name = block.optString("name")
                         val input = block.optJSONObject("input") ?: JSONObject()
-                        // MOT-05: no content_block_start on this path, so the
-                        // step is added here, already knowing its input.
-                        val stepId = block.optString("id")
-                        val label = AnalystToolExecutor.stepLabel(name, input)
-                        runOnUi {
-                            if (binding == null) return@runOnUi
-                            chatAdapter().addTraceStep(stepId, label)
-                        }
-                        markStep(stepId, TraceStep.State.RUNNING)
-                        val t0 = SystemClock.elapsedRealtime()
+                        showToolPhrase(name, input) // AE1
                         val outcome = AnalystToolExecutor.executeWithSources(appCtx, name, input)
-                        markStep(stepId,
-                            if (outcome.failed) TraceStep.State.FAILED else TraceStep.State.DONE,
-                            SystemClock.elapsedRealtime() - t0)
                         st.sources.addAll(outcome.sources) // MOT-04
                         toolResults.put(JSONObject()
                             .put("type", "tool_result")
@@ -1852,6 +1763,7 @@ class AssistantFragment : Fragment() {
                     messages.put(JSONObject().put("role", "user").put("content", toolResults))
                     // Paragraph break so the next round's text doesn't run into this one.
                     if (st.acc.length > 0) st.acc.append("\n\n")
+                    showToolPhrase(null)
                     sendTurn(messages, systemPrompt, committedQuery, st, depth + 1)
                     return
                 }
@@ -1883,22 +1795,9 @@ class AssistantFragment : Fragment() {
         // belong to the reply even when the final round came back as JSON.
         msg.charts = ArrayList(st.charts)
         msg.sources = st.sources.snapshot() // MOT-04
-        runOnUi {
-            chatAdapter().finishTrace("Thought") // MOT-02: success, not "Stopped"
-            closeTurnSuccessfully() // MOT-05
-            requestFinished()
-            chatAdapter().removeTypingIndicator()
-            // ChatMessage is Kotlin (batch 3), so `text` is a property here —
-            // msg.getText() would not resolve from Kotlin.
-            if (st.streamIdx >= 0) {
-                chatAdapter().updateMessageText(st.streamIdx, msg.text)
-                if (msg.charts.isNotEmpty())
-                    chatAdapter().updateMessageCharts(st.streamIdx, msg.charts)
-                chatAdapter().updateMessageSources(st.streamIdx, msg.sources) // MOT-04
-            } else chatAdapter().addMessage(msg)
-            host().persistChatMessage(msg)
-            maybeScrollToBottom(false)
-        }
+        attachAnswerMeta(msg, st) // the model label for the long-press sheet
+        appContext?.let { ChatAdapter.prefetchCards(it, viewModelOrNull(), msg.charts) }
+        runOnUi { landAnswer(msg) }
     }
 
     private fun commitToHistory(userQuery: String, assistantText: String) {

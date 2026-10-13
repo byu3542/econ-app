@@ -238,4 +238,26 @@
     <string name="assistant_start_title">How can I help?</string>
     <string name="assistant_start_subtitle">Ask me about rates, inflation, jobs, or what\'s moving markets.</string>
     <string name="assistant_start_sources">Responses use live Treasury · BEA · BLS data</string>
+    <!-- Pantrii port U7 (R5, KTD9): assistant loader. Themed phrases rotate
+         every 1.8 s while a reply is pending; a tool phrase replaces them while
+         that tool runs. {series} is filled with the series being pulled. -->
+    <string-array name="assistant_loading_phrases">
+        <item>Reading the yield curve…</item>
+        <item>Consulting the dot plot…</item>
+        <item>Seasonally adjusting…</item>
+        <item>Counting nonfarm payrolls…</item>
+        <item>Balancing the ledger…</item>
+        <item>Squinting at the spreads…</item>
+        <item>Asking the Fed nicely…</item>
+        <item>Pricing in the cuts…</item>
+        <item>Weighing the CPI basket…</item>
+        <item>Skimming the Beige Book…</item>
+        <item>Running the regressions…</item>
+        <item>Tallying Treasury auctions…</item>
+    </string-array>
+    <string name="assistant_tool_series">Pulling the {series} series…</string>
+    <string name="assistant_tool_headlines">Scanning today\'s headlines…</string>
+    <string name="assistant_tool_chart">Drawing the chart…</string>
+    <string name="assistant_tool_table">Lining up the table…</string>
+    <string name="assistant_loader_cd">Econ Analyst is working on your answer</string>
 </resources>

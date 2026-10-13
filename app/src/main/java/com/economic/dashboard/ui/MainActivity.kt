@@ -482,7 +482,7 @@ class MainActivity : AppCompatActivity() {
 
     /** Saves a message so the conversation survives app restarts. */
     fun persistChatMessage(m: ChatMessage?) {
-        if (m == null || m.isTyping || m.isError) return
+        if (m == null || m.isLoader || m.isError) return
         AppExecutors.diskIO().execute {
             val db = YieldDatabase.getInstance(this)
             db.chatMessageDao().insert(ChatMessageEntity.from(m))
