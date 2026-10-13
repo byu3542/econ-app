@@ -252,6 +252,16 @@
                     android:textColor="@color/muted"
                     android:gravity="center" />
 
+                <!-- U5: data-source line, moved here from under the composer. -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_xs"
+                    android:text="@string/assistant_start_sources"
+                    android:textAppearance="@style/TextAppearance.Econ.Caption"
+                    android:textColor="@color/muted"
+                    android:gravity="center" />
+
                 <!-- Up to four prompt cards (item_prompt_card). Tap sends
                      (KTD7). Animated in centre-out (CentreOutStagger). -->
                 <LinearLayout
@@ -336,33 +346,38 @@
 
     </LinearLayout>
 
+    <!-- Pantrii port U5 (R3, R12): composer row. Attach and send are 52dp
+         rounded squares; the field carries a trailing mic for dictation. -->
     <LinearLayout
         android:id="@+id/llInputArea"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="@dimen/space_lg"
-        android:gravity="center_vertical">
+        android:gravity="bottom"
+        android:paddingHorizontal="@dimen/space_lg"
+        android:paddingTop="@dimen/space_sm"
+        android:paddingBottom="@dimen/space_lg">
+
+        <ImageButton
+            android:id="@+id/btnAttach"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:src="@drawable/ic_attach_image"
+            android:background="@drawable/bg_composer_button"
+            app:tint="@color/composer_button_icon"
+            android:contentDescription="Attach an image for analysis" />
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:minHeight="56dp"
+            android:minHeight="52dp"
             android:layout_weight="1"
-            android:background="@drawable/bg_chat_input_capsule"
+            android:layout_marginHorizontal="@dimen/space_sm"
+            android:background="@drawable/bg_composer_field"
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:paddingStart="@dimen/space_lg"
-            android:paddingEnd="@dimen/space_sm">
-
-            <ImageButton
-                android:id="@+id/btnAttach"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:src="@drawable/ic_attach_image"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                app:tint="@color/text_muted"
-                android:contentDescription="Attach an image for analysis" />
+            android:paddingEnd="@dimen/space_xs">
 
             <EditText
                 android:id="@+id/etMessage"
@@ -370,39 +385,37 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:paddingVertical="@dimen/space_md"
-                android:hint="Ask about the economy..."
+                android:hint="Ask me anything"
                 android:background="@null"
-                android:textColor="@color/text_navy"
-                android:textColorHint="@color/text_muted"
-                android:textSize="@dimen/text_body"
+                android:textColor="@color/ink"
+                android:textColorHint="@color/muted"
+                android:textAppearance="@style/TextAppearance.Econ.Body"
                 android:inputType="textCapSentences"
                 android:imeOptions="actionSend"
                 android:maxLines="4" />
 
             <ImageButton
-                android:id="@+id/btnSend"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:src="@drawable/ic_send_filled"
-                android:background="@drawable/bg_send_button_circle"
-                app:tint="@color/accent_gold"
-                android:contentDescription="Send message"
-                android:enabled="false"
-                android:alpha="0.4"
-                android:layout_marginStart="@dimen/space_sm" />
+                android:id="@+id/btnMic"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:src="@drawable/ic_mic"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                app:tint="@color/muted"
+                android:contentDescription="Dictate a message"
+                android:visibility="gone" />
 
         </LinearLayout>
 
-    </LinearLayout>
+        <ImageButton
+            android:id="@+id/btnSend"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:src="@drawable/ic_send_filled"
+            android:background="@drawable/bg_composer_button"
+            app:tint="@color/composer_button_icon"
+            android:contentDescription="Send message"
+            android:enabled="false" />
 
-    <!-- Disclaimer -->
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Responses use live Treasury · BEA · BLS data"
-        android:textColor="@color/text_muted"
-        android:textSize="@dimen/text_caption"
-        android:gravity="center"
-        android:paddingBottom="@dimen/space_lg" />
+    </LinearLayout>
 
 </LinearLayout>

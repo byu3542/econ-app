@@ -237,4 +237,5 @@
     <!-- Pantrii port U4: start screen -->
     <string name="assistant_start_title">How can I help?</string>
     <string name="assistant_start_subtitle">Ask me about rates, inflation, jobs, or what\'s moving markets.</string>
+    <string name="assistant_start_sources">Responses use live Treasury · BEA · BLS data</string>
 </resources>

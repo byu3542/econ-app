@@ -158,6 +158,7 @@ class AssistantFragment : Fragment() {
     /** Photo picker for the attach-image button. Registered in onCreate, which
      *  is the only point the Activity Result API allows. */
     private lateinit var pickImageLauncher: ActivityResultLauncher<String>
+    private lateinit var dictateLauncher: ActivityResultLauncher<android.content.Intent>
 
     /** Query queued to fire as soon as a shared image finishes encoding. */
     @Volatile
@@ -192,6 +193,21 @@ class AssistantFragment : Fragment() {
         pickImageLauncher = registerForActivityResult(
             ActivityResultContracts.GetContent()
         ) { uri -> if (uri != null) attachImage(uri, false) }
+        // U5 (R12): dictation fills the field; it never sends.
+        dictateLauncher = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result ->
+            val spoken = result.data
+                ?.getStringArrayListExtra(android.speech.RecognizerIntent.EXTRA_RESULTS)
+                ?.firstOrNull()?.trim()
+            val et = binding?.etMessage
+            if (!spoken.isNullOrEmpty() && et != null) {
+                val current = et.text.toString().trimEnd()
+                et.setText(if (current.isEmpty()) spoken else "$current $spoken")
+                et.setSelection(et.text.length)
+                et.requestFocus()
+            }
+        }
     }
 
     override fun onCreateView(
@@ -382,6 +398,12 @@ class AssistantFragment : Fragment() {
 
         // ── Attach image (vision analysis) ─────────────────────────────────────
         b.btnAttach.setOnClickListener { pickImageLauncher.launch("image/*") }
+
+        // ── Dictation (U5, R12): hidden when the device has no recognizer ──────
+        if (android.speech.SpeechRecognizer.isRecognitionAvailable(requireContext())) {
+            b.btnMic.visibility = View.VISIBLE
+            b.btnMic.setOnClickListener { startDictation() }
+        }
         b.btnRemoveImage.setOnClickListener { clearPendingImage() }
 
         btnClose?.setOnClickListener { close() }
@@ -671,6 +693,18 @@ class AssistantFragment : Fragment() {
         return !caps.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
 
+    private fun startDictation() {
+        val intent = android.content.Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+            .putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            .putExtra(android.speech.RecognizerIntent.EXTRA_PROMPT, "Ask me anything")
+        try {
+            dictateLauncher.launch(intent)
+        } catch (e: android.content.ActivityNotFoundException) {
+            binding?.btnMic?.visibility = View.GONE
+        }
+    }
+
     /** Send button doubles as Stop while a response is streaming. */
     private fun refreshSendEnabled() {
         val b = binding ?: return
@@ -678,13 +712,14 @@ class AssistantFragment : Fragment() {
             b.btnSend.setImageResource(R.drawable.ic_stop)
             b.btnSend.contentDescription = "Stop response"
             b.btnSend.isEnabled = true
-            b.btnSend.alpha = 1f
+            b.btnSend.isActivated = true
         } else {
             b.btnSend.setImageResource(R.drawable.ic_send_filled)
             b.btnSend.contentDescription = "Send message"
             val canSend = b.etMessage.text.toString().trim().length > 0 || pendingImage != null
+            // U5: accent fill when there is something to send, outline when not.
             b.btnSend.isEnabled = canSend
-            b.btnSend.alpha = if (canSend) 1f else 0.4f
+            b.btnSend.isActivated = canSend
         }
     }
 
