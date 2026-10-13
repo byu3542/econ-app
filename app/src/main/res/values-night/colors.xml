@@ -3,15 +3,24 @@
      bottom nav) are already dark and keep their day values — only the
      light "reading" surfaces and their text flip here. -->
 <resources>
-    <color name="bg_warm_off_white">#12161F</color>
-    <color name="surface_card">#1C222E</color>
+    <!-- Pantrii-port semantic tokens, night half (palette B). The legacy
+         names aliased onto these in values/colors.xml (bg_warm_off_white,
+         surface_card, divider_sand, text_*, background, sheet_*) no longer
+         carry night values of their own — they follow these tokens. -->
+    <color name="ground">#0A0E18</color>
+    <color name="surface">#131A29</color>
+    <color name="surface_2">#1A2336</color>
+    <color name="line">#26314A</color>
+    <color name="ink">#EEEBE3</color>
+    <color name="ink_2">#C9CCD6</color>
+    <color name="muted">#97A0B5</color>
+    <color name="accent">#E2B84B</color>
+    <color name="on_accent">#17130A</color>
+    <color name="accent_soft">#262014</color>
+
     <color name="row_alt_bg">#171C26</color>
-    <color name="divider_sand">#2A3142</color>
     <color name="tab_bg_warm_gray">#1C222E</color>
 
-    <color name="text_navy">#E9ECF4</color>
-    <color name="text_secondary">#A9B1C2</color>
-    <color name="text_muted">#707A8C</color>
     <color name="alabaster_dark_gray">#D8DCE6</color>
 
     <!-- R2-TICKET-09: badge greys get explicit night values so the light and dark
@@ -31,7 +40,6 @@
          2026-09-01: opaque. Matches values/colors.xml, see the comment there. -->
     <color name="header_navy_translucent">#FF1A1A2E</color>
 
-    <color name="background">#12161F</color>
     <color name="economy_tab_bg">#1C222E</color>
     <!-- TICKET-44: day value darkened for the light tab bg; on the dark night
          tab bg slate is the passing value (~5.6:1), so it lives on here. -->
@@ -52,16 +60,9 @@
 
     <color name="fab_ring">#2A3142</color>
 
-    <!-- Metric popup sheet surfaces — the navy sheet the popup has always used.
-         These are the night half of a flipping pair; see values/colors.xml. -->
-    <color name="sheet_surface">#1a1a2e</color>
-    <color name="sheet_card">#1F2633</color>
-    <color name="sheet_divider">#2A3342</color>
-    <!-- TICKET-41: near-white, not pure white — matches text_navy's night value
-         so sheet body text isn't the one max-contrast glare surface in dark mode. -->
-    <color name="sheet_text_primary">#E9ECF4</color>
-    <color name="sheet_text_secondary">#8A9AB5</color>
-    <color name="sheet_accent">#c9a84c</color>
+    <!-- Metric popup sheet surfaces: aliases onto the tokens since U1 (see
+         values/colors.xml). TICKET-41's near-white body text holds — ink's
+         night value is #EEEBE3, not pure white. -->
 
     <!-- Status signal palette. Badge cards are navy in both themes, so these keep
          their day values; declared here so the resource is theme-complete and badges

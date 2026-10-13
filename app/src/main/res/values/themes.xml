@@ -6,8 +6,11 @@
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
 
-        <!-- Customize your theme here. -->
-        <item name="android:windowBackground">@color/background</item>
+        <!-- Pantrii port U1: window paints the semantic ground token. Status and
+             nav bars stay transparent (IOS-04 below) — the app draws edge to
+             edge, so the ground or the header shows through them; painting
+             the bars ground would put a light strip over the navy header. -->
+        <item name="android:windowBackground">@color/ground</item>
 
         <!-- IOS-04: status/nav bars are transparent — the header/bottom-nav
              views themselves are the translucent "material" (see
