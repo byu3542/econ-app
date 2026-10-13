@@ -702,9 +702,13 @@ class ChatAdapter(
             }
             if (overlaps) continue
             claimed.add(intArrayOf(idx, end))
+            // T3: a metric with its own sheet opens it in place; the rest
+            // ("yield curve", "treasury") still jump to their dashboard tab.
+            val popupId = METRIC_SHEETS[key]
             cs.setSpan(object : ClickableSpan() {
                 override fun onClick(widget: View) {
-                    listener.onMetricTapped(tabKey)
+                    if (popupId != null) listener.onOpenMetricSheet(popupId, null, null)
+                    else listener.onMetricTapped(tabKey)
                 }
                 override fun updateDrawState(ds: TextPaint) {
                     ds.isUnderlineText = true // keep bubble text color, just underline
@@ -1452,6 +1456,23 @@ class ChatAdapter(
             put("nasdaq", "markets")
             put("vix", "markets")
         }
+
+        /** 2026-10-12 analyst cards T3: [METRIC_TABS] keys that map to a
+         *  MetricPopupRegistry sheet. Keys absent here keep the tab jump. */
+        private val METRIC_SHEETS: Map<String, String> = mapOf(
+            "fed funds rate" to "fedfunds",
+            "federal funds rate" to "fedfunds",
+            "unemployment rate" to "unemployment",
+            "unemployment" to "unemployment",
+            "cpi" to "cpi",
+            "inflation" to "cpi",
+            "gdp" to "gdp",
+            "mortgage rate" to "mortgage",
+            "housing starts" to "housing",
+            "s&p 500" to "sp500",
+            "nasdaq" to "nasdaq",
+            "vix" to "vix"
+        )
 
         /** Series data cache so recycled rows don't re-query Room. */
         private val seriesCache = HashMap<String, ChatSeriesData.Card>()
