@@ -430,8 +430,17 @@ class AssistantFragment : Fragment() {
         b.llAnalystIdentity.setOnClickListener { AnalystIdentity.showAbout(requireContext()) }
 
         b.btnClearChat.setOnClickListener { confirmNewChat() }
+        // U8 (R7): history. Not mid-answer — reopening another chat would
+        // land the pending answer in the wrong thread.
+        b.btnHistory.setOnClickListener {
+            if (awaitingResponse)
+                android.widget.Toast.makeText(requireContext(),
+                    R.string.history_wait, android.widget.Toast.LENGTH_SHORT).show()
+            else ChatHistoryFragment.show(parentFragmentManager)
+        }
         // U3: same spring press as the FAB and KPI badges.
         PressFeedback.attach(b.btnClose)
+        PressFeedback.attach(b.btnHistory)
         PressFeedback.attach(b.btnClearChat)
 
         // ── Prefill / shared-image entry points ────────────────────────────────

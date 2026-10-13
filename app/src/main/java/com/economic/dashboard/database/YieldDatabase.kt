@@ -26,6 +26,8 @@ import com.economic.dashboard.models.TreasuryYield
  * v6 → added chat_messages.charts (TICKET-P2-2: the analyst's render_chart
  *      calls, as JSON, so charts survive a restart now that they no longer ride
  *      inside the message text as a [CHART:...] tag)
+ * v7 → chat_messages.archived (AIC-08)   v8 → chat_messages.sources (AIC-11)
+ * v9 → chat_messages.conversationId (Pantrii port U8, the history screen)
  *
  * Every migration here is load-bearing in a way the destructive fallback below
  * hides: a MISSING or wrong migration does not crash, it silently wipes. The
@@ -40,7 +42,7 @@ import com.economic.dashboard.models.TreasuryYield
  */
 @Database(
     entities = [TreasuryYield::class, NewsArticle::class, EconomicHistoryEntry::class, ChatMessageEntity::class],
-    version = 8,
+    version = 9,
     exportSchema = false
 )
 abstract class YieldDatabase : RoomDatabase() {
@@ -150,6 +152,18 @@ abstract class YieldDatabase : RoomDatabase() {
             }
         }
 
+        // ── Migration: v8 → v9 ───────────────────────────────────────────────────
+        // Pantrii port U8 (KTD8): a conversation key for the history screen.
+        // Nullable with no DEFAULT, matching the entity (the MIGRATION_5_6
+        // rule). No backfill: legacy archived rows carry no boundary marker,
+        // so they keep NULL and are grouped at read time. ADD COLUMN touches
+        // no existing value, so no archived message can be lost or merged.
+        private val MIGRATION_8_9: Migration = object : Migration(8, 9) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE `chat_messages` ADD COLUMN `conversationId` INTEGER")
+            }
+        }
+
         // ── Singleton factory ─────────────────────────────────────────────────────
 
         @JvmStatic
@@ -159,7 +173,7 @@ abstract class YieldDatabase : RoomDatabase() {
                 YieldDatabase::class.java,
                 "yield_database"
             )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
                 // Safety net: if migration path is still missing, wipe and rebuild.
                 // All data is re-fetched from APIs so no data loss in practice.
                 .fallbackToDestructiveMigration()

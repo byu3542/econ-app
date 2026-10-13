@@ -5,7 +5,9 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import com.economic.dashboard.analyst.ConversationSummary
 import com.economic.dashboard.ui.assistant.AssistantFragment
+import com.economic.dashboard.ui.assistant.ChatHistoryFragment
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -92,6 +94,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var chatAdapter: ChatAdapter
     private val conversationHistory = JSONArray()
     private var lastUserQuery = ""
+    /** U8 (KTD8): the key stamped on rows of the active thread. Replaced by
+     *  the stored key once loadPersistedChat runs; archiveActive re-stamps the
+     *  whole thread anyway, so a row saved before that still files correctly. */
+    @Volatile private var activeConversationId = System.currentTimeMillis()
     private val httpClient = OkHttpClient.Builder()
         .connectTimeout(30, TimeUnit.SECONDS)
         .writeTimeout(30, TimeUnit.SECONDS)
@@ -156,6 +162,8 @@ class MainActivity : AppCompatActivity() {
             // U3: the full-screen assistant pads itself for the bars and the
             // IME, but consuming here stops dispatch — hand it the insets first.
             supportFragmentManager.findFragmentByTag(AssistantFragment.TAG)?.view
+                ?.let { ViewCompat.dispatchApplyWindowInsets(it, insets) }
+            supportFragmentManager.findFragmentByTag(ChatHistoryFragment.TAG)?.view
                 ?.let { ViewCompat.dispatchApplyWindowInsets(it, insets) }
             WindowInsetsCompat.CONSUMED
         }
@@ -439,7 +447,9 @@ class MainActivity : AppCompatActivity() {
     /** Restores the saved conversation; falls back to the welcome message. */
     private fun loadPersistedChat() {
         AppExecutors.diskIO().execute {
-            val saved = YieldDatabase.getInstance(this).chatMessageDao().getAll()
+            val dao = YieldDatabase.getInstance(this).chatMessageDao()
+            dao.activeConversationId()?.let { activeConversationId = it }
+            val saved = dao.getAll()
             val restored = ArrayList<ChatMessage>()
             for (e in saved) restored.add(e.toChatMessage())
             runOnUiThread {
@@ -483,9 +493,10 @@ class MainActivity : AppCompatActivity() {
     /** Saves a message so the conversation survives app restarts. */
     fun persistChatMessage(m: ChatMessage?) {
         if (m == null || m.isLoader || m.isError) return
+        val conversationId = activeConversationId
         AppExecutors.diskIO().execute {
             val db = YieldDatabase.getInstance(this)
-            db.chatMessageDao().insert(ChatMessageEntity.from(m))
+            db.chatMessageDao().insert(ChatMessageEntity.from(m, conversationId))
             db.chatMessageDao().trim(CHAT_PERSIST_LIMIT)
         }
     }
@@ -502,14 +513,38 @@ class MainActivity : AppCompatActivity() {
     /** Resets the visible chat. AIC-08: [archive] (the sheet's New chat) keeps
      *  the old thread in Room; Settings' clear still wipes everything. */
     fun clearChatHistory(archive: Boolean = false) {
+        val archivedId = activeConversationId
+        activeConversationId = System.currentTimeMillis()
         AppExecutors.diskIO().execute {
             val dao = YieldDatabase.getInstance(this).chatMessageDao()
-            if (archive) dao.archiveActive() else dao.clearAll()
+            if (archive) dao.archiveActive(archivedId) else dao.clearAll()
         }
         while (conversationHistory.length() > 0) conversationHistory.remove(0)
         lastUserQuery = ""
         chatAdapter.setMessages(ArrayList())
         chatAdapter.addMessage(ChatMessage(WELCOME_TEXT, false))
+    }
+
+    /** U8 (R7, AE3): makes an archived conversation the active thread. The
+     *  current thread is archived first, in the same transaction, then the
+     *  reopened rows load exactly as a restart would load them. A legacy
+     *  group takes a fresh key so it stays one conversation from now on. */
+    fun reopenConversation(summary: ConversationSummary, onDone: () -> Unit) {
+        val archivedId = activeConversationId
+        val reopenedId = summary.conversationId ?: System.currentTimeMillis()
+        activeConversationId = reopenedId
+        AppExecutors.diskIO().execute {
+            val dao = YieldDatabase.getInstance(this).chatMessageDao()
+            dao.swapActive(archivedId, summary.rowIds, reopenedId)
+            val restored = ArrayList<ChatMessage>()
+            for (e in dao.getAll()) restored.add(e.toChatMessage())
+            runOnUiThread {
+                lastUserQuery = ""
+                chatAdapter.setMessages(restored)
+                rebuildConversationHistory(restored)
+                onDone()
+            }
+        }
     }
 
     // ── Share target (text / images shared from other apps) ──────────────────

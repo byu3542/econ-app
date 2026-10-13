@@ -31,7 +31,12 @@ data class ChatMessageEntity(
     /** AIC-11: what the answer fetched (MOT-04 sources), as a JSON array, so
      *  the sources stack survives a restart. Schema v8 (MIGRATION_7_8);
      *  nullable, and a decode failure degrades to no sources. */
-    var sources: String? = null
+    var sources: String? = null,
+    /** Pantrii port U8 (KTD8): which conversation the row belongs to, so
+     *  history can tell archived chats apart. Schema v9 (MIGRATION_8_9);
+     *  nullable, and legacy rows stay NULL — ConversationSummary groups those
+     *  at read time instead of guessing a key into the database. */
+    var conversationId: Long? = null
 ) {
     fun toChatMessage(): ChatMessage {
         val m = ChatMessage(text, isUser, false, false, timeMillis)
@@ -42,11 +47,13 @@ data class ChatMessageEntity(
 
     companion object {
         @JvmStatic
-        fun from(m: ChatMessage): ChatMessageEntity =
+        @JvmOverloads
+        fun from(m: ChatMessage, conversationId: Long? = null): ChatMessageEntity =
             ChatMessageEntity(
                 text = m.text, isUser = m.isUser, timeMillis = m.timeMillis,
                 charts = encodeCharts(m.charts),
-                sources = encodeSources(m.sources)
+                sources = encodeSources(m.sources),
+                conversationId = conversationId
             )
 
         /** AIC-11: null for an empty list, like [encodeCharts]. */

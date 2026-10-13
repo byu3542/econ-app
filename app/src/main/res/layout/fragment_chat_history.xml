@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Pantrii port U8 (R7): chat history, pushed over the assistant. Same header
+  style as fragment_assistant.xml (back on a rounded-square surface_2 button),
+  then one card per archived conversation, newest first. Root pads itself for
+  the system bars (ChatHistoryFragment).
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/ground"
+    android:clickable="true"
+    android:focusable="false">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="64dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="@dimen/space_lg"
+        android:paddingVertical="@dimen/space_sm">
+
+        <ImageButton
+            android:id="@+id/btnHistoryBack"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/bg_icon_button"
+            android:src="@drawable/ic_chevron_left"
+            android:contentDescription="@string/assistant_back"
+            app:tint="@color/ink" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginHorizontal="@dimen/space_md"
+            android:text="@string/history_title"
+            android:fontFamily="@font/plus_jakarta_sans_extrabold"
+            android:textStyle="bold"
+            android:textColor="@color/ink"
+            android:textSize="20sp"
+            android:maxLines="1"
+            android:accessibilityHeading="true" />
+
+    </LinearLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvHistory"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingHorizontal="@dimen/space_lg"
+            android:paddingBottom="@dimen/space_lg" />
+
+        <TextView
+            android:id="@+id/tvHistoryEmpty"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginHorizontal="@dimen/space_xl"
+            android:gravity="center"
+            android:text="@string/history_empty"
+            android:textAppearance="@style/TextAppearance.Econ.Body"
+            android:textColor="@color/muted"
+            android:visibility="gone" />
+
+    </FrameLayout>
+
+</LinearLayout>

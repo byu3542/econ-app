@@ -233,6 +233,16 @@
     <string name="assistant_about">About economii Analyst</string>
     <string name="assistant_history">Chat history</string>
     <string name="assistant_new_chat">New chat</string>
+    <!-- Pantrii port U8 (R7): chat history -->
+    <string name="history_title">History</string>
+    <string name="history_empty">No past chats yet. Start a new chat and this one lands here.</string>
+    <string name="history_deleted">Chat deleted</string>
+    <string name="history_undo">Undo</string>
+    <string name="history_wait">History opens once this answer lands.</string>
+    <plurals name="history_messages">
+        <item quantity="one">%d message</item>
+        <item quantity="other">%d messages</item>
+    </plurals>
 
     <!-- Pantrii port U4: start screen -->
     <string name="assistant_start_title">How can I help?</string>

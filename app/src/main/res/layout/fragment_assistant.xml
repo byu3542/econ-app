@@ -76,8 +76,7 @@
 
         </LinearLayout>
 
-        <!-- U8 builds the history screen; hidden until then so the header
-             never shows a dead button. -->
+        <!-- U8 (R7): opens ChatHistoryFragment. -->
         <ImageButton
             android:id="@+id/btnHistory"
             android:layout_width="48dp"
@@ -86,7 +85,6 @@
             android:background="@drawable/bg_icon_button"
             android:src="@drawable/ic_history"
             android:contentDescription="@string/assistant_history"
-            android:visibility="gone"
             app:tint="@color/ink" />
 
         <ImageButton
