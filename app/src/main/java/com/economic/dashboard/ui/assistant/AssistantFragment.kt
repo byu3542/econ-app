@@ -734,7 +734,6 @@ class AssistantFragment : Fragment() {
             showFollowUpPrompts(text, msg.sources)
             revealAnswer()
             announceAnswer(text) // AIC-06
-            Log.d(TAG, "answer landed " + (SystemClock.uptimeMillis() - loaderShownAt) + "ms after send")
         }
     }
 
@@ -754,7 +753,6 @@ class AssistantFragment : Fragment() {
     private fun showToolPhrase(name: String?, input: JSONObject? = null) {
         val phrase = if (name == null) null
             else toolPhrases?.forTool(name, AnalystToolExecutor.seriesSubject(name, input))
-        Log.d(TAG, "loader phrase: " + (phrase ?: "themed"))
         runOnUi { if (binding != null) chatAdapter().setLoaderTool(phrase) }
     }
 
@@ -1431,11 +1429,7 @@ class AssistantFragment : Fragment() {
                 val text = delta.optString("text", "")
                 // KTD2: keep accumulating, stop painting. finalizeTurn binds
                 // the whole answer once.
-                if (!text.isEmpty()) synchronized(st.acc) {
-                    if (st.acc.isEmpty()) Log.d(TAG, "first answer text held " +
-                        (SystemClock.uptimeMillis() - loaderShownAt) + "ms after send")
-                    st.acc.append(text)
-                }
+                if (!text.isEmpty()) synchronized(st.acc) { st.acc.append(text) }
             } else if ("message_delta" == type) {
                 val delta = evt.optJSONObject("delta")
                 if (delta != null) stopReason = delta.optString("stop_reason", stopReason)
