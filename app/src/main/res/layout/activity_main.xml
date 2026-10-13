@@ -253,7 +253,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_margin="4dp"
-            android:src="@drawable/ic_fab_gold_ai"
+            android:src="@drawable/ic_fab_logo"
             android:scaleType="fitXY"
             android:importantForAccessibility="no" />
 
