@@ -228,20 +228,23 @@
          straddles the top edge of the bottom nav (pantrii-style FAB).
          Opens AiAnalystBottomSheet — wired in MainActivity.
     ═════════════════════════ -->
-    <!-- TICKET-56: 70dp card in the bar's own color with the 62dp artwork
-         inset 4dp, so the part of the disc that overhangs the bar has bar
-         material behind it and scrolling text passes behind a ring, never
-         straight under the gold. Center is unchanged (anchored). -->
+    <!-- TICKET-56: card in the bar's own color with the artwork inset 4dp,
+         so the part of the disc that overhangs the bar has bar material
+         behind it and scrolling text passes behind a ring, never straight
+         under the gold.
+         Sized and placed like Pantrii's center button: 82dp card (74dp
+         artwork), center 25dp below the bar's top edge so it lines up with
+         the tab icons (12dp padding + 28dp icon) and only ~12dp overhangs. -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/fabAiAnalyst"
-        android:layout_width="70dp"
-        android:layout_height="70dp"
+        android:layout_width="82dp"
+        android:layout_height="82dp"
         android:layout_gravity="center"
-        android:translationY="10dp"
+        android:translationY="25dp"
         android:clickable="true"
         android:focusable="true"
         android:contentDescription="Ask Econ Analyst"
-        app:cardCornerRadius="35dp"
+        app:cardCornerRadius="41dp"
         app:cardElevation="8dp"
         app:cardBackgroundColor="@color/nav_bg"
         app:rippleColor="@color/navy_ripple"
