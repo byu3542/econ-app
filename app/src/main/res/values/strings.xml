@@ -233,4 +233,8 @@
     <string name="assistant_about">About economii Analyst</string>
     <string name="assistant_history">Chat history</string>
     <string name="assistant_new_chat">New chat</string>
+
+    <!-- Pantrii port U4: start screen -->
+    <string name="assistant_start_title">How can I help?</string>
+    <string name="assistant_start_subtitle">Ask me about rates, inflation, jobs, or what\'s moving markets.</string>
 </resources>

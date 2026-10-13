@@ -216,54 +216,55 @@
             android:clipToPadding="false"
             android:clipChildren="false" />
 
-        <!-- Empty state: shown until the first message is sent -->
-        <LinearLayout
+        <!-- Pantrii port U4 (R2): "How can I help?" start screen, shown until
+             the first message is sent. Vertically centred in the thread area;
+             scrolls when the window is too short (landscape, split screen). -->
+        <ScrollView
             android:id="@+id/llEmptyState"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:paddingHorizontal="40dp"
+            android:layout_height="match_parent"
+            android:fillViewport="true"
+            android:background="@color/ground"
             android:visibility="gone">
 
-            <ImageView
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:src="@drawable/ic_ai_agent"
-                app:tint="@color/accent_gold"
-                android:importantForAccessibility="no" />
-
-            <TextView
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/space_md"
-                android:text="Your Econ Analyst"
-                android:textColor="@color/text_navy"
-                android:textSize="@dimen/text_body"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/space_xs"
-                android:text="Ask anything about the economy — answers use the live dashboard data and 24 months of history."
-                android:textColor="@color/text_secondary"
-                android:textSize="@dimen/text_secondary"
+                android:orientation="vertical"
                 android:gravity="center"
-                android:lineSpacingExtra="3dp" />
+                android:paddingHorizontal="@dimen/space_xl"
+                android:paddingVertical="@dimen/space_2xl">
 
-            <!-- MOT-03: up to four starter prompts. Tap fills the composer;
-                 it never sends. Animated in centre-out (CentreOutStagger). -->
-            <com.google.android.material.chip.ChipGroup
-                android:id="@+id/cgStarters"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/space_lg"
-                app:chipSpacingHorizontal="@dimen/space_sm"
-                app:chipSpacingVertical="@dimen/space_sm" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/assistant_start_title"
+                    android:textAppearance="@style/TextAppearance.Econ.Display"
+                    android:textColor="@color/ink"
+                    android:accessibilityHeading="true" />
 
-        </LinearLayout>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_sm"
+                    android:text="@string/assistant_start_subtitle"
+                    android:textAppearance="@style/TextAppearance.Econ.Body"
+                    android:textColor="@color/muted"
+                    android:gravity="center" />
+
+                <!-- Up to four prompt cards (item_prompt_card). Tap sends
+                     (KTD7). Animated in centre-out (CentreOutStagger). -->
+                <LinearLayout
+                    android:id="@+id/llPromptCards"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_2xl"
+                    android:orientation="vertical"
+                    android:showDividers="middle"
+                    android:divider="@drawable/divider_prompt_card" />
+
+            </LinearLayout>
+        </ScrollView>
 
         <TextView
             android:id="@+id/pillNewReply"

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Pantrii port U4 (R2): one start-screen prompt card. Tap sends (KTD7).
+     Long prompts wrap to two lines; the arrow stays vertically centred. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:minHeight="56dp"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:background="@drawable/bg_prompt_card"
+    android:paddingStart="@dimen/space_xl"
+    android:paddingEnd="@dimen/space_lg"
+    android:paddingVertical="@dimen/space_md"
+    android:clickable="true"
+    android:focusable="true">
+
+    <TextView
+        android:id="@+id/tvPrompt"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:textAppearance="@style/TextAppearance.Econ.Body"
+        android:textColor="@color/ink"
+        android:maxLines="2"
+        android:ellipsize="end" />
+
+    <ImageView
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_marginStart="@dimen/space_md"
+        android:src="@drawable/ic_arrow_forward"
+        app:tint="@color/muted"
+        android:importantForAccessibility="no" />
+
+</LinearLayout>

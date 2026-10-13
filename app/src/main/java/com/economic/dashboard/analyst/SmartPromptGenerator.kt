@@ -5,6 +5,16 @@ import java.util.Locale
 
 object SmartPromptGenerator {
 
+    /** Pantrii port U4: the assistant start screen's prompt cards. Plain
+     *  text, no emoji — the cards carry their own trailing arrow. */
+    @JvmStatic
+    fun starterPrompts(): List<String> = listOf(
+        "What moved in the economy today?",
+        "Is the yield curve still inverted?",
+        "Explain the latest CPI print",
+        "How high is recession risk right now?"
+    )
+
     /** Keyword-matched prompts for any raw headline string (used by the chat sheet). */
     @JvmStatic
     fun generatePromptsForHeadline(headline: String?): List<String> {

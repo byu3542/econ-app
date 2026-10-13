@@ -320,8 +320,8 @@ class AssistantFragment : Fragment() {
         chipRecentUpdates?.setOnClickListener { sendQuery(buildRecentUpdatesQuery()) }
         chipRecentNews?.setOnClickListener { sendQuery(buildRecentNewsQuery()) }
 
-        // MOT-03: empty-state starter prompts — fill the composer, never send.
-        bindPromptChips(b.cgStarters, STARTER_PROMPTS)
+        // Pantrii port U4: start-screen prompt cards — a tap sends (KTD7).
+        bindPromptCards(b.llPromptCards, SmartPromptGenerator.starterPrompts())
 
         refreshContextChips()
         val vm = host().getViewModel()
@@ -573,9 +573,11 @@ class AssistantFragment : Fragment() {
         if (visible && followStream) maybeScrollToBottom(false)
     }
 
-    /** Shows the empty state on a fresh chat. Quick-ask chips stay visible
-     *  whenever the setting is on — chat history persists across sessions,
-     *  so tying them to an empty conversation would hide them forever. */
+    /** Shows the start screen on a fresh chat. Quick-ask chips show once a
+     *  conversation exists, whenever the setting is on — chat history
+     *  persists across sessions, so tying them to an empty conversation would
+     *  hide them forever. Pantrii port U4: the start screen itself carries
+     *  only the title, subtitle and prompt cards, so the chips stay off it. */
     private fun updateConversationStateViews() {
         val b = binding ?: return
         if (activity == null) return
@@ -588,12 +590,12 @@ class AssistantFragment : Fragment() {
         // MOT-03: play the centre-out reveal each time the empty state appears.
         val showEmpty = !hasMessages
         if (showEmpty && b.llEmptyState.visibility != View.VISIBLE)
-            b.llEmptyState.post { CentreOutStagger.animateIn(binding?.cgStarters) }
+            b.llEmptyState.post { CentreOutStagger.animateIn(binding?.llPromptCards) }
         if (!hasMessages) setChipVis(b.cgFollowUps, View.GONE)
         b.llEmptyState.visibility = if (hasMessages) View.GONE else View.VISIBLE
         val chipsEnabled = SettingsManager.getBool(requireContext(),
             SettingsManager.KEY_SMART_CHIPS, true)
-        val chipVis = if (chipsEnabled) View.VISIBLE else View.GONE
+        val chipVis = if (chipsEnabled && hasMessages) View.VISIBLE else View.GONE
         setChipVis(b.tvAskAbout, chipVis)
         setChipVis(b.hsvChips, chipVis)
     }
@@ -1715,6 +1717,20 @@ class AssistantFragment : Fragment() {
         }
     }
 
+    /** Pantrii port U4 (R2, KTD7): one full-width card per prompt, at most
+     *  [MAX_PROMPT_CARDS]. Fewer prompts means fewer cards, never empty
+     *  slots. A tap sends the prompt as the user's message. */
+    private fun bindPromptCards(group: ViewGroup, prompts: List<String>) {
+        group.removeAllViews()
+        val inflater = LayoutInflater.from(group.context)
+        for (prompt in startCardPrompts(prompts)) {
+            val card = inflater.inflate(R.layout.item_prompt_card, group, false)
+            card.findViewById<TextView>(R.id.tvPrompt).text = prompt
+            card.setOnClickListener { sendQuery(prompt) }
+            group.addView(card)
+        }
+    }
+
     private fun fillComposer(prompt: String) {
         val b = binding ?: return
         b.etMessage.setText(prompt)
@@ -2038,12 +2054,25 @@ class AssistantFragment : Fragment() {
     }
 
     /** Dark status/nav icons over the light ground while the assistant is up;
-     *  restored on the way out. Night mode keeps light icons on dark ground. */
+     *  restored on the way out. Night mode keeps light icons on dark ground.
+     *  The theme's windowTranslucentStatus makes the system paint a grey scrim
+     *  under the status bar whatever statusBarColor says — invisible over the
+     *  navy header, a visible band over the assistant's ground. So the flag is
+     *  cleared while the assistant is up (content still draws edge to edge)
+     *  and put back on the way out. */
     private fun setLightSystemBars(assistantUp: Boolean) {
         val window = activity?.window ?: return
         val night = (resources.configuration.uiMode and
             android.content.res.Configuration.UI_MODE_NIGHT_MASK) ==
             android.content.res.Configuration.UI_MODE_NIGHT_YES
+        val translucent = android.view.WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS
+        if (assistantUp) {
+            androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, false)
+            window.clearFlags(translucent)
+            window.statusBarColor = android.graphics.Color.TRANSPARENT
+        } else {
+            window.addFlags(translucent)
+        }
         val controller = androidx.core.view.WindowCompat.getInsetsController(window, window.decorView)
         controller.isAppearanceLightStatusBars = assistantUp && !night
         if (android.os.Build.VERSION.SDK_INT >= 29) window.isStatusBarContrastEnforced = false
@@ -2087,12 +2116,13 @@ class AssistantFragment : Fragment() {
 
         /** MOT-03: four max — five wraps and breaks the centre-out reading. */
         private const val MAX_PROMPT_CHIPS = 4
-        private val STARTER_PROMPTS = listOf(
-            "What moved today?",
-            "Is the curve inverted?",
-            "Explain the CPI print",
-            "Recession risk?"
-        )
+
+        /** Pantrii port U4: the start screen shows four cards, like Pantrii. */
+        const val MAX_PROMPT_CARDS = 4
+
+        /** The prompts the start screen renders: the first [MAX_PROMPT_CARDS]. */
+        @JvmStatic
+        fun startCardPrompts(prompts: List<String>): List<String> = prompts.take(MAX_PROMPT_CARDS)
 
         /** Cap request context at the last N history entries (N/2 turns). */
         private const val HISTORY_CAP = 20
