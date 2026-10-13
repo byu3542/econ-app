@@ -31,6 +31,7 @@ import androidx.recyclerview.widget.RecyclerView
 
 import com.economic.dashboard.R
 import com.economic.dashboard.analyst.AnalystToolExecutor
+import com.economic.dashboard.analyst.ChatSeriesData
 import com.economic.dashboard.analyst.DerivedMetricsBuilder
 import com.economic.dashboard.analyst.HistoricalContextBuilder
 import com.economic.dashboard.analyst.ModelConfig
@@ -166,6 +167,8 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
 
     private fun host(): MainActivity = requireActivity() as MainActivity
     private fun chatAdapter(): ChatAdapter = host().getChatAdapter()
+    /** Safe off the main thread and after detach, unlike [host]. */
+    private fun viewModelOrNull(): EconomicViewModel? = (activity as? MainActivity)?.getViewModel()
     private fun conversationHistory(): JSONArray = host().getConversationHistory()
     private fun httpClient(): okhttp3.OkHttpClient = host().getHttpClient()
     private fun lastUserQuery(): String? = host().getLastUserQuery()
@@ -1035,17 +1038,21 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
         // caveats; deferred detail surfaces as follow-up chips after the
         // answer (showFollowUpPrompts), so the prompt can honestly promise it.
         val lengthRule = if (conciseGesture)
-            "This question came from a one-tap gesture on a card or chart. Keep the " +
-                "reply to 60-90 words: only what was asked, plus any caveat needed to " +
-                "keep it accurate — never drop an accuracy caveat to save words. Lead " +
-                "with the answer in the first sentence; keep paragraphs to 2-3 " +
-                "sentences. Skip news, upcoming releases, and charts unless directly " +
-                "relevant. Deeper detail is offered to the user separately as follow-up " +
+            "This question came from a one-tap gesture on a card or chart. Answer in " +
+                "3 sentences or fewer; the card carries the numbers. Say only what was " +
+                "asked, plus any caveat needed to keep it accurate — never drop an " +
+                "accuracy caveat to save words. Lead with the answer in the first " +
+                "sentence. Skip news and upcoming releases unless directly relevant. " +
+                "Deeper detail is offered to the user separately as follow-up " +
                 "questions, so leave it out rather than compressing it in. "
         else if (SettingsManager.getBool(requireContext(), SettingsManager.KEY_DETAILED_AI, false))
-            "Detailed analysis is welcome — up to roughly 500 words when the question warrants it. "
+            // The one opt-out from the 3-sentence rule (decided 2026-10-12).
+            "Detailed analysis is welcome — up to roughly 500 words when the question " +
+                "warrants it. Still lead with the answer in the first sentence. "
         else
-            "Keep responses under 200 words unless the user explicitly asks for detail. "
+            "Answer in 3 sentences or fewer; the card carries the numbers — when a " +
+                "chart or table would show the figures, draw it rather than listing " +
+                "them. Go longer only if the user explicitly asks for detail. "
         val newsContext = NewsContextBuilder.build(cachedNews)
         val derived = DerivedMetricsBuilder.build(host().getViewModel())
         val releases = ReleaseCalendar.build()
@@ -1088,7 +1095,10 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
             "per chart, several charts are fine when you are comparing series. It renders " +
             "for the user and returns no data to you, so never wait on it for numbers, " +
             "never mention the tool or the chart mechanics in your prose, and never write " +
-            "any chart markup or tag into your text.\n\n" +
+            "any chart markup or tag into your text. Call render_table instead when " +
+            "the exact recent readings matter more than the trend shape; it shows the " +
+            "last few months, newest first, with each month's change. Each call's result " +
+            "is the one-line summary the card shows — quote those figures, not others.\n\n" +
             "FORMATTING RULES: Do NOT use markdown headers (##, ###, or # prefix). " +
             "Do NOT use bullet lists with dashes or asterisks. " +
             "Use short paragraphs and bold text (**word**) only for key figures or labels. " +
@@ -1315,8 +1325,8 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
                         runOnUi {
                             requestFinished()
                             chatAdapter().removeTypingIndicator()
-                            // A bubble created just to show TOOL_STATUS must not
-                            // keep saying "Checking the data…" next to an error.
+                            // Repaint the bubble from acc so a half-streamed
+                            // round doesn't linger next to the error.
                             if (st.streamIdx >= 0)
                                 chatAdapter().updateMessageText(st.streamIdx, st.acc.toString())
                             if (!call.isCanceled()) addErrorBubble(friendly)
@@ -1358,6 +1368,10 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
         // acc may already hold earlier rounds' text; only text streamed in THIS
         // round belongs in this round's assistant message.
         val roundStart = st.acc.length
+        // T4: text streamed before this round's first tool call. It is held
+        // back from the bubble (the trace row is the progress signal) but
+        // still sent to the API as this round's assistant text.
+        val held = StringBuilder()
 
         val toolBlocks = LinkedHashMap<Int, ToolUseBlock>()
         var stopReason: String? = null
@@ -1388,6 +1402,7 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
             } else if ("content_block_start" == type) {
                 val block = evt.optJSONObject("content_block")
                 if (block != null && "tool_use" == block.optString("type")) {
+                    if (toolBlocks.isEmpty()) holdBackRoundText(st, roundStart, held)
                     val tb = ToolUseBlock()
                     tb.id = block.optString("id")
                     tb.name = block.optString("name")
@@ -1504,7 +1519,7 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
                 val assistantContent = JSONArray()
                 // Only THIS round's text — resending the whole accumulated reply
                 // made the model see itself repeating and re-announce tool calls.
-                val roundText = st.acc.substring(roundStart)
+                val roundText = held.toString() + st.acc.substring(roundStart)
                 if (!roundText.trim().isEmpty())
                     assistantContent.put(JSONObject().put("type", "text").put("text", roundText))
                 val toolResults = JSONArray()
@@ -1525,9 +1540,27 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
                         // resolved ChatChart survives — the app draws from its
                         // own store; the tool_result is only an acknowledgement.
                         val outcome = AnalystToolExecutor.renderCard(tb.name, input)
-                        val chart = outcome.chart
+                        var chart = outcome.chart
+                        var message = outcome.message
+                        if (chart != null) {
+                            // T4: the tool_result is the card's own summary line,
+                            // so the prose quotes the numbers the card shows.
+                            val card = ChatSeriesData.resolve(appCtx, viewModelOrNull(),
+                                chart.seriesId, chart.months)
+                            if (card.points.size < 2) {
+                                // The card would hide itself; say so honestly.
+                                message = "Nothing was drawn: no data is loaded for " +
+                                    chart.seriesId + " yet. Do not retry and do not " +
+                                    "mention the card — just continue your answer in prose."
+                                chart = null
+                            } else {
+                                message = "Shown to the user: " + card.summaryLine() +
+                                    ". Continue your answer; do not restate the card's " +
+                                    "points one by one."
+                            }
+                        }
                         if (chart != null) { st.charts.add(chart); chartsChanged = true }
-                        result = outcome.message
+                        result = message
                         failed = chart == null
                     } else {
                         // MOT-04: keep what the call fetched for the sources stack.
@@ -1565,37 +1598,15 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
                     // MEASURED drop in this guard's fire rate, and a silent
                     // guard can't be measured. Same tag at all three sites.
                     Log.d(TAG, "law1_guard fired: tool-round lead-in dropped (depth=$depth)")
-                    st.acc.setLength(roundStart)
                 }
+                // T4: no tool round's prose reaches the bubble — the next round
+                // answers on its own. The trace row carries progress instead of
+                // the old "Checking the data…" status (a deliberate departure
+                // from AI Law 11's status line, noted in the analyst-cards plan).
+                synchronized(st.acc) { st.acc.setLength(roundStart) }
                 // Paragraph break so the next round's text doesn't run into this one.
                 if (st.acc.length > 0) st.acc.append("\n\n")
-                // AI Law 11: a tool round can take a few seconds — show an honest
-                // status instead of what looks like a hang. The next round's
-                // streamed text overwrites it. ChatAdapter renders the trailing
-                // status italic + subdued so "fetching" reads differently from
-                // "answering" (TICKET-6). Chart-only rounds skip it: nothing is
-                // being fetched, and the ack round is fast.
-                if (hasDataTool) {
-                    val statusText = st.acc.toString() + ChatAdapter.TOOL_STATUS
-                    runOnUi {
-                        if (binding == null) return@runOnUi
-                        // Forced tool rounds (tool_choice "any") emit no prose, so
-                        // streamIdx is still -1 on exactly the slowest multi-round
-                        // turns — create the bubble here or the user stares at bare
-                        // typing dots for the whole loop and reads it as a hang.
-                        if (st.streamIdx < 0) {
-                            chatAdapter().removeTypingIndicator()
-                            chatAdapter().addMessage(ChatMessage(statusText, false))
-                            st.streamIdx = chatAdapter().getLastIndex()
-                        } else {
-                            // AIC-09: a batched delta still queued must not
-                            // overwrite the status line.
-                            cancelStreamFlush(st)
-                            chatAdapter().updateMessageText(st.streamIdx, statusText)
-                        }
-                        maybeScrollToBottom(false)
-                    }
-                }
+                syncHeldBubble(st)
                 if (!hasDataTool) st.chartRounds++
                 // Chart-only rounds re-enter at the SAME depth — the budget they
                 // are exempt from is the one this parameter carries.
@@ -1627,22 +1638,8 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
                         "tool now if the series is available; otherwise answer directly " +
                         "from the data in the system prompt. Do not announce lookups — " +
                         "just answer."))
-                st.acc.setLength(roundStart)
-                val statusText = st.acc.toString() + ChatAdapter.TOOL_STATUS
-                runOnUi {
-                    if (binding == null) return@runOnUi
-                    // Same streamIdx<0 hole as the data-tool status above: the
-                    // dropped announce-then-stop text may have been this turn's
-                    // only prose, leaving no bubble to carry the status.
-                    if (st.streamIdx < 0) {
-                        chatAdapter().removeTypingIndicator()
-                        chatAdapter().addMessage(ChatMessage(statusText, false))
-                        st.streamIdx = chatAdapter().getLastIndex()
-                    } else {
-                        cancelStreamFlush(st) // AIC-09
-                        chatAdapter().updateMessageText(st.streamIdx, statusText)
-                    }
-                }
+                synchronized(st.acc) { st.acc.setLength(roundStart) }
+                syncHeldBubble(st) // T4: no status line; the trace row shows progress
                 sendTurn(messages, systemPrompt, committedQuery, st, depth + 1)
                 return
             }
@@ -1673,7 +1670,39 @@ class AiAnalystBottomSheet : BottomSheetDialogFragment() {
         }, st, STREAM_FLUSH_MS)
     }
 
-    /** AIC-09: drops a queued flush, e.g. before a tool-status repaint. */
+    /** T4: the first tool_use of a round moves the round's streamed text out
+     *  of [StreamState.acc] into [held] and repaints the bubble without it. */
+    private fun holdBackRoundText(st: StreamState, roundStart: Int, held: StringBuilder) {
+        synchronized(st.acc) {
+            if (st.acc.length <= roundStart) return
+            held.append(st.acc, roundStart, st.acc.length)
+            st.acc.setLength(roundStart)
+        }
+        syncHeldBubble(st)
+    }
+
+    /** T4: repaints the streaming bubble from [StreamState.acc]. A bubble left
+     *  with no text and no charts is removed, so the next text opens a fresh
+     *  one — the trace row stays as the only progress signal. */
+    private fun syncHeldBubble(st: StreamState) {
+        val text = synchronized(st.acc) { st.acc.toString() }
+        val drop = text.isBlank() && st.charts.isEmpty()
+        // Reset on the stream thread, so the next delta opens a new bubble
+        // instead of flushing into the one queued for removal below.
+        if (drop) st.bubblePosted = false
+        runOnUi {
+            if (binding == null || st.streamIdx < 0) return@runOnUi
+            cancelStreamFlush(st) // AIC-09: a queued delta must not repaint held text
+            if (drop) {
+                chatAdapter().removeMessageAt(st.streamIdx)
+                st.streamIdx = -1
+            } else {
+                chatAdapter().updateMessageText(st.streamIdx, text)
+            }
+        }
+    }
+
+    /** AIC-09: drops a queued flush, e.g. before a held-text repaint. */
     private fun cancelStreamFlush(st: StreamState) {
         streamHandler.removeCallbacksAndMessages(st)
         st.flushScheduled.set(false)

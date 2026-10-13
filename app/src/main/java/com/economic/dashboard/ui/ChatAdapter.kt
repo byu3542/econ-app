@@ -254,6 +254,14 @@ class ChatAdapter(
 
     fun getLastIndex(): Int = messages.size - 1
 
+    /** T4: drops a streaming bubble whose only text was held back before a
+     *  tool call, so no empty bubble sits under the trace row. */
+    fun removeMessageAt(index: Int) {
+        if (index < 0 || index >= messages.size) return
+        messages.removeAt(index)
+        notifyItemRemoved(index)
+    }
+
     fun messageAt(index: Int): ChatMessage? = messages.getOrNull(index)
 
     /** AIC-05: the question the answer at [index] replies to, or null (the
