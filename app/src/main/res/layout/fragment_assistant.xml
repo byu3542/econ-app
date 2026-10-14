@@ -16,7 +16,8 @@
 
     <!-- Pantrii port U3 (R1): back · wordmark · history · new chat. All
          buttons are 48dp touch targets drawn as 40dp rounded squares (inset
-         backgrounds, matching Pantrii); icon buttons on surface_2, new chat
+         backgrounds, butted together for an 8dp visible gap, matching Pantrii);
+         icon buttons on surface_2, new chat
          is the one accent fill. Wordmark: brand in accent, role in ink. -->
     <LinearLayout
         android:id="@+id/rlHeader"
@@ -83,7 +84,6 @@
             android:id="@+id/btnHistory"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:layout_marginEnd="@dimen/space_sm"
             android:background="@drawable/bg_icon_button_inset"
             android:src="@drawable/ic_history"
             android:contentDescription="@string/assistant_history"

@@ -60,8 +60,8 @@
                  can overflow this box's edges without being clipped.
                  Pantrii port U9 (R10): the bar now matches the assistant
                  header (fragment_assistant.xml rlHeader) — 64dp min height,
-                 the same padding, and 48dp rounded-square surface_2 icon
-                 buttons in ink. The buttons sit fully inside the bar again,
+                 the same padding, and 40dp rounded-square surface_2 icon
+                 buttons (inset in 48dp targets) in ink. The buttons sit fully inside the bar again,
                  so the -2dp overflow trick above is gone. -->
             <FrameLayout
                 android:id="@+id/header_inner_layout"
@@ -93,24 +93,24 @@
                     android:padding="@dimen/space_md"
                     android:src="@drawable/ic_settings"
                     android:contentDescription="@string/settings"
-                    android:background="@drawable/bg_icon_button"
+                    android:background="@drawable/bg_icon_button_inset"
                     app:tint="@color/ink"/>
 
                 <!-- TICKET-58: "Edit cards" moved off the Overview's first row into
                      the header, left of the gear. Same 48dp target; MainActivity
                      shows it only while Overview is the visible tab. U9: the
-                     56dp end margin is the gear's 48dp plus the assistant
-                     header's space_sm gap between buttons. -->
+                     48dp end margin is the gear's 48dp, butted up like the assistant
+                     header: the two 4dp insets leave an 8dp visible gap, as in Pantrii. -->
                 <ImageView
                     android:id="@+id/btnEditCards"
                     android:layout_width="48dp"
                     android:layout_height="48dp"
-                    android:layout_marginEnd="56dp"
+                    android:layout_marginEnd="48dp"
                     android:layout_gravity="end|center_vertical"
                     android:padding="@dimen/space_md"
                     android:src="@drawable/ic_edit"
                     android:contentDescription="@string/edit_dashboard_button"
-                    android:background="@drawable/bg_icon_button"
+                    android:background="@drawable/bg_icon_button_inset"
                     app:tint="@color/ink"/>
 
             </FrameLayout>
