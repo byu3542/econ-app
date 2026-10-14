@@ -58,7 +58,6 @@
     <color name="handle_on_surface">#33FFFFFF</color>
     <color name="header_hairline_neutral">#1FFFFFFF</color>
 
-    <color name="fab_ring">#2A3142</color>
 
     <!-- Metric popup sheet surfaces: aliases onto the tokens since U1 (see
          values/colors.xml). TICKET-41's near-white body text holds — ink's

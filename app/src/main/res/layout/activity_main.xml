@@ -40,7 +40,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="top"
-            android:background="@color/header_navy_translucent"
+            android:background="@color/ground"
             android:clipChildren="false"
             android:orientation="vertical">
 
@@ -57,14 +57,20 @@
                  (negative-margin) height below, targeting iOS's 44dp compact
                  bar instead of the ~69dp this padding used to add on top of
                  a 48dp icon. clipChildren=false so the icon's touch target
-                 can overflow this box's edges without being clipped. -->
+                 can overflow this box's edges without being clipped.
+                 Pantrii port U9 (R10): the bar now matches the assistant
+                 header (fragment_assistant.xml rlHeader) — 64dp min height,
+                 the same padding, and 48dp rounded-square surface_2 icon
+                 buttons in ink. The buttons sit fully inside the bar again,
+                 so the -2dp overflow trick above is gone. -->
             <FrameLayout
                 android:id="@+id/header_inner_layout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:minHeight="64dp"
                 android:clipChildren="false"
-                android:paddingStart="@dimen/space_lg"
-                android:paddingEnd="@dimen/space_lg">
+                android:paddingHorizontal="@dimen/space_lg"
+                android:paddingVertical="@dimen/space_sm">
 
                 <TextView
                     android:id="@+id/tvHeaderCompactTitle"
@@ -72,50 +78,40 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:text="Overview"
-                    android:textSize="17sp"
-                    android:textColor="@color/card_white"
-                    android:fontFamily="@font/plus_jakarta_sans_medium"
-                    android:textStyle="bold"
+                    android:textAppearance="@style/TextAppearance.Econ.Title"
+                    android:textColor="@color/ink"
+                    android:fontFamily="@font/plus_jakarta_sans_bold"
                     android:singleLine="true"
                     android:includeFontPadding="false"/>
 
-                <!-- 48dp touch target preserved (UX_DESIGN_LAWS.md Law 4,
-                     Fitts's Law: "Minimum touch target 48x48dp") via -2dp
-                     top/bottom margins rather than shrinking the ImageView
-                     itself: the view stays 48dp and overflows the
-                     FrameLayout's box by 2dp on each edge, but only
-                     contributes 44dp (48 - 2 - 2) to this FrameLayout's
-                     wrap_content height — the same 44dp the compact bar
-                     targets. -->
+                <!-- 48dp touch target (UX_DESIGN_LAWS.md Law 4). -->
                 <ImageView
                     android:id="@+id/btnSettings"
                     android:layout_width="48dp"
                     android:layout_height="48dp"
-                    android:layout_marginTop="-2dp"
-                    android:layout_marginBottom="-2dp"
                     android:layout_gravity="end|center_vertical"
                     android:padding="@dimen/space_md"
                     android:src="@drawable/ic_settings"
                     android:contentDescription="@string/settings"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    app:tint="@color/white_70"/>
+                    android:background="@drawable/bg_icon_button"
+                    app:tint="@color/ink"/>
 
                 <!-- TICKET-58: "Edit cards" moved off the Overview's first row into
                      the header, left of the gear. Same 48dp target; MainActivity
-                     shows it only while Overview is the visible tab. -->
+                     shows it only while Overview is the visible tab. U9: the
+                     56dp end margin is the gear's 48dp plus the assistant
+                     header's space_sm gap between buttons. -->
                 <ImageView
                     android:id="@+id/btnEditCards"
                     android:layout_width="48dp"
                     android:layout_height="48dp"
-                    android:layout_marginTop="-2dp"
-                    android:layout_marginBottom="-2dp"
-                    android:layout_marginEnd="48dp"
+                    android:layout_marginEnd="56dp"
                     android:layout_gravity="end|center_vertical"
                     android:padding="@dimen/space_md"
                     android:src="@drawable/ic_edit"
                     android:contentDescription="@string/edit_dashboard_button"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    app:tint="@color/white_70"/>
+                    android:background="@drawable/bg_icon_button"
+                    app:tint="@color/ink"/>
 
             </FrameLayout>
 
@@ -133,7 +129,7 @@
                 android:id="@+id/headerSeparator"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/divider_hairline_height"
-                android:background="@color/header_hairline_neutral" />
+                android:background="@color/line" />
 
         </LinearLayout>
 
@@ -147,7 +143,7 @@
             style="@style/Widget.AppCompat.ProgressBar.Horizontal"
             android:indeterminate="true"
             android:visibility="gone"
-            android:progressTint="@color/accent_gold"
+            android:progressTint="@color/accent"
             app:layout_anchor="@id/header_container"
             app:layout_anchorGravity="bottom" />
 
@@ -181,7 +177,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom"
-            android:background="@color/nav_bg">
+            android:background="@color/surface">
 
             <!-- BottomNav declared FIRST so it is drawn beneath the indicator -->
             <com.google.android.material.bottomnavigation.BottomNavigationView
@@ -246,7 +242,7 @@
         android:contentDescription="Ask Econ Analyst"
         app:cardCornerRadius="41dp"
         app:cardElevation="8dp"
-        app:cardBackgroundColor="@color/nav_bg"
+        app:cardBackgroundColor="@color/surface"
         app:rippleColor="@color/navy_ripple"
         app:strokeWidth="0dp"
         app:layout_anchor="@id/bottomNavWrapper"

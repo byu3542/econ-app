@@ -860,8 +860,8 @@ class MainActivity : AppCompatActivity() {
         // Explicit setters on BadgeDrawable (Material, third-party): Drawable
         // also declares a two-arg setVisible(boolean, boolean), so property
         // syntax here would be needlessly ambiguous (migration lesson 12).
-        badge.setBackgroundColor(ContextCompat.getColor(this, R.color.accent_gold))
-        badge.setBadgeTextColor(ContextCompat.getColor(this, R.color.header_navy))
+        badge.setBackgroundColor(ContextCompat.getColor(this, R.color.accent))
+        badge.setBadgeTextColor(ContextCompat.getColor(this, R.color.on_accent))
         badge.setMaxCharacterCount(2)                   // "9+" style past 99
         badge.setNumber(unread)
         badge.setVisible(true)

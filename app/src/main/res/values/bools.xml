@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Pantrii port U9: dark system-bar icons over the light ground header
+         and surface bottom nav. values-night flips it. -->
+    <bool name="light_system_bars">true</bool>
+</resources>

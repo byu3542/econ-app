@@ -113,9 +113,10 @@
     <color name="hairline_on_surface">#14000000</color>
     <color name="handle_on_surface">#26000000</color>
 
-    <!-- Center-nav AI FAB: ring reads against both page bg and nav bar;
-         disc gold matches ic_fab_gold_ai artwork (#D2B156) -->
-    <color name="fab_ring">#f5f3ef</color>
+    <!-- Center-nav AI FAB: ring reads against both page bg and nav bar.
+         Pantrii port U9: the surface_2 token, the icon-button fill, in both
+         themes (the night override is gone). -->
+    <color name="fab_ring">@color/surface_2</color>
     <color name="fab_gold">#D2B156</color>
     <!-- ── Semantic tokens (moved out of layout hex literals) ── -->
     <!-- Navy-surface structure -->
