@@ -19,7 +19,7 @@
              HOUSING METRIC BADGES — Housing Starts & Existing Home Sales
 
              R2-TICKET-04: these were the family-A geometry (12dp/4dp) over the
-             family-B colour (header_navy) — a third hybrid. Now fully family A.
+             family-B colour (header_navy) — a third hybrid. U10: now the one card.
              R2-TICKET-05/06: values were @dimen/text_secondary (13sp), the
              smallest KPI value in the app; now @dimen/text_display_lg like the
              rest, auto-shrinking only if a reading is too wide for its card.
@@ -32,14 +32,12 @@
             android:baselineAligned="false">
 
             <!-- HOUSING STARTS Badge -->
-            <androidx.cardview.widget.CardView
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.Econ.Card"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginEnd="@dimen/space_sm"
-                app:cardCornerRadius="@dimen/radius_card_kpi"
-                app:cardElevation="@dimen/elevation_card_kpi"
-                app:cardBackgroundColor="@color/card_navy_badge">
+                android:layout_marginEnd="@dimen/space_sm">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -60,7 +58,7 @@
                         android:layout_height="@dimen/kpi_value_height"
                         android:text="\u2014"
                         android:gravity="center"
-                        android:textColor="@color/card_white"
+                        android:textColor="@color/ink"
                         android:maxLines="1"
                         android:autoSizeTextType="uniform"
                         android:autoSizeMinTextSize="@dimen/text_kpi_autosize_min"
@@ -76,17 +74,15 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/space_hairline" />
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
+            </com.google.android.material.card.MaterialCardView>
 
             <!-- HOME SALES Badge -->
-            <androidx.cardview.widget.CardView
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.Econ.Card"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="@dimen/space_sm"
-                app:cardCornerRadius="@dimen/radius_card_kpi"
-                app:cardElevation="@dimen/elevation_card_kpi"
-                app:cardBackgroundColor="@color/card_navy_badge">
+                android:layout_marginStart="@dimen/space_sm">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -107,7 +103,7 @@
                         android:layout_height="@dimen/kpi_value_height"
                         android:text="\u2014"
                         android:gravity="center"
-                        android:textColor="@color/card_white"
+                        android:textColor="@color/ink"
                         android:maxLines="1"
                         android:autoSizeTextType="uniform"
                         android:autoSizeMinTextSize="@dimen/text_kpi_autosize_min"
@@ -123,7 +119,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/space_hairline" />
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
+            </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
 
         <!-- ═══════════════════════════════════════════════════════════════════
@@ -137,15 +133,13 @@
             android:baselineAligned="false">
 
             <!-- 30-YR RATE Badge -->
-            <androidx.cardview.widget.CardView
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.Econ.Card"
                 android:id="@+id/badgeMortgage"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginEnd="@dimen/space_sm"
-                app:cardCornerRadius="@dimen/radius_card_kpi"
-                app:cardElevation="@dimen/elevation_card_kpi"
-                app:cardBackgroundColor="@color/card_navy_badge">
+                android:layout_marginEnd="@dimen/space_sm">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -168,7 +162,7 @@
                         android:layout_height="@dimen/kpi_value_height"
                         android:text="\u2014"
                         android:gravity="center"
-                        android:textColor="@color/card_white"
+                        android:textColor="@color/ink"
                         android:maxLines="1"
                         android:autoSizeTextType="uniform"
                         android:autoSizeMinTextSize="@dimen/text_kpi_autosize_min"
@@ -184,18 +178,16 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/space_hairline" />
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
+            </com.google.android.material.card.MaterialCardView>
 
             <!-- 10Y T-RATE Badge -->
-            <androidx.cardview.widget.CardView
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.Econ.Card"
                 android:id="@+id/badge10Y"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginHorizontal="@dimen/space_xs"
-                app:cardCornerRadius="@dimen/radius_card_kpi"
-                app:cardElevation="@dimen/elevation_card_kpi"
-                app:cardBackgroundColor="@color/card_navy_badge">
+                android:layout_marginHorizontal="@dimen/space_xs">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -216,7 +208,7 @@
                         android:layout_height="@dimen/kpi_value_height"
                         android:text="\u2014"
                         android:gravity="center"
-                        android:textColor="@color/card_white"
+                        android:textColor="@color/ink"
                         android:maxLines="1"
                         android:autoSizeTextType="uniform"
                         android:autoSizeMinTextSize="@dimen/text_kpi_autosize_min"
@@ -232,18 +224,16 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/space_hairline" />
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
+            </com.google.android.material.card.MaterialCardView>
 
             <!-- SPREAD Badge -->
-            <androidx.cardview.widget.CardView
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.Econ.Card"
                 android:id="@+id/badgeSpread"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="@dimen/space_sm"
-                app:cardCornerRadius="@dimen/radius_card_kpi"
-                app:cardElevation="@dimen/elevation_card_kpi"
-                app:cardBackgroundColor="@color/card_navy_badge">
+                android:layout_marginStart="@dimen/space_sm">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -264,7 +254,7 @@
                         android:layout_height="@dimen/kpi_value_height"
                         android:text="\u2014"
                         android:gravity="center"
-                        android:textColor="@color/card_white"
+                        android:textColor="@color/ink"
                         android:maxLines="1"
                         android:autoSizeTextType="uniform"
                         android:autoSizeMinTextSize="@dimen/text_kpi_autosize_min"
@@ -280,7 +270,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/space_hairline" />
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
+            </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
 
         <!-- ═══════════════════════════════════════════════════════════════════
@@ -289,13 +279,11 @@
         <!-- TICKET-11: inline range switcher (drives both Housing charts) -->
         <include layout="@layout/view_timeframe_selector" />
 
-        <androidx.cardview.widget.CardView
+        <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.Econ.Card"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/space_2xl"
-            app:cardCornerRadius="@dimen/radius_card_panel"
-            app:cardElevation="@dimen/elevation_card_panel"
-            app:cardBackgroundColor="@color/header_navy">
+            android:layout_marginBottom="@dimen/space_2xl">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -305,7 +293,6 @@
                 <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="@color/card_navy_badge"
                     android:paddingHorizontal="@dimen/space_xl"
                     android:paddingVertical="@dimen/space_lg">
 
@@ -318,9 +305,9 @@
 
                     <View
                         android:layout_width="match_parent"
-                        android:layout_height="2dp"
+                        android:layout_height="1dp"
                         android:layout_alignParentBottom="true"
-                        android:background="@color/accent_gold" />
+                        android:background="@color/line" />
                 </RelativeLayout>
 
                 <com.github.mikephil.charting.charts.LineChart
@@ -332,18 +319,16 @@
                     android:padding="@dimen/space_md" />
 
             </LinearLayout>
-        </androidx.cardview.widget.CardView>
+        </com.google.android.material.card.MaterialCardView>
 
         <!-- ═══════════════════════════════════════════════════════════════════
              MBS & MORTGAGE RATES CHART
              ═══════════════════════════════════════════════════════════════════ -->
-        <androidx.cardview.widget.CardView
+        <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.Econ.Card"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/space_2xl"
-            app:cardCornerRadius="@dimen/radius_card_panel"
-            app:cardElevation="@dimen/elevation_card_panel"
-            app:cardBackgroundColor="@color/header_navy">
+            android:layout_marginBottom="@dimen/space_2xl">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -353,7 +338,6 @@
                 <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="@color/card_navy_badge"
                     android:paddingHorizontal="@dimen/space_xl"
                     android:paddingVertical="@dimen/space_lg">
 
@@ -365,9 +349,9 @@
 
                     <View
                         android:layout_width="match_parent"
-                        android:layout_height="2dp"
+                        android:layout_height="1dp"
                         android:layout_alignParentBottom="true"
-                        android:background="@color/accent_gold" />
+                        android:background="@color/line" />
                 </RelativeLayout>
 
                 <com.github.mikephil.charting.charts.LineChart
@@ -379,7 +363,7 @@
                     android:padding="@dimen/space_lg" />
 
             </LinearLayout>
-        </androidx.cardview.widget.CardView>
+        </com.google.android.material.card.MaterialCardView>
 
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

@@ -70,9 +70,9 @@ class YieldsFragment : Fragment() {
         yieldCurveChart = b.yieldCurveChart
         AskAnalyst.attachChartExplain(
             yieldCurveChart, requireActivity(), "the current Treasury yield curve across maturities")
-        ChartHelper.styleNavyChart(yieldCurveChart, noDataText = "Loading yield data…",
-            noDataTextColor = ChartPalette.slate(requireContext()))
-        ChartHelper.declutterDark(yieldCurveChart)
+        ChartHelper.stylePanelChart(yieldCurveChart, noDataText = "Loading yield data…",
+            noDataTextColor = ChartPalette.axisText(requireContext()))
+        ChartHelper.declutterPanel(yieldCurveChart)
         yieldCurveChart.axisLeft.setValueFormatter(object : ValueFormatter() {
             override fun getFormattedValue(value: Float): String {
                 return String.format(Locale.US, "%.1f%%", value)

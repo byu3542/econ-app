@@ -127,6 +127,15 @@
     <string name="tier_word_alert">ALERT</string>
     <string name="tier_word_alert_deep">SEVERE</string>
     <string name="tier_word_imbalance">IMBALANCE</string>
+    <!-- Pantrii port U10 (KTD10 rule 2): one leading glyph per tier, so a
+         badge's state never rests on hue alone. The WATCH yellow and the gold
+         accent are 1.1:1 apart; the half-filled circle is what tells them apart. -->
+    <string name="tier_glyph_good" translatable="false">✓</string>
+    <string name="tier_glyph_watch" translatable="false">◐</string>
+    <string name="tier_glyph_elevated" translatable="false">▲</string>
+    <string name="tier_glyph_alert" translatable="false">✕</string>
+    <string name="tier_glyph_alert_deep" translatable="false">■</string>
+    <string name="tier_glyph_imbalance" translatable="false">◆</string>
 
     <!-- TICKET-59: Employment unemployment sub-line (was "12-month low: x% (Rise: +y%)") -->
     <string name="unemp_at_low">At a 12-month low</string>

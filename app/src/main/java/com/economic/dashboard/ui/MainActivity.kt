@@ -895,7 +895,7 @@ class MainActivity : AppCompatActivity() {
         val newest = SettingsManager.getAnalystLastInsight(this)
         if (newest > lastSeen) {
             val badge = binding.bottomNav.getOrCreateBadge(R.id.nav_ai_placeholder)
-            badge.setBackgroundColor(ContextCompat.getColor(this, R.color.accent_gold))
+            badge.setBackgroundColor(ContextCompat.getColor(this, R.color.accent))
             badge.setVisible(true)                  // dot — a single "new insight" nudge
         } else {
             clearAnalystBadge()

@@ -91,8 +91,8 @@ class GdpFragment : Fragment() {
         tvGdpLatestQuarterLabel = b.tvGdpLatestQuarterLabel
         statusGdpLatestQuarter = b.statusGdpLatestQuarter.root
 
-        ChartHelper.styleNavyChart(gdpChart)
-        ChartHelper.declutterDark(gdpChart)
+        ChartHelper.stylePanelChart(gdpChart)
+        ChartHelper.declutterPanel(gdpChart)
         ChartHelper.attachCrosshair(gdpChart) // TICKET-23
         gdpChart.axisLeft.setValueFormatter(object : ValueFormatter() {
             override fun getFormattedValue(value: Float): String {

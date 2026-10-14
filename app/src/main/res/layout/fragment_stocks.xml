@@ -31,15 +31,13 @@
             android:baselineAligned="false"
             android:layout_marginBottom="@dimen/space_lg">
 
-            <androidx.cardview.widget.CardView
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.Econ.Card"
                 android:id="@+id/cardSp500"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginEnd="@dimen/space_hairline"
-                app:cardCornerRadius="@dimen/radius_card_kpi"
-                app:cardElevation="@dimen/elevation_card_kpi"
-                app:cardBackgroundColor="@color/card_navy_badge">
+                android:layout_marginEnd="@dimen/space_hairline">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:orientation="vertical" android:padding="@dimen/space_md" android:gravity="center">
                     <TextView style="@style/Card.Overline" android:layout_width="wrap_content"
@@ -51,7 +49,7 @@
                         android:autoSizeMinTextSize="@dimen/text_kpi_autosize_min"
                         android:autoSizeMaxTextSize="@dimen/text_display_lg"
                         android:autoSizeStepGranularity="1sp"
-                        android:textColor="@color/card_white" android:textStyle="bold" android:layout_marginTop="@dimen/space_xs" />
+                        android:textColor="@color/ink" android:textStyle="bold" android:layout_marginTop="@dimen/space_xs" />
                     <include
                         android:id="@+id/statusSp500"
                         layout="@layout/view_status_badge"
@@ -59,18 +57,16 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/space_xs" />
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
+            </com.google.android.material.card.MaterialCardView>
 
-            <androidx.cardview.widget.CardView
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.Econ.Card"
                 android:id="@+id/cardNasdaq"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginStart="@dimen/space_hairline"
-                android:layout_marginEnd="@dimen/space_hairline"
-                app:cardCornerRadius="@dimen/radius_card_kpi"
-                app:cardElevation="@dimen/elevation_card_kpi"
-                app:cardBackgroundColor="@color/card_navy_badge">
+                android:layout_marginEnd="@dimen/space_hairline">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:orientation="vertical" android:padding="@dimen/space_md" android:gravity="center">
                     <TextView style="@style/Card.Overline" android:layout_width="wrap_content"
@@ -82,7 +78,7 @@
                         android:autoSizeMinTextSize="@dimen/text_kpi_autosize_min"
                         android:autoSizeMaxTextSize="@dimen/text_display_lg"
                         android:autoSizeStepGranularity="1sp"
-                        android:textColor="@color/card_white" android:textStyle="bold" android:layout_marginTop="@dimen/space_xs" />
+                        android:textColor="@color/ink" android:textStyle="bold" android:layout_marginTop="@dimen/space_xs" />
                     <include
                         android:id="@+id/statusNasdaq"
                         layout="@layout/view_status_badge"
@@ -90,17 +86,15 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/space_xs" />
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
+            </com.google.android.material.card.MaterialCardView>
 
-            <androidx.cardview.widget.CardView
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.Econ.Card"
                 android:id="@+id/cardVix"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="@dimen/space_hairline"
-                app:cardCornerRadius="@dimen/radius_card_kpi"
-                app:cardElevation="@dimen/elevation_card_kpi"
-                app:cardBackgroundColor="@color/card_navy_badge">
+                android:layout_marginStart="@dimen/space_hairline">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:orientation="vertical" android:padding="@dimen/space_md" android:gravity="center">
                     <TextView style="@style/Card.Overline" android:layout_width="wrap_content"
@@ -112,7 +106,7 @@
                         android:autoSizeMinTextSize="@dimen/text_kpi_autosize_min"
                         android:autoSizeMaxTextSize="@dimen/text_display_lg"
                         android:autoSizeStepGranularity="1sp"
-                        android:textColor="@color/card_white" android:textStyle="bold" android:layout_marginTop="@dimen/space_xs" />
+                        android:textColor="@color/ink" android:textStyle="bold" android:layout_marginTop="@dimen/space_xs" />
                     <include
                         android:id="@+id/statusVix"
                         layout="@layout/view_status_badge"
@@ -120,7 +114,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/space_xs" />
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
+            </com.google.android.material.card.MaterialCardView>
 
         </LinearLayout>
 
@@ -128,21 +122,19 @@
         <include layout="@layout/view_timeframe_selector" />
 
         <!-- Chart/panel card — R2-TICKET-04 family B (16dp / 6dp) -->
-        <androidx.cardview.widget.CardView
+        <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.Econ.Card"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/space_2xl"
-            app:cardCornerRadius="@dimen/radius_card_panel"
-            app:cardElevation="@dimen/elevation_card_panel"
-            app:cardBackgroundColor="@color/header_navy">
+            android:layout_marginBottom="@dimen/space_2xl">
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:orientation="vertical" android:paddingHorizontal="@dimen/space_xl" android:paddingTop="@dimen/space_lg">
                     <TextView android:id="@+id/tvChartTitle" android:layout_width="wrap_content"
                         android:layout_height="wrap_content" android:text="S&amp;P 500 Index"
                         android:textAppearance="@style/TextAppearance.Econ.PanelTitle" />
-                    <View android:layout_width="match_parent" android:layout_height="2dp"
-                        android:layout_marginTop="@dimen/space_sm" android:background="@color/accent_gold" />
+                    <View android:layout_width="match_parent" android:layout_height="1dp"
+                        android:layout_marginTop="@dimen/space_sm" android:background="@color/line" />
                 </LinearLayout>
                 <com.github.mikephil.charting.charts.LineChart
                     android:id="@+id/swappableChart"
@@ -152,7 +144,7 @@
                     android:layout_height="300dp"
                     android:padding="@dimen/space_md" />
             </LinearLayout>
-        </androidx.cardview.widget.CardView>
+        </com.google.android.material.card.MaterialCardView>
 
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

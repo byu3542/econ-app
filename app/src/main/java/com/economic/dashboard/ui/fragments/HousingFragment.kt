@@ -7,7 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 
-import androidx.cardview.widget.CardView
+import com.google.android.material.card.MaterialCardView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -61,9 +61,9 @@ class HousingFragment : Fragment() {
     private lateinit var tvSalesValue: TextView
 
     // Rate badge cards
-    private lateinit var badgeMortgage: CardView
-    private lateinit var badge10Y: CardView
-    private lateinit var badgeSpread: CardView
+    private lateinit var badgeMortgage: MaterialCardView
+    private lateinit var badge10Y: MaterialCardView
+    private lateinit var badgeSpread: MaterialCardView
     private lateinit var tvBadgeMortgageValue: TextView
     private lateinit var tvBadge10YValue: TextView
     private lateinit var tvBadgeSpreadValue: TextView
@@ -141,7 +141,7 @@ class HousingFragment : Fragment() {
 
         // Style swappable chart (dark theme)
         styleSwappableChart()
-        ChartHelper.declutterDark(chartSwappable)
+        ChartHelper.declutterPanel(chartSwappable)
         ChartHelper.attachCrosshair(chartSwappable) // TICKET-23
 
         // TICKET-11: one inline range switcher drives both Housing charts.
@@ -163,8 +163,9 @@ class HousingFragment : Fragment() {
         setActiveBadge("mortgage")
 
         // ── MBS Chart: full dark theme styling ──────────────────────────────
-        val mbsDarkBg = ContextCompat.getColor(requireContext(), R.color.card_navy_badge) // TICKET-57
-        val mbsSubtleGrid = Color.argb(0x14, 0xFF, 0xFF, 0xFF) // ~8% white
+        // Pantrii port U10: on the surface card, chrome from ChartPalette.
+        val mbsDarkBg = Color.TRANSPARENT
+        val mbsSubtleGrid = ChartPalette.grid(requireContext())
 
         chartMbsMortgage.setBackgroundColor(mbsDarkBg)
         chartMbsMortgage.setDrawGridBackground(false)
@@ -176,7 +177,7 @@ class HousingFragment : Fragment() {
         chartMbsMortgage.setDoubleTapToZoomEnabled(true)
         chartMbsMortgage.description.setEnabled(false)
         chartMbsMortgage.setNoDataText("Awaiting MBS Data...")
-        chartMbsMortgage.setNoDataTextColor(ChartPalette.slateDim(requireContext()))
+        chartMbsMortgage.setNoDataTextColor(ChartPalette.axisText(requireContext()))
         chartMbsMortgage.setExtraBottomOffset(30f)
         chartMbsMortgage.setExtraLeftOffset(10f)
         chartMbsMortgage.setExtraTopOffset(10f)
@@ -185,7 +186,7 @@ class HousingFragment : Fragment() {
         // X-axis
         val mbsXAxis = chartMbsMortgage.xAxis
         mbsXAxis.setPosition(XAxis.XAxisPosition.BOTTOM)
-        mbsXAxis.setTextColor(ChartPalette.slateDim(requireContext()))
+        mbsXAxis.setTextColor(ChartPalette.axisText(requireContext()))
         mbsXAxis.setTextSize(10f)
         mbsXAxis.setDrawGridLines(true)
         mbsXAxis.setGridColor(mbsSubtleGrid)
@@ -224,7 +225,7 @@ class HousingFragment : Fragment() {
 
         // Legend
         val mbsLegend = chartMbsMortgage.legend
-        mbsLegend.setTextColor(ChartPalette.slate(requireContext()))
+        mbsLegend.setTextColor(ChartPalette.legendText(requireContext()))
         mbsLegend.setTextSize(11f)
         mbsLegend.setForm(Legend.LegendForm.LINE)
         mbsLegend.setFormSize(16f)
@@ -236,7 +237,7 @@ class HousingFragment : Fragment() {
         mbsLegend.setYOffset(5f)
 
         // Observe housing data (metric cards only)
-        ChartHelper.declutterDark(chartMbsMortgage)
+        ChartHelper.declutterPanel(chartMbsMortgage)
         ChartHelper.attachCrosshair(chartMbsMortgage) // TICKET-23
 
         viewModel.getHousingData().observe(viewLifecycleOwner) { housing ->
@@ -373,13 +374,10 @@ class HousingFragment : Fragment() {
     }
 
     private fun setActiveBadge(which: String) {
-        // R3-TICKET-01: border geometry lives in BenchmarkStyle so it tracks the card radius token.
-        badgeMortgage.foreground = if ("mortgage" == which) BenchmarkStyle.activeCardBorder(
-            requireContext(), R.dimen.radius_card_kpi) else null
-        badge10Y.foreground = if ("tenYear" == which) BenchmarkStyle.activeCardBorder(
-            requireContext(), R.dimen.radius_card_kpi) else null
-        badgeSpread.foreground = if ("spread" == which) BenchmarkStyle.activeCardBorder(
-            requireContext(), R.dimen.radius_card_kpi) else null
+        // R3-TICKET-01 / U10: the active card swaps its stroke through BenchmarkStyle.
+        BenchmarkStyle.setCardActive(badgeMortgage, "mortgage" == which)
+        BenchmarkStyle.setCardActive(badge10Y, "tenYear" == which)
+        BenchmarkStyle.setCardActive(badgeSpread, "spread" == which)
         // TICKET-58: the value size moves with the stroke — one hero per row.
         HeroValue.apply(tvBadgeMortgageValue, "mortgage" == which)
         HeroValue.apply(tvBadge10YValue, "tenYear" == which)
@@ -396,8 +394,8 @@ class HousingFragment : Fragment() {
     // ── Swappable Chart ────────────────────────────────────────────────────────
 
     private fun styleSwappableChart() {
-        val darkBg = ContextCompat.getColor(requireContext(), R.color.card_navy_badge) // TICKET-57
-        val subtleGrid = Color.argb(0x14, 0xFF, 0xFF, 0xFF)
+        val darkBg = Color.TRANSPARENT // Pantrii port U10: on the surface card
+        val subtleGrid = ChartPalette.grid(requireContext())
 
         chartSwappable.setBackgroundColor(darkBg)
         chartSwappable.setDrawGridBackground(false)
@@ -408,14 +406,14 @@ class HousingFragment : Fragment() {
         chartSwappable.setPinchZoom(true)
         chartSwappable.description.setEnabled(false)
         chartSwappable.setNoDataText("Select a badge above…")
-        chartSwappable.setNoDataTextColor(ChartPalette.slateDim(requireContext()))
+        chartSwappable.setNoDataTextColor(ChartPalette.axisText(requireContext()))
         chartSwappable.setExtraBottomOffset(8f)
         chartSwappable.setExtraLeftOffset(8f)
         chartSwappable.setExtraRightOffset(8f)
 
         val xAxis = chartSwappable.xAxis
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM)
-        xAxis.setTextColor(ChartPalette.slateDim(requireContext()))
+        xAxis.setTextColor(ChartPalette.axisText(requireContext()))
         xAxis.setTextSize(9f)
         xAxis.setDrawGridLines(true)
         xAxis.setGridColor(subtleGrid)
@@ -426,7 +424,7 @@ class HousingFragment : Fragment() {
         xAxis.setAvoidFirstLastClipping(true)
 
         val leftAxis = chartSwappable.axisLeft
-        leftAxis.setTextColor(ChartPalette.slate(requireContext()))
+        leftAxis.setTextColor(ChartPalette.axisText(requireContext()))
         leftAxis.setTextSize(10f)
         leftAxis.setDrawGridLines(true)
         leftAxis.setGridColor(subtleGrid)

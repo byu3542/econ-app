@@ -2,16 +2,14 @@
 <!-- Design branch 2a, direction 1d: fixed (non-draggable) hero row at the top
      of Edit Cards — there's only one hero, so nothing to reorder, but it can
      still be swapped for any indicator. -->
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView
+    style="@style/Widget.Econ.Card" xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="@dimen/space_lg"
     android:layout_marginTop="@dimen/space_md"
-    android:layout_marginBottom="@dimen/space_md"
-    app:cardCornerRadius="@dimen/radius_card_kpi"
-    app:cardElevation="1dp"
-    app:cardBackgroundColor="@color/surface_card">
+    android:layout_marginBottom="@dimen/space_md">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -66,4 +64,4 @@
             android:focusable="true" />
 
     </LinearLayout>
-</androidx.cardview.widget.CardView>
+</com.google.android.material.card.MaterialCardView>

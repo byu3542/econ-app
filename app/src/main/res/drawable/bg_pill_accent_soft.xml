@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Pantrii port U10: a tappable accent pill (the News "Analyze" action).
+     It is a control, so KTD10 rule 1 lets it carry the accent. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <corners android:radius="@dimen/radius_pill" />
+    <solid android:color="@color/accent_soft" />
+</shape>

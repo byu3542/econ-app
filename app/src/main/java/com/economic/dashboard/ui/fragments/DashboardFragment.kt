@@ -30,6 +30,7 @@ import com.economic.dashboard.ui.onboarding.WatchlistSetupFragment
 import com.economic.dashboard.ui.views.PressFeedback
 import com.economic.dashboard.ui.views.RollingNumberView
 import com.economic.dashboard.utils.AxisDateFormat
+import com.economic.dashboard.utils.ChartPalette
 import com.economic.dashboard.utils.DeltaFormatter
 import com.economic.dashboard.utils.EdgeToEdgeInsets
 import com.economic.dashboard.utils.HapticUtil
@@ -502,7 +503,7 @@ class DashboardFragment : Fragment() {
         sp.visibility = if (hasData) View.VISIBLE else View.INVISIBLE // slot stays (TICKET-58)
         if (hasData && vals != null) {
             sp.setFillEnabled(false)
-            sp.setLineColor(0xFFC9A84C.toInt())
+            sp.setLineColor(ChartPalette.primary(requireContext())) // U10, KTD10: no gold beside a badge
             val doubles = ArrayList<Double>(vals.size)
             for (v in vals) doubles.add(v.toDouble())
             sp.setData(doubles)

@@ -18,18 +18,14 @@
     <color name="on_accent">#17130A</color>
     <color name="accent_soft">#262014</color>
 
-    <color name="row_alt_bg">#171C26</color>
     <color name="tab_bg_warm_gray">#1C222E</color>
 
     <color name="alabaster_dark_gray">#D8DCE6</color>
 
     <!-- R2-TICKET-09: badge greys get explicit night values so the light and dark
-         badge can't silently diverge. Badge cards are navy in BOTH themes, so the
-         day values are correct here — the entries exist to record that intent and
-         to give every colour on the badge path a light + night pair.
-         text_slate is the only grey a status word may use (@style/Badge.Status);
-         dot_neutral is the pre-data placeholder dot. -->
-    <color name="text_slate">#8A9AB5</color>
+         badge can't silently diverge. Pantrii port U10: text_slate is now an
+         alias of the muted token (values/colors.xml), which flips by itself, so
+         it has no entry here. dot_neutral is the pre-data placeholder dot. -->
     <color name="dot_neutral">#9E9E9E</color>
     <color name="text_on_navy_muted">#8CFFFFFF</color>
     <!-- The two card surfaces a badge can sit on. Same reasoning: navy in both
@@ -48,11 +44,6 @@
     <color name="error_bubble_bg">#2A1E20</color>
     <color name="error_bubble_stroke">#5C3438</color>
     <color name="error_text">#FF8A93</color>
-
-    <color name="chart_grid">#2A3142</color>
-    <color name="chart_axis_line">#3A4358</color>
-    <color name="chart_axis_text">#A9B1C2</color>
-    <color name="chart_legend_text">#C5CCDB</color>
 
     <color name="hairline_on_surface">#1FFFFFFF</color>
     <color name="handle_on_surface">#33FFFFFF</color>

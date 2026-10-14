@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- IOS-05: the sliding thumb — a raised gold pill. Slightly smaller radius
-     than the track so it reads as sitting inside it. -->
+<!-- IOS-05: the sliding thumb. Pantrii port U10: a selected chip (accent_soft
+     pill with an accent hairline) instead of a raised gold block. -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
-    <corners android:radius="5dp"/>
-    <solid android:color="@color/accent_gold"/>
+    <corners android:radius="@dimen/radius_pill"/>
+    <solid android:color="@color/accent_soft"/>
+    <stroke android:width="1dp" android:color="@color/accent"/>
 </shape>

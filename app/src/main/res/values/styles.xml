@@ -30,12 +30,29 @@
          them not even all-caps). Overlines must stay short enough to fit one
          line at 360 dp — put any qualifier on the description line under the
          badge instead. -->
+    <!-- Pantrii port U10 (KTD10 rule 1): muted, not gold. The overline sits
+         beside a status badge, and gold text next to a WATCH badge reads as
+         one state. -->
     <style name="Card.Overline" parent="">
         <item name="android:textSize">@dimen/text_caption</item>
-        <item name="android:textColor">@color/accent_gold</item>
+        <item name="android:textColor">@color/muted</item>
         <item name="android:textStyle">bold</item>
         <item name="android:textAllCaps">true</item>
         <item name="android:letterSpacing">0.08</item>
+    </style>
+
+    <!-- Pantrii port U10 (R10): THE card. Every KPI, panel and chart card in
+         the tabs uses it; there is no navy or gold variant any more. A card
+         that drives the chart below it swaps its stroke through
+         BenchmarkStyle.setCardActive, never through a foreground drawable
+         (MaterialCardView draws this stroke in its foreground). -->
+    <style name="Widget.Econ.Card" parent="Widget.MaterialComponents.CardView">
+        <item name="cardBackgroundColor">@color/surface</item>
+        <item name="cardCornerRadius">@dimen/radius_card</item>
+        <item name="cardElevation">0dp</item>
+        <item name="strokeColor">@color/line</item>
+        <item name="strokeWidth">@dimen/stroke_card</item>
+        <item name="rippleColor">@color/hairline_on_surface</item>
     </style>
 
     <!-- ── Type roles (Pantrii port U2) ─────────────────────────────────────
@@ -81,13 +98,13 @@
          tnum. Now an alias of the number role. -->
     <style name="TextAppearance.Econ.Value" parent="TextAppearance.Econ.Number" />
 
-    <!-- TICKET-57: the one chart-card / panel title, bold in card_white on the
-         navy panels. Was serif until the Pantrii port; now the title role.
+    <!-- TICKET-57: the one chart-card / panel title, bold in ink on the
+         surface card (navy panels until Pantrii port U10). Was serif until the Pantrii port; now the title role.
          Apply with android:textAppearance and set NO inline textColor /
          textSize / fontFamily / textStyle on the same view (those override
          the appearance silently). -->
     <style name="TextAppearance.Econ.PanelTitle" parent="TextAppearance.Econ.Title">
-        <item name="android:textColor">@color/card_white</item>
+        <item name="android:textColor">@color/ink</item>
     </style>
 
     <!-- AIC-05: text button in the row under an analyst answer. 48dp tall so

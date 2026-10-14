@@ -6,7 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 
-import androidx.cardview.widget.CardView
+import com.google.android.material.card.MaterialCardView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 
@@ -45,8 +45,8 @@ class EmploymentFragment : Fragment() {
     private lateinit var swappableChart: LineChart
     private lateinit var tvChartTitle: TextView
 
-    private lateinit var cardUnemploymentStatus: CardView
-    private lateinit var cardLaborParticipation: CardView
+    private lateinit var cardUnemploymentStatus: MaterialCardView
+    private lateinit var cardLaborParticipation: MaterialCardView
     private lateinit var tvUnempValue: TextView
     private lateinit var tvUnempLowInfo: TextView
     private lateinit var tvLaborValue: TextView
@@ -83,8 +83,8 @@ class EmploymentFragment : Fragment() {
             swappableChart, requireActivity(), "U.S. employment data (unemployment rate and related labor series)")
         tvChartTitle = b.tvChartTitle
 
-        ChartHelper.styleNavyChart(swappableChart)
-        ChartHelper.declutterDark(swappableChart)
+        ChartHelper.stylePanelChart(swappableChart)
+        ChartHelper.declutterPanel(swappableChart)
         ChartHelper.attachCrosshair(swappableChart) // TICKET-23
         addEmploymentLimitLines(swappableChart)
 
@@ -139,11 +139,9 @@ class EmploymentFragment : Fragment() {
     }
 
     private fun setActiveCard(which: String) {
-        // R3-TICKET-01: border geometry lives in BenchmarkStyle so it tracks the card radius token.
-        cardUnemploymentStatus.foreground = if ("unemployment" == which) BenchmarkStyle.activeCardBorder(
-            requireContext(), R.dimen.radius_card_kpi) else null
-        cardLaborParticipation.foreground = if ("labor" == which) BenchmarkStyle.activeCardBorder(
-            requireContext(), R.dimen.radius_card_kpi) else null
+        // R3-TICKET-01 / U10: the active card swaps its stroke through BenchmarkStyle.
+        BenchmarkStyle.setCardActive(cardUnemploymentStatus, "unemployment" == which)
+        BenchmarkStyle.setCardActive(cardLaborParticipation, "labor" == which)
         tvChartTitle.text = if ("labor" == which) "Labor Participation Trends" else "Unemployment Trends"
     }
 

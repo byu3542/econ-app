@@ -2,17 +2,17 @@ package com.economic.dashboard.ui
 
 import android.content.Context
 import android.graphics.Color
-import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
-import android.graphics.drawable.InsetDrawable
 import android.view.View
 import android.widget.TextView
 
-import androidx.annotation.DimenRes
+import androidx.annotation.ColorInt
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.ColorUtils
 
 import com.economic.dashboard.R
 import com.economic.dashboard.utils.SettingsManager
+import com.google.android.material.card.MaterialCardView
 
 /**
  * Single source of truth for how a status/benchmark badge is coloured.
@@ -82,6 +82,28 @@ object BenchmarkStyle {
         return w.substring(0, 1).uppercase() + w.substring(1).lowercase()
     }
 
+    /**
+     * Pantrii port U10 (KTD10 rule 2): the leading glyph a tier owns. Paired
+     * with [tierWord], so severity reads from shape and word even where two
+     * tier colours (or WATCH and the gold accent) are close.
+     */
+    @JvmStatic
+    fun tierGlyph(context: Context, tier: Tier): String = context.getString(when (tier) {
+        Tier.GOOD -> R.string.tier_glyph_good
+        Tier.WATCH -> R.string.tier_glyph_watch
+        Tier.ELEVATED -> R.string.tier_glyph_elevated
+        Tier.ALERT -> R.string.tier_glyph_alert
+        Tier.ALERT_DEEP -> R.string.tier_glyph_alert_deep
+        Tier.IMBALANCE -> R.string.tier_glyph_imbalance
+    })
+
+    /** Dark ink or white, whichever reads better on the tier disc [disc]. */
+    private fun glyphInkOn(context: Context, @ColorInt disc: Int): Int {
+        val ink = ContextCompat.getColor(context, R.color.badge_glyph_dark)
+        return if (ColorUtils.calculateContrast(ink, disc) >= ColorUtils.calculateContrast(Color.WHITE, disc)) ink
+        else Color.WHITE
+    }
+
     /** What TalkBack says for a badge: "WATCH, recovering" or just "HEALTHY". */
     @JvmStatic
     fun spoken(context: Context, r: Benchmarks.Result): String {
@@ -106,7 +128,19 @@ object BenchmarkStyle {
     @JvmStatic
     fun apply(card: View?, context: Context?, r: Benchmarks.Result?, dotId: Int, statusTextId: Int) {
         if (card == null || r == null) return
-        tintDot(card.findViewById(dotId), context, r.tier)
+        val dot: View? = card.findViewById(dotId)
+        tintDot(dot, context, r.tier)
+        // U10: a row with a glyph slot (view_status_badge) leads with the glyph
+        // instead of the dot; the dot stays the loading placeholder.
+        val glyph: TextView? = card.findViewById(R.id.tvTierGlyph)
+        if (glyph != null && context != null) {
+            val tierColor = colorFor(context, r.tier)
+            glyph.text = tierGlyph(context, r.tier)
+            glyph.setTextColor(glyphInkOn(context, tierColor))
+            tintDot(glyph, context, r.tier)
+            glyph.visibility = View.VISIBLE
+            dot?.visibility = View.GONE
+        }
         val tv: TextView? = card.findViewById(statusTextId)
         // TICKET-59: the coloured word is the tier word; the metric-specific
         // reading goes to the detail line when the row (view_status_badge) has one.
@@ -141,36 +175,19 @@ object BenchmarkStyle {
     }
 
     /**
-     * Gold "this card drives the chart" outline (R3-TICKET-01), sized to the card's own
-     * corner radius so the arc stays concentric with the CardView clip.
+     * Marks the card that drives the chart below it (R3-TICKET-01). Pantrii
+     * port U10: the card's own stroke turns accent and one step heavier, the
+     * same accent hairline a selected chip carries; otherwise it is the plain
+     * `line` hairline of @style/Widget.Econ.Card.
      *
-     * Hang it on a selected card with
-     * `card.foreground = BenchmarkStyle.activeCardBorder(ctx, R.dimen.radius_card_kpi)`
-     * and clear it with `foreground = null`.
-     *
-     * **Pass the card's radius dimen; never hardcode it.** This method replaces five
-     * copy-pasted `makeActiveBorder()` privates that each baked in `16f * density`.
-     * When the KPI cards moved to `@dimen/radius_card_kpi` (12dp) only one copy was
-     * updated, so the other four drew a 16dp arc inside a 12dp clip and leaked navy card fill
-     * at the corners — see `TICKET_2026-07-24_selector_border_radius.md`.
-     *
-     * The [InsetDrawable] compensates for [GradientDrawable] centering its
-     * stroke on the shape edge, which is what keeps the straight edges flush. That inset is
-     * correct — only the radius term was ever wrong.
-     *
-     * @param ctx         any context able to resolve app resources
-     * @param radiusDimen the `cardCornerRadius` dimen the target card uses
+     * It used to hang a gold [GradientDrawable] on `card.foreground`, sized to
+     * the card radius. MaterialCardView draws its stroke in that foreground, so
+     * the old way would erase the hairline on every card it cleared.
      */
     @JvmStatic
-    fun activeCardBorder(ctx: Context, @DimenRes radiusDimen: Int): Drawable {
-        val density = ctx.resources.displayMetrics.density
-        val strokePx = Math.max(2, Math.round(1.5f * density))
-        val insetPx = Math.ceil((strokePx / 2f).toDouble()).toInt()
-        val radiusPx = ctx.resources.getDimension(radiusDimen)
-        val gd = GradientDrawable()
-        gd.setColor(Color.TRANSPARENT)
-        gd.cornerRadius = radiusPx - insetPx
-        gd.setStroke(strokePx, ContextCompat.getColor(ctx, R.color.accent_gold))
-        return InsetDrawable(gd, insetPx)
+    fun setCardActive(card: MaterialCardView, active: Boolean) {
+        val res = card.resources
+        card.strokeColor = ContextCompat.getColor(card.context, if (active) R.color.accent else R.color.line)
+        card.strokeWidth = res.getDimensionPixelSize(if (active) R.dimen.stroke_card_active else R.dimen.stroke_card)
     }
 }

@@ -1,15 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView
+    style="@style/Widget.Econ.Card"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="@dimen/space_md"
-    android:layout_marginVertical="@dimen/space_xs"
-    app:cardBackgroundColor="@color/surface_card"
-    app:cardElevation="1dp"
-    app:cardCornerRadius="10dp"
-    android:foreground="?attr/selectableItemBackground">
+    android:layout_marginVertical="@dimen/space_xs">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -127,12 +124,12 @@
             android:layout_gravity="center_vertical"
             android:layout_marginStart="@dimen/space_sm"
             android:paddingHorizontal="@dimen/space_md"
-            android:background="@drawable/bg_pill_navy"
+            android:background="@drawable/bg_pill_accent_soft"
             android:drawableStart="@drawable/ic_sparkle_12"
-            android:drawableTint="@color/accent_gold"
+            android:drawableTint="@color/accent"
             android:drawablePadding="@dimen/space_xs"
             android:text="@string/news_analyze_chip"
-            android:textColor="@color/accent_gold"
+            android:textColor="@color/accent"
             android:textSize="@dimen/text_caption"
             android:textStyle="bold"
             android:contentDescription="@string/news_more_actions"

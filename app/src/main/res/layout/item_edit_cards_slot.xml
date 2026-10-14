@@ -2,15 +2,13 @@
 <!-- Design branch 2a, direction 1d: one slot row. The handle drags to reorder
      within its category only; Swap opens a picker scoped to that same
      category so the card's label never goes stale. -->
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView
+    style="@style/Widget.Econ.Card" xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="@dimen/space_lg"
-    android:layout_marginBottom="@dimen/space_sm"
-    app:cardCornerRadius="@dimen/radius_card_kpi"
-    app:cardElevation="1dp"
-    app:cardBackgroundColor="@color/surface_card">
+    android:layout_marginBottom="@dimen/space_sm">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -66,4 +64,4 @@
             android:focusable="true" />
 
     </LinearLayout>
-</androidx.cardview.widget.CardView>
+</com.google.android.material.card.MaterialCardView>

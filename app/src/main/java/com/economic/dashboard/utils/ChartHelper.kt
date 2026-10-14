@@ -124,7 +124,8 @@ object ChartHelper {
     }
 
     /**
-     * The dark-navy base style the per-tab fragments used to each carry as a
+     * The panel-card base style (dark navy until Pantrii port U10; now on the
+     * surface card, chrome from [ChartPalette]) the per-tab fragments used to each carry as a
      * private `styleChart` — one copy here so a style change is single-point.
      * The three per-site variants are parameters: `noDataText` (Stocks:
      * "Loading…", Yields: "Loading yield data…"), `noDataTextColor`
@@ -132,29 +133,29 @@ object ChartHelper {
      * line to the grid color).
      */
     @JvmStatic
-    fun styleNavyChart(
+    fun stylePanelChart(
         chart: LineChart,
         noDataText: String = "Loading data...",
         noDataTextColor: Int? = null,
         xAxisLineToGrid: Boolean = false
     ) {
         val ctx: Context = chart.context
-        val grid = Color.argb(0x14, 0xFF, 0xFF, 0xFF)
-        // TICKET-57: tokens, not literals — the same navy the badge cards use.
-        chart.setBackgroundColor(ContextCompat.getColor(ctx, R.color.card_navy_badge)); chart.setDrawGridBackground(false)
+        val grid = ChartPalette.grid(ctx)
+        // Pantrii port U10: transparent, so the chart sits on the surface card.
+        chart.setBackgroundColor(Color.TRANSPARENT); chart.setDrawGridBackground(false)
         chart.setDrawBorders(false); chart.setTouchEnabled(true); chart.setDragEnabled(true)
         chart.setScaleEnabled(true); chart.setPinchZoom(true); chart.description.setEnabled(false)
         chart.setNoDataText(noDataText)
-        if (noDataTextColor != null) chart.setNoDataTextColor(noDataTextColor)
+        chart.setNoDataTextColor(noDataTextColor ?: ChartPalette.axisText(ctx))
         chart.setExtraBottomOffset(8f)
         val x = chart.xAxis
-        x.setPosition(XAxis.XAxisPosition.BOTTOM); x.setTextColor(ChartPalette.slateDim(ctx)); x.setTextSize(9f)
+        x.setPosition(XAxis.XAxisPosition.BOTTOM); x.setTextColor(ChartPalette.axisText(ctx)); x.setTextSize(9f)
         x.setDrawGridLines(true); x.setGridColor(grid)
         if (xAxisLineToGrid) x.setAxisLineColor(grid)
         x.setLabelRotationAngle(-45f)
         x.setGranularity(1f); x.setLabelCount(6, false); x.setAvoidFirstLastClipping(true)
         val y = chart.axisLeft
-        y.setTextColor(ChartPalette.slate(ctx)); y.setTextSize(10f); y.setDrawGridLines(true); y.setGridColor(grid)
+        y.setTextColor(ChartPalette.axisText(ctx)); y.setTextSize(10f); y.setDrawGridLines(true); y.setGridColor(grid)
         chart.axisRight.setEnabled(false)
         // TICKET-57: one legend look (line swatch, slate, bottom-centre); off
         // until setLineData sees more than one series.
@@ -164,7 +165,7 @@ object ChartHelper {
         legend.setOrientation(Legend.LegendOrientation.HORIZONTAL)
         legend.setDrawInside(false)
         legend.setTextSize(11f)
-        legend.setTextColor(ChartPalette.slate(ctx))
+        legend.setTextColor(ChartPalette.legendText(ctx))
         legend.setForm(Legend.LegendForm.LINE)
         legend.setFormSize(16f)
         legend.setFormLineWidth(2f)
@@ -224,9 +225,9 @@ object ChartHelper {
      * (low-alpha white on navy) so no resource lookups are needed.
      */
     @JvmStatic
-    fun declutterDark(chart: LineChart?) {
+    fun declutterPanel(chart: LineChart?) {
         if (chart == null) return
-        val faintGrid = Color.argb(0x0D, 0xFF, 0xFF, 0xFF) // ~5% white
+        val faintGrid = ChartPalette.grid(chart.context)
         chart.description.setEnabled(false)
 
         // IOS-07: no vertical gridlines — Swift Charts doesn't draw them.

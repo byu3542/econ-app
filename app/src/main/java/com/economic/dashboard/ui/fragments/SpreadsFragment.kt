@@ -6,7 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 
-import androidx.cardview.widget.CardView
+import com.google.android.material.card.MaterialCardView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 
@@ -45,8 +45,8 @@ class SpreadsFragment : Fragment() {
     private lateinit var viewModel: EconomicViewModel
     private lateinit var swappableChart: LineChart
     private lateinit var tvChartTitle: TextView
-    private lateinit var cardSpreadYoY: CardView
-    private lateinit var cardSpread3M: CardView
+    private lateinit var cardSpreadYoY: MaterialCardView
+    private lateinit var cardSpread3M: MaterialCardView
     // MOT-01: rolling figures
     private lateinit var tvSpreadValue: RollingNumberView
     private lateinit var tvSpread3MValue: RollingNumberView
@@ -81,8 +81,8 @@ class SpreadsFragment : Fragment() {
         AskAnalyst.attachChartExplain(
             swappableChart, requireActivity(), "Treasury yield spreads (10Y-2Y and 10Y-3M) over time")
         tvChartTitle = b.tvChartTitle
-        ChartHelper.styleNavyChart(swappableChart)
-        ChartHelper.declutterDark(swappableChart)
+        ChartHelper.stylePanelChart(swappableChart)
+        ChartHelper.declutterPanel(swappableChart)
         ChartHelper.attachCrosshair(swappableChart) // TICKET-23
         addSpreadLimitLines(swappableChart)
         swappableChart.axisLeft.setValueFormatter(object : ValueFormatter() {
@@ -158,11 +158,9 @@ class SpreadsFragment : Fragment() {
     }
 
     private fun setActiveCard(which: String) {
-        // R3-TICKET-01: border geometry lives in BenchmarkStyle so it tracks the card radius token.
-        cardSpreadYoY.foreground = if ("yoy" == which) BenchmarkStyle.activeCardBorder(
-            requireContext(), R.dimen.radius_card_kpi) else null
-        cardSpread3M.foreground = if ("3m" == which) BenchmarkStyle.activeCardBorder(
-            requireContext(), R.dimen.radius_card_kpi) else null
+        // R3-TICKET-01 / U10: the active card swaps its stroke through BenchmarkStyle.
+        BenchmarkStyle.setCardActive(cardSpreadYoY, "yoy" == which)
+        BenchmarkStyle.setCardActive(cardSpread3M, "3m" == which)
         tvChartTitle.text = if ("3m" == which) "10Y-3M Spread" else "10Y-2Y Spread"
     }
 

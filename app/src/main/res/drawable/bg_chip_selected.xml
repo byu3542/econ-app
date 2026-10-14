@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Pantrii port U10 (KTD10 rule 1): the selected chip. accent_soft fill, a
+     1dp accent hairline, ink text on top. The accent is a fill on a control
+     here, never a pill or dot beside data, so it cannot read as a WATCH badge. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <corners android:radius="@dimen/radius_pill" />
+    <solid android:color="@color/accent_soft" />
+    <stroke android:width="1dp" android:color="@color/accent" />
+</shape>

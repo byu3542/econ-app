@@ -42,6 +42,7 @@ import com.economic.dashboard.utils.AppExecutors
 import com.economic.dashboard.utils.MotionUtil
 import com.economic.dashboard.utils.AxisDateFormat
 import com.economic.dashboard.utils.ChartHelper
+import com.economic.dashboard.utils.ChartPalette
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
@@ -544,7 +545,7 @@ class ChatAdapter(
         AxisDateFormat.attachLabels(lineChart,
             card.points.map { AxisDateFormat.axisLabel(it.date, AxisDateFormat.COMPACT) })
         val ds = LineDataSet(entries, card.label)
-        ChartHelper.styleLineSeries(ds, ContextCompat.getColor(ctx, R.color.sheet_accent))
+        ChartHelper.styleLineSeries(ds, ChartPalette.primary(ctx)) // U10, KTD10 rule 3: never the accent
         ChartHelper.setLineData(lineChart, LineData(ds))
         ChartHelper.highlightLatest(lineChart)
 

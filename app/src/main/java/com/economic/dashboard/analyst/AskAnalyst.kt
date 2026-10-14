@@ -146,7 +146,7 @@ object AskAnalyst {
         iv.tag = TAG_SPARKLE
         iv.setImageResource(R.drawable.ic_sparkle_12)
         iv.imageTintList = ColorStateList.valueOf(
-            ContextCompat.getColor(card.context, R.color.card_white))
+            ContextCompat.getColor(card.context, R.color.ink))
         iv.alpha = 0.5f
         iv.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
         val lp = FrameLayout.LayoutParams(size, size, Gravity.TOP or Gravity.END)

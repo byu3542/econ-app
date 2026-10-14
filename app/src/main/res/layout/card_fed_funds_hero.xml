@@ -1,13 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView
+<com.google.android.material.card.MaterialCardView
+    style="@style/Widget.Econ.Card"
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/cardFedFundsHero"
-    style="@style/FedFundsHeroCard"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="@dimen/space_lg"
-    android:backgroundTint="@null"
-    android:foreground="@null"
     android:clickable="true"
     android:focusable="true">
 
@@ -15,12 +13,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
-
-        <!-- Gold accent bar at top -->
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="3dp"
-            android:background="@color/accent_gold" />
 
         <!-- Card content -->
         <RelativeLayout
@@ -42,7 +34,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="FED FUNDS RATE"
-                    android:textColor="@color/accent_gold"
+                    android:textColor="@color/muted"
                     android:textSize="@dimen/text_caption"
                     android:textStyle="bold"
                     android:textAllCaps="true"
@@ -54,7 +46,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="—"
-                    android:textColor="@color/card_white"
+                    android:textColor="@color/ink"
                     android:textSize="@dimen/text_display_lg"
                     android:textStyle="bold"
                     android:includeFontPadding="false" />
@@ -63,7 +55,7 @@
                     android:id="@+id/tvFedFundsHeroLastUpdated"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/text_on_navy_muted"
+                    android:textColor="@color/muted"
                     android:textSize="@dimen/text_caption"
                     android:visibility="gone" />
 
@@ -73,7 +65,7 @@
                     android:layout_marginTop="@dimen/space_sm"
                     android:text="View history →"
                     android:textSize="@dimen/text_caption"
-                    android:textColor="@color/text_on_navy_muted" />
+                    android:textColor="@color/muted" />
 
                 <!-- Shown only when the Fed Funds series fails to refresh; the
                      cached rate above stays visible. Tapping re-fetches it. -->
@@ -86,7 +78,7 @@
                     android:paddingVertical="@dimen/space_xs"
                     android:background="@drawable/bg_retry_pill"
                     android:text="@string/couldnt_refresh"
-                    android:textColor="@color/signal_watch"
+                    android:textColor="@color/ink_2"
                     android:textSize="@dimen/text_caption"
                     android:clickable="true"
                     android:focusable="true"
@@ -120,7 +112,7 @@
                     android:id="@+id/tvFedFundsHeroCycle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/text_on_navy_secondary"
+                    android:textColor="@color/ink_2"
                     android:textSize="@dimen/text_caption"
                     android:textStyle="italic"
                     android:visibility="gone" />
@@ -130,7 +122,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_hairline"
-                    android:textColor="@color/text_on_navy_muted"
+                    android:textColor="@color/muted"
                     android:textSize="@dimen/text_caption" />
 
             </LinearLayout>
@@ -138,4 +130,4 @@
         </RelativeLayout>
 
     </LinearLayout>
-</androidx.cardview.widget.CardView>
+</com.google.android.material.card.MaterialCardView>

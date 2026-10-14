@@ -74,12 +74,15 @@
     <dimen name="radius_badge">12dp</dimen>   <!-- neutral badge, retry pill -->
     <dimen name="radius_pill">20dp</dimen>    <!-- fully-rounded chips/pills -->
 
-    <!-- Card chrome (R2-TICKET-04): exactly two card families, told apart by role.
-         KPI = a card that carries a status badge (Overview grid + every leaf tab's
-         reading cards). PANEL = a chart/section card. Never mix the two sets:
-         a badge card is 12dp/4dp, a chart card is 16dp/6dp. -->
-    <dimen name="radius_card_kpi">12dp</dimen>
-    <dimen name="elevation_card_kpi">4dp</dimen>
-    <dimen name="radius_card_panel">16dp</dimen>
-    <dimen name="elevation_card_panel">6dp</dimen>
+    <!-- Card chrome (Pantrii port U10, R10): ONE card. 20dp radius, no
+         elevation, a 1dp @color/line stroke on @color/surface. Supersedes the
+         R2-TICKET-04 KPI (12dp/4dp) and panel (16dp/6dp) families. The style
+         that applies it is @style/Widget.Econ.Card. -->
+    <dimen name="radius_card">20dp</dimen>
+    <dimen name="stroke_card">1dp</dimen>
+    <!-- The card that drives the chart below it: accent stroke, one step heavier. -->
+    <dimen name="stroke_card_active">2dp</dimen>
+    <!-- Pantrii port U10: the status badge's glyph disc (view_status_badge). -->
+    <dimen name="badge_glyph_disc">16dp</dimen>
+    <dimen name="badge_glyph_text">10sp</dimen>
 </resources>

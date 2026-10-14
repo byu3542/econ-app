@@ -6,7 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 
-import androidx.cardview.widget.CardView
+import com.google.android.material.card.MaterialCardView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 
@@ -43,9 +43,9 @@ class StocksFragment : Fragment() {
     private lateinit var viewModel: EconomicViewModel
     private var binding: FragmentStocksBinding? = null
     private lateinit var skeleton: SkeletonController
-    private lateinit var cardSp500: CardView
-    private lateinit var cardNasdaq: CardView
-    private lateinit var cardVix: CardView
+    private lateinit var cardSp500: MaterialCardView
+    private lateinit var cardNasdaq: MaterialCardView
+    private lateinit var cardVix: MaterialCardView
     // MOT-01: rolling figures
     private lateinit var tvSp500Value: RollingNumberView
     private lateinit var tvNasdaqValue: RollingNumberView
@@ -103,8 +103,8 @@ class StocksFragment : Fragment() {
             swappableChart, requireActivity(), "stock market indices (S&P 500, Nasdaq, VIX)")
         tvChartTitle = b.tvChartTitle
 
-        ChartHelper.styleNavyChart(swappableChart, noDataText = "Loading…", xAxisLineToGrid = true)
-        ChartHelper.declutterDark(swappableChart)
+        ChartHelper.stylePanelChart(swappableChart, noDataText = "Loading…", xAxisLineToGrid = true)
+        ChartHelper.declutterPanel(swappableChart)
         ChartHelper.attachCrosshair(swappableChart) // TICKET-23
         addVixBenchmarks(swappableChart)
 
@@ -190,13 +190,10 @@ class StocksFragment : Fragment() {
     }
 
     private fun setActiveCard(which: String) {
-        // R3-TICKET-01: border geometry lives in BenchmarkStyle so it tracks the card radius token.
-        cardSp500.foreground = if ("sp500" == which) BenchmarkStyle.activeCardBorder(
-            requireContext(), R.dimen.radius_card_kpi) else null
-        cardNasdaq.foreground = if ("nasdaq" == which) BenchmarkStyle.activeCardBorder(
-            requireContext(), R.dimen.radius_card_kpi) else null
-        cardVix.foreground = if ("vix" == which) BenchmarkStyle.activeCardBorder(
-            requireContext(), R.dimen.radius_card_kpi) else null
+        // R3-TICKET-01 / U10: the active card swaps its stroke through BenchmarkStyle.
+        BenchmarkStyle.setCardActive(cardSp500, "sp500" == which)
+        BenchmarkStyle.setCardActive(cardNasdaq, "nasdaq" == which)
+        BenchmarkStyle.setCardActive(cardVix, "vix" == which)
         // TICKET-58: the value size moves with the stroke — one hero per row.
         HeroValue.apply(tvSp500Value, "sp500" == which)
         HeroValue.apply(tvNasdaqValue, "nasdaq" == which)

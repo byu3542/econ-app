@@ -20,6 +20,7 @@ import com.economic.dashboard.R
 import com.economic.dashboard.models.EconomicDataPoint
 import com.economic.dashboard.ui.views.SegmentedView
 import com.economic.dashboard.utils.ChartHelper
+import com.economic.dashboard.utils.ChartPalette
 import com.economic.dashboard.utils.AxisDateFormat
 import com.economic.dashboard.utils.TimeframeSelector
 import com.github.mikephil.charting.charts.LineChart
@@ -232,7 +233,7 @@ object MetricPopupController {
         if (windowMonths != null) AxisDateFormat.attach(chart, spec.chartId, windowMonths, dates)
         else AxisDateFormat.attach(chart, chart.context, spec.chartId, dates) // TICKET-57
         val ds = LineDataSet(entries, spec.title)
-        ChartHelper.styleLineSeries(ds, ContextCompat.getColor(chart.context, R.color.sheet_accent))
+        ChartHelper.styleLineSeries(ds, ChartPalette.primary(chart.context)) // U10, KTD10 rule 3: never the accent
         ChartHelper.setLineData(chart, LineData(ds))
     }
 

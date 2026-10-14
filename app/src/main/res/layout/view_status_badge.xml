@@ -48,6 +48,24 @@
             android:layout_marginEnd="@dimen/space_xs"
             android:importantForAccessibility="no" />
 
+        <!-- Pantrii port U10 (KTD10 rule 2): the tier glyph, an ink or white
+             shape on a disc in the tier colour. BenchmarkStyle.apply fills it
+             and hides the placeholder dot, so a loaded badge leads with a
+             shape, not just a colour, and the shape stays legible where the
+             tier colour itself is faint (WATCH yellow on a white card). TalkBack skips
+             it; the word already says the state. -->
+        <TextView
+            android:id="@+id/tvTierGlyph"
+            android:layout_width="@dimen/badge_glyph_disc"
+            android:layout_height="@dimen/badge_glyph_disc"
+            android:layout_marginEnd="@dimen/space_xs"
+            android:gravity="center"
+            android:textSize="@dimen/badge_glyph_text"
+            android:textStyle="bold"
+            android:includeFontPadding="false"
+            android:importantForAccessibility="no"
+            android:visibility="gone" />
+
         <TextView
             android:id="@+id/tvTierStatus"
             style="@style/Badge.Status"
@@ -64,7 +82,7 @@
         android:layout_marginTop="@dimen/space_hairline"
         android:lines="1"
         android:ellipsize="end"
-        android:textColor="@color/slate_dim"
+        android:textColor="@color/muted"
         android:textSize="@dimen/text_caption"
         android:visibility="gone" />
 

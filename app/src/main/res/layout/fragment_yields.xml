@@ -15,17 +15,17 @@
         <!-- TICKET-18: per-screen retry chip (hidden until this screen's fetch fails) -->
         <include layout="@layout/view_retry_chip" />
 
-        <androidx.cardview.widget.CardView
+        <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.Econ.Card"
             android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/space_2xl" app:cardCornerRadius="@dimen/radius_card_panel"
-            app:cardElevation="@dimen/elevation_card_panel" app:cardBackgroundColor="@color/header_navy">
+            android:layout_marginBottom="@dimen/space_2xl">
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:orientation="vertical" android:paddingHorizontal="@dimen/space_xl" android:paddingTop="@dimen/space_lg">
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                         android:text="Current Yield Curve" android:textAppearance="@style/TextAppearance.Econ.PanelTitle" />
-                    <View android:layout_width="match_parent" android:layout_height="2dp"
-                        android:layout_marginTop="@dimen/space_sm" android:background="@color/accent_gold" />
+                    <View android:layout_width="match_parent" android:layout_height="1dp"
+                        android:layout_marginTop="@dimen/space_sm" android:background="@color/line" />
                 </LinearLayout>
                 <com.github.mikephil.charting.charts.LineChart
                     android:id="@+id/yieldCurveChart"
@@ -33,19 +33,18 @@
                     android:contentDescription="Treasury yield curve chart"
                     android:layout_width="match_parent" android:layout_height="300dp" android:padding="@dimen/space_md" />
             </LinearLayout>
-        </androidx.cardview.widget.CardView>
+        </com.google.android.material.card.MaterialCardView>
 
-        <androidx.cardview.widget.CardView
+        <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.Econ.Card"
             android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/space_2xl" app:cardCornerRadius="@dimen/radius_card_panel"
-            app:cardElevation="@dimen/elevation_card_panel" app:cardBackgroundColor="@color/surface_card">
+            android:layout_marginBottom="@dimen/space_2xl">
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
-                <RelativeLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:background="@color/header_navy" android:paddingHorizontal="@dimen/space_xl" android:paddingVertical="@dimen/space_lg">
+                <RelativeLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingHorizontal="@dimen/space_xl" android:paddingVertical="@dimen/space_lg">
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                         android:text="Treasury Yields" android:textAppearance="@style/TextAppearance.Econ.PanelTitle" />
-                    <View android:layout_width="match_parent" android:layout_height="2dp"
-                        android:layout_alignParentBottom="true" android:background="@color/accent_gold" />
+                    <View android:layout_width="match_parent" android:layout_height="1dp"
+                        android:layout_alignParentBottom="true" android:background="@color/line" />
                 </RelativeLayout>
                 <include layout="@layout/row_section_alt" android:id="@+id/row1M" />
                 <include layout="@layout/row_section" android:id="@+id/row3M" />
@@ -53,7 +52,7 @@
                 <include layout="@layout/row_section" android:id="@+id/row10Y" />
                 <include layout="@layout/row_section_alt" android:id="@+id/row30Y" />
             </LinearLayout>
-        </androidx.cardview.widget.CardView>
+        </com.google.android.material.card.MaterialCardView>
 
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

@@ -40,7 +40,8 @@
     <!-- Light/dark-flipping card surface. card_white stays literal white in both
          modes because many layouts use it as TEXT color on navy cards. -->
     <color name="surface_card">@color/surface</color>
-    <color name="row_alt_bg">#faf9f7</color>
+    <!-- U10: zebra rows alternate surface and ground. Alias. -->
+    <color name="row_alt_bg">@color/ground</color>
     <color name="divider_sand">@color/line</color>
     <color name="accent_gold">#c9a84c</color>
     <!-- Darker gold for bold text on cards (chat key figures). Alias: follows
@@ -55,9 +56,10 @@
     <!-- Dark badge cards (KPI grid, housing badges) -->
     <color name="card_navy_badge">#1C2236</color>
     <!-- R2-TICKET-01/09: the ONE grey a status badge word is allowed to use.
-         Owned by @style/Badge.Status; has an explicit values-night twin so the
-         badge greys can't drift apart across themes again. -->
-    <color name="text_slate">#8A9AB5</color>
+         Owned by @style/Badge.Status. Pantrii port U10: an alias of muted, so
+         one token drives both themes (the old #8A9AB5 slate measured 2.7:1 on
+         a white surface card). -->
+    <color name="text_slate">@color/muted</color>
     <!-- R2-TICKET-08: neutral placeholder dot, shown until BenchmarkStyle.tintDot()
          supplies the tier colour. Was a #9e9e9e literal in drawable/dot_neutral.xml. -->
     <color name="dot_neutral">#9E9E9E</color>
@@ -103,11 +105,12 @@
          clear 4.5:1; the night twin keeps slate because the tab bg goes dark. -->
     <color name="economy_tab_text_unselected">#4E5D75</color>
 
-    <!-- Theme-aware chart styling (light-surface charts via ChartHelper) -->
-    <color name="chart_grid">#EEEEEE</color>
-    <color name="chart_axis_line">#CCCCCC</color>
-    <color name="chart_axis_text">#888888</color>
-    <color name="chart_legend_text">#555555</color>
+    <!-- Theme-aware chart chrome. U10: aliases onto the tokens, read through
+         ChartPalette.grid / axisText / legendText. -->
+    <color name="chart_grid">@color/line</color>
+    <color name="chart_axis_line">@color/line</color>
+    <color name="chart_axis_text">@color/muted</color>
+    <color name="chart_legend_text">@color/ink_2</color>
 
     <!-- Theme-aware hairlines/handles on flipping surfaces -->
     <color name="hairline_on_surface">#14000000</color>
@@ -141,6 +144,9 @@
     <!-- Purple = "too much of a good thing" (imbalance): GDP overheating, extreme curve steepness. Never reused for "very strong/best". -->
     <color name="signal_imbalance">#8A6E9E</color>
     <!-- Colorblind-safe status set (Okabe-Ito), swapped in when colorblind mode is on. Distinct luminance for grayscale. -->
+    <!-- Pantrii port U10: the dark glyph ink on a badge's tier disc. Fixed in
+         both themes: it sits on the signal colour, not on the page. -->
+    <color name="badge_glyph_dark">#121826</color>
     <color name="signal_good_cb">#009E73</color>
     <color name="signal_watch_cb">#F0E442</color>
     <color name="signal_elevated_cb">#E69F00</color>

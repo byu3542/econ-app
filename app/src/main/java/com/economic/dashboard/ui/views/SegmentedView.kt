@@ -233,10 +233,10 @@ class SegmentedView @JvmOverloads constructor(
         for (seg in segments) if (seg.tag?.toString() == tag) seg.setTextColor(active)
     }
 
-    /** Label color on the thumb: navy on gold; theme text on the subtle thumb. */
+    /** Label color on the thumb: ink on the accent_soft chip (U10); theme text on the subtle thumb. */
     private fun activeTextColor(): Int = ContextCompat.getColor(
         context,
-        if (emphasis == Emphasis.PRIMARY) R.color.header_navy else R.color.text_navy
+        if (emphasis == Emphasis.PRIMARY) R.color.ink else R.color.text_navy
     )
 
     private fun dp(v: Int): Int =

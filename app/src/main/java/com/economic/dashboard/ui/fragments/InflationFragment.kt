@@ -116,12 +116,12 @@ class InflationFragment : Fragment() {
         AskAnalyst.attachChartExplain(
             chartComparison, requireActivity(), "a comparison of inflation measures")
 
-        ChartHelper.styleNavyChart(chartPceCpi)
-        ChartHelper.styleNavyChart(chartComparison)
+        ChartHelper.stylePanelChart(chartPceCpi)
+        ChartHelper.stylePanelChart(chartComparison)
         // TICKET-07/08: thin gridlines + label each line at its right end
         // instead of a detached legend.
-        ChartHelper.declutterDark(chartPceCpi)
-        ChartHelper.declutterDark(chartComparison)
+        ChartHelper.declutterPanel(chartPceCpi)
+        ChartHelper.declutterPanel(chartComparison)
         ChartHelper.useDirectLabels(chartPceCpi)
         ChartHelper.useDirectLabels(chartComparison)
         ChartHelper.attachCrosshair(chartPceCpi) // TICKET-23

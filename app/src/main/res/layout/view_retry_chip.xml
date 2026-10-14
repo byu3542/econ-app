@@ -13,7 +13,7 @@
     android:paddingVertical="@dimen/space_xs"
     android:background="@drawable/bg_retry_pill"
     android:text="@string/couldnt_refresh"
-    android:textColor="@color/signal_watch"
+    android:textColor="@color/ink_2"
     android:textSize="@dimen/text_caption"
     android:clickable="true"
     android:focusable="true"

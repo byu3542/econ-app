@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The selected chip as a TabLayout indicator (EconomyTabLayout). The inset
+     keeps neighbouring pills apart and off the row's edges. -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/bg_chip_selected"
+    android:insetLeft="@dimen/space_xs"
+    android:insetRight="@dimen/space_xs"
+    android:insetTop="6dp"
+    android:insetBottom="6dp" />

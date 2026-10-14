@@ -6,7 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 
-import androidx.cardview.widget.CardView
+import com.google.android.material.card.MaterialCardView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 
@@ -42,8 +42,8 @@ class BondsFragment : Fragment() {
     private lateinit var viewModel: EconomicViewModel
     private var binding: FragmentBondsBinding? = null
     private lateinit var skeleton: SkeletonController
-    private lateinit var cardBaa: CardView
-    private lateinit var cardHy: CardView
+    private lateinit var cardBaa: MaterialCardView
+    private lateinit var cardHy: MaterialCardView
     // MOT-01: rolling figures
     private lateinit var tvBaaValue: RollingNumberView
     private lateinit var tvHyValue: RollingNumberView
@@ -88,7 +88,7 @@ class BondsFragment : Fragment() {
         AskAnalyst.attachChartExplain(
             swappableChart, requireActivity(), "corporate bond spreads (BAA and high-yield) over time")
 
-        ChartHelper.styleNavyChart(swappableChart); ChartHelper.declutterDark(swappableChart); ChartHelper.attachCrosshair(swappableChart); addAllBenchmarks(swappableChart) // TICKET-23
+        ChartHelper.stylePanelChart(swappableChart); ChartHelper.declutterPanel(swappableChart); ChartHelper.attachCrosshair(swappableChart); addAllBenchmarks(swappableChart) // TICKET-23
 
         // TICKET-11: inline range switcher redraws the active bond-spread series.
         val tfSel: SegmentedView? = view.findViewById(R.id.timeframeSelector)
@@ -153,11 +153,9 @@ class BondsFragment : Fragment() {
     }
 
     private fun setActiveCard(which: String) {
-        // R3-TICKET-01: border geometry lives in BenchmarkStyle so it tracks the card radius token.
-        cardBaa.foreground = if ("baa" == which) BenchmarkStyle.activeCardBorder(
-            requireContext(), R.dimen.radius_card_kpi) else null
-        cardHy.foreground = if ("hy" == which) BenchmarkStyle.activeCardBorder(
-            requireContext(), R.dimen.radius_card_kpi) else null
+        // R3-TICKET-01 / U10: the active card swaps its stroke through BenchmarkStyle.
+        BenchmarkStyle.setCardActive(cardBaa, "baa" == which)
+        BenchmarkStyle.setCardActive(cardHy, "hy" == which)
         tvChartTitle.text = if ("hy" == which) "High Yield Spread" else "BAA Corporate Spread"
     }
 

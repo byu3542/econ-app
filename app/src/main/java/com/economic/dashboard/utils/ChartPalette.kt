@@ -47,8 +47,18 @@ object ChartPalette {
     @JvmStatic @ColorInt fun purple(ctx: Context): Int = ContextCompat.getColor(ctx, R.color.accent_purple)
     @JvmStatic @ColorInt fun slate(ctx: Context): Int = ContextCompat.getColor(ctx, R.color.slate_soft)
 
-    /** Dimmer slate for x-axis labels and "no data" text on navy panels. */
-    @JvmStatic @ColorInt fun slateDim(ctx: Context): Int = ContextCompat.getColor(ctx, R.color.slate_dim)
+    // Pantrii port U10: chart chrome reads the theme tokens (through the
+    // chart_* aliases in colors.xml), so one chart sits on a light or a dark
+    // card. The data colours above are unchanged.
+
+    /** Axis labels and "no data" text. */
+    @JvmStatic @ColorInt fun axisText(ctx: Context): Int = ContextCompat.getColor(ctx, R.color.chart_axis_text)
+
+    /** Grid lines and axis lines. */
+    @JvmStatic @ColorInt fun grid(ctx: Context): Int = ContextCompat.getColor(ctx, R.color.chart_grid)
+
+    /** Legend text. */
+    @JvmStatic @ColorInt fun legendText(ctx: Context): Int = ContextCompat.getColor(ctx, R.color.chart_legend_text)
 
     /** Benchmark (LimitLine) colour for a tier — colourblind-aware. */
     @JvmStatic

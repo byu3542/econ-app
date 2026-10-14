@@ -9,8 +9,8 @@ import com.economic.dashboard.R
  * TICKET-58 — one hero per three-up row (Von Restorff).
  *
  * The Stocks row and Housing's rates row present three equal 34sp values;
- * the card whose series is charted already carries the gold stroke
- * ([com.economic.dashboard.ui.BenchmarkStyle.activeCardBorder]). This moves
+ * the card whose series is charted already carries the accent stroke
+ * ([com.economic.dashboard.ui.BenchmarkStyle.setCardActive]). This moves
  * the value size with the stroke: the active card's value may grow to
  * `text_display_lg` (34sp), its siblings cap at `text_display` (28sp). The
  * values keep their uniform auto-size (R2-TICKET-06) so three still fit a

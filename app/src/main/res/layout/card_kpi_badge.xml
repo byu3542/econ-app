@@ -1,38 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- ═══════════════════════════════════════════════════════════════════════════
-     THE reference KPI/badge card (R2-TICKET-04). Dark navy, 12dp radius, 4dp
-     elevation, @color/card_navy_badge.
+     The Overview KPI card. Pantrii port U10 (R10): every card in the tabs is
+     ONE card, @style/Widget.Econ.Card (20dp radius, no elevation, a 1dp line
+     hairline on surface). The R2-TICKET-04 split into a navy KPI family
+     (12dp/4dp) and a panel family (16dp/6dp), and the unused navy and gold
+     light variants, are gone. A card that drives a chart marks itself with
+     BenchmarkStyle.setCardActive (accent stroke), never a different card.
 
-     There are exactly two card families in this app and they are told apart by
-     ROLE, not by screen:
-
-       KPI / badge card  → @dimen/radius_card_kpi (12dp) + @dimen/elevation_card_kpi
-                           (4dp) + @color/card_navy_badge. Any card carrying a
-                           status badge. This file and the Overview grid define it;
-                           every leaf tab's reading cards now match it, so the
-                           Overview card and the leaf tab for the same metric are
-                           finally the same object.
-       Chart / panel card → @dimen/radius_card_panel (16dp) + @dimen/elevation_card_panel
-                           (6dp). Charts and section panels only — never a badge.
-
-     Before R2-TICKET-04 these were split arbitrarily (GDP was family A, Spreads
-     one tab away was family B, Housing inverted both), which is what the
-     Spreads-vs-GDP screenshots were actually showing.
-
-     Used by Overview for the KPI indicator grid. Tappable (ripple foreground);
-     shows value + delta chip + sparkline.
+     Tappable (ripple); shows value + delta chip + sparkline + status badge.
      ═══════════════════════════════════════════════════════════════════════════ -->
-<androidx.cardview.widget.CardView
+<com.google.android.material.card.MaterialCardView
+    style="@style/Widget.Econ.Card"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:foreground="@null"
     android:clickable="true"
-    android:focusable="true"
-    app:cardCornerRadius="@dimen/radius_card_kpi"
-    app:cardElevation="@dimen/elevation_card_kpi"
-    app:cardBackgroundColor="@color/card_navy_badge">
+    android:focusable="true">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -46,7 +30,7 @@
              their intrinsic height and go INVISIBLE, never GONE) so two cards in
              a pair always put their value on the same baseline. -->
 
-        <!-- Label: indicator name (gold, all-caps) — R2-TICKET-07 -->
+        <!-- Label: indicator name (muted overline, all-caps) — R2-TICKET-07, U10 -->
         <TextView
             android:id="@+id/tvMetricLabel"
             style="@style/Card.Overline"
@@ -70,7 +54,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="—"
-                android:textColor="@color/card_white"
+                android:textColor="@color/ink"
                 android:textSize="@dimen/text_display"
                 android:textStyle="bold" />
 
@@ -108,7 +92,7 @@
             android:layout_height="wrap_content"
             android:text=""
             android:lines="1"
-            android:textColor="@color/text_slate"
+            android:textColor="@color/muted"
             android:textSize="@dimen/text_caption"
             android:layout_marginTop="@dimen/space_hairline" />
 
@@ -124,11 +108,11 @@
             android:paddingVertical="@dimen/space_xs"
             android:background="@drawable/bg_retry_pill"
             android:text="@string/couldnt_refresh"
-            android:textColor="@color/signal_watch"
+            android:textColor="@color/ink_2"
             android:textSize="@dimen/text_caption"
             android:clickable="true"
             android:focusable="true"
             android:visibility="gone" />
 
     </LinearLayout>
-</androidx.cardview.widget.CardView>
+</com.google.android.material.card.MaterialCardView>
