@@ -15,8 +15,9 @@
     android:focusable="false">
 
     <!-- Pantrii port U3 (R1): back · wordmark · history · new chat. All
-         buttons are 48dp touch targets; icon buttons are rounded squares on
-         surface_2, new chat is the one accent fill. -->
+         buttons are 48dp touch targets drawn as 40dp rounded squares (inset
+         backgrounds, matching Pantrii); icon buttons on surface_2, new chat
+         is the one accent fill. Wordmark: brand in accent, role in ink. -->
     <LinearLayout
         android:id="@+id/rlHeader"
         android:layout_width="match_parent"
@@ -31,7 +32,7 @@
             android:id="@+id/btnClose"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:background="@drawable/bg_icon_button"
+            android:background="@drawable/bg_icon_button_inset"
             android:src="@drawable/ic_chevron_left"
             android:contentDescription="@string/assistant_back"
             app:tint="@color/ink" />
@@ -56,8 +57,8 @@
                 android:layout_height="wrap_content"
                 android:text="@string/assistant_wordmark_brand"
                 android:fontFamily="@font/plus_jakarta_sans_extrabold"
-                android:textStyle="bold"
-                android:textColor="@color/ink"
+                app:fontFamily="@font/plus_jakarta_sans_extrabold"
+                android:textColor="@color/accent"
                 android:textSize="20sp"
                 android:maxLines="1"
                 android:importantForAccessibility="no" />
@@ -67,8 +68,9 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="6dp"
                 android:text="@string/assistant_wordmark_role"
-                android:fontFamily="@font/plus_jakarta_sans_medium"
-                android:textColor="@color/ink_2"
+                android:fontFamily="@font/plus_jakarta_sans_extrabold"
+                app:fontFamily="@font/plus_jakarta_sans_extrabold"
+                android:textColor="@color/ink"
                 android:textSize="20sp"
                 android:maxLines="1"
                 android:ellipsize="end"
@@ -82,7 +84,7 @@
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:layout_marginEnd="@dimen/space_sm"
-            android:background="@drawable/bg_icon_button"
+            android:background="@drawable/bg_icon_button_inset"
             android:src="@drawable/ic_history"
             android:contentDescription="@string/assistant_history"
             app:tint="@color/ink" />
@@ -91,7 +93,7 @@
             android:id="@+id/btnClearChat"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:background="@drawable/bg_icon_button_accent"
+            android:background="@drawable/bg_icon_button_accent_inset"
             android:src="@drawable/ic_add"
             android:contentDescription="@string/assistant_new_chat"
             app:tint="@color/on_accent" />

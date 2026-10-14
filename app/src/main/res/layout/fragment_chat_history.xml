@@ -28,7 +28,7 @@
             android:id="@+id/btnHistoryBack"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:background="@drawable/bg_icon_button"
+            android:background="@drawable/bg_icon_button_inset"
             android:src="@drawable/ic_chevron_left"
             android:contentDescription="@string/assistant_back"
             app:tint="@color/ink" />

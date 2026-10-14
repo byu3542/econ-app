@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Assistant header: Pantrii's 40dp rounded-square button drawn inside a
+     48dp touch target, so the visual matches Pantrii without shrinking the
+     tap area. -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:inset="4dp">
+    <shape android:shape="rectangle">
+        <solid android:color="@color/surface_2" />
+        <corners android:radius="12dp" />
+    </shape>
+</inset>
