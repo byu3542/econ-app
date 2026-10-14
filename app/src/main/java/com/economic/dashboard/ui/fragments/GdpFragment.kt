@@ -137,7 +137,7 @@ class GdpFragment : Fragment() {
         // Shared grading + semantic palette (TICKET-01/02/04)
         val result = Benchmarks.gdpGrowth(rollingAvg)
         // R2-TICKET-01/02: the badge word's colour is owned by @style/Badge.Status.
-        // The card background is @color/card_navy_badge in the layout (R2-TICKET-04).
+        // The card is @style/Widget.Econ.Card in the layout (Pantrii port U10).
         BenchmarkStyle.applyBadge(statusGdp, requireContext(), result)
     }
 
