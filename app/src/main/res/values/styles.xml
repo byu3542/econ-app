@@ -119,7 +119,7 @@
         <item name="android:paddingEnd">@dimen/space_sm</item>
         <item name="android:textSize">@dimen/text_caption</item>
         <item name="android:textStyle">bold</item>
-        <item name="android:textColor">@color/text_navy</item>
+        <item name="android:textColor">@color/ink</item>
         <item name="android:background">?attr/selectableItemBackground</item>
         <item name="android:clickable">true</item>
         <item name="android:focusable">true</item>

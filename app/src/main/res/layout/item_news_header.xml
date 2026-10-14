@@ -11,4 +11,4 @@
     android:textStyle="bold"
     android:textAllCaps="true"
     android:letterSpacing="0.12"
-    android:textColor="@color/text_muted" />
+    android:textColor="@color/muted" />

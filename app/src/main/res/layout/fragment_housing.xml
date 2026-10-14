@@ -4,7 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bg_warm_off_white">
+    android:background="@color/ground">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -19,7 +19,7 @@
              HOUSING METRIC BADGES — Housing Starts & Existing Home Sales
 
              R2-TICKET-04: these were the family-A geometry (12dp/4dp) over the
-             family-B colour (header_navy) — a third hybrid. U10: now the one card.
+             family-B navy header colour — a third hybrid. U10: now the one card.
              R2-TICKET-05/06: values were @dimen/text_secondary (13sp), the
              smallest KPI value in the app; now @dimen/text_display_lg like the
              rest, auto-shrinking only if a reading is too wide for its card.

@@ -100,7 +100,7 @@ class YieldsFragment : Fragment() {
         // a named TalkBack click action — not the cards' PressFeedback spring,
         // which scales a full-bleed stripe visibly, and no haptic (same as the
         // GDP direct-popup card). No long-press: the sparkle marker is
-        // FrameLayout-only and card_white would vanish on the light rows.
+        // FrameLayout-only and a white marker would vanish on the light rows.
         wireRowPopup(row1M, "yield1m")
         wireRowPopup(row3M, "yield3m")
         wireRowPopup(row2Y, "yield2y")
@@ -207,7 +207,7 @@ class YieldsFragment : Fragment() {
                 if (Math.abs(bps) < 0.5) {
                     changeView.text = "—"
                     changeView.setTextColor(ContextCompat.getColor(
-                        requireContext(), R.color.text_muted))
+                        requireContext(), R.color.muted))
                     spoken.append(", unchanged")
                 } else {
                     changeView.text = DeltaFormatter.format(bps, "%.0fbp")

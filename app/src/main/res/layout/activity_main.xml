@@ -23,7 +23,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bg_warm_off_white">
+    android:background="@color/ground">
 
         <!-- ══ 2. FRAGMENT CONTAINER — hosts Overview / Markets / Economy ══
              Declared first so it sits behind the header and bottom nav.
@@ -120,7 +120,7 @@
                  resetHeaderCompactAlwaysVisible() in MainActivity).
                  2026-07-27 follow-up: this used to double as both this
                  hairline AND the identity gold rule under Overview's large
-                 masthead (1dp @color/gold_hairline), which read as a heavy
+                 masthead (a 1dp translucent gold hairline), which read as a heavy
                  border once it was the only thing under a compact title.
                  That large-masthead state was later removed entirely
                  (2026-07-28), so this View is now simply the one neutral

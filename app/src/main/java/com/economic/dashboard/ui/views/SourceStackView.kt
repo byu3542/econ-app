@@ -106,7 +106,7 @@ class SourceStackView @JvmOverloads constructor(
         list.visibility = GONE
         list.showDividers = SHOW_DIVIDER_BEGINNING or SHOW_DIVIDER_MIDDLE
         val divider = GradientDrawable()
-        divider.setColor(ContextCompat.getColor(context, R.color.divider_sand))
+        divider.setColor(ContextCompat.getColor(context, R.color.line))
         divider.setSize(1, 1)
         list.dividerDrawable = divider
         addView(list, LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT))
@@ -251,7 +251,7 @@ class SourceStackView @JvmOverloads constructor(
 
         val title = TextView(context)
         title.text = if (s.kind == TurnSource.Kind.SERIES) "${s.seriesId} · ${s.title}" else s.title
-        title.setTextColor(ContextCompat.getColor(context, R.color.text_navy))
+        title.setTextColor(ContextCompat.getColor(context, R.color.ink))
         title.setTextSize(TypedValue.COMPLEX_UNIT_PX, resources.getDimension(R.dimen.text_secondary))
         title.maxLines = 2
         title.ellipsize = TextUtils.TruncateAt.END
@@ -259,7 +259,7 @@ class SourceStackView @JvmOverloads constructor(
 
         val provider = TextView(context)
         provider.text = s.provider
-        provider.setTextColor(ContextCompat.getColor(context, R.color.text_secondary))
+        provider.setTextColor(ContextCompat.getColor(context, R.color.muted))
         provider.setTextSize(TypedValue.COMPLEX_UNIT_PX, resources.getDimension(R.dimen.text_caption))
         provider.maxLines = 1
         val providerLp = LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT)

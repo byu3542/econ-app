@@ -32,7 +32,7 @@
             android:layout_marginEnd="-8dp"
             android:gravity="center"
             android:text="@string/drag_handle_glyph"
-            android:textColor="@color/text_muted"
+            android:textColor="@color/muted"
             android:textSize="@dimen/text_body" />
 
         <TextView
@@ -40,7 +40,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textColor="@color/text_navy"
+            android:textColor="@color/ink"
             android:textSize="@dimen/text_body"
             android:textStyle="bold" />
 
@@ -57,7 +57,7 @@
             android:paddingVertical="@dimen/space_xs"
             android:background="@drawable/bg_pill_swap_inset"
             android:text="@string/edit_cards_swap"
-            android:textColor="@color/text_navy"
+            android:textColor="@color/ink"
             android:textSize="@dimen/text_caption"
             android:textStyle="bold"
             android:clickable="true"

@@ -10,7 +10,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/bg_warm_off_white">
+    android:background="@color/ground">
 
     <!-- Secondary tab row: cream-dark bg, gold 2dp indicator -->
     <com.google.android.material.tabs.TabLayout

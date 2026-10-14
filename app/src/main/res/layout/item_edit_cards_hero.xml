@@ -30,7 +30,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/edit_dashboard_hero_title"
-                android:textColor="@color/text_navy"
+                android:textColor="@color/ink"
                 android:textSize="@dimen/text_body"
                 android:textStyle="bold" />
 
@@ -39,7 +39,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/space_hairline"
-                android:textColor="@color/text_secondary"
+                android:textColor="@color/muted"
                 android:textSize="@dimen/text_caption" />
 
         </LinearLayout>
@@ -57,7 +57,7 @@
             android:paddingVertical="@dimen/space_xs"
             android:background="@drawable/bg_pill_swap_inset"
             android:text="@string/edit_cards_swap"
-            android:textColor="@color/text_navy"
+            android:textColor="@color/ink"
             android:textSize="@dimen/text_caption"
             android:textStyle="bold"
             android:clickable="true"

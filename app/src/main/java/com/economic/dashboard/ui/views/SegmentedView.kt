@@ -126,7 +126,7 @@ class SegmentedView @JvmOverloads constructor(
         row.removeAllViews()
         dividers.removeAllViews()
         selectedTag = null
-        val inactive = ContextCompat.getColor(context, R.color.text_secondary)
+        val inactive = ContextCompat.getColor(context, R.color.muted)
         for (i in labels.indices) {
             val seg = TextView(context)
             seg.layoutParams = LinearLayout.LayoutParams(0, heightPx, 1f)
@@ -151,7 +151,7 @@ class SegmentedView @JvmOverloads constructor(
                 divider.layoutParams = LinearLayout.LayoutParams(dp(1), dp(20)).apply {
                     gravity = Gravity.CENTER_VERTICAL
                 }
-                divider.setBackgroundColor(ContextCompat.getColor(context, R.color.divider_sand))
+                divider.setBackgroundColor(ContextCompat.getColor(context, R.color.line))
                 divider.alpha = 0.6f
                 dividers.addView(divider)
             }
@@ -169,7 +169,7 @@ class SegmentedView @JvmOverloads constructor(
      */
     fun select(tag: String, animate: Boolean) {
         val active = activeTextColor()
-        val inactive = ContextCompat.getColor(context, R.color.text_secondary)
+        val inactive = ContextCompat.getColor(context, R.color.muted)
         var target: TextView? = null
         for (seg in segments) {
             val on = seg.tag?.toString() == tag

@@ -3,6 +3,6 @@
      slot row — a quieter pill than the accent Done pill since it sits inside a
      card row rather than in the sheet header. -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
-    <solid android:color="@color/divider_sand" />
+    <solid android:color="@color/line" />
     <corners android:radius="@dimen/radius_pill" />
 </shape>

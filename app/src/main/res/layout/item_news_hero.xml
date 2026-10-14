@@ -46,7 +46,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/space_sm"
                 android:text="@string/news_top_story"
-                android:textColor="@color/gold_ink"
+                android:textColor="@color/accent"
                 android:textSize="@dimen/text_caption"
                 android:textStyle="bold" />
 
@@ -57,7 +57,7 @@
                 android:layout_marginHorizontal="@dimen/space_xs"
                 android:text="@string/news_meta_separator"
                 android:textSize="@dimen/text_caption"
-                android:textColor="@color/text_muted"
+                android:textColor="@color/muted"
                 android:importantForAccessibility="no" />
 
             <TextView
@@ -65,7 +65,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="@dimen/text_caption"
-                android:textColor="@color/text_muted" />
+                android:textColor="@color/muted" />
 
             <!-- TICKET-59: labelled Analyze chip, see item_news_row.xml -->
         <TextView
@@ -99,7 +99,7 @@
             android:layout_marginTop="@dimen/space_sm"
             android:textSize="@dimen/text_body"
             android:textStyle="bold"
-            android:textColor="@color/text_navy"
+            android:textColor="@color/ink"
             android:lineHeight="22sp"
             android:maxLines="3"
             android:ellipsize="end" />
@@ -113,7 +113,7 @@
             android:layout_marginTop="@dimen/space_xs"
             android:layout_marginBottom="@dimen/space_lg"
             android:textSize="@dimen/text_secondary"
-            android:textColor="@color/text_secondary"
+            android:textColor="@color/muted"
             android:maxLines="2"
             android:ellipsize="end" />
 

@@ -38,7 +38,7 @@
                      row of the feed breaks the 10% accent budget; only the hero
                      card's source keeps gold. TICKET-44: text_secondary, not
                      text_slate — this label sits on the theme-flipping
-                     surface_card, and slate only clears 4.5:1 on the navy badge
+                     surface, and slate only clears 4.5:1 on the navy badge
                      surfaces it was made for. -->
                 <TextView
                     android:id="@+id/tv_row_source"
@@ -48,14 +48,14 @@
                     android:textSize="@dimen/text_caption"
                     android:textStyle="bold"
                     android:textAllCaps="true"
-                    android:textColor="@color/text_secondary" />
+                    android:textColor="@color/muted" />
 
                 <TextView
                     android:id="@+id/tv_row_time"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textSize="@dimen/text_caption"
-                    android:textColor="@color/text_muted" />
+                    android:textColor="@color/muted" />
 
             </LinearLayout>
 
@@ -66,7 +66,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/space_xs"
                 android:textSize="@dimen/text_secondary"
-                android:textColor="@color/text_navy"
+                android:textColor="@color/ink"
                 android:lineHeight="18sp"
                 android:maxLines="2"
                 android:ellipsize="end" />
@@ -93,7 +93,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/space_sm"
-                    android:textColor="@color/gold_ink"
+                    android:textColor="@color/accent"
                     android:textSize="@dimen/text_caption"
                     android:textStyle="bold"
                     android:visibility="gone" />

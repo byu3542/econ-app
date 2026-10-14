@@ -3,10 +3,9 @@
      bottom nav) are already dark and keep their day values — only the
      light "reading" surfaces and their text flip here. -->
 <resources>
-    <!-- Pantrii-port semantic tokens, night half (palette B). The legacy
-         names aliased onto these in values/colors.xml (bg_warm_off_white,
-         surface_card, divider_sand, text_*, background, sheet_*) no longer
-         carry night values of their own — they follow these tokens. -->
+    <!-- Pantrii-port semantic tokens, night half (palette B). U12 renamed
+         the legacy aliases (bg_warm_off_white, divider_sand, text_*, sheet_*)
+         to these tokens and deleted them. -->
     <color name="ground">#0A0E18</color>
     <color name="surface">#131A29</color>
     <color name="surface_2">#1A2336</color>
@@ -18,7 +17,6 @@
     <color name="on_accent">#17130A</color>
     <color name="accent_soft">#262014</color>
 
-    <color name="tab_bg_warm_gray">#1C222E</color>
 
     <color name="alabaster_dark_gray">#D8DCE6</color>
 
@@ -27,26 +25,20 @@
          alias of the muted token (values/colors.xml), which flips by itself, so
          it has no entry here. dot_neutral is the pre-data placeholder dot. -->
     <color name="dot_neutral">#9E9E9E</color>
-    <color name="text_on_navy_muted">#8CFFFFFF</color>
     <!-- The two card surfaces a badge can sit on. Same reasoning: navy in both
          themes, declared here so the whole badge path is theme-complete. -->
-    <color name="card_navy_badge">#1C2236</color>
-    <color name="header_navy">#1a1a2e</color>
     <!-- 2026-07-27 nav fix: raised ~85% (#D9) → ~95% (#F2); TICKET-56
          2026-09-01: opaque. Matches values/colors.xml, see the comment there. -->
     <color name="header_navy_translucent">#FF1A1A2E</color>
 
-    <color name="economy_tab_bg">#1C222E</color>
     <!-- TICKET-44: day value darkened for the light tab bg; on the dark night
          tab bg slate is the passing value (~5.6:1), so it lives on here. -->
-    <color name="economy_tab_text_unselected">#8A9AB5</color>
 
     <color name="error_bubble_bg">#2A1E20</color>
     <color name="error_bubble_stroke">#5C3438</color>
     <color name="error_text">#FF8A93</color>
 
     <color name="hairline_on_surface">#1FFFFFFF</color>
-    <color name="handle_on_surface">#33FFFFFF</color>
     <color name="header_hairline_neutral">#1FFFFFFF</color>
 
 

@@ -104,7 +104,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="ASK ABOUT"
-        android:textColor="@color/text_muted"
+        android:textColor="@color/muted"
         android:textSize="@dimen/text_caption"
         android:textStyle="bold"
         android:letterSpacing="0.2"
@@ -137,7 +137,7 @@
                 android:paddingHorizontal="@dimen/space_lg"
                 android:paddingVertical="@dimen/space_sm"
                 android:textSize="@dimen/text_secondary"
-                android:textColor="@color/text_secondary"
+                android:textColor="@color/muted"
                 android:layout_marginEnd="@dimen/space_sm"
                 android:clickable="true"
                 android:focusable="true" />
@@ -151,7 +151,7 @@
                 android:paddingHorizontal="@dimen/space_lg"
                 android:paddingVertical="@dimen/space_sm"
                 android:textSize="@dimen/text_secondary"
-                android:textColor="@color/text_secondary"
+                android:textColor="@color/muted"
                 android:layout_marginEnd="@dimen/space_sm"
                 android:clickable="true"
                 android:focusable="true" />
@@ -165,7 +165,7 @@
                 android:paddingHorizontal="@dimen/space_lg"
                 android:paddingVertical="@dimen/space_sm"
                 android:textSize="@dimen/text_secondary"
-                android:textColor="@color/text_secondary"
+                android:textColor="@color/muted"
                 android:layout_marginEnd="@dimen/space_sm"
                 android:clickable="true"
                 android:focusable="true" />
@@ -179,7 +179,7 @@
                 android:paddingHorizontal="@dimen/space_lg"
                 android:paddingVertical="@dimen/space_sm"
                 android:textSize="@dimen/text_secondary"
-                android:textColor="@color/text_secondary"
+                android:textColor="@color/muted"
                 android:layout_marginEnd="@dimen/space_sm"
                 android:clickable="true"
                 android:focusable="true" />
@@ -193,7 +193,7 @@
                 android:paddingHorizontal="@dimen/space_lg"
                 android:paddingVertical="@dimen/space_sm"
                 android:textSize="@dimen/text_secondary"
-                android:textColor="@color/text_secondary"
+                android:textColor="@color/muted"
                 android:clickable="true"
                 android:focusable="true" />
 
@@ -342,7 +342,7 @@
             android:layout_weight="1"
             android:layout_marginStart="@dimen/space_md"
             android:text="Image attached — will be analyzed with your next message"
-            android:textColor="@color/text_muted"
+            android:textColor="@color/muted"
             android:textSize="@dimen/text_caption" />
 
         <ImageButton
@@ -351,7 +351,7 @@
             android:layout_height="36dp"
             android:src="@android:drawable/ic_menu_close_clear_cancel"
             android:background="?attr/selectableItemBackgroundBorderless"
-            app:tint="@color/text_muted"
+            app:tint="@color/muted"
             android:contentDescription="Remove attached image" />
 
     </LinearLayout>

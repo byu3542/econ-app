@@ -24,7 +24,7 @@
         android:layout_margin="-8dp"
         android:gravity="center"
         android:text="@string/drag_handle_glyph"
-        android:textColor="@color/text_muted"
+        android:textColor="@color/muted"
         android:textSize="@dimen/text_body" />
 
     <TextView

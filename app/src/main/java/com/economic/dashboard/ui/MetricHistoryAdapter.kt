@@ -68,7 +68,7 @@ class MetricHistoryAdapter(
             holder.tvChange.setTextColor(DeltaFormatter.color(ctx, delta, goodWhenDown))
         } else {
             holder.tvChange.text = "—"
-            holder.tvChange.setTextColor(androidx.core.content.ContextCompat.getColor(ctx, R.color.sheet_text_secondary))
+            holder.tvChange.setTextColor(androidx.core.content.ContextCompat.getColor(ctx, R.color.muted))
         }
     }
 

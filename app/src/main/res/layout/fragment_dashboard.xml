@@ -5,7 +5,7 @@
     android:id="@+id/swipeRefresh"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bg_warm_off_white">
+    android:background="@color/ground">
 
     <androidx.core.widget.NestedScrollView
         android:id="@+id/dashboardScroll"
@@ -38,7 +38,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="@dimen/space_sm"
                     android:text=""
-                    android:textColor="@color/text_secondary"
+                    android:textColor="@color/muted"
                     android:textSize="@dimen/text_caption"
                     android:visibility="gone" />
 

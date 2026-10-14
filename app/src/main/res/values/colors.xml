@@ -5,7 +5,7 @@
          (U1, KTD3, KTD5). Night values in values-night/colors.xml. New work
          reads these names; the legacy Alabaster names further down are
          temporary aliases onto them and are deleted in U12.
-         Light accent is #7F6222, one step darker than the old gold_ink:
+         Light accent is #7F6222, one step darker than the old gold accent ink:
          #8F6F2A measures exactly 4.50:1 on ground and fails on accent_soft. -->
     <color name="ground">#FBFAF7</color>
     <color name="surface">#FFFFFF</color>
@@ -19,10 +19,8 @@
     <color name="accent_soft">#F5EEDC</color>
 
     <!-- Alabaster Report Design System. Names marked "alias" point at the
-         tokens above until U12 removes them. -->
-    <color name="bg_warm_off_white">@color/ground</color>
-    <color name="header_navy">#1a1a2e</color>
-    <!-- IOS-04: header/bottom-nav "material" — alpha over header_navy so
+         tokens above. -->
+    <!-- IOS-04: header/bottom-nav "material" — alpha over the navy header so
          content scrolling underneath registers as passing *behind* the bar
          rather than stopping at a solid opaque block.
          2026-07-27 nav fix: raised from ~85% (#D9) to ~95% (#F2). Without a
@@ -36,25 +34,14 @@
          smaller but still there. Name kept so the IOS-04 history stays
          greppable; the depth cue is bg_nav_scrim.xml under the bottom bar. -->
     <color name="header_navy_translucent">#FF1A1A2E</color>
-    <color name="card_white">#ffffff</color>
-    <!-- Light/dark-flipping card surface. card_white stays literal white in both
-         modes because many layouts use it as TEXT color on navy cards. -->
-    <color name="surface_card">@color/surface</color>
     <!-- U10: zebra rows alternate surface and ground. Alias. -->
     <color name="row_alt_bg">@color/ground</color>
-    <color name="divider_sand">@color/line</color>
     <color name="accent_gold">#c9a84c</color>
     <!-- Darker gold for bold text on cards (chat key figures). Alias: follows
          the theme's accent, so it also reads on dark cards now. -->
-    <color name="gold_ink">@color/accent</color>
-    <color name="tab_bg_warm_gray">#ede9e3</color>
 
-    <color name="text_navy">@color/ink</color>
-    <color name="text_secondary">@color/muted</color>
-    <color name="text_muted">@color/muted</color>
 
     <!-- Dark badge cards (KPI grid, housing badges) -->
-    <color name="card_navy_badge">#1C2236</color>
     <!-- R2-TICKET-01/09: the ONE grey a status badge word is allowed to use.
          Owned by @style/Badge.Status. Pantrii port U10: an alias of muted, so
          one token drives both themes (the old #8A9AB5 slate measured 2.7:1 on
@@ -65,10 +52,7 @@
     <color name="dot_neutral">#9E9E9E</color>
     <!-- Translucent white on navy. NOT for status words (R2-TICKET-01 removed it
          from every badge) — still used for supporting copy on navy hero cards. -->
-    <color name="text_on_navy_muted">#8CFFFFFF</color>
-    <color name="text_on_navy_secondary">#A6FFFFFF</color>
     <!-- Design branch 2a: indicator picker's checked-row tint -->
-    <color name="bg_selected_row">#1FEFE6C9</color>
 
     <!-- Chat error bubble -->
     <color name="error_bubble_bg">#FFF8F8</color>
@@ -85,10 +69,10 @@
     <color name="delta_bad_cb">#E69F00</color>
 
     <!-- Map missing names used in themes.xml -->
-    <color name="cardBackground">@color/card_white</color>
+    <color name="cardBackground">#ffffff</color>
     <color name="alabaster_dark_gray">#333333</color>
-    <color name="textPrimary">@color/text_navy</color>
-    <color name="textSecondary">@color/text_secondary</color>
+    <color name="textPrimary">@color/ink</color>
+    <color name="textSecondary">@color/muted</color>
 
     <!-- Legacy / Theme Compatibility -->
     <color name="colorPrimary">#1a1a2e</color>
@@ -97,13 +81,10 @@
     <color name="background">@color/ground</color>
 
     <!-- Bottom Navigation -->
-    <color name="nav_bg">#0f1729</color>
 
     <!-- Economy secondary tab row -->
-    <color name="economy_tab_bg">#ede8df</color>
     <!-- TICKET-44: was #8a9ab5 (slate), ~2.3:1 on the warm tab bg. Darkened to
          clear 4.5:1; the night twin keeps slate because the tab bg goes dark. -->
-    <color name="economy_tab_text_unselected">#4E5D75</color>
 
     <!-- Theme-aware chart chrome. U10: aliases onto the tokens, read through
          ChartPalette.grid / axisText / legendText. -->
@@ -114,18 +95,13 @@
 
     <!-- Theme-aware hairlines/handles on flipping surfaces -->
     <color name="hairline_on_surface">#14000000</color>
-    <color name="handle_on_surface">#26000000</color>
 
     <!-- Center-nav AI FAB: ring reads against both page bg and nav bar.
          Pantrii port U9: the surface_2 token, the icon-button fill, in both
          themes (the night override is gone). -->
     <color name="fab_ring">@color/surface_2</color>
-    <color name="fab_gold">#D2B156</color>
     <!-- ── Semantic tokens (moved out of layout hex literals) ── -->
     <!-- Navy-surface structure -->
-    <color name="navy_divider">#2A3342</color>
-    <color name="navy_surface_deep">#1F2633</color>
-    <color name="slate_dim">#5A6A8A</color>
     <color name="slate_soft">#8899BB</color>
     <!-- Status signal palette (muted to fit the navy/gold scheme) -->
     <color name="signal_good">#6FA97A</color>
@@ -158,32 +134,24 @@
          is a "reading" surface, so it goes light in light mode. The values-night
          twins reproduce the original navy sheet exactly. -->
     <!-- Aliases since U1: the sheet pair now flips through the tokens. -->
-    <color name="sheet_surface">@color/ground</color>
-    <color name="sheet_card">@color/surface</color>
-    <color name="sheet_divider">@color/line</color>
-    <color name="sheet_text_primary">@color/ink</color>
-    <color name="sheet_text_secondary">@color/muted</color>
-    <color name="sheet_accent">@color/accent</color>
 
     <!-- Informational accents -->
     <color name="info_blue">#5B8DB8</color>
     <color name="info_blue_soft">#B3C9DD</color>
     <color name="info_blue_tint">#E3EAF4</color>
     <color name="accent_purple">#8A6E9E</color>
-    <color name="accent_purple_soft">#D3C4DC</color>
     <color name="google_blue">#4285F4</color>
     <color name="google_amber">#FBBC04</color>
     <!-- Alpha overlays -->
     <color name="white_70">#B3FFFFFF</color>
     <color name="white_28">#47FFFFFF</color>
     <color name="navy_ripple">#331A1A2E</color>
-    <color name="gold_hairline">#2EC9A84C</color>
     <!-- IOS-02 follow-up (2026-07-27): neutral hairline for the persistent
-         header bar's bottom edge, split out of gold_hairline (see
+         header bar's bottom edge, split out of the old gold hairline (see
          headerSeparator in activity_main.xml). header_container stays navy in
          both themes, so this doesn't need a values-night twin with a
          different value — declared there anyway, identically, for the same
-         reason header_navy is. -->
+         reason the old navy header colour was. -->
     <color name="header_hairline_neutral">#1FFFFFFF</color>
 
     <!-- Launch splash (Economii wordmark). Fixed in both themes: the splash is
