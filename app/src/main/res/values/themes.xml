@@ -42,6 +42,11 @@
              own context would otherwise fall back to platform chrome silently. -->
         <item name="materialAlertDialogTheme">@style/ThemeOverlay.Econ.MaterialAlertDialog</item>
 
+        <!-- Pantrii port U11: a BottomSheetDialogFragment that sets no style of
+             its own (the indicator picker, the watchlist setup) opens on the
+             same sheet theme as the ones that do. -->
+        <item name="bottomSheetDialogTheme">@style/Theme.Econ.Sheet</item>
+
         <!-- IOS-03: tabular digits on every default TextView (see Widget.Econ.TextView
              below). Only affects numeral glyph widths — no visual change to
              non-numeric text — so this is safe app-wide rather than hand-picking
@@ -72,17 +77,15 @@
         <item name="android:popupBackground">@drawable/bg_popup_rounded</item>
     </style>
 
-    <!-- ── Dialogs (TICKET-54) ───────────────────────────────────────────────
+    <!-- ── Dialogs (TICKET-54, Pantrii port U11) ───────────────────────────
          Dialogs carry forms and destructive actions; sheets carry data and
-         charts. The theme makes that split visible: dialogs take surface_card,
-         which follows the DayNight theme (#ffffff day / #1C222E night), while
-         sheets keep header_navy in both. 16dp sits between the KPI card (12dp)
-         and the sheet (24dp) — a dialog is a floating panel, not a small sheet.
-         No gold on the buttons: the P7 audit demoted gold to one deliberate
-         layer per screen, and a dialog floats over a screen that already spent
-         it. Selection controls keep their gold tick. Every token referenced
-         here has a night twin; text_muted and delta_bad are deliberately absent
-         (TICKET-52 left their values alone for their other consumers).
+         charts. U11 puts both on the semantic tokens: a dialog is a surface
+         panel with 24dp corners (above the 20dp card, below the 28dp sheet),
+         an ink title in Jakarta bold, ink_2 body text, and one accent-filled
+         pill as its primary button. That pill is a control, so it is the one
+         place the accent may sit here (KTD10 rule 1). The secondary button
+         stays a text button. A destructive dialog swaps the pill for red text
+         at the call site (markDestructive, DialogStyle.kt).
 
          Mechanism notes, learned the same way EconomicBottomSheetStyle24 did:
          the dialog surface is backgroundTint on alertDialogStyle — NOT
@@ -97,32 +100,52 @@
          Rationale: subprojects/ux-passes/DIALOG_THEME_DECISION_2026-08-17.md -->
     <style name="ShapeAppearance.Econ.Dialog" parent="">
         <item name="cornerFamily">rounded</item>
-        <item name="cornerSize">@dimen/radius_card</item>
+        <item name="cornerSize">@dimen/radius_dialog</item>
     </style>
 
     <style name="MaterialAlertDialog.Econ" parent="MaterialAlertDialog.MaterialComponents">
-        <item name="backgroundTint">@color/surface_card</item>
+        <item name="backgroundTint">@color/surface</item>
         <item name="shapeAppearanceOverlay">@style/ShapeAppearance.Econ.Dialog</item>
     </style>
 
+    <!-- U11: the family is set here too. Material's title and message
+         styles carry their own font through textAppearanceBody2/Headline6,
+         so the theme-level Jakarta did not reach the message text. AppCompat's
+         text helper reads the app: twin, so both are set. -->
     <style name="MaterialAlertDialog.Econ.Title.Text" parent="MaterialAlertDialog.MaterialComponents.Title.Text">
-        <item name="android:textColor">@color/text_navy</item>
+        <item name="android:textColor">@color/ink</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:fontFamily">@font/plus_jakarta_sans</item>
+        <item name="fontFamily">@font/plus_jakarta_sans</item>
     </style>
 
     <style name="MaterialAlertDialog.Econ.Body.Text" parent="MaterialAlertDialog.MaterialComponents.Body.Text">
-        <item name="android:textColor">@color/text_secondary</item>
+        <item name="android:textColor">@color/ink_2</item>
+        <item name="android:letterSpacing">0</item>
+        <item name="android:fontFamily">@font/plus_jakarta_sans</item>
+        <item name="fontFamily">@font/plus_jakarta_sans</item>
     </style>
 
-    <style name="Button.Econ.Dialog.Positive" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
-        <item name="android:textColor">@color/text_navy</item>
-        <item name="rippleColor">@color/ripple_dialog_navy</item>
+    <!-- The primary button: an accent-filled pill. Unelevated, so it stays
+         flat like every other surface in the port. -->
+    <style name="Button.Econ.Dialog.Positive" parent="Widget.MaterialComponents.Button.UnelevatedButton">
+        <item name="backgroundTint">@color/accent</item>
+        <item name="android:textColor">@color/on_accent</item>
+        <item name="rippleColor">@color/hairline_on_surface</item>
+        <item name="cornerRadius">@dimen/radius_pill</item>
         <item name="android:textAllCaps">false</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:layout_marginStart">@dimen/space_sm</item>
+        <item name="android:paddingStart">@dimen/space_xl</item>
+        <item name="android:paddingEnd">@dimen/space_xl</item>
+        <item name="android:letterSpacing">0</item>
     </style>
 
     <style name="Button.Econ.Dialog.Negative" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
-        <item name="android:textColor">@color/text_secondary</item>
+        <item name="android:textColor">@color/ink_2</item>
         <item name="rippleColor">@color/ripple_dialog_secondary</item>
         <item name="android:textAllCaps">false</item>
+        <item name="android:letterSpacing">0</item>
     </style>
 
     <!-- Neutral keeps the Flush parent so it stays left-aligned with the
@@ -133,9 +156,10 @@
          it after show() via AlertDialog.markDestructive() (DialogStyle.kt),
          the single owner of that colour. -->
     <style name="Button.Econ.Dialog.Neutral" parent="Widget.MaterialComponents.Button.TextButton.Dialog.Flush">
-        <item name="android:textColor">@color/text_secondary</item>
+        <item name="android:textColor">@color/ink_2</item>
         <item name="rippleColor">@color/ripple_dialog_secondary</item>
         <item name="android:textAllCaps">false</item>
+        <item name="android:letterSpacing">0</item>
     </style>
 
     <style name="ThemeOverlay.Econ.MaterialAlertDialog" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
@@ -145,6 +169,13 @@
         <item name="buttonBarPositiveButtonStyle">@style/Button.Econ.Dialog.Positive</item>
         <item name="buttonBarNegativeButtonStyle">@style/Button.Econ.Dialog.Negative</item>
         <item name="buttonBarNeutralButtonStyle">@style/Button.Econ.Dialog.Neutral</item>
+        <!-- U11: controls inside a dialog (the add-alert radios, the text
+             field's focus ring and hint) take the accent. The app theme's
+             colorPrimary is still the legacy navy, invisible on a dark
+             surface, and colorSecondary falls back to Material's teal. -->
+        <item name="colorPrimary">@color/accent</item>
+        <item name="colorSecondary">@color/accent</item>
+        <item name="colorOnSecondary">@color/on_accent</item>
     </style>
 
     <!-- Full screen dialog theme for AI Chat (kept for reference) -->
@@ -159,31 +190,6 @@
     <style name="DialogAnimation">
         <item name="android:windowEnterAnimation">@anim/slide_in_up</item>
         <item name="android:windowExitAnimation">@anim/slide_out_down</item>
-    </style>
-
-    <!-- Half-sheet bottom sheet theme for AI Chat (v2) -->
-    <style name="Theme.EconomicDashboard.BottomSheet" parent="Theme.MaterialComponents.DayNight.BottomSheetDialog">
-        <item name="bottomSheetStyle">@style/EconomicBottomSheetStyle</item>
-        <!-- TICKET-54: sibling branch of Theme.EconomicDashboard, so it must
-             carry the dialog theme itself — see the comment on that theme. -->
-        <item name="materialAlertDialogTheme">@style/ThemeOverlay.Econ.MaterialAlertDialog</item>
-        <!-- U2: same sibling-branch reason — carry the suite typeface. -->
-        <item name="android:fontFamily">@font/plus_jakarta_sans</item>
-        <item name="fontFamily">@font/plus_jakarta_sans</item>
-    </style>
-
-    <style name="EconomicBottomSheetStyle" parent="Widget.MaterialComponents.BottomSheet.Modal">
-        <item name="android:background">@color/bg_warm_off_white</item>
-        <item name="shapeAppearanceOverlay">@style/BottomSheetRoundedCorners</item>
-        <item name="android:elevation">16dp</item>
-    </style>
-
-    <style name="BottomSheetRoundedCorners">
-        <item name="cornerFamily">rounded</item>
-        <item name="cornerSizeTopLeft">20dp</item>
-        <item name="cornerSizeTopRight">20dp</item>
-        <item name="cornerSizeBottomLeft">0dp</item>
-        <item name="cornerSizeBottomRight">0dp</item>
     </style>
 
     <style name="AlabasterToolbar" parent="Widget.MaterialComponents.Toolbar">
@@ -260,17 +266,22 @@
         <item name="android:width">0dp</item>
     </style>
 
-    <!-- Update AI bottom sheet corners to match mockup (24dp) -->
-    <style name="BottomSheetRoundedCorners24">
+    <!-- ── Sheets (Pantrii port U11, R10) ─────────────────────────────────
+         ONE sheet theme for every bottom sheet: the metric popup, edit cards,
+         the indicator picker, the watchlist setup and the answer actions. A
+         surface panel with 28dp top corners and no elevation shadow; each
+         sheet layout draws its own 40x4dp line handle (bg_sheet_handle, the
+         one U6 introduced). Cards inside a sheet are Widget.Econ.Card, whose
+         line stroke separates them from the surface they sit on. -->
+    <style name="ShapeAppearance.Econ.Sheet" parent="">
         <item name="cornerFamily">rounded</item>
-        <item name="cornerSizeTopLeft">24dp</item>
-        <item name="cornerSizeTopRight">24dp</item>
+        <item name="cornerSizeTopLeft">@dimen/radius_sheet</item>
+        <item name="cornerSizeTopRight">@dimen/radius_sheet</item>
         <item name="cornerSizeBottomLeft">0dp</item>
         <item name="cornerSizeBottomRight">0dp</item>
     </style>
 
-    <!-- Updated bottom sheet style using 24dp corners.
-         `android:background` is a no-op here and must NOT be relied on: once
+    <!-- `android:background` is a no-op here and must NOT be relied on: once
          `shapeAppearanceOverlay` is set, BottomSheetBehavior's constructor
          (see BottomSheetBehavior_Layout in the Material library's attrs.xml)
          unconditionally builds its own MaterialShapeDrawable in
@@ -281,37 +292,30 @@
          and, when that's unset, falls back to the theme's android:colorBackground
          — which under Theme.MaterialComponents.DayNight resolves to a plain
          light/white color regardless of the app's own navy palette. That
-         fallback fill, painted at the exact same 24dp-rounded geometry as
+         fallback fill, painted at the exact same rounded geometry as
          MetricBottomSheet's own `wrap` clip but by an independently
          anti-aliased shape, is what showed through as a thin white halo
          tracing the rounded top corners. Setting `backgroundTint` explicitly
-         to the same navy `wrap` already uses fixes it at the source (and
-         means any residual sub-pixel seam is navy-on-navy, so invisible even
-         if the two roundrects don't align exactly). -->
-    <style name="EconomicBottomSheetStyle24" parent="Widget.MaterialComponents.BottomSheet.Modal">
-        <item name="backgroundTint">@color/header_navy</item>
-        <item name="shapeAppearanceOverlay">@style/BottomSheetRoundedCorners24</item>
-        <item name="android:elevation">16dp</item>
+         to the same surface the `wrap` uses fixes it at the source (and
+         means any residual sub-pixel seam is surface-on-surface, so
+         invisible even if the two roundrects don't align exactly). -->
+    <style name="Widget.Econ.BottomSheet" parent="Widget.MaterialComponents.BottomSheet.Modal">
+        <item name="backgroundTint">@color/surface</item>
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearance.Econ.Sheet</item>
+        <!-- Keep the 28dp corners when expanded. By default the behavior
+             squares them off at the top, but these sheets stop short of the
+             status bar (MetricBottomSheet's expanded offset), so the square
+             corners showed behind the rounded content as white wedges. -->
+        <item name="shouldRemoveExpandedCorners">false</item>
     </style>
 
-    <style name="Theme.EconomicDashboard.BottomSheet24" parent="Theme.MaterialComponents.DayNight.BottomSheetDialog">
-        <item name="bottomSheetStyle">@style/EconomicBottomSheetStyle24</item>
+    <style name="Theme.Econ.Sheet" parent="Theme.MaterialComponents.DayNight.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/Widget.Econ.BottomSheet</item>
         <!-- TICKET-54: sibling branch of Theme.EconomicDashboard, so it must
              carry the dialog theme itself — see the comment on that theme. -->
         <item name="materialAlertDialogTheme">@style/ThemeOverlay.Econ.MaterialAlertDialog</item>
         <item name="android:fontFamily">@font/plus_jakarta_sans</item>
         <item name="fontFamily">@font/plus_jakarta_sans</item>
-    </style>
-
-    <!-- Pantrii port U6 (KTD6): the answer actions sheet. Surface fill set via
-         backgroundTint for the reason given on EconomicBottomSheetStyle24. -->
-    <style name="Econ.AnswerSheetStyle" parent="Widget.MaterialComponents.BottomSheet.Modal">
-        <item name="backgroundTint">@color/surface</item>
-        <item name="shapeAppearanceOverlay">@style/BottomSheetRoundedCorners24</item>
-    </style>
-
-    <style name="Theme.Econ.AnswerSheet" parent="Theme.EconomicDashboard.BottomSheet24">
-        <item name="bottomSheetStyle">@style/Econ.AnswerSheetStyle</item>
     </style>
 
     <!-- Circular crop for the center-nav AI Analyst button -->
@@ -330,28 +334,25 @@
         <item name="android:textStyle">bold</item>
         <item name="android:textAllCaps">true</item>
         <item name="android:letterSpacing">0.2</item>
-        <item name="android:textColor">@color/text_secondary</item>
+        <item name="android:textColor">@color/muted</item>
         <item name="android:drawablePadding">6dp</item>
         <item name="android:gravity">center_vertical</item>
         <item name="android:layout_marginBottom">@dimen/space_sm</item>
     </style>
 
-    <!-- Card that wraps each settings section -->
-    <style name="SettingsCard" parent="Widget.MaterialComponents.CardView">
+    <!-- Card that wraps each settings section. Pantrii port U11 (R10): the
+         one card (surface, 20dp, 1dp line stroke), grouped rows inside it
+         split by line hairlines, as in Pantrii's Settings. -->
+    <style name="SettingsCard" parent="Widget.Econ.Card">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_marginTop">@dimen/space_md</item>
-        <item name="cardBackgroundColor">@color/surface_card</item>
-        <item name="cardElevation">0dp</item>
-        <item name="cardCornerRadius">12dp</item>
-        <item name="strokeColor">@color/divider_sand</item>
-        <item name="strokeWidth">1dp</item>
         <item name="contentPadding">@dimen/space_lg</item>
         <item name="contentPaddingBottom">@dimen/space_md</item>
         <item name="contentPaddingTop">@dimen/space_md</item>
     </style>
 
-    <!-- Brand-tinted switch: gold track when on, muted when off -->
+    <!-- Switch: accent track when on (a control, KTD10 rule 1), muted when off. -->
     <style name="SettingsSwitch" parent="Widget.MaterialComponents.CompoundButton.Switch">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
@@ -366,7 +367,20 @@
         <item name="android:textColor">@color/error_text</item>
         <item name="strokeColor">@color/error_bubble_stroke</item>
         <item name="rippleColor">@color/error_bubble_bg</item>
+        <item name="cornerRadius">@dimen/radius_pill</item>
         <item name="android:textAllCaps">false</item>
+        <item name="android:letterSpacing">0</item>
+    </style>
+
+    <!-- Pantrii port U11: the secondary button. A pill with a line hairline
+         and ink text, for the settings data actions and the sheet's Dismiss. -->
+    <style name="Widget.Econ.Button.Outlined" parent="Widget.MaterialComponents.Button.OutlinedButton">
+        <item name="android:textColor">@color/ink</item>
+        <item name="strokeColor">@color/line</item>
+        <item name="rippleColor">@color/hairline_on_surface</item>
+        <item name="cornerRadius">@dimen/radius_pill</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:letterSpacing">0</item>
     </style>
 
     <style name="SettingsRow">
@@ -391,26 +405,23 @@
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:textSize">@dimen/text_body</item>
-        <item name="android:textColor">@color/text_navy</item>
+        <item name="android:textColor">@color/ink</item>
     </style>
 
     <style name="SettingsRowSub">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:textSize">@dimen/text_secondary</item>
-        <item name="android:textColor">@color/text_secondary</item>
+        <item name="android:textColor">@color/muted</item>
     </style>
 
     <!-- Settings pickers (theme / startup tab / decimals / timeframe) are
          ui.views.SegmentedView since TICKET-55; no MDC toggle styles remain. -->
 
-    <!-- Dismiss button on the metric popup sheet (theme-aware surface) -->
-    <style name="BenchmarkDismissButton" parent="Widget.MaterialComponents.Button.OutlinedButton">
-        <item name="android:textColor">@color/sheet_accent</item>
-        <item name="strokeColor">@color/sheet_accent</item>
-        <item name="rippleColor">@color/sheet_accent</item>
+    <!-- Dismiss button on the metric popup sheet. U11: the secondary pill,
+         not gold — the accent would sit right under the tier rows. -->
+    <style name="BenchmarkDismissButton" parent="Widget.Econ.Button.Outlined">
         <item name="android:textSize">@dimen/text_secondary</item>
-        <item name="android:letterSpacing">0.05</item>
     </style>
 
     <!-- Shimmer skeleton placeholders (Overview) -->

@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- TICKET-43: gold marks the CHECKED state only — a flat gold tint made every
-     checkbox gold whether picked or not, spending the accent on nothing. Same
-     state-gated pattern as settings_switch_track / bottom_nav_icon_color. -->
-<selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:color="@color/accent_gold" android:state_checked="true" />
-    <item android:color="@color/text_muted" />
-</selector>

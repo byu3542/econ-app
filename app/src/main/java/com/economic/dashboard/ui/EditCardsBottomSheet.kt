@@ -98,7 +98,7 @@ class EditCardsBottomSheet : BottomSheetDialogFragment() {
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        setStyle(STYLE_NORMAL, R.style.Theme_EconomicDashboard_BottomSheet24)
+        setStyle(STYLE_NORMAL, R.style.Theme_Econ_Sheet)
         val dialog = super.onCreateDialog(savedInstanceState) as BottomSheetDialog
         // Full-screen editor — open expanded and skip the collapsed stop so a
         // single swipe down dismisses instead of snapping halfway.

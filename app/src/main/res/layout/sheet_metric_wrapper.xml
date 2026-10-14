@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Shared chrome for metric-detail bottom sheets: drag handle + scrolling content slot.
+     Pantrii port U11: surface, 28dp top corners, the 40x4dp line handle every
+     sheet shares (bg_sheet_handle).
      Root must be match_parent: BottomSheetBehavior#setFitToContents(false) positions this
      view's top edge by offset and expects it to span the parent; a wrap_content root leaves
      the sheet's bottom floating mid-screen or clips content off the bottom edge. -->
@@ -9,11 +11,14 @@
     android:orientation="vertical"
     android:background="@drawable/bg_sheet_rounded">
 
-    <com.google.android.material.bottomsheet.BottomSheetDragHandleView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+    <View
+        android:layout_width="40dp"
+        android:layout_height="4dp"
         android:layout_gravity="center_horizontal"
-        android:tint="@color/handle_on_surface" />
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="@dimen/space_xs"
+        android:background="@drawable/bg_sheet_handle"
+        android:importantForAccessibility="no" />
 
     <androidx.core.widget.NestedScrollView
         android:id="@+id/sheetScroll"

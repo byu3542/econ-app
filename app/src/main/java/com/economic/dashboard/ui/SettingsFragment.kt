@@ -3,7 +3,6 @@ package com.economic.dashboard.ui
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.content.res.ColorStateList
 import android.os.Build
 import android.os.Bundle
 import android.text.Editable
@@ -185,13 +184,9 @@ class SettingsFragment : Fragment() {
             val divider: View = row.findViewById(R.id.rowDivider)
             val content: View = row.findViewById(R.id.rowContent)
 
+            // Pantrii port U11: every row leads with the same surface_2 tile
+            // (bg_settings_badge) in ink_2; the group headers already sort them.
             tvBadge.text = meta.initials
-            val (bg, fg) = if (meta.group == Group.ABOUT)
-                Pair(R.color.tab_bg_warm_gray, R.color.text_secondary)
-            else
-                Pair(R.color.accent_purple_soft, R.color.accent_purple)
-            tvBadge.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), bg))
-            tvBadge.setTextColor(ContextCompat.getColor(requireContext(), fg))
             tvTitle.text = getString(meta.titleRes)
             tvSummary.text = summaryFor(meta.id)
             divider.visibility = if (i == rows.lastIndex) View.GONE else View.VISIBLE

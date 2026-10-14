@@ -224,7 +224,7 @@ class SegmentedView @JvmOverloads constructor(
             Emphasis.SUBTLE -> {
                 track.background = ContextCompat.getDrawable(context, R.drawable.bg_segmented_track_subtle)
                 thumb.backgroundTintList = ColorStateList.valueOf(
-                    ContextCompat.getColor(context, R.color.sheet_divider)
+                    ContextCompat.getColor(context, R.color.line)
                 )
             }
         }
@@ -233,10 +233,10 @@ class SegmentedView @JvmOverloads constructor(
         for (seg in segments) if (seg.tag?.toString() == tag) seg.setTextColor(active)
     }
 
-    /** Label color on the thumb: ink on the accent_soft chip (U10); theme text on the subtle thumb. */
+    /** Label color on the thumb: ink on the accent_soft chip (U10) and on the line-tinted subtle thumb (U11). */
     private fun activeTextColor(): Int = ContextCompat.getColor(
         context,
-        if (emphasis == Emphasis.PRIMARY) R.color.ink else R.color.text_navy
+        R.color.ink
     )
 
     private fun dp(v: Int): Int =

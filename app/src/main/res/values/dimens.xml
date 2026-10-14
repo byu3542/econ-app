@@ -85,4 +85,8 @@
     <!-- Pantrii port U10: the status badge's glyph disc (view_status_badge). -->
     <dimen name="badge_glyph_disc">16dp</dimen>
     <dimen name="badge_glyph_text">10sp</dimen>
+    <!-- Pantrii port U11 (R10): sheets round their top corners at 28dp,
+         dialogs all four at 24dp. Both sit above the 20dp card they hold. -->
+    <dimen name="radius_sheet">28dp</dimen>
+    <dimen name="radius_dialog">24dp</dimen>
 </resources>

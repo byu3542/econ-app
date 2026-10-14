@@ -164,14 +164,16 @@ object MetricPopupController {
             tv.text = valueStr
             return
         }
-        val full = "$valueStr · ${grade.word}"
+        // Pantrii port U11 (KTD10 rule 2): the grade leads with its tier glyph,
+        // so the state reads from shape and word. Ink, not the tier colour
+        // (signal_watch's pale yellow is illegible as text on surface) and not
+        // the accent, which must never sit beside a badge (KTD10 rule 1). The
+        // glyph disc in the highlighted band row is the tier-colour cue.
+        val graded = "${BenchmarkStyle.tierGlyph(ctx, grade.tier)} ${grade.word}"
+        val full = "$valueStr · $graded"
         val span = SpannableString(full)
-        val start = full.length - grade.word.length
-        // Not BenchmarkStyle.colorFor(grade.tier): those tier colors (e.g.
-        // signal_watch's pale yellow) are tuned as TEXT only for the always-navy
-        // badge cards elsewhere in the app — illegible on this sheet's light-mode
-        // surface. The dot in the highlighted band row is the tier-color cue here.
-        val color = ContextCompat.getColor(ctx, R.color.sheet_accent)
+        val start = full.length - graded.length
+        val color = ContextCompat.getColor(ctx, R.color.ink)
         span.setSpan(ForegroundColorSpan(color), start, full.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         span.setSpan(StyleSpan(Typeface.BOLD), start, full.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         tv.text = span
@@ -186,14 +188,14 @@ object MetricPopupController {
         val inflater = LayoutInflater.from(ctx)
         for ((index, band) in spec.bands.withIndex()) {
             val row = inflater.inflate(R.layout.item_benchmark_band, container, false)
-            val dot: View? = row.findViewById(R.id.viewBandDot)
+            val glyph: TextView? = row.findViewById(R.id.tvBandGlyph)
             val tvLabel: TextView? = row.findViewById(R.id.tvBandLabel)
             val tvRange: TextView? = row.findViewById(R.id.tvBandRange)
-            BenchmarkStyle.tintDot(dot, ctx, band.tier)
+            if (glyph != null) BenchmarkStyle.glyphDisc(glyph, ctx, band.tier)
             tvLabel?.text = band.label
-            // Same reasoning as the subtitle: tier color goes on the dot only,
+            // Same reasoning as the subtitle: tier color goes on the disc only,
             // never on text (matches BenchmarkStyle.applyBadge's own rule).
-            tvLabel?.setTextColor(ContextCompat.getColor(ctx, R.color.sheet_text_secondary))
+            tvLabel?.setTextColor(ContextCompat.getColor(ctx, R.color.muted))
             tvRange?.text = band.rangeText
 
             if (grade != null && band.tier == grade.tier && band.label == grade.word) {
@@ -209,7 +211,7 @@ object MetricPopupController {
                 val divider = View(ctx)
                 divider.layoutParams = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT, dpToPx(ctx, 1))
-                divider.setBackgroundColor(ContextCompat.getColor(ctx, R.color.navy_divider))
+                divider.setBackgroundColor(ContextCompat.getColor(ctx, R.color.line))
                 container.addView(divider)
             }
         }

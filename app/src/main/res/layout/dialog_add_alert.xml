@@ -7,7 +7,10 @@
      TextInputLayout (it owns the inline error slot and the unit suffix), a
      context caption sits above the field, and the single bulk-remove line
      became one row per existing rule (view_alert_rule_row.xml). No dialog
-     theme is set here on purpose — that is TICKET-54's design call. -->
+     theme is set here on purpose — that is TICKET-54's design call.
+     Pantrii port U11: the radios and the field's focus ring take the accent
+     from ThemeOverlay.Econ.MaterialAlertDialog (colorPrimary/colorSecondary);
+     the captions are muted. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -58,7 +61,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/space_sm"
         android:text=""
-        android:textColor="@color/text_secondary"
+        android:textColor="@color/muted"
         android:textSize="@dimen/text_secondary"
         android:visibility="gone" />
 
@@ -88,7 +91,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/space_md"
         android:text="@string/alert_existing_header"
-        android:textColor="@color/text_secondary"
+        android:textColor="@color/muted"
         android:textSize="@dimen/text_secondary"
         android:visibility="gone" />
 

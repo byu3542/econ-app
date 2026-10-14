@@ -1,12 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Design branch 2a, direction 1d: "drag to reorder, tap to swap". Full-height
      editor — Cancel/Done header over a drag-reorderable list of category
-     blocks + slots. See EditCardsBottomSheet. -->
+     blocks + slots. See EditCardsBottomSheet.
+     Pantrii port U11: on the shared sheet (surface, 28dp, line handle). Done
+     is the accent-filled pill, the one primary control on the sheet. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="@color/bg_warm_off_white">
+    android:orientation="vertical">
+
+    <View
+        android:layout_width="40dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/bg_sheet_handle"
+        android:importantForAccessibility="no" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -23,7 +32,7 @@
             android:layout_weight="1"
             android:gravity="center_vertical"
             android:text="@string/edit_cards_cancel"
-            android:textColor="@color/text_secondary"
+            android:textColor="@color/ink_2"
             android:textSize="@dimen/text_body"
             android:clickable="true"
             android:focusable="true" />
@@ -34,29 +43,38 @@
             android:layout_weight="2"
             android:gravity="center"
             android:text="@string/edit_cards_title"
-            android:textColor="@color/text_navy"
+            android:textColor="@color/ink"
             android:textSize="@dimen/text_body"
             android:textStyle="bold" />
 
-        <TextView
-            android:id="@+id/btnEditCardsDone"
+        <FrameLayout
             android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:gravity="center_vertical|end"
-            android:text="@string/watchlist_done"
-            android:textColor="@color/gold_ink"
-            android:textSize="@dimen/text_body"
-            android:textStyle="bold"
-            android:clickable="true"
-            android:focusable="true" />
+            android:layout_height="wrap_content"
+            android:layout_weight="1">
+
+            <TextView
+                android:id="@+id/btnEditCardsDone"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end|center_vertical"
+                android:minHeight="40dp"
+                android:gravity="center"
+                android:paddingHorizontal="@dimen/space_lg"
+                android:background="@drawable/bg_pill_accent"
+                android:text="@string/watchlist_done"
+                android:textColor="@color/on_accent"
+                android:textSize="@dimen/text_body"
+                android:textStyle="bold"
+                android:clickable="true"
+                android:focusable="true" />
+        </FrameLayout>
 
     </LinearLayout>
 
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="@color/divider_sand" />
+        android:background="@color/line" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvEditCards"

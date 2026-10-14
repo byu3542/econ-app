@@ -56,7 +56,7 @@ class IndicatorPickerBottomSheet : BottomSheetDialogFragment() {
             val header = TextView(ctx)
             header.text = group
             header.setTextAppearance(android.R.style.TextAppearance_Small)
-            header.setTextColor(resolveColor(ctx, R.color.text_secondary))
+            header.setTextColor(resolveColor(ctx, R.color.muted))
             header.textSize = 11f
             header.isAllCaps = true
             header.letterSpacing = 0.1f
@@ -83,9 +83,11 @@ class IndicatorPickerBottomSheet : BottomSheetDialogFragment() {
                 // ="no" in the row layout).
                 row.contentDescription =
                     if (selected) getString(R.string.a11y_indicator_selected, ind.label) else ind.label
-                row.setBackgroundColor(
-                    if (selected) resolveColor(ctx, R.color.bg_selected_row) else android.graphics.Color.TRANSPARENT
-                )
+                // Pantrii port U11: the picked row is a selected pill chip
+                // (accent_soft fill, accent hairline); the others keep the
+                // layout's ripple background.
+                if (selected) row.background =
+                    androidx.core.content.ContextCompat.getDrawable(ctx, R.drawable.bg_chip_selected)
                 row.setOnClickListener {
                     val result = Bundle()
                     result.putString(KEY_SELECTED_ID, ind.id)

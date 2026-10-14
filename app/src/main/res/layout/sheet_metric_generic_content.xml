@@ -4,20 +4,22 @@
      replaces the 13 hand-typed dialog_*_status.xml the old, non-generic
      approach would have needed. Root MUST stay LinearLayout: MetricBottomSheet
      appends the "+ Add alert" row as this root's last child when the sheet
-     is opened with a non-null seriesKey/seriesLabel. -->
+     is opened with a non-null seriesKey/seriesLabel.
+     Pantrii port U11: the three cards are Widget.Econ.Card on the sheet's
+     surface; the title is ink, not gold, since the grade badge sits right
+     under it (KTD10). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="@color/sheet_surface"
     android:padding="@dimen/space_2xl">
 
     <TextView
         android:id="@+id/tvPopupTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="@color/sheet_accent"
+        android:textColor="@color/ink"
         android:textSize="@dimen/text_secondary"
         android:textStyle="bold"
         android:textAllCaps="true"
@@ -30,11 +32,11 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/space_xs"
         android:layout_marginBottom="@dimen/space_xl"
-        android:textColor="@color/sheet_text_secondary"
+        android:textColor="@color/muted"
         android:textSize="@dimen/text_secondary"
         android:gravity="center" />
 
-    <!-- Primary switch: DATA / BENCHMARKS — full-width, gold thumb (mockup 1c,
+    <!-- Primary switch: DATA / BENCHMARKS — full-width, pill thumb (mockup 1c,
          TICKET-55). DATA sits left and is the default-active segment. -->
     <com.economic.dashboard.ui.views.SegmentedView
         android:id="@+id/switchPrimary"
@@ -65,12 +67,10 @@
         android:visibility="invisible"
         android:importantForAccessibility="noHideDescendants">
 
-        <androidx.cardview.widget.CardView
+        <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.Econ.Card"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:cardCornerRadius="12dp"
-            app:cardBackgroundColor="@color/sheet_card"
-            app:cardElevation="0dp">
+            android:layout_height="wrap_content">
 
             <LinearLayout
                 android:id="@+id/benchmarkBandContainer"
@@ -79,7 +79,7 @@
                 android:orientation="vertical"
                 android:padding="@dimen/space_md" />
 
-        </androidx.cardview.widget.CardView>
+        </com.google.android.material.card.MaterialCardView>
     </FrameLayout>
 
     <!-- DATA pane (default-active): secondary GRAPH/TABLE switch (visually
@@ -120,12 +120,10 @@
             android:visibility="invisible"
             android:importantForAccessibility="noHideDescendants">
 
-            <androidx.cardview.widget.CardView
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.Econ.Card"
                 android:layout_width="match_parent"
-                android:layout_height="320dp"
-                app:cardCornerRadius="12dp"
-                app:cardBackgroundColor="@color/sheet_card"
-                app:cardElevation="0dp">
+                android:layout_height="320dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -145,7 +143,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="@string/table_header_date"
-                            android:textColor="@color/sheet_text_secondary"
+                            android:textColor="@color/muted"
                             android:textSize="@dimen/text_caption"
                             android:textStyle="bold" />
 
@@ -154,7 +152,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="@string/table_header_value"
-                            android:textColor="@color/sheet_text_secondary"
+                            android:textColor="@color/muted"
                             android:textSize="@dimen/text_caption"
                             android:textStyle="bold"
                             android:gravity="center" />
@@ -164,7 +162,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="@string/table_header_change"
-                            android:textColor="@color/sheet_text_secondary"
+                            android:textColor="@color/muted"
                             android:textSize="@dimen/text_caption"
                             android:textStyle="bold"
                             android:gravity="end" />
@@ -180,7 +178,7 @@
                         android:clipToPadding="false" />
 
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
+            </com.google.android.material.card.MaterialCardView>
         </FrameLayout>
 
         <FrameLayout
@@ -188,12 +186,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <androidx.cardview.widget.CardView
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.Econ.Card"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:cardCornerRadius="12dp"
-                app:cardBackgroundColor="@color/sheet_card"
-                app:cardElevation="0dp">
+                android:layout_height="wrap_content">
 
                 <com.github.mikephil.charting.charts.LineChart
                     android:id="@+id/chartMetricHistory"
@@ -201,7 +197,7 @@
                     android:layout_height="260dp"
                     android:padding="@dimen/space_md" />
 
-            </androidx.cardview.widget.CardView>
+            </com.google.android.material.card.MaterialCardView>
         </FrameLayout>
 
         </FrameLayout>
@@ -215,7 +211,7 @@
         style="@style/BenchmarkDismissButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="DISMISS"
+        android:text="Dismiss"
         android:contentDescription="Close"
         android:layout_gravity="end"
         android:layout_marginTop="@dimen/space_lg" />

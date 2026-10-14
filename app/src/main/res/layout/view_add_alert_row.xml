@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- TICKET-24: "Add alert" affordance appended to a metric's bottom sheet.
-     Tapping opens the threshold-rule dialog for that metric. -->
+     Tapping opens the threshold-rule dialog for that metric.
+     Pantrii port U11: ink on the quiet pill, not the accent, which would
+     sit beside the metric's tier badge (KTD10 rule 1). -->
 <TextView xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/tvAddAlert"
     android:layout_width="match_parent"
@@ -12,7 +14,7 @@
     android:paddingVertical="@dimen/space_md"
     android:background="@drawable/bg_pill_sheet"
     android:text="@string/add_alert"
-    android:textColor="@color/sheet_accent"
+    android:textColor="@color/ink"
     android:textSize="@dimen/text_secondary"
     android:textStyle="bold"
     android:clickable="true"

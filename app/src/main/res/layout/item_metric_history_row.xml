@@ -20,7 +20,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textColor="@color/sheet_text_primary"
+            android:textColor="@color/ink"
             android:textSize="@dimen/text_secondary" />
 
         <TextView
@@ -28,7 +28,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textColor="@color/sheet_text_primary"
+            android:textColor="@color/ink"
             android:textSize="@dimen/text_secondary"
             android:gravity="center"
             android:textStyle="bold" />
@@ -38,7 +38,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textColor="@color/sheet_text_secondary"
+            android:textColor="@color/muted"
             android:textSize="@dimen/text_secondary"
             android:gravity="end"
             android:textStyle="bold" />
@@ -48,6 +48,6 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="@color/sheet_divider" />
+        android:background="@color/line" />
 
 </LinearLayout>

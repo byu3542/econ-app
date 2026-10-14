@@ -30,7 +30,7 @@ object AnswerActionsSheet {
     )
 
     fun show(ctx: Context, quote: CharSequence, actions: List<Action>) {
-        val dialog = BottomSheetDialog(ctx, R.style.Theme_Econ_AnswerSheet)
+        val dialog = BottomSheetDialog(ctx, R.style.Theme_Econ_Sheet)
         val inflater = LayoutInflater.from(dialog.context)
         val content = inflater.inflate(R.layout.sheet_answer_actions, null)
         content.findViewById<TextView>(R.id.tvAnswerSheetQuote).text = quote
@@ -67,7 +67,7 @@ object AnswerActionsSheet {
      * a way to close the sheet.
      */
     fun showSelectable(ctx: Context, text: CharSequence, attach: (TextView, () -> Unit) -> Unit) {
-        val dialog = BottomSheetDialog(ctx, R.style.Theme_Econ_AnswerSheet)
+        val dialog = BottomSheetDialog(ctx, R.style.Theme_Econ_Sheet)
         val c = dialog.context
         val pad = (18 * c.resources.displayMetrics.density).toInt()
         val tv = TextView(c)

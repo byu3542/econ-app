@@ -29,6 +29,7 @@
             android:textStyle="bold"
             android:fontFamily="@font/plus_jakarta_sans_medium"
             android:includeFontPadding="false"
+            android:textColor="@color/ink_2"
             tools:text="Ap"/>
 
         <TextView
@@ -37,7 +38,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:textSize="@dimen/text_body"
-            android:textColor="@color/text_navy"
+            android:textColor="@color/ink"
             tools:text="Appearance"/>
 
         <TextView
@@ -50,14 +51,14 @@
             android:maxLines="1"
             android:ellipsize="end"
             android:textSize="@dimen/text_secondary"
-            android:textColor="@color/text_secondary"
+            android:textColor="@color/muted"
             tools:text="Light · Haptics on"/>
 
         <ImageView
             android:layout_width="16dp"
             android:layout_height="16dp"
             android:src="@drawable/ic_chevron_right"
-            app:tint="@color/text_secondary"
+            app:tint="@color/muted"
             android:contentDescription="@null"/>
     </LinearLayout>
 

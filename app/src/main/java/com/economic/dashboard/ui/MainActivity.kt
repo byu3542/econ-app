@@ -8,9 +8,11 @@ import android.os.Bundle
 import com.economic.dashboard.analyst.ConversationSummary
 import com.economic.dashboard.ui.assistant.AssistantFragment
 import com.economic.dashboard.ui.assistant.ChatHistoryFragment
+import android.view.Gravity
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.widget.FrameLayout
 import android.widget.Toast
 
 import androidx.activity.OnBackPressedCallback
@@ -22,6 +24,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.doOnLayout
 import androidx.fragment.app.Fragment
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator
@@ -151,6 +154,16 @@ class MainActivity : AppCompatActivity() {
         // Edge-to-edge: draw behind system bars, then pad the header and
         // bottom nav so content clears them (required on Android 15+).
         WindowCompat.setDecorFitsSystemWindows(window, false)
+        // Pantrii port U11: set the system-bar icon tone from the resolved
+        // night mode on every create. The theme's windowLightStatusBar alone
+        // is right on a cold start but not after Settings → Appearance: the
+        // recreate under AppCompat's night-mode override kept the old tone
+        // (dark icons on the dark ground, white icons on the light one).
+        val lightBars = resources.getBoolean(R.bool.light_system_bars)
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+            isAppearanceLightStatusBars = lightBars
+            isAppearanceLightNavigationBars = lightBars
+        }
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
             val bars: Insets = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             binding.headerContainer.setPadding(0, bars.top, 0, 0)
@@ -348,6 +361,9 @@ class MainActivity : AppCompatActivity() {
         binding.btnSettings.setImageResource(R.drawable.ic_chevron_left)
         binding.btnSettings.contentDescription = getString(R.string.settings_back_to_list)
         binding.btnSettings.setOnClickListener { handleSettingsBackOrClose() }
+        // Pantrii port U11: a back button leads the header, as on the
+        // assistant; only the gear sits at the end.
+        setSettingsButtonGravity(Gravity.START or Gravity.CENTER_VERTICAL)
         // Full-screen page, no bottom chrome — the FAB floats on top of the
         // nav bar, so it goes with it.
         binding.bottomNavWrapper.visibility = View.GONE
@@ -386,6 +402,15 @@ class MainActivity : AppCompatActivity() {
         binding.btnSettings.setImageResource(R.drawable.ic_settings)
         binding.btnSettings.contentDescription = getString(R.string.settings)
         binding.btnSettings.setOnClickListener { openSettings() }
+        setSettingsButtonGravity(Gravity.END or Gravity.CENTER_VERTICAL)
+    }
+
+    /** The header button is the gear at the end, or the back chevron at the start. */
+    private fun setSettingsButtonGravity(gravity: Int) {
+        val lp = binding.btnSettings.layoutParams as FrameLayout.LayoutParams
+        if (lp.gravity == gravity) return
+        lp.gravity = gravity
+        binding.btnSettings.layoutParams = lp
     }
 
     /** Shared by the back gesture and by tapping the header's back chevron

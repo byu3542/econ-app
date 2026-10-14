@@ -51,7 +51,7 @@ object MetricBottomSheet {
     )
 
     /**
-     * Inflates layoutRes inside the sheet chrome (rounded navy top + drag handle),
+     * Inflates layoutRes inside the sheet chrome (rounded surface top + drag handle),
      * wires the optional btnClose, and shows the sheet.
      *
      * TICKET-24: when `seriesKey`/`seriesLabel` are given, appends an
@@ -71,8 +71,7 @@ object MetricBottomSheet {
         // Guarantee the rounded top corners regardless of what child content
         // draws over them (the extra height pushes the bottom of the round-rect
         // below the view's visible bounds, so only the top corners round off).
-        val density0 = ctx.resources.displayMetrics.density
-        val cornerRadiusPxOutline = 24 * density0
+        val cornerRadiusPxOutline = ctx.resources.getDimension(R.dimen.radius_sheet)
         wrap.clipToOutline = true
         wrap.outlineProvider = object : ViewOutlineProvider() {
             override fun getOutline(view: View, outline: Outline) {
@@ -85,7 +84,7 @@ object MetricBottomSheet {
         val sheetScroll: View? = wrap.findViewById(R.id.sheetScroll)
         val content = LayoutInflater.from(ctx).inflate(layoutRes, holder, false)
         holder.addView(content)
-        val dialog = BottomSheetDialog(ctx, R.style.Theme_EconomicDashboard_BottomSheet24)
+        val dialog = BottomSheetDialog(ctx, R.style.Theme_Econ_Sheet)
         dialog.setContentView(wrap)
         val btn: View? = content.findViewById(R.id.btnClose)
         btn?.setOnClickListener { dialog.dismiss() }

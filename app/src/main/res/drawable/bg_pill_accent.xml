@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Pantrii port U11: the primary pill — an accent fill with on_accent text.
+     A control, so the accent may sit here (KTD10 rule 1). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="@color/accent" />
+    <corners android:radius="@dimen/radius_pill" />
+</shape>

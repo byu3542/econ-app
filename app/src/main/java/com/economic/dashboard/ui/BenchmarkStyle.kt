@@ -104,6 +104,19 @@ object BenchmarkStyle {
         else Color.WHITE
     }
 
+    /**
+     * Pantrii port U11: paint [tv] as the tier's glyph disc — the tier colour
+     * as a filled circle, the tier glyph on it in whichever ink contrasts more.
+     * Shared by the status badge and the metric sheet's benchmark rows.
+     */
+    @JvmStatic
+    fun glyphDisc(tv: TextView, context: Context, tier: Tier) {
+        tv.text = tierGlyph(context, tier)
+        tv.setTextColor(glyphInkOn(context, colorFor(context, tier)))
+        tintDot(tv, context, tier)
+        tv.visibility = View.VISIBLE
+    }
+
     /** What TalkBack says for a badge: "WATCH, recovering" or just "HEALTHY". */
     @JvmStatic
     fun spoken(context: Context, r: Benchmarks.Result): String {
@@ -134,11 +147,7 @@ object BenchmarkStyle {
         // instead of the dot; the dot stays the loading placeholder.
         val glyph: TextView? = card.findViewById(R.id.tvTierGlyph)
         if (glyph != null && context != null) {
-            val tierColor = colorFor(context, r.tier)
-            glyph.text = tierGlyph(context, r.tier)
-            glyph.setTextColor(glyphInkOn(context, tierColor))
-            tintDot(glyph, context, r.tier)
-            glyph.visibility = View.VISIBLE
+            glyphDisc(glyph, context, r.tier)
             dot?.visibility = View.GONE
         }
         val tv: TextView? = card.findViewById(statusTextId)

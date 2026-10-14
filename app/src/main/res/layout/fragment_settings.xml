@@ -42,7 +42,7 @@
                     android:layout_height="16dp"
                     android:layout_marginEnd="@dimen/space_sm"
                     android:src="@drawable/ic_search"
-                    app:tint="@color/text_secondary"
+                    app:tint="@color/muted"
                     android:contentDescription="@null"/>
 
                 <EditText
@@ -52,8 +52,8 @@
                     android:layout_weight="1"
                     android:background="@null"
                     android:hint="@string/settings_search_hint"
-                    android:textColorHint="@color/text_secondary"
-                    android:textColor="@color/text_navy"
+                    android:textColorHint="@color/muted"
+                    android:textColor="@color/ink"
                     android:textSize="@dimen/text_body"
                     android:inputType="text"
                     android:imeOptions="actionSearch"
@@ -148,7 +148,7 @@
                     android:layout_width="16dp"
                     android:layout_height="16dp"
                     android:src="@drawable/ic_chevron_left"
-                    app:tint="@color/text_navy"
+                    app:tint="@color/ink"
                     android:contentDescription="@null"/>
 
                 <TextView
@@ -157,7 +157,7 @@
                     android:layout_marginStart="@dimen/space_xs"
                     android:text="@string/settings_back_to_list"
                     android:textSize="@dimen/text_body"
-                    android:textColor="@color/text_navy"/>
+                    android:textColor="@color/ink"/>
             </LinearLayout>
 
             <TextView
@@ -167,7 +167,7 @@
                 android:layout_marginBottom="@dimen/space_sm"
                 android:textSize="@dimen/text_title"
                 android:textStyle="bold"
-                android:textColor="@color/text_navy"
+                android:textColor="@color/ink"
                 tools:text="Appearance"/>
 
             <!-- ~~ APPEARANCE ~~ -->
@@ -299,26 +299,22 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnRefreshNow"
-                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                            style="@style/Widget.Econ.Button.Outlined"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:layout_marginEnd="@dimen/space_sm"
                             android:text="@string/refresh_data"
-                            android:textAllCaps="false"
-                            android:textSize="@dimen/text_body"
-                            android:textColor="@color/text_navy"/>
+                            android:textSize="@dimen/text_body"/>
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnClearCache"
-                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                            style="@style/Widget.Econ.Button.Outlined"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="@string/clear_cache"
-                            android:textAllCaps="false"
-                            android:textSize="@dimen/text_body"
-                            android:textColor="@color/text_navy"/>
+                            android:textSize="@dimen/text_body"/>
                     </LinearLayout>
 
                     <LinearLayout style="@style/SettingsRow">

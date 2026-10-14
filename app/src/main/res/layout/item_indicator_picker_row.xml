@@ -16,18 +16,20 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:textColor="@color/text_navy"
+        android:textColor="@color/ink"
         android:textSize="@dimen/text_body"
         android:textStyle="bold" />
 
     <!-- TICKET-42: decorative — the row's contentDescription (set in
-         IndicatorPickerBottomSheet) already announces the selected state. -->
+         IndicatorPickerBottomSheet) already announces the selected state.
+         Pantrii port U11: ink, not signal_good — a green ✓ is the HEALTHY
+         badge glyph, and this tick only means "picked". -->
     <TextView
         android:id="@+id/tvIndicatorRowCheck"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/check_glyph"
-        android:textColor="@color/signal_good"
+        android:textColor="@color/ink"
         android:textSize="@dimen/text_title"
         android:importantForAccessibility="no"
         android:visibility="invisible" />

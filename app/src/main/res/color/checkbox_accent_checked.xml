@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- TICKET-43: the accent marks the CHECKED state only — a flat tint made every
+     checkbox coloured whether picked or not, spending the accent on nothing.
+     Pantrii port U11: accent, not the old gold literal (a checkbox is a
+     control, KTD10 rule 1). Same state-gated pattern as settings_switch_track. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:color="@color/accent" android:state_checked="true" />
+    <item android:color="@color/muted" />
+</selector>
