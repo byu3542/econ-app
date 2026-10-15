@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- TICKET-54: dialog-button ripple for the negative/neutral roles. Same
-     alpha ladder as ripple_dialog_navy; see that file. -->
+<!-- TICKET-54: dialog-button ripple for the negative/neutral roles.
+     Pressed 16%, focused 12%, hovered 8%, default 12% of muted. -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:alpha="0.16" android:color="@color/muted" android:state_pressed="true" />
     <item android:alpha="0.12" android:color="@color/muted" android:state_focused="true" />

@@ -39,7 +39,7 @@ object AnalystToolExecutor {
      * AI Law 3 (tool coverage matches trigger surfaces): series served straight
      * from the ViewModel data the app already charts, so a long-press on ANY
      * fragment's card has real history behind it. Ids map to lists supplied by
-     * the LiveSeriesProvider wired up in AiAnalystBottomSheet.
+     * the LiveSeriesProvider wired up in AssistantFragment.
      *
      * Since the 2026-07-30 cache expansion every catalogued series is
      * ROOM_CACHED, so this map is empty in practice — but the live provider is
@@ -54,7 +54,7 @@ object AnalystToolExecutor {
     private const val MAX_POINTS = 40
 
     /** Tool name for the rendering directive (TICKET-P2-2). Named once because
-     *  AiAnalystBottomSheet has to branch on it in the stream handler. */
+     *  AssistantFragment has to branch on it in the stream handler. */
     const val RENDER_CHART = "render_chart"
 
     /** 2026-10-12: the table card's tool, a sibling of [RENDER_CHART]. */
@@ -69,14 +69,11 @@ object AnalystToolExecutor {
     private class Pt(@JvmField val date: String, @JvmField val value: Double)
 
     /**
-     * Supplies live ViewModel-backed series lists; set by AiAnalystBottomSheet.
+     * Supplies live ViewModel-backed series lists; set by AssistantFragment.
      *
-     * Declared `fun interface` deliberately. Its only implementation is a lambda
-     * in AiAnalystBottomSheet — which is still Java today (Java SAM-converts to
-     * any single-method interface regardless of source language), but becomes
-     * Kotlin in batch 9c, and a Kotlin lambda will NOT convert to a plain
-     * Kotlin-declared interface. Without `fun` here, 9b builds green and 9c
-     * breaks.
+     * Declared `fun interface` deliberately: its only implementation is a
+     * Kotlin lambda in AssistantFragment, and a Kotlin lambda will NOT convert
+     * to a plain Kotlin-declared interface.
      */
     fun interface LiveSeriesProvider {
         fun get(seriesId: String): List<EconomicDataPoint>?
@@ -87,7 +84,7 @@ object AnalystToolExecutor {
      * property of that name synthesizes a `setLiveSeriesProvider` accessor that
      * collides with the explicit function below on the same JVM signature
      * ("platform declaration clash"). The public function name is load-bearing
-     * for AiAnalystBottomSheet, so the field is what gets renamed.
+     * for AssistantFragment, so the field is what gets renamed.
      */
     @Volatile
     private var liveProvider: LiveSeriesProvider? = null

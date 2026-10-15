@@ -2056,8 +2056,6 @@ class AssistantFragment : Fragment() {
          *  overloaded_error) can retry indefinitely. */
         private const val MAX_RETRIES_PER_TURN = 3
 
-        /** AI Law 6: model ids, shared with DailyBriefWorker via ModelConfig so a
-         *  model rotation only needs one edit (TICKET-F / review F9). */
         /** AIC-05: what Continue sends after a stopped answer. */
         private const val CONTINUE_PROMPT = "Continue your previous answer from where it stopped."
 
