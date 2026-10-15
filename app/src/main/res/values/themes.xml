@@ -1,9 +1,11 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. DayNight — dark palette lives in values-night/colors.xml. -->
     <style name="Theme.EconomicDashboard" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <!-- Primary brand color. -->
-        <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <!-- Primary brand color: the Pantrii accent (was the legacy navy
+             #1a1a2e), so widgets that tint from colorPrimary match the port. -->
+        <item name="colorPrimary">@color/accent</item>
+        <item name="colorPrimaryDark">@color/accent</item>
+        <item name="colorOnPrimary">@color/on_accent</item>
         <item name="colorAccent">@color/colorAccent</item>
 
         <!-- Pantrii port U1: window paints the semantic ground token. Status and
@@ -170,9 +172,8 @@
         <item name="buttonBarNegativeButtonStyle">@style/Button.Econ.Dialog.Negative</item>
         <item name="buttonBarNeutralButtonStyle">@style/Button.Econ.Dialog.Neutral</item>
         <!-- U11: controls inside a dialog (the add-alert radios, the text
-             field's focus ring and hint) take the accent. The app theme's
-             colorPrimary is still the legacy navy, invisible on a dark
-             surface, and colorSecondary falls back to Material's teal. -->
+             field's focus ring and hint) take the accent. colorSecondary
+             would otherwise fall back to Material's teal. -->
         <item name="colorPrimary">@color/accent</item>
         <item name="colorSecondary">@color/accent</item>
         <item name="colorOnSecondary">@color/on_accent</item>

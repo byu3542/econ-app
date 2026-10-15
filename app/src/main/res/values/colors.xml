@@ -61,8 +61,6 @@
     <color name="textSecondary">@color/muted</color>
 
     <!-- Legacy / Theme Compatibility -->
-    <color name="colorPrimary">#1a1a2e</color>
-    <color name="colorPrimaryDark">#1a1a2e</color>
     <color name="colorAccent">@color/accent</color>
 
     <!-- Bottom Navigation -->
