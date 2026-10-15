@@ -296,11 +296,6 @@
         <item name="fontFamily">@font/plus_jakarta_sans</item>
     </style>
 
-    <!-- Circular crop for the center-nav AI Analyst button -->
-    <style name="CircleFabOverlay">
-        <item name="cornerFamily">rounded</item>
-        <item name="cornerSize">50%</item>
-    </style>
 
     <!-- ── Settings sheet ─────────────────────────────────────────────────── -->
     <!-- IOS-08: inset-grouped section header — 13sp uppercase text_secondary,

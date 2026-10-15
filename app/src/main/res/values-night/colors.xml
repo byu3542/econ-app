@@ -27,9 +27,6 @@
     <color name="dot_neutral">#9E9E9E</color>
     <!-- The two card surfaces a badge can sit on. Same reasoning: navy in both
          themes, declared here so the whole badge path is theme-complete. -->
-    <!-- 2026-07-27 nav fix: raised ~85% (#D9) → ~95% (#F2); TICKET-56
-         2026-09-01: opaque. Matches values/colors.xml, see the comment there. -->
-    <color name="header_navy_translucent">#FF1A1A2E</color>
 
     <!-- TICKET-44: day value darkened for the light tab bg; on the dark night
          tab bg slate is the passing value (~5.6:1), so it lives on here. -->
@@ -39,7 +36,6 @@
     <color name="error_text">#FF8A93</color>
 
     <color name="hairline_on_surface">#1FFFFFFF</color>
-    <color name="header_hairline_neutral">#1FFFFFFF</color>
 
 
     <!-- Metric popup sheet surfaces: aliases onto the tokens since U1 (see
@@ -50,17 +46,10 @@
          their day values; declared here so the resource is theme-complete and badges
          re-theme correctly under values-night. -->
     <color name="signal_good">#6FA97A</color>
-    <color name="signal_good_soft">#A9C4AE</color>
-    <color name="signal_good_tint">#CBDCCE</color>
     <color name="signal_watch">#DCC873</color>
-    <color name="signal_watch_soft">#E6DCA8</color>
-    <color name="signal_watch_tint">#F0EAC8</color>
     <color name="signal_elevated">#D98E4F</color>
-    <color name="signal_elevated_soft">#E5BE93</color>
-    <color name="signal_elevated_tint">#F0DABF</color>
     <color name="signal_alert">#C75B4E</color>
     <color name="signal_alert_soft">#D9A099</color>
-    <color name="signal_alert_tint">#EFD3D0</color>
     <color name="signal_alert_deep">#8E3B32</color>
     <color name="signal_imbalance">#8A6E9E</color>
     <color name="signal_good_cb">#009E73</color>

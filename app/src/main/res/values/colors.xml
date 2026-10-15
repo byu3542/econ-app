@@ -20,20 +20,6 @@
 
     <!-- Alabaster Report Design System. Names marked "alias" point at the
          tokens above. -->
-    <!-- IOS-04: header/bottom-nav "material" — alpha over the navy header so
-         content scrolling underneath registers as passing *behind* the bar
-         rather than stopping at a solid opaque block.
-         2026-07-27 nav fix: raised from ~85% (#D9) to ~95% (#F2). Without a
-         real backdrop blur (see the MainActivity comment on why Android can't
-         do one here), 85% let KPI values and news headlines read clearly
-         through the bar and compete with the title / nav labels — the
-         translucency looked like a rendering bug rather than a material. 95%
-         keeps the depth cue while restoring legibility. Keep this in sync with
-         bg_bottom_nav_border.xml's fill and values-night/colors.xml.
-         TICKET-56 (2026-09-01): now fully opaque (#FF) — at 95% the leak was
-         smaller but still there. Name kept so the IOS-04 history stays
-         greppable; the depth cue is bg_nav_scrim.xml under the bottom bar. -->
-    <color name="header_navy_translucent">#FF1A1A2E</color>
     <!-- U10: zebra rows alternate surface and ground. Alias. -->
     <color name="row_alt_bg">@color/ground</color>
     <color name="accent_gold">#c9a84c</color>
@@ -78,7 +64,6 @@
     <color name="colorPrimary">#1a1a2e</color>
     <color name="colorPrimaryDark">#1a1a2e</color>
     <color name="colorAccent">@color/accent</color>
-    <color name="background">@color/ground</color>
 
     <!-- Bottom Navigation -->
 
@@ -105,17 +90,10 @@
     <color name="slate_soft">#8899BB</color>
     <!-- Status signal palette (muted to fit the navy/gold scheme) -->
     <color name="signal_good">#6FA97A</color>
-    <color name="signal_good_soft">#A9C4AE</color>
-    <color name="signal_good_tint">#CBDCCE</color>
     <color name="signal_watch">#DCC873</color>
-    <color name="signal_watch_soft">#E6DCA8</color>
-    <color name="signal_watch_tint">#F0EAC8</color>
     <color name="signal_elevated">#D98E4F</color>
-    <color name="signal_elevated_soft">#E5BE93</color>
-    <color name="signal_elevated_tint">#F0DABF</color>
     <color name="signal_alert">#C75B4E</color>
     <color name="signal_alert_soft">#D9A099</color>
-    <color name="signal_alert_tint">#EFD3D0</color>
     <color name="signal_alert_deep">#8E3B32</color>
     <!-- Purple = "too much of a good thing" (imbalance): GDP overheating, extreme curve steepness. Never reused for "very strong/best". -->
     <color name="signal_imbalance">#8A6E9E</color>
@@ -137,22 +115,9 @@
 
     <!-- Informational accents -->
     <color name="info_blue">#5B8DB8</color>
-    <color name="info_blue_soft">#B3C9DD</color>
-    <color name="info_blue_tint">#E3EAF4</color>
     <color name="accent_purple">#8A6E9E</color>
-    <color name="google_blue">#4285F4</color>
-    <color name="google_amber">#FBBC04</color>
     <!-- Alpha overlays -->
-    <color name="white_70">#B3FFFFFF</color>
-    <color name="white_28">#47FFFFFF</color>
     <color name="navy_ripple">#331A1A2E</color>
-    <!-- IOS-02 follow-up (2026-07-27): neutral hairline for the persistent
-         header bar's bottom edge, split out of the old gold hairline (see
-         headerSeparator in activity_main.xml). header_container stays navy in
-         both themes, so this doesn't need a values-night twin with a
-         different value — declared there anyway, identically, for the same
-         reason the old navy header colour was. -->
-    <color name="header_hairline_neutral">#1FFFFFFF</color>
 
     <!-- Launch splash (Economii wordmark). Fixed in both themes: the splash is
          a brand moment, not a themed surface. -->

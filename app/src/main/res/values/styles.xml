@@ -93,10 +93,6 @@
         <item name="android:fontFeatureSettings">tnum</item>
     </style>
 
-    <!-- IOS-03: tabular (fixed-width) digits for a value/delta TextView that
-         uses some other style and would not inherit Widget.Econ.TextView's
-         tnum. Now an alias of the number role. -->
-    <style name="TextAppearance.Econ.Value" parent="TextAppearance.Econ.Number" />
 
     <!-- TICKET-57: the one chart-card / panel title, bold in ink on the
          surface card (navy panels until Pantrii port U10). Was serif until the Pantrii port; now the title role.

@@ -2,7 +2,7 @@
 <!--
   Draws a 1dp neutral hairline along the top edge of the BottomNavigationView.
   TICKET-43 follow-up: was 20% gold (#33C9A84C); a permanent gold rule spent
-  accent budget on chrome, so it now matches @color/header_hairline_neutral.
+  accent budget on chrome, so it is now a neutral 12% white hairline.
   The bottom/left/right are pushed out so only the top stroke is visible.
   IOS-04: fill is alpha'd (was a solid #0f1729) so it reads as a translucent
   material with content passing underneath, not an opaque block.

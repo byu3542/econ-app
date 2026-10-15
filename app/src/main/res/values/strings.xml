@@ -1,16 +1,7 @@
 <resources>
     <string name="app_name">Economii</string>
-    <string name="tab_dashboard">Dashboard</string>
-    <string name="tab_treasury">Treasury</string>
-    <string name="tab_gdp">GDP</string>
-    <string name="tab_employment">Employment</string>
-    <string name="tab_cpi">CPI</string>
-    <string name="tab_wages">Wages</string>
 
-    <string name="middle_dot">&#183;</string>
     <string name="refresh">Refresh</string>
-    <string name="loading">Loading data…</string>
-    <string name="no_data">No data yet. Pull to refresh.</string>
     <string name="clear_cache">Clear Cache</string>
     <string name="clear_cache_confirm">Delete all locally cached economic data? It will be re-downloaded on the next refresh.</string>
     <string name="cache_cleared">Cache cleared</string>
@@ -157,7 +148,6 @@
     <string name="news_intl_sub">IMF, World Bank, BIS, OECD</string>
     <string name="news_research">Research &amp; think tanks</string>
     <string name="news_research_sub">Brookings, PIIE, regional Feds, and more</string>
-    <string name="news_source_required">At least one news source must stay on</string>
     <string name="smart_chips">Quick-ask suggestions</string>
     <string name="smart_chips_sub">Show the tappable question chips in the chat</string>
     <string name="detailed_ai">More detailed AI answers</string>
@@ -221,7 +211,6 @@
     <string name="news_analyze_chip">Analyze</string>
     <string name="news_meta_separator">·</string>
     <string name="news_featured_image">Featured story image</string>
-    <string name="news_analyze">Analyze with Econ Analyst</string>
     <string name="news_open_original">Open original</string>
     <string name="checking_freshness">Checking data freshness\u2026</string>
     <!-- Daily AI morning brief -->

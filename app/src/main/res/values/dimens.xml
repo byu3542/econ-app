@@ -7,10 +7,8 @@
     <dimen name="text_secondary">13sp</dimen>    <!-- secondary copy, dates -->
     <dimen name="text_body">15sp</dimen>         <!-- body copy -->
     <dimen name="text_title">18sp</dimen>        <!-- card/section titles -->
-    <dimen name="text_headline">22sp</dimen>     <!-- screen sub-headers -->
     <dimen name="text_display">28sp</dimen>      <!-- KPI values, masthead -->
     <dimen name="text_display_lg">34sp</dimen>   <!-- large metric values -->
-    <dimen name="text_display_xl">48sp</dimen>   <!-- hero metric value -->
     <!-- R2-TICKET-06: floor for auto-sizing KPI values. Three 34sp values in one
          row overflow at 360dp width, so those rows auto-shrink to this instead of
          hardcoding a smaller size and re-introducing a fourth step in the ramp. -->
@@ -38,7 +36,6 @@
     <dimen name="space_xl">20dp</dimen>
     <dimen name="space_2xl">24dp</dimen>
     <dimen name="space_3xl">28dp</dimen>
-    <dimen name="space_4xl">32dp</dimen>
 
     <!-- Yields table rows: ~30% shorter than the space_xl (20dp) default so
          more maturities fit on screen without scrolling. -->
