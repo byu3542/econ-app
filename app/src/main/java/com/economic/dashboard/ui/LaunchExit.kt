@@ -57,6 +57,13 @@ object LaunchExit {
     private const val RING_SCALE = 1.12f
     /** windowSplashScreenIconBackgroundColor on Theme.EconomicDashboard.Starting. */
     private const val DISC_COLOR = 0xFF1A3470.toInt()
+    /**
+     * windowSplashScreenBrandingImage as the system lays it out: 200x80dp,
+     * centred, 60dp above the bottom of the window.
+     */
+    private const val BRAND_W_DP = 200f
+    private const val BRAND_H_DP = 80f
+    private const val BRAND_BOTTOM_DP = 60f
 
     fun play(activity: Activity, provider: SplashScreenViewProvider, target: View, onGone: () -> Unit) {
                 val icon = provider.iconView
@@ -80,9 +87,11 @@ object LaunchExit {
         val ringR = discR * RING_SCALE
         val fullR = hypot(max(cx, root.width - cx), max(cy, root.height - cy))
 
+        val accent = splashAccent(activity)
         val art = ExitDrawable(
-            cx, cy, discR, icon.width, groundColor(activity), fullR,
+            cx, cy, discR, icon.width, accent.bright.toInt(), fullR,
             ContextCompat.getDrawable(activity, R.drawable.splash_logo)!!,
+            branding(activity, root, accent),
         )
         val view = View(activity).apply { background = art }
         root.addView(view, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
@@ -96,7 +105,10 @@ object LaunchExit {
             val collapse = ValueAnimator.ofFloat(fullR, ringR).apply {
                 duration = COLLAPSE_MS
                 interpolator = ease
-                addUpdateListener { art.fieldR = it.animatedValue as Float }
+                addUpdateListener {
+                    art.fieldR = it.animatedValue as Float
+                    art.brandAlpha = (1f - it.animatedFraction * 2f).coerceAtLeast(0f)
+                }
             }
             val scale = (target.width / 2f) / ringR
             val drop = AnimatorSet().apply {
@@ -142,16 +154,32 @@ object LaunchExit {
      * The ground the system splash just showed: the chosen accent on API 33+
      * (setSplashScreenTheme), the manifest theme's navy below that.
      */
-    private fun groundColor(context: Context): Int {
-        val accent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+    private fun splashAccent(context: Context): AccentPalette =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             SettingsManager.getAccent(context)
         } else {
             AccentPalette.DEFAULT
         }
-        return accent.bright.toInt()
+
+    /**
+     * The system splash's wordmark, placed where the system drew it, so it
+     * stays while the field collapses. None below API 31, which has no
+     * branding image.
+     */
+    private fun branding(context: Context, root: View, accent: AccentPalette): Drawable? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return null
+        val res = if (accent == AccentPalette.NAVY) R.drawable.splash_branding_light else R.drawable.splash_branding
+        val d = ContextCompat.getDrawable(context, res) ?: return null
+        val dp = context.resources.displayMetrics.density
+        val w = (BRAND_W_DP * dp).toInt()
+        val h = (BRAND_H_DP * dp).toInt()
+        val left = (root.width - w) / 2
+        val bottom = root.height - (BRAND_BOTTOM_DP * dp).toInt()
+        d.setBounds(left, bottom - h, left + w, bottom)
+        return d
     }
 
-    /** The splash, redrawn: accent field, navy disc, finished logo. */
+    /** The splash, redrawn: accent field, navy disc, finished logo, wordmark. */
     private class ExitDrawable(
         private val cx: Float,
         private val cy: Float,
@@ -160,11 +188,19 @@ object LaunchExit {
         ground: Int,
         initialFieldR: Float,
         private val logo: Drawable,
+        private val brand: Drawable?,
     ) : Drawable() {
         private val fieldPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = ground }
         private val discPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = DISC_COLOR }
 
         var fieldR = initialFieldR
+            set(value) {
+                field = value
+                invalidateSelf()
+            }
+
+        /** The wordmark fades out in the first half of the collapse, before the drop moves it. */
+        var brandAlpha = 1f
             set(value) {
                 field = value
                 invalidateSelf()
@@ -179,6 +215,10 @@ object LaunchExit {
             canvas.drawCircle(cx, cy, fieldR, fieldPaint)
             canvas.drawCircle(cx, cy, discR, discPaint)
             logo.draw(canvas)
+            brand?.let {
+                it.alpha = (brandAlpha * 255).toInt()
+                it.draw(canvas)
+            }
         }
 
         override fun setAlpha(alpha: Int) = Unit
