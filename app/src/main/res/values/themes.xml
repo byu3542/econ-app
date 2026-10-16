@@ -3,10 +3,15 @@
     <style name="Theme.EconomicDashboard" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <!-- Primary brand color: the Pantrii accent (was the legacy navy
              #1a1a2e), so widgets that tint from colorPrimary match the port. -->
-        <item name="colorPrimary">@color/accent</item>
-        <item name="colorPrimaryDark">@color/accent</item>
-        <item name="colorOnPrimary">@color/on_accent</item>
-        <item name="colorAccent">@color/colorAccent</item>
+        <item name="colorPrimary">?attr/econAccent</item>
+        <item name="colorPrimaryDark">?attr/econAccent</item>
+        <item name="colorOnPrimary">?attr/econOnAccent</item>
+        <item name="colorAccent">?attr/econAccent</item>
+        <!-- Settings parity U1: gold defaults for the accent attributes; the
+             chosen ThemeOverlay.Economii.Accent.* overrides them. -->
+        <item name="econAccent">@color/accent</item>
+        <item name="econOnAccent">@color/on_accent</item>
+        <item name="econAccentSoft">@color/accent_soft</item>
 
         <!-- Pantrii port U1: window paints the semantic ground token. Status and
              nav bars stay transparent (IOS-04 below) — the app draws edge to
@@ -131,8 +136,8 @@
     <!-- The primary button: an accent-filled pill. Unelevated, so it stays
          flat like every other surface in the port. -->
     <style name="Button.Econ.Dialog.Positive" parent="Widget.MaterialComponents.Button.UnelevatedButton">
-        <item name="backgroundTint">@color/accent</item>
-        <item name="android:textColor">@color/on_accent</item>
+        <item name="backgroundTint">?attr/econAccent</item>
+        <item name="android:textColor">?attr/econOnAccent</item>
         <item name="rippleColor">@color/hairline_on_surface</item>
         <item name="cornerRadius">@dimen/radius_pill</item>
         <item name="android:textAllCaps">false</item>
@@ -174,9 +179,9 @@
         <!-- U11: controls inside a dialog (the add-alert radios, the text
              field's focus ring and hint) take the accent. colorSecondary
              would otherwise fall back to Material's teal. -->
-        <item name="colorPrimary">@color/accent</item>
-        <item name="colorSecondary">@color/accent</item>
-        <item name="colorOnSecondary">@color/on_accent</item>
+        <item name="colorPrimary">?attr/econAccent</item>
+        <item name="colorSecondary">?attr/econAccent</item>
+        <item name="colorOnSecondary">?attr/econOnAccent</item>
     </style>
 
     <style name="AlabasterToolbar" parent="Widget.MaterialComponents.Toolbar">

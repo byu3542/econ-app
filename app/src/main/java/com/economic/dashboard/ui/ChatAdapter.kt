@@ -25,6 +25,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
+import com.google.android.material.color.MaterialColors
 import androidx.recyclerview.widget.RecyclerView
 import com.economic.dashboard.analyst.ReleaseCalendar
 import com.economic.dashboard.R
@@ -625,7 +626,7 @@ class ChatAdapter(
             bubbleParams.horizontalBias = 1.0f
             bubble.setBackgroundResource(R.drawable.bg_chat_bubble_user)
             bubble.setPadding(dp(res, 15f), dp(res, 11f), dp(res, 15f), dp(res, 11f))
-            holder.tvMessage.setTextColor(ContextCompat.getColor(ctx, R.color.on_accent))
+            holder.tvMessage.setTextColor(MaterialColors.getColor(holder.tvMessage, R.attr.econOnAccent))
             holder.tvMessage.setTextIsSelectable(false)
             holder.tvMessage.customSelectionActionModeCallback = null
             holder.tvRetry.visibility = View.GONE

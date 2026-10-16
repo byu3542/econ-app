@@ -61,7 +61,6 @@
     <color name="textSecondary">@color/muted</color>
 
     <!-- Legacy / Theme Compatibility -->
-    <color name="colorAccent">@color/accent</color>
 
     <!-- Bottom Navigation -->
 

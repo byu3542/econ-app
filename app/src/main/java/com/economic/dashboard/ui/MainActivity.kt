@@ -19,6 +19,7 @@ import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.google.android.material.color.MaterialColors
 import androidx.core.graphics.Insets
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.ViewCompat
@@ -123,6 +124,9 @@ class MainActivity : AppCompatActivity() {
         // Must run before super.onCreate: swaps the navy Starting theme for the
         // app theme. The animated wordmark (LaunchSplash) takes over below.
         val splash = installSplashScreen()
+        // Settings parity U1 (KTD1): the chosen accent overlays the app theme
+        // before anything inflates. Changing it recreates the activity.
+        theme.applyStyle(SettingsManager.getAccent(this).overlay, true)
         super.onCreate(savedInstanceState)
         freshLaunch = (savedInstanceState == null)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -885,8 +889,8 @@ class MainActivity : AppCompatActivity() {
         // Explicit setters on BadgeDrawable (Material, third-party): Drawable
         // also declares a two-arg setVisible(boolean, boolean), so property
         // syntax here would be needlessly ambiguous (migration lesson 12).
-        badge.setBackgroundColor(ContextCompat.getColor(this, R.color.accent))
-        badge.setBadgeTextColor(ContextCompat.getColor(this, R.color.on_accent))
+        badge.setBackgroundColor(MaterialColors.getColor(binding.bottomNav, R.attr.econAccent))
+        badge.setBadgeTextColor(MaterialColors.getColor(binding.bottomNav, R.attr.econOnAccent))
         badge.setMaxCharacterCount(2)                   // "9+" style past 99
         badge.setNumber(unread)
         badge.setVisible(true)
@@ -920,7 +924,7 @@ class MainActivity : AppCompatActivity() {
         val newest = SettingsManager.getAnalystLastInsight(this)
         if (newest > lastSeen) {
             val badge = binding.bottomNav.getOrCreateBadge(R.id.nav_ai_placeholder)
-            badge.setBackgroundColor(ContextCompat.getColor(this, R.color.accent))
+            badge.setBackgroundColor(MaterialColors.getColor(binding.bottomNav, R.attr.econAccent))
             badge.setVisible(true)                  // dot — a single "new insight" nudge
         } else {
             clearAnalystBadge()

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Pantrii port U5: icon tint for bg_composer_button. -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:state_activated="true" android:color="@color/on_accent" />
+    <item android:state_activated="true" android:color="?attr/econOnAccent" />
     <item android:color="@color/muted" />
 </selector>

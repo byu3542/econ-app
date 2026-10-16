@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Pantrii port U6 (R4): user bubble. Accent fill, 20dp radius. -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
-    <solid android:color="@color/accent" />
+    <solid android:color="?attr/econAccent" />
     <corners android:radius="@dimen/radius_card" />
 </shape>

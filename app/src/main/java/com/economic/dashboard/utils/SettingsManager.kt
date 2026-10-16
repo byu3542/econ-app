@@ -1,6 +1,7 @@
 package com.economic.dashboard.utils
 
 import android.content.Context
+import com.economic.dashboard.ui.AccentPalette
 import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatDelegate
 import com.economic.dashboard.alerts.AlertRule
@@ -19,6 +20,7 @@ object SettingsManager {
 
     // Appearance
     @JvmField val KEY_NIGHT_MODE = "night_mode"
+    @JvmField val KEY_ACCENT = "accent_id" // settings parity U1: AccentPalette id, default gold
     @JvmField val KEY_COLORBLIND = "colorblind_mode" // blue/orange safe deltas
     // Data
     @JvmField val KEY_REFRESH_ON_OPEN = "refresh_on_open"
@@ -126,6 +128,14 @@ object SettingsManager {
     // ── Typed convenience accessors ──────────────────────────────────
     @JvmStatic
     fun getNightMode(c: Context): Int = getInt(c, KEY_NIGHT_MODE, AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+
+    @JvmStatic
+    fun getAccent(c: Context): AccentPalette = AccentPalette.fromId(prefs(c).getString(KEY_ACCENT, null))
+
+    @JvmStatic
+    fun setAccent(c: Context, accent: AccentPalette) {
+        prefs(c).edit().putString(KEY_ACCENT, accent.id).apply()
+    }
 
     @JvmStatic
     fun setNightMode(c: Context, mode: Int) {

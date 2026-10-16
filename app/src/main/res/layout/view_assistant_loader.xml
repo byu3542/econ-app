@@ -23,7 +23,7 @@
         android:importantForAccessibility="no"
         app:indicatorSize="16dp"
         app:trackThickness="2dp"
-        app:indicatorColor="@color/accent"
+        app:indicatorColor="?attr/econAccent"
         app:trackColor="@android:color/transparent" />
 
     <TextView

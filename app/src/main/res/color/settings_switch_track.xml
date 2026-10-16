@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Pantrii port U11: accent track when on (a control, KTD10 rule 1), muted when off. -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:state_checked="true" android:color="@color/accent"/>
+    <item android:state_checked="true" android:color="?attr/econAccent"/>
     <item android:color="@color/muted"/>
 </selector>

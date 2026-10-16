@@ -2,6 +2,6 @@
 <!-- Pantrii port U6: rounded-square icon tile (card title rows, actions sheet). -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
-    <solid android:color="@color/accent_soft" />
+    <solid android:color="?attr/econAccentSoft" />
     <corners android:radius="11dp" />
 </shape>

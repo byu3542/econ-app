@@ -18,7 +18,7 @@
         android:layout_height="34dp"
         android:background="@drawable/bg_icon_tile"
         android:padding="8dp"
-        app:tint="@color/accent"
+        app:tint="?attr/econAccent"
         android:importantForAccessibility="no" />
 
     <TextView

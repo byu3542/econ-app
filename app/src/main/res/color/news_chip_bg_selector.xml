@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Pantrii port U10: selected = accent_soft, otherwise surface. -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:state_checked="true" android:color="@color/accent_soft" />
+    <item android:state_checked="true" android:color="?attr/econAccentSoft" />
     <item android:color="@color/surface" />
 </selector>
