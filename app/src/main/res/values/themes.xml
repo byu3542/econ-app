@@ -468,7 +468,7 @@
 
     <!-- Cold-start theme (launch variation C). The splash ground is the
          accent's bright value and the launcher logo builds on a navy disc
-         (splash_logo_anim, 480 ms, plays once). MainActivity's exit listener
+         (splash_logo_anim, 740 ms, plays once). MainActivity's exit listener
          (LaunchExit.kt) then shrinks the accent field to a ring around the logo
          and drops it into the Analyst FAB. This manifest theme is navy; on API
          33+ MainActivity swaps in the chosen accent's Starting.<Accent> theme
@@ -478,7 +478,7 @@
         <item name="windowSplashScreenIconBackgroundColor">#1A3470</item>
         <!-- Navy ground: the drawable draws its own smaller disc. -->
         <item name="windowSplashScreenAnimatedIcon">@drawable/splash_logo_anim</item>
-        <item name="windowSplashScreenAnimationDuration">480</item>
+        <item name="windowSplashScreenAnimationDuration">740</item>
         <item name="postSplashScreenTheme">@style/Theme.EconomicDashboard</item>
     </style>
 

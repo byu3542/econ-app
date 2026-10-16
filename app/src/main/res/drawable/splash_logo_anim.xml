@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Builds the launch logo once, 480 ms: bars grow, left dot appears, trend
+<!-- Builds the launch logo once, 740 ms: bars grow, left dot appears, trend
      line draws, trend dot lands. A white arc spins outside the disc until the splash
      exits (the only repeating part). Matches
      windowSplashScreenAnimationDuration on Theme.EconomicDashboard.Starting. -->
@@ -41,7 +41,7 @@
     <target android:name="line">
         <aapt:attr name="android:animation">
             <objectAnimator android:propertyName="trimPathEnd" android:valueFrom="0" android:valueTo="1"
-                android:startOffset="180" android:duration="200"
+                android:startOffset="180" android:duration="420"
                 android:interpolator="@android:interpolator/fast_out_slow_in"/>
         </aapt:attr>
     </target>
@@ -49,10 +49,10 @@
         <aapt:attr name="android:animation">
             <set>
                 <objectAnimator android:propertyName="scaleX" android:valueFrom="0" android:valueTo="1"
-                    android:startOffset="300" android:duration="180"
+                    android:startOffset="520" android:duration="220"
                     android:interpolator="@android:anim/overshoot_interpolator"/>
                 <objectAnimator android:propertyName="scaleY" android:valueFrom="0" android:valueTo="1"
-                    android:startOffset="300" android:duration="180"
+                    android:startOffset="520" android:duration="220"
                     android:interpolator="@android:anim/overshoot_interpolator"/>
             </set>
         </aapt:attr>

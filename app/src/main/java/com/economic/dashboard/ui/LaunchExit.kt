@@ -63,7 +63,7 @@ object LaunchExit {
     private const val BRAND_GAP_DP = 4f
     /** The wordmark fades in under the wheel and holds before the collapse. */
     private const val BRAND_IN_MS = 160L
-    private const val BRAND_HOLD_MS = 360L
+    private const val BRAND_HOLD_MS = 600L
 
     fun play(activity: Activity, provider: SplashScreenViewProvider, target: View, onGone: () -> Unit) {
                 val icon = provider.iconView
