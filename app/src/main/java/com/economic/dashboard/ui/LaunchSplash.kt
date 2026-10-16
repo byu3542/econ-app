@@ -54,9 +54,10 @@ object LaunchSplash {
 
     /**
      * Adds the overlay. [onCovered] runs once it fully covers the system
-     * splash; the caller removes the system splash there.
+     * splash; the caller removes the system splash there. [onGone] runs once
+     * the overlay has faded out and the app is in view.
      */
-    fun show(activity: Activity, onCovered: () -> Unit): Handle {
+    fun show(activity: Activity, onGone: () -> Unit = {}, onCovered: () -> Unit): Handle {
         val systemAnimated = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
         val root = activity.window.decorView as ViewGroup
         val overlay = LayoutInflater.from(activity)
@@ -101,6 +102,7 @@ object LaunchSplash {
                 .withEndAction {
                     motion?.stop()
                     root.removeView(overlay)
+                    onGone()
                 }
                 .start()
         }

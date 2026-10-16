@@ -88,9 +88,9 @@ class MainActivity : AppCompatActivity(), ShortcutsBottomSheet.Host, SearchFragm
 
     private lateinit var viewModel: EconomicViewModel
 
-    /** Title of the visible tab ("Overview", "Markets", ...) — read by the AI
+    /** Title of the visible tab ("Home", "Markets", ...) — read by the AI
         Analyst so the model knows what screen the user is looking at. */
-    private var currentScreenLabel = "Overview"
+    private var currentScreenLabel = "Home"
 
     fun getCurrentScreenLabel(): String = currentScreenLabel
 
@@ -99,6 +99,11 @@ class MainActivity : AppCompatActivity(), ShortcutsBottomSheet.Host, SearchFragm
     /** True only on a fresh launch (not on theme-change/rotation recreates) —
         gates "open to default tab" and "refresh cache on open". */
     private var freshLaunch = false
+
+    /** The Home wordmark waves once per cold start, after the splash leaves
+     *  and the first time Home is in view (Aaron, 2026-10-16). */
+    private var homeWavePending = false
+    private var splashGone = false
     /** Settings parity U6: sub-tab a shortcut asked for, consumed by the next tab host made. */
     private var pendingSubTab = -1
 
@@ -139,6 +144,7 @@ class MainActivity : AppCompatActivity(), ShortcutsBottomSheet.Host, SearchFragm
         theme.applyStyle(SettingsManager.getAccent(this).overlay, true)
         super.onCreate(savedInstanceState)
         freshLaunch = (savedInstanceState == null)
+        homeWavePending = freshLaunch
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         // Fresh launches only, so a theme change or rotation doesn't replay it.
@@ -149,7 +155,7 @@ class MainActivity : AppCompatActivity(), ShortcutsBottomSheet.Host, SearchFragm
             splash.setOnExitAnimationListener { provider ->
                 // remove() only once the overlay covers the system splash, so
                 // the navy ground and the motion never break.
-                val launch = LaunchSplash.show(this) { provider.remove() }
+                val launch = LaunchSplash.show(this, onGone = { splashGone = true; maybePlayHomeWave() }) { provider.remove() }
                 // Cache-first: with a snapshot on disk the cards are already
                 // painted, so the overlay only waits for its own animation.
                 // A first-ever launch waits for the network fetch to settle.
@@ -507,6 +513,8 @@ class MainActivity : AppCompatActivity(), ShortcutsBottomSheet.Host, SearchFragm
      *  fragment calls this from showList and showSection. */
     fun setSettingsTitle(title: CharSequence) {
         setHeaderTitleLarge(true)
+        binding.wordmarkHome.visibility = View.GONE
+        binding.tvHeaderCompactTitle.visibility = View.VISIBLE
         binding.tvHeaderCompactTitle.text = title
         currentScreenLabel = title.toString()
     }
@@ -524,6 +532,24 @@ class MainActivity : AppCompatActivity(), ShortcutsBottomSheet.Host, SearchFragm
         tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, resources.getDimension(R.dimen.text_page_title))
     }
 
+    /** A tab's header title. Home shows the "economii" wordmark instead of
+     *  its name; [currentScreenLabel] keeps the name for the Analyst. */
+    private fun setTabTitle(title: String, navId: Int = binding.bottomNav.selectedItemId) {
+        val home = navId == R.id.nav_overview
+        binding.tvHeaderCompactTitle.text = title
+        binding.tvHeaderCompactTitle.visibility = if (home) View.GONE else View.VISIBLE
+        binding.wordmarkHome.visibility = if (home) View.VISIBLE else View.GONE
+        currentScreenLabel = title
+        maybePlayHomeWave()
+    }
+
+    private fun maybePlayHomeWave() {
+        if (!homeWavePending || !splashGone) return
+        if (binding.wordmarkHome.visibility != View.VISIBLE || isFullScreenShowing()) return
+        homeWavePending = false
+        binding.wordmarkHome.playWave()
+    }
+
     /** Restores whichever tab bottomNav still has selected and puts the gear
      *  icon back to normal. */
     private fun closeSettings() {
@@ -531,8 +557,7 @@ class MainActivity : AppCompatActivity(), ShortcutsBottomSheet.Host, SearchFragm
         loadFragmentForNavId(id)
         val (_, title) = fragmentIndexAndTitle(id)
         setHeaderTitleLarge(false)
-        binding.tvHeaderCompactTitle.text = title
-        currentScreenLabel = title
+        setTabTitle(title)
         resetSettingsGearIcon()
         binding.bottomNavWrapper.visibility = View.VISIBLE
         binding.navScrim.visibility = View.VISIBLE
@@ -598,7 +623,7 @@ class MainActivity : AppCompatActivity(), ShortcutsBottomSheet.Host, SearchFragm
         return if (id == R.id.nav_markets) 1 to "Markets"
         else if (id == R.id.nav_economy) 3 to "Economy"
         else if (id == R.id.navigation_news) 4 to "News"
-        else 0 to "Overview"
+        else 0 to "Home"
     }
 
     /** Asks for the Android 13+ notification permission if not yet granted. */
@@ -965,6 +990,8 @@ class MainActivity : AppCompatActivity(), ShortcutsBottomSheet.Host, SearchFragm
                 // U3: a restored assistant sits on the back stack over the tab;
                 // loading the tab here would replace it.
                 if (!isFullScreenShowing()) loadFragmentForNavId(binding.bottomNav.selectedItemId)
+                if (!isSettingsShowing())
+                    setTabTitle(fragmentIndexAndTitle(binding.bottomNav.selectedItemId).second)
                 updateEditCardsButton()
             }
         }
@@ -993,8 +1020,8 @@ class MainActivity : AppCompatActivity(), ShortcutsBottomSheet.Host, SearchFragm
                 }
                 val (index, title) = fragmentIndexAndTitle(id)
                 resetHeaderCompactAlwaysVisible()
-                binding.tvHeaderCompactTitle.text = title
-                currentScreenLabel = title
+                // The nav still reports the old item inside this listener.
+                setTabTitle(title, id)
 
                 // Width is read at tap time, not captured at setup: when
                 // setupBottomNav() ran with the nav GONE (recreate straight

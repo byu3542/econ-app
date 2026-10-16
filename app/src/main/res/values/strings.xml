@@ -93,7 +93,7 @@
     <string name="alert_undo">Undo</string>
     <!-- TICKET-25: watchlist onboarding -->
     <string name="watchlist_title">What do you watch?</string>
-    <string name="watchlist_subtitle">Pick the metrics you care about — your Overview will show them first. Tap in your order of importance.</string>
+    <string name="watchlist_subtitle">Pick the metrics you care about — Home will show them first. Tap in your order of importance.</string>
     <string name="watchlist_progress_zero">0 of 6</string>
     <string name="watchlist_gdp">GDP growth</string>
     <string name="watchlist_spread">10Y-3M Treasury spread</string>
@@ -161,7 +161,7 @@
     <string name="refresh_on_open_sub">Uses more data and may take longer to load</string>
     <string name="data_cache_sub">Economic history is stored on this device for faster loading.</string>
     <string name="news_sources_summary">%1$d of 4 source groups enabled</string>
-    <string name="tab_overview">Overview</string>
+    <string name="tab_overview">Home</string>
     <string name="tab_markets">Markets</string>
     <string name="tab_economy">Economy</string>
     <string name="tab_news">News</string>

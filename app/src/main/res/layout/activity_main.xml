@@ -77,13 +77,25 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="start|center_vertical"
-                    android:text="Overview"
+                    android:visibility="gone"
+                    android:text="@string/tab_overview"
                     android:textAppearance="@style/TextAppearance.Econ.Title"
                     android:textSize="@dimen/text_page_title"
                     android:textColor="@color/ink"
                     android:fontFamily="@font/plus_jakarta_sans_bold"
                     android:singleLine="true"
                     android:includeFontPadding="false"/>
+
+                <!-- Home's title is the "economii" wordmark, which waves once
+                     after launch (Aaron, 2026-10-16). MainActivity swaps it with
+                     tvHeaderCompactTitle; Home is the launch tab, so it starts
+                     visible. The letters rise past the bar's padding, hence
+                     clipChildren="false" on header_inner_layout. -->
+                <com.economic.dashboard.ui.views.WaveWordmark
+                    android:id="@+id/wordmarkHome"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="start|center_vertical"/>
 
                 <!-- 48dp touch target (UX_DESIGN_LAWS.md Law 4). -->
                 <ImageView
