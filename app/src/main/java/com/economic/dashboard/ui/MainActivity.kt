@@ -535,15 +535,21 @@ class MainActivity : AppCompatActivity(), ShortcutsBottomSheet.Host, SearchFragm
 
     /**
      * API 33+: makes the next cold launch's system splash use the chosen
-     * accent's Starting theme (Android persists it). Skipped when the stored
-     * choice already matches, since the call is a PackageManager IPC.
+     * accent's Starting theme (Android persists it). Called once per process
+     * and again after each accent change (which recreates the activity), not
+     * gated on a stored flag: the system's copy is the source of truth and can
+     * be reset without our prefs knowing.
      */
     private fun syncSplashTheme() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
         val accent = SettingsManager.getAccent(this)
-        if (SettingsManager.getString(this, SettingsManager.KEY_SPLASH_THEME, null) == accent.id) return
-        splashScreen.setSplashScreenTheme(accent.startingTheme)
-        SettingsManager.setString(this, SettingsManager.KEY_SPLASH_THEME, accent.id)
+        if (splashThemeSynced == accent.id) return
+        try {
+            splashScreen.setSplashScreenTheme(accent.startingTheme)
+            splashThemeSynced = accent.id
+        } catch (e: RuntimeException) {
+            android.util.Log.w("MainActivity", "setSplashScreenTheme failed", e)
+        }
     }
 
     private fun maybePlayHomeWave() {
@@ -1200,6 +1206,9 @@ class MainActivity : AppCompatActivity(), ShortcutsBottomSheet.Host, SearchFragm
     }
 
     companion object {
+        /** Accent id last passed to setSplashScreenTheme in this process. */
+        private var splashThemeSynced: String? = null
+
         const val WELCOME_TEXT =
             "Hello! I am your Econ Analyst, powered by Claude. " +
                 "I can see all of the dashboard's live data — ask me anything about it. " +

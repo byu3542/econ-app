@@ -57,8 +57,7 @@ object LaunchExit {
     private const val DISC_COLOR = 0xFF1A3470.toInt()
 
     fun play(activity: Activity, provider: SplashScreenViewProvider, target: View, onGone: () -> Unit) {
-        val splash = provider.view
-        val icon = provider.iconView
+                val icon = provider.iconView
         if (!ValueAnimator.areAnimatorsEnabled() || icon.width == 0 || target.width == 0) {
             provider.remove()
             onGone()
@@ -88,7 +87,8 @@ object LaunchExit {
         view.pivotX = cx
         view.pivotY = cy
 
-        val start = {
+        var running: AnimatorSet? = null
+        val start = Runnable {
             provider.remove()
             val ease = FastOutSlowInInterpolator()
             val collapse = ValueAnimator.ofFloat(fullR, ringR).apply {
@@ -112,19 +112,28 @@ object LaunchExit {
                 startDelay = FADE_DELAY_MS
                 duration = FADE_MS
             }
-            AnimatorSet().apply {
+            running = AnimatorSet().apply {
                 playTogether(collapse, drop, fade)
                 addListener(object : AnimatorListenerAdapter() {
                     override fun onAnimationEnd(animation: Animator) {
                         root.removeView(view)
-                        onGone()
+                        if (!activity.isDestroyed) onGone()
                     }
                 })
                 start()
             }
         }
         // The copy draws on its next frame; drop the system splash after it.
-        splash.postDelayed({ view.post { start() } }, buildLeft.coerceAtLeast(0L))
+        // If the activity goes away first (rotation, accent recreate), the
+        // window detaches the copy: stop everything there.
+        view.postDelayed(start, buildLeft.coerceAtLeast(0L) + 1)
+        view.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
+            override fun onViewAttachedToWindow(v: View) = Unit
+            override fun onViewDetachedFromWindow(v: View) {
+                v.removeCallbacks(start)
+                running?.cancel()
+            }
+        })
     }
 
     /**
