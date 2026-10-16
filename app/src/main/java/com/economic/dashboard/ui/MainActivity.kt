@@ -1016,7 +1016,7 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         const val WELCOME_TEXT =
-            "Hello! I am your Econ Analyst, powered by Claude. " +
+            "Hello! I am your economii Analyst, powered by Claude. " +
                 "I can see all of the dashboard's live data — ask me anything about it. " +
                 "Tip: long-press any card on the Overview screen to ask about that metric.\n\n" +
                 "Answers are AI-generated and can be wrong — verify anything important " +

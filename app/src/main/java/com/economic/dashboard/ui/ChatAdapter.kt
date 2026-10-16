@@ -803,7 +803,7 @@ class ChatAdapter(
     }
 
     /** "Select text" from the sheet: the answer opens in a selection sheet
-     *  whose toolbar keeps "Ask Econ Analyst"; asking closes that sheet. */
+     *  whose toolbar keeps "Ask economii Analyst"; asking closes that sheet. */
     private fun startTextSelection(holder: ViewHolder) {
         val text = holder.tvMessage.text
         AnswerActionsSheet.showSelectable(holder.itemView.context, text) { tv, close ->
@@ -835,7 +835,7 @@ class ChatAdapter(
 
     private fun copyToClipboard(ctx: Context, text: String) {
         val cm = ctx.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager ?: return
-        cm.setPrimaryClip(ClipData.newPlainText("Econ Analyst message", text))
+        cm.setPrimaryClip(ClipData.newPlainText("economii Analyst message", text))
         Toast.makeText(ctx, "Copied", Toast.LENGTH_SHORT).show()
     }
 

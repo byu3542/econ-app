@@ -4,7 +4,7 @@ import com.economic.dashboard.api.ApiConfig
 import java.util.LinkedHashMap
 
 /**
- * Single source of truth for every economic series the Econ Analyst can
+ * Single source of truth for every economic series the economii Analyst can
  * reference. Before this existed, the same 17 ids were hand-maintained in
  * three separate places (AnalystToolExecutor.SERIES_IDS/LIVE_SERIES,
  * ChatAdapter.SERIES_LABELS, and a literal id list inside

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Full-screen AI Econ Analyst (AssistantFragment, Pantrii port U3), pushed
+  Full-screen AI economii Analyst (AssistantFragment, Pantrii port U3), pushed
   onto MainActivity's fragmentContainer. Root pads itself for system bars and
   the IME. Vertical LinearLayout so the chat area can flex.
 -->

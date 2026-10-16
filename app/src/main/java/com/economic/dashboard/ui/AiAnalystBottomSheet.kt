@@ -10,7 +10,7 @@ import java.util.Locale
 import java.util.regex.Pattern
 
 /**
- * Pure turn logic for the Econ Analyst: model routing, lookup-announcement
+ * Pure turn logic for the economii Analyst: model routing, lookup-announcement
  * detection, error wording and snapshot freshness, plus the per-turn
  * [StreamState]. No views, no Android lifecycle.
  *
@@ -167,7 +167,7 @@ class AiAnalystBottomSheet private constructor() {
             if (e is java.net.SocketTimeoutException)
                 return "The response timed out — please try again."
             val m = e.message
-            if (m != null && m.startsWith("Econ Analyst service error")) return m
+            if (m != null && m.startsWith("economii Analyst service error")) return m
             if (e is IOException)
                 return "The connection dropped while receiving the response — please try again."
             return "Couldn't read the response — please try again."
@@ -190,7 +190,7 @@ class AiAnalystBottomSheet private constructor() {
                 || m.contains("api_error"))
                 return "The analyst service is down. Please try again shortly."
             if (e is java.net.SocketTimeoutException) return friendlyError(e)
-            if (code == null && e is IOException && !m.startsWith("Econ Analyst service error"))
+            if (code == null && e is IOException && !m.startsWith("economii Analyst service error"))
                 return friendlyError(e)
             return "Something went wrong. Please try again."
         }

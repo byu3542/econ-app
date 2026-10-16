@@ -20,7 +20,7 @@ object AnalystIdentity {
 
     /** The assistant's name. Codifies the name the app already used at the
      *  sheet header, sender label, system prompt, and greeting. */
-    const val NAME = "Econ Analyst"
+    const val NAME = "economii Analyst"
 
     /** The AI-content marker, prefixed to labels and generated content. */
     const val MARKER = "✨"

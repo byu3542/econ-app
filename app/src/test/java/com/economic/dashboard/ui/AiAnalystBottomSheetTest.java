@@ -12,7 +12,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /**
- * JVM unit tests for the Econ Analyst agent path's pure, side-effect-free
+ * JVM unit tests for the economii Analyst agent path's pure, side-effect-free
  * functions in AiAnalystBottomSheet (TICKET-I / review Q7). These were made
  * package-visible (were private) with no logic change so this test class can
  * call them directly.
@@ -85,9 +85,9 @@ public class AiAnalystBottomSheetTest {
     @Test
     public void overloadedOrRateLimited_isTransient() {
         assertTrue(AiAnalystBottomSheet.isTransientFailure(
-                new IOException("Econ Analyst service error (overloaded_error): server overloaded")));
+                new IOException("economii Analyst service error (overloaded_error): server overloaded")));
         assertTrue(AiAnalystBottomSheet.isTransientFailure(
-                new IOException("Econ Analyst service error (rate_limit_error): too many requests")));
+                new IOException("economii Analyst service error (rate_limit_error): too many requests")));
     }
 
     @Test
@@ -112,7 +112,7 @@ public class AiAnalystBottomSheetTest {
 
     @Test
     public void serviceError_passesMessageThrough() {
-        String msg = "Econ Analyst service error (overloaded_error): server overloaded";
+        String msg = "economii Analyst service error (overloaded_error): server overloaded";
         assertEquals(msg, AiAnalystBottomSheet.friendlyError(new IOException(msg)));
     }
 

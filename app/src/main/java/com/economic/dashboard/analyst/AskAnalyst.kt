@@ -129,7 +129,7 @@ object AskAnalyst {
      * TICKET-59: every card wired here shows a 12dp sparkle at 50% alpha in its
      * top-trailing corner — the same glyph as the analyst FAB — so the
      * long-press has a visible affordance, and TalkBack names the action
-     * ("double-tap and hold to ask the Econ Analyst"). Cards are CardViews
+     * ("double-tap and hold to ask the economii Analyst"). Cards are CardViews
      * (FrameLayouts), so the marker is an overlay child; a card re-wired on
      * refresh keeps its single marker (tag check).
      */

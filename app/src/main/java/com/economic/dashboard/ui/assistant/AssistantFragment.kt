@@ -978,7 +978,7 @@ class AssistantFragment : Fragment() {
     private fun queryClaude(userQuery: String, rv: RecyclerView) {
         if (ApiConfig.PROXY_BASE_URL.isEmpty()) {
             chatAdapter().addMessage(ChatMessage(
-                "Econ Analyst is not configured. Deploy the proxy in the proxy/ folder, " +
+                "economii Analyst is not configured. Deploy the proxy in the proxy/ folder, " +
                     "then set PROXY_BASE_URL in local.properties (see proxy/README.md).", false))
             return
         }
@@ -1098,7 +1098,7 @@ class AssistantFragment : Fragment() {
         if (screenContext != null && !screenContext.isEmpty())
             screenBlock += screenContext + "\n"
 
-        val fixed = "You are the Econ Analyst, an economic analyst embedded in the U.S. Economic " +
+        val fixed = "You are the economii Analyst, an economic analyst embedded in the U.S. Economic " +
             "Monitor app. " +
             "You have access to the following live data pulled directly from the app, " +
             "plus 24 months of locally cached historical data (treasury yields, mortgage " +
@@ -1448,7 +1448,7 @@ class AssistantFragment : Fragment() {
                 val errType = if (err != null) err.optString("type", "") else ""
                 // Include the error type so the retry guard can tell a
                 // transient overload from a permanent bad request (AI Law 5).
-                throw IOException("Econ Analyst service error" +
+                throw IOException("economii Analyst service error" +
                     (if (errType.isEmpty()) "" else " ($errType)") +
                     (if (msg.isEmpty()) "." else ": $msg"))
             }
@@ -1730,7 +1730,7 @@ class AssistantFragment : Fragment() {
             val json = JSONObject(trimmed)
             val apiErr = json.optJSONObject("error")
             if (apiErr != null)
-                throw IOException("Econ Analyst service error: " + apiErr.optString("message", "unknown error"))
+                throw IOException("economii Analyst service error: " + apiErr.optString("message", "unknown error"))
             val content = json.optJSONArray("content") ?: throw IOException("unrecognized response body")
 
             // Tool use in a non-streamed reply: run tools and continue the turn.

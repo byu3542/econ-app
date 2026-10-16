@@ -239,7 +239,7 @@
         android:translationY="25dp"
         android:clickable="true"
         android:focusable="true"
-        android:contentDescription="Ask Econ Analyst"
+        android:contentDescription="Ask economii Analyst"
         app:cardCornerRadius="41dp"
         app:cardElevation="8dp"
         app:cardBackgroundColor="@color/surface"

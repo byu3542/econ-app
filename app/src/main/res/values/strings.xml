@@ -33,7 +33,7 @@
     <string name="section_data">Data</string>
     <string name="section_startup_tab">Startup and dashboard</string>
     <string name="section_news_sources">News sources</string>
-    <string name="section_ai_analyst">Econ Analyst</string>
+    <string name="section_ai_analyst">economii Analyst</string>
     <string name="section_charts">Charts</string>
     <string name="section_notifications">Notifications</string>
     <string name="section_about">About</string>
@@ -107,7 +107,7 @@
     <string name="a11y_view_details">view benchmarks and history</string>
     <!-- TICKET-P2-8: lowercase verb phrase (TalkBack composes "double-tap and
          hold to …"), but the assistant is named, not called "the AI". -->
-    <string name="a11y_ask_analyst">ask the Econ Analyst</string>
+    <string name="a11y_ask_analyst">ask the economii Analyst</string>
 
     <!-- TICKET-59: one badge word per tier colour, app-wide. Benchmarks.Result.word
          (the metric-specific reading: "Recovering", "Losing ground") is shown in
@@ -207,7 +207,7 @@
     <string name="news_medium_impact">Medium impact</string>
     <!-- TICKET-59: the circled-chevron ImageButton became a labelled chip;
          news_more_actions is its spoken description, news_analyze_chip its label. -->
-    <string name="news_more_actions">Analyze this article with the Econ Analyst</string>
+    <string name="news_more_actions">Analyze this article with the economii Analyst</string>
     <string name="news_analyze_chip">Analyze</string>
     <string name="news_meta_separator">·</string>
     <string name="news_featured_image">Featured story image</string>
@@ -218,8 +218,8 @@
     <string name="daily_brief_sub">A 7:30 AM summary of what changed and what to watch. Skipped on mornings with no new data (at most one AI request per day)</string>
     <!-- TICKET-P2-8: the ✨ marker's tap target — what the analyst is and
          where its numbers come from (AnalystIdentity.showAbout). -->
-    <string name="analyst_about_title">✨ Econ Analyst</string>
-    <string name="analyst_about_body">The Econ Analyst is an AI analyst powered by Claude, built into this app.\n\nThe figures it cites come from the app\'s own data: official series fetched from the U.S. Bureau of Labor Statistics, FRED (Federal Reserve Bank of St. Louis), the U.S. Treasury, and market data feeds. The model is handed these exact numbers — it does not look them up elsewhere.\n\nIts analysis is AI-generated and can be wrong. Verify anything important before acting on it.</string>
+    <string name="analyst_about_title">✨ economii Analyst</string>
+    <string name="analyst_about_body">The economii Analyst is an AI analyst powered by Claude, built into this app.\n\nThe figures it cites come from the app\'s own data: official series fetched from the U.S. Bureau of Labor Statistics, FRED (Federal Reserve Bank of St. Louis), the U.S. Treasury, and market data feeds. The model is handed these exact numbers — it does not look them up elsewhere.\n\nIts analysis is AI-generated and can be wrong. Verify anything important before acting on it.</string>
     <string name="about_version_label">Version %1$s</string>
     <string name="about_privacy">Data sources and AI information</string>
     <!-- 2026-10-12 analyst cards -->
@@ -267,5 +267,5 @@
     <string name="assistant_tool_headlines">Scanning today\'s headlines…</string>
     <string name="assistant_tool_chart">Drawing the chart…</string>
     <string name="assistant_tool_table">Lining up the table…</string>
-    <string name="assistant_loader_cd">Econ Analyst is working on your answer</string>
+    <string name="assistant_loader_cd">economii Analyst is working on your answer</string>
 </resources>

@@ -188,7 +188,7 @@ class EconomicViewModel(application: Application) : AndroidViewModel(application
         // populated neighbours.
         postCached(wageData, KEY_WAGES)
         // Stocks is a Markets child tab, but its data is also consumed by the
-        // Econ Analyst. Prime these series here so opening the analyst after a
+        // economii Analyst. Prime these series here so opening the analyst after a
         // lifecycle change does not lose the values that Stocks already showed.
         postCached(sp500Data, KEY_SP500)
         postCached(nasdaqData, KEY_NASDAQ)

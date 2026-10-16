@@ -78,7 +78,7 @@ class DailyBriefWorker(context: Context, params: WorkerParameters) : Worker(cont
             }
 
             // TICKET-12 (End): a crisp brief that reads as headline + movers.
-            val systemPrompt = "You are the Econ Analyst writing a short morning brief " +
+            val systemPrompt = "You are the economii Analyst writing a short morning brief " +
                 "for the U.S. Economic Monitor app. Using the historical data, upcoming " +
                 "releases, and headlines below, write the brief in this shape:\n" +
                 "- First line: a punchy headline of at most 8 words, no period.\n" +
