@@ -72,4 +72,8 @@
          left dot, and the trend mark (line plus right dot) swap black/white with the theme. -->
     <color name="fab_glyph_stem">#FFFFFF</color>
     <color name="fab_glyph_mark">#E7BE55</color>
+    <!-- Analyst FAB outer ring, night. Day's surface_2 ring (#1A2336 here) vanishes
+         against the #131A29 nav bar and the navy disc, so night gets a muted gold
+         that ties to fab_glyph_mark and holds well over 3:1 against both. -->
+    <color name="fab_ring">#C9A44A</color>
 </resources>
