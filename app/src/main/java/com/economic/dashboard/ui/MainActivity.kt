@@ -8,6 +8,7 @@ import android.os.Bundle
 import com.economic.dashboard.analyst.ConversationSummary
 import com.economic.dashboard.ui.assistant.AssistantFragment
 import com.economic.dashboard.ui.assistant.ChatHistoryFragment
+import android.util.TypedValue
 import android.view.Gravity
 import android.view.Menu
 import android.view.MenuItem
@@ -360,8 +361,7 @@ class MainActivity : AppCompatActivity() {
      *  openSettings(), so [setupBottomNav] re-applies the chrome alone. */
     private fun applySettingsChrome() {
         resetHeaderCompactAlwaysVisible()
-        binding.tvHeaderCompactTitle.text = getString(R.string.settings)
-        currentScreenLabel = getString(R.string.settings)
+        setSettingsTitle(getString(R.string.settings))
         binding.btnSettings.setImageResource(R.drawable.ic_chevron_left)
         binding.btnSettings.contentDescription = getString(R.string.settings_back_to_list)
         binding.btnSettings.setOnClickListener { handleSettingsBackOrClose() }
@@ -376,12 +376,33 @@ class MainActivity : AppCompatActivity() {
         binding.btnEditCards.visibility = View.GONE
     }
 
+    /** Settings parity U3 (R1, R2, KTD3): Settings and each of its pages own
+     *  the header title, large and left-aligned beside the back button. The
+     *  fragment calls this from showList and showSection. */
+    fun setSettingsTitle(title: CharSequence) {
+        setHeaderTitleLarge(true)
+        binding.tvHeaderCompactTitle.text = title
+        currentScreenLabel = title.toString()
+    }
+
+    /** The large left-aligned Settings title, or the centred tab title. */
+    private fun setHeaderTitleLarge(large: Boolean) {
+        val tv = binding.tvHeaderCompactTitle
+        val lp = tv.layoutParams as FrameLayout.LayoutParams
+        lp.gravity = if (large) Gravity.START or Gravity.CENTER_VERTICAL else Gravity.CENTER
+        lp.marginStart = if (large) resources.getDimensionPixelSize(R.dimen.settings_header_title_inset) else 0
+        tv.layoutParams = lp
+        tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, resources.getDimension(
+            if (large) R.dimen.text_page_title else R.dimen.text_title))
+    }
+
     /** Restores whichever tab bottomNav still has selected and puts the gear
      *  icon back to normal. */
     private fun closeSettings() {
         val id = binding.bottomNav.selectedItemId
         loadFragmentForNavId(id)
         val (_, title) = fragmentIndexAndTitle(id)
+        setHeaderTitleLarge(false)
         binding.tvHeaderCompactTitle.text = title
         currentScreenLabel = title
         resetSettingsGearIcon()

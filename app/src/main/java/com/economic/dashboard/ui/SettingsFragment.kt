@@ -11,6 +11,9 @@ import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.accessibility.AccessibilityNodeInfo
+import android.widget.Button
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 
@@ -22,6 +25,7 @@ import com.economic.dashboard.R
 import com.economic.dashboard.cache.CacheManager
 import com.economic.dashboard.databinding.FragmentSettingsBinding
 import com.economic.dashboard.news.NewsRepository
+import com.economic.dashboard.ui.views.PressFeedback
 import com.economic.dashboard.ui.views.SegmentedView
 import com.economic.dashboard.utils.EdgeToEdgeInsets
 import com.economic.dashboard.utils.SettingsManager
@@ -86,14 +90,15 @@ class SettingsFragment : Fragment() {
         setupNotifications(v)
         setupAbout(v)
 
-        b.rowBackToList.setOnClickListener { showList() }
         b.etSettingsSearch.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: Editable?) { buildList() }
         })
 
+        setupFooter(b)
         buildList()
+        host().setSettingsTitle(getString(titleFor(activeSection)))
     }
 
     override fun onResume() {
@@ -121,8 +126,7 @@ class SettingsFragment : Fragment() {
     private fun showSection(id: String) {
         val b = binding ?: return
         activeSection = id
-        val meta = SECTIONS.first { it.id == id }
-        b.tvDetailTitle.text = getString(meta.titleRes)
+        host().setSettingsTitle(getString(titleFor(id)))
         for ((key, card) in detailCards(b)) card.visibility = if (key == id) View.VISIBLE else View.GONE
         b.settingsListScroll.visibility = View.GONE
         b.settingsDetailScroll.visibility = View.VISIBLE
@@ -132,6 +136,7 @@ class SettingsFragment : Fragment() {
     private fun showList() {
         val b = binding ?: return
         activeSection = null
+        host().setSettingsTitle(getString(R.string.settings))
         b.settingsDetailScroll.visibility = View.GONE
         b.settingsListScroll.visibility = View.VISIBLE
         buildList() // values may have changed while a section was open
@@ -145,54 +150,76 @@ class SettingsFragment : Fragment() {
         "news" to b.cardNews,
         "charts" to b.cardCharts,
         "notifications" to b.cardNotifications,
+        "sources" to b.cardSources,
         "about" to b.cardAbout,
     )
+
+    private fun titleFor(id: String?): Int =
+        SECTIONS.firstOrNull { it.id == id }?.titleRes ?: R.string.settings
 
     // -- List pane: grouped rows with live summaries -------------------------------
 
     private fun buildList() {
         val b = binding ?: return
-        b.llGroupFrequent.removeAllViews()
-        b.llGroupMore.removeAllViews()
-        b.llGroupAbout.removeAllViews()
-
         val query = b.etSettingsSearch.text?.toString()?.trim()?.lowercase() ?: ""
-        val visible = SECTIONS.filter { query.isEmpty() || getString(it.titleRes).lowercase().contains(query) }
-
-        addRows(b.llGroupFrequent, visible.filter { it.group == Group.FREQUENT })
-        addRows(b.llGroupMore, visible.filter { it.group == Group.MORE })
-        addRows(b.llGroupAbout, visible.filter { it.group == Group.ABOUT })
-
-        val hasFrequent = visible.any { it.group == Group.FREQUENT }
-        val hasMore = visible.any { it.group == Group.MORE }
-        val hasAbout = visible.any { it.group == Group.ABOUT }
-        b.tvGroupFrequent.visibility = if (hasFrequent) View.VISIBLE else View.GONE
-        b.cardGroupFrequent.visibility = if (hasFrequent) View.VISIBLE else View.GONE
-        b.tvGroupMore.visibility = if (hasMore) View.VISIBLE else View.GONE
-        b.cardGroupMore.visibility = if (hasMore) View.VISIBLE else View.GONE
-        b.tvGroupAbout.visibility = if (hasAbout) View.VISIBLE else View.GONE
-        b.cardGroupAbout.visibility = if (hasAbout) View.VISIBLE else View.GONE
+        // Search matches the subtitle too, so "grid" finds Charts (Gridlines on).
+        val visible = SECTIONS.filter {
+            query.isEmpty() || getString(it.titleRes).lowercase().contains(query) ||
+                summaryFor(it.id).lowercase().contains(query)
+        }
+        val groups = listOf(
+            Triple(Group.PREFERENCES, b.tvGroupPreferences, b.cardGroupPreferences) to b.llGroupPreferences,
+            Triple(Group.DATA, b.tvGroupData, b.cardGroupData) to b.llGroupData,
+            Triple(Group.SUPPORT, b.tvGroupSupport, b.cardGroupSupport) to b.llGroupSupport,
+        )
+        for ((g, container) in groups) {
+            val (group, header, card) = g
+            val rows = visible.filter { it.group == group }
+            container.removeAllViews()
+            addRows(container, rows)
+            val shown = if (rows.isEmpty()) View.GONE else View.VISIBLE
+            header.visibility = shown
+            card.visibility = shown
+        }
+        b.settingsFooter.visibility = if (query.isEmpty()) View.VISIBLE else View.GONE
     }
 
     private fun addRows(container: LinearLayout, rows: List<SectionMeta>) {
         val inflater = LayoutInflater.from(requireContext())
         rows.forEachIndexed { i, meta ->
             val row = inflater.inflate(R.layout.item_settings_row, container, false)
-            val tvBadge: TextView = row.findViewById(R.id.tvBadge)
+            val icon: ImageView = row.findViewById(R.id.ivRowIcon)
             val tvTitle: TextView = row.findViewById(R.id.tvRowTitle)
             val tvSummary: TextView = row.findViewById(R.id.tvRowSummary)
             val divider: View = row.findViewById(R.id.rowDivider)
             val content: View = row.findViewById(R.id.rowContent)
 
-            // Pantrii port U11: every row leads with the same surface_2 tile
-            // (bg_settings_badge) in ink_2; the group headers already sort them.
-            tvBadge.text = meta.initials
+            icon.setImageResource(meta.iconRes)
             tvTitle.text = getString(meta.titleRes)
             tvSummary.text = summaryFor(meta.id)
             divider.visibility = if (i == rows.lastIndex) View.GONE else View.VISIBLE
-            content.setOnClickListener { showSection(meta.id) }
+            // TalkBack reads the row as one button: title, subtitle, "button".
+            content.accessibilityDelegate = object : View.AccessibilityDelegate() {
+                override fun onInitializeAccessibilityNodeInfo(host: View, info: AccessibilityNodeInfo) {
+                    super.onInitializeAccessibilityNodeInfo(host, info)
+                    info.className = Button::class.java.name
+                }
+            }
+            if (meta.placeholder) {
+                // Placeholder until Aaron names the target (2026-10-16).
+                content.isEnabled = false
+                content.alpha = 0.55f
+                row.findViewById<View>(R.id.ivRowChevron).visibility = View.GONE
+            } else {
+                content.setOnClickListener { showSection(meta.id) }
+                PressFeedback.attach(content)
+            }
             container.addView(row)
         }
+    }
+
+    private fun setupFooter(b: FragmentSettingsBinding) {
+        b.tvFooterVersion.text = summaryFor("about")
     }
 
     private fun summaryFor(id: String): String {
@@ -234,6 +261,8 @@ class SettingsFragment : Fragment() {
                 R.string.settings_summary_notifications,
                 NOTIFY_KEYS.count { SettingsManager.getBool(c, it, false) }
             )
+            "sources" -> getString(R.string.settings_summary_sources)
+            "feedback", "privacy" -> getString(R.string.settings_coming_soon)
             "about" -> try {
                 val name = c.packageManager.getPackageInfo(c.packageName, 0).versionName
                 getString(R.string.about_version_label, name)
@@ -551,23 +580,31 @@ class SettingsFragment : Fragment() {
 
     // -- Section catalog ------------------------------------------------------------
 
-    private enum class Group { FREQUENT, MORE, ABOUT }
+    private enum class Group { PREFERENCES, DATA, SUPPORT }
 
-    private data class SectionMeta(val id: String, val titleRes: Int, val initials: String, val group: Group)
+    /** One Settings row (R3, KTD4). A placeholder row shows but does not open. */
+    private data class SectionMeta(
+        val id: String, val titleRes: Int, val iconRes: Int, val group: Group,
+        val placeholder: Boolean = false,
+    )
 
     companion object {
         /** Fragment-manager tag, shared by MainActivity's open/close/back logic. */
         const val TAG = "SettingsFragment"
 
+        // Settings parity U3 (R3). Shortcuts joins Preferences in U6.
         private val SECTIONS = listOf(
-            SectionMeta("appearance", R.string.section_appearance, "Ap", Group.FREQUENT),
-            SectionMeta("startup", R.string.section_startup_tab, "St", Group.FREQUENT),
-            SectionMeta("ai", R.string.section_ai_analyst, "AI", Group.FREQUENT),
-            SectionMeta("data", R.string.section_data, "Da", Group.MORE),
-            SectionMeta("news", R.string.section_news_sources, "Ne", Group.MORE),
-            SectionMeta("charts", R.string.section_charts, "Ch", Group.MORE),
-            SectionMeta("notifications", R.string.section_notifications, "No", Group.MORE),
-            SectionMeta("about", R.string.section_about, "Ab", Group.ABOUT),
+            SectionMeta("appearance", R.string.section_appearance, R.drawable.ic_settings_appearance, Group.PREFERENCES),
+            SectionMeta("notifications", R.string.section_notifications, R.drawable.ic_settings_notifications, Group.PREFERENCES),
+            SectionMeta("ai", R.string.section_ai_analyst, R.drawable.ic_settings_analyst, Group.PREFERENCES),
+            SectionMeta("startup", R.string.section_startup_tab, R.drawable.ic_settings_startup, Group.PREFERENCES),
+            SectionMeta("data", R.string.section_data, R.drawable.ic_settings_data, Group.DATA),
+            SectionMeta("news", R.string.section_news_sources, R.drawable.ic_settings_news, Group.DATA),
+            SectionMeta("charts", R.string.section_charts, R.drawable.ic_settings_charts, Group.DATA),
+            SectionMeta("feedback", R.string.section_feedback, R.drawable.ic_settings_feedback, Group.SUPPORT, placeholder = true),
+            SectionMeta("sources", R.string.section_sources, R.drawable.ic_settings_sources, Group.SUPPORT),
+            SectionMeta("privacy", R.string.section_privacy, R.drawable.ic_settings_privacy, Group.SUPPORT, placeholder = true),
+            SectionMeta("about", R.string.section_about, R.drawable.ic_settings_about, Group.SUPPORT),
         )
 
         private val NEWS_KEYS = arrayOf(

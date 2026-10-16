@@ -62,58 +62,87 @@
             </LinearLayout>
 
             <TextView
-                android:id="@+id/tvGroupFrequent"
+                android:id="@+id/tvGroupPreferences"
                 style="@style/SettingsSectionHeader"
                 android:layout_marginTop="@dimen/space_lg"
                 android:layout_marginBottom="@dimen/space_sm"
-                android:text="@string/settings_group_frequent"/>
+                android:text="@string/settings_group_preferences"/>
 
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardGroupFrequent"
+                android:id="@+id/cardGroupPreferences"
                 style="@style/SettingsCard"
                 android:layout_marginTop="0dp">
                 <LinearLayout
-                    android:id="@+id/llGroupFrequent"
+                    android:id="@+id/llGroupPreferences"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"/>
             </com.google.android.material.card.MaterialCardView>
 
             <TextView
-                android:id="@+id/tvGroupMore"
+                android:id="@+id/tvGroupData"
                 style="@style/SettingsSectionHeader"
                 android:layout_marginTop="@dimen/space_lg"
                 android:layout_marginBottom="@dimen/space_sm"
-                android:text="@string/settings_group_more"/>
+                android:text="@string/settings_group_data"/>
 
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardGroupMore"
+                android:id="@+id/cardGroupData"
                 style="@style/SettingsCard"
                 android:layout_marginTop="0dp">
                 <LinearLayout
-                    android:id="@+id/llGroupMore"
+                    android:id="@+id/llGroupData"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"/>
             </com.google.android.material.card.MaterialCardView>
 
             <TextView
-                android:id="@+id/tvGroupAbout"
+                android:id="@+id/tvGroupSupport"
                 style="@style/SettingsSectionHeader"
                 android:layout_marginTop="@dimen/space_lg"
                 android:layout_marginBottom="@dimen/space_sm"
-                android:text="@string/section_about"/>
+                android:text="@string/settings_group_support"/>
 
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardGroupAbout"
+                android:id="@+id/cardGroupSupport"
                 style="@style/SettingsCard"
                 android:layout_marginTop="0dp">
                 <LinearLayout
-                    android:id="@+id/llGroupAbout"
+                    android:id="@+id/llGroupSupport"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"/>
             </com.google.android.material.card.MaterialCardView>
+
+            <!-- Settings parity U3 (R3): wordmark-and-version footer. -->
+            <LinearLayout
+                android:id="@+id/settingsFooter"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_xl"
+                android:orientation="vertical"
+                android:gravity="center_horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/assistant_wordmark_brand"
+                    android:fontFamily="@font/plus_jakarta_sans_extrabold"
+                    app:fontFamily="@font/plus_jakarta_sans_extrabold"
+                    android:textColor="?attr/econAccent"
+                    android:textSize="22sp"
+                    android:importantForAccessibility="no"/>
+
+                <TextView
+                    android:id="@+id/tvFooterVersion"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:textSize="@dimen/text_secondary"
+                    android:textColor="@color/muted"
+                    tools:text="Version 1.0"/>
+            </LinearLayout>
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
@@ -133,42 +162,6 @@
             android:paddingEnd="@dimen/space_lg"
             android:paddingTop="@dimen/space_md"
             android:paddingBottom="@dimen/space_3xl">
-
-            <LinearLayout
-                android:id="@+id/rowBackToList"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:background="?attr/selectableItemBackground"
-                android:padding="@dimen/space_xs"
-                android:layout_marginBottom="@dimen/space_sm">
-
-                <ImageView
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
-                    android:src="@drawable/ic_chevron_left"
-                    app:tint="@color/ink"
-                    android:contentDescription="@null"/>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="@dimen/space_xs"
-                    android:text="@string/settings_back_to_list"
-                    android:textSize="@dimen/text_body"
-                    android:textColor="@color/ink"/>
-            </LinearLayout>
-
-            <TextView
-                android:id="@+id/tvDetailTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/space_sm"
-                android:textSize="@dimen/text_title"
-                android:textStyle="bold"
-                android:textColor="@color/ink"
-                tools:text="Appearance"/>
 
             <!-- ~~ APPEARANCE ~~ -->
             <com.google.android.material.card.MaterialCardView android:id="@+id/cardAppearance" style="@style/SettingsCard" android:layout_marginTop="0dp">
@@ -538,6 +531,13 @@
             </com.google.android.material.card.MaterialCardView>
 
             <!-- ~~ ABOUT ~~ -->
+            <!-- ~~ DATA SOURCES & AI ~~ (settings parity U3, R3) -->
+            <com.google.android.material.card.MaterialCardView android:id="@+id/cardSources" style="@style/SettingsCard" android:layout_marginTop="0dp">
+                <TextView
+                    style="@style/SettingsRowSub"
+                    android:text="@string/about_data_note"/>
+            </com.google.android.material.card.MaterialCardView>
+
             <com.google.android.material.card.MaterialCardView android:id="@+id/cardAbout" style="@style/SettingsCard" android:layout_marginTop="0dp">
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -549,15 +549,6 @@
                         style="@style/SettingsRowSub"
                         android:text="Economii"/>
 
-                    <TextView
-                        style="@style/SettingsRowSub"
-                        android:layout_marginTop="@dimen/space_xs"
-                        android:text="@string/about_data_note"/>
-
-                    <TextView
-                        style="@style/SettingsRowSub"
-                        android:layout_marginTop="@dimen/space_sm"
-                        android:text="@string/about_privacy"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
