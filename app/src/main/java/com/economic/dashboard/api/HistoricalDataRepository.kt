@@ -8,9 +8,9 @@ import com.economic.dashboard.analyst.EconomicSeriesRegistry.Entry
 import com.economic.dashboard.analyst.EconomicSeriesRegistry.Tier
 import com.economic.dashboard.database.EconomicHistoryDao
 import com.economic.dashboard.database.YieldDatabase
+import com.economic.dashboard.models.BeaResponse
 import com.economic.dashboard.models.EconomicHistoryEntry
 import java.util.Calendar
-import java.util.Locale
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
@@ -413,11 +413,10 @@ object HistoricalDataRepository {
                 val dataValue = dp.DataValue
                 if (timePeriod == null || dataValue == null || !isValidValue(dataValue)) continue
 
-                // Only keep "Gross domestic product" line (LineDescription)
-                val desc = dp.getDescription()
-                if (desc == null || !desc.lowercase(Locale.US)
-                        .contains("gross domestic product")
-                ) continue
+                // Only keep line 1, real GDP (SeriesCode A191RL). A substring match on
+                // "gross domestic product" also caught line 27 (nominal GDP, A191RP), whose
+                // rows then REPLACE-overwrote the real values on the (seriesId, date) index.
+                if (!isRealGdpLine(dp)) continue
 
                 try {
                     val value = dataValue.replace(",", "").toDouble()
@@ -446,6 +445,10 @@ object HistoricalDataRepository {
     // ──────────────────────────────────────────────────────────────────────────
     // Helpers
     // ──────────────────────────────────────────────────────────────────────────
+
+    /** True for T10101 line 1 (real GDP, % change, SAAR); exact-description fallback if SeriesCode is absent. */
+    private fun isRealGdpLine(dp: BeaResponse.BeaDataPoint): Boolean =
+        dp.SeriesCode?.let { it == "A191RL" } ?: (dp.LineDescription == "Gross domestic product")
 
     /** Convert BEA period "2023Q1" → "2023-01-01". Returns null on bad input. */
     private fun beaTimePeriodToDate(timePeriod: String?): String? {
