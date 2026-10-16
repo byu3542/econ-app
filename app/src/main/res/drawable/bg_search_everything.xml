@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Settings parity U9 (R13): the global "Search everything" field. Pantrii
+     draws it as a white pill with an accent outline while focused; the
+     accent is the theme's, so it follows the picker. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/surface"/>
+    <stroke android:width="1.5dp" android:color="?attr/econAccent"/>
+    <corners android:radius="@dimen/radius_pill"/>
+</shape>

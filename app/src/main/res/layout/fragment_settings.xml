@@ -62,58 +62,87 @@
             </LinearLayout>
 
             <TextView
-                android:id="@+id/tvGroupFrequent"
+                android:id="@+id/tvGroupPreferences"
                 style="@style/SettingsSectionHeader"
                 android:layout_marginTop="@dimen/space_lg"
                 android:layout_marginBottom="@dimen/space_sm"
-                android:text="@string/settings_group_frequent"/>
+                android:text="@string/settings_group_preferences"/>
 
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardGroupFrequent"
+                android:id="@+id/cardGroupPreferences"
                 style="@style/SettingsCard"
                 android:layout_marginTop="0dp">
                 <LinearLayout
-                    android:id="@+id/llGroupFrequent"
+                    android:id="@+id/llGroupPreferences"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"/>
             </com.google.android.material.card.MaterialCardView>
 
             <TextView
-                android:id="@+id/tvGroupMore"
+                android:id="@+id/tvGroupData"
                 style="@style/SettingsSectionHeader"
                 android:layout_marginTop="@dimen/space_lg"
                 android:layout_marginBottom="@dimen/space_sm"
-                android:text="@string/settings_group_more"/>
+                android:text="@string/settings_group_data"/>
 
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardGroupMore"
+                android:id="@+id/cardGroupData"
                 style="@style/SettingsCard"
                 android:layout_marginTop="0dp">
                 <LinearLayout
-                    android:id="@+id/llGroupMore"
+                    android:id="@+id/llGroupData"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"/>
             </com.google.android.material.card.MaterialCardView>
 
             <TextView
-                android:id="@+id/tvGroupAbout"
+                android:id="@+id/tvGroupSupport"
                 style="@style/SettingsSectionHeader"
                 android:layout_marginTop="@dimen/space_lg"
                 android:layout_marginBottom="@dimen/space_sm"
-                android:text="@string/section_about"/>
+                android:text="@string/settings_group_support"/>
 
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardGroupAbout"
+                android:id="@+id/cardGroupSupport"
                 style="@style/SettingsCard"
                 android:layout_marginTop="0dp">
                 <LinearLayout
-                    android:id="@+id/llGroupAbout"
+                    android:id="@+id/llGroupSupport"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"/>
             </com.google.android.material.card.MaterialCardView>
+
+            <!-- Settings parity U3 (R3): wordmark-and-version footer. -->
+            <LinearLayout
+                android:id="@+id/settingsFooter"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_xl"
+                android:orientation="vertical"
+                android:gravity="center_horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/assistant_wordmark_brand"
+                    android:fontFamily="@font/plus_jakarta_sans_extrabold"
+                    app:fontFamily="@font/plus_jakarta_sans_extrabold"
+                    android:textColor="?attr/econAccent"
+                    android:textSize="22sp"
+                    android:importantForAccessibility="no"/>
+
+                <TextView
+                    android:id="@+id/tvFooterVersion"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:textSize="@dimen/text_secondary"
+                    android:textColor="@color/muted"
+                    tools:text="Version 1.0"/>
+            </LinearLayout>
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
@@ -134,67 +163,54 @@
             android:paddingTop="@dimen/space_md"
             android:paddingBottom="@dimen/space_3xl">
 
-            <LinearLayout
-                android:id="@+id/rowBackToList"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:background="?attr/selectableItemBackground"
-                android:padding="@dimen/space_xs"
-                android:layout_marginBottom="@dimen/space_sm">
-
-                <ImageView
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
-                    android:src="@drawable/ic_chevron_left"
-                    app:tint="@color/ink"
-                    android:contentDescription="@null"/>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="@dimen/space_xs"
-                    android:text="@string/settings_back_to_list"
-                    android:textSize="@dimen/text_body"
-                    android:textColor="@color/ink"/>
-            </LinearLayout>
-
-            <TextView
-                android:id="@+id/tvDetailTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/space_sm"
-                android:textSize="@dimen/text_title"
-                android:textStyle="bold"
-                android:textColor="@color/ink"
-                tools:text="Appearance"/>
-
             <!-- ~~ APPEARANCE ~~ -->
-            <com.google.android.material.card.MaterialCardView android:id="@+id/cardAppearance" style="@style/SettingsCard" android:layout_marginTop="0dp">
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
+            <!-- Settings parity U4 (R5): Theme, Accent color, Example, Display. -->
+            <LinearLayout
+                android:id="@+id/appearancePage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
 
-                    <!-- TICKET-55: the app's one segmented control; tags light/dark/system -->
-                    <com.economic.dashboard.ui.views.SegmentedView
-                        android:id="@+id/segTheme"
+                <TextView style="@style/SettingsSectionHeader" android:text="@string/appearance_theme_header"/>
+                <com.google.android.material.card.MaterialCardView style="@style/SettingsCard" android:layout_marginTop="0dp">
+                    <LinearLayout
+                        android:id="@+id/llThemeRows"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="@dimen/space_sm"
-                        app:segmentTextSize="@dimen/text_secondary"
-                        app:segmentLabels="@array/theme_segment_labels"
-                        app:segmentTags="@array/theme_segment_tags"/>
+                        android:orientation="vertical"/>
+                </com.google.android.material.card.MaterialCardView>
+
+                <TextView style="@style/SettingsSectionHeader" android:layout_marginTop="@dimen/space_lg" android:text="@string/appearance_accent_header"/>
+                <com.google.android.material.card.MaterialCardView style="@style/SettingsCard" android:layout_marginTop="0dp">
+                    <LinearLayout
+                        android:id="@+id/llAccentSwatches"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"/>
+                </com.google.android.material.card.MaterialCardView>
+
+                <TextView style="@style/SettingsSectionHeader" android:layout_marginTop="@dimen/space_lg" android:text="@string/appearance_example_header"/>
+                <com.google.android.material.card.MaterialCardView style="@style/SettingsCard" android:layout_marginTop="0dp">
+                    <include android:id="@+id/accentExample" layout="@layout/view_accent_example"/>
+                </com.google.android.material.card.MaterialCardView>
+
+                <TextView style="@style/SettingsSectionHeader" android:layout_marginTop="@dimen/space_lg" android:text="@string/appearance_display_header"/>
+                <com.google.android.material.card.MaterialCardView style="@style/SettingsCard" android:layout_marginTop="0dp">
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
 
                     <LinearLayout style="@style/SettingsRow">
+                        <ImageView style="@style/SettingsRowIcon" android:src="@drawable/ic_row_colorblind"/>
                         <LinearLayout style="@style/SettingsRowText">
                             <TextView style="@style/SettingsRowTitle" android:text="@string/colorblind_title"/>
                             <TextView style="@style/SettingsRowSub" android:text="@string/colorblind_sub"/>
                         </LinearLayout>
-                        <com.google.android.material.switchmaterial.SwitchMaterial
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
                             android:id="@+id/switchColorblind"
-                            style="@style/SettingsSwitch"
                             android:contentDescription="@string/colorblind_title"/>
                     </LinearLayout>
 
@@ -202,17 +218,20 @@
                         android:background="@drawable/divider_hairline_inset"/>
 
                     <LinearLayout style="@style/SettingsRow">
+                        <ImageView style="@style/SettingsRowIcon" android:src="@drawable/ic_row_haptics"/>
                         <LinearLayout style="@style/SettingsRowText">
                             <TextView style="@style/SettingsRowTitle" android:text="@string/haptics_title"/>
                             <TextView style="@style/SettingsRowSub" android:text="@string/haptics_sub"/>
                         </LinearLayout>
-                        <com.google.android.material.switchmaterial.SwitchMaterial
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
                             android:id="@+id/switchHaptics"
-                            style="@style/SettingsSwitch"
                             android:contentDescription="@string/haptics_title"/>
                     </LinearLayout>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
 
             <!-- ~~ STARTUP TAB ~~ -->
             <com.google.android.material.card.MaterialCardView android:id="@+id/cardStartup" style="@style/SettingsCard" android:layout_marginTop="0dp">
@@ -220,7 +239,13 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
-
+                    <LinearLayout style="@style/SettingsInfoRow">
+                        <ImageView style="@style/SettingsRowIcon" android:src="@drawable/ic_row_startup"/>
+                        <LinearLayout style="@style/SettingsRowText">
+                            <TextView style="@style/SettingsRowTitle" android:text="@string/startup_title"/>
+                            <TextView style="@style/SettingsRowSub" android:text="@string/startup_sub"/>
+                        </LinearLayout>
+                    </LinearLayout>
                     <!-- TICKET-55: tags are the bottom-nav index SettingsManager stores -->
                     <com.economic.dashboard.ui.views.SegmentedView
                         android:id="@+id/segDefaultTab"
@@ -233,6 +258,11 @@
             </com.google.android.material.card.MaterialCardView>
 
             <!-- ~~ ECONOMII ANALYST ~~ -->
+            <LinearLayout
+                android:id="@+id/aiPage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
             <com.google.android.material.card.MaterialCardView android:id="@+id/cardAi" style="@style/SettingsCard" android:layout_marginTop="0dp">
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -240,13 +270,15 @@
                     android:orientation="vertical">
 
                     <LinearLayout style="@style/SettingsRow">
+                        <ImageView style="@style/SettingsRowIcon" android:src="@drawable/ic_row_followups"/>
                         <LinearLayout style="@style/SettingsRowText">
                             <TextView style="@style/SettingsRowTitle" android:text="@string/smart_chips"/>
                             <TextView style="@style/SettingsRowSub" android:text="@string/smart_chips_sub"/>
                         </LinearLayout>
-                        <com.google.android.material.switchmaterial.SwitchMaterial
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
                             android:id="@+id/switchSmartChips"
-                            style="@style/SettingsSwitch"
                             android:contentDescription="@string/smart_chips"/>
                     </LinearLayout>
 
@@ -254,81 +286,72 @@
                         android:background="@drawable/divider_hairline_inset"/>
 
                     <LinearLayout style="@style/SettingsRow">
+                        <ImageView style="@style/SettingsRowIcon" android:src="@drawable/ic_row_detailed"/>
                         <LinearLayout style="@style/SettingsRowText">
                             <TextView style="@style/SettingsRowTitle" android:text="@string/detailed_ai"/>
                             <TextView style="@style/SettingsRowSub" android:text="@string/detailed_ai_sub"/>
                         </LinearLayout>
-                        <com.google.android.material.switchmaterial.SwitchMaterial
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
                             android:id="@+id/switchDetailedAi"
-                            style="@style/SettingsSwitch"
                             android:contentDescription="@string/detailed_ai"/>
                     </LinearLayout>
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnClearChat"
-                        style="@style/SettingsDestructiveButton"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/space_xs"
-                        android:text="@string/clear_chat_history"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
+            <!-- Settings parity U5 (R4): destructive actions are red text rows at the page foot. -->
+            <TextView
+                android:id="@+id/btnClearChat"
+                style="@style/SettingsDestructiveRow"
+                android:text="@string/clear_chat_history"/>
+            </LinearLayout>
 
             <!-- ~~ DATA & SYNC ~~ -->
+            <LinearLayout
+                android:id="@+id/dataPage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
             <com.google.android.material.card.MaterialCardView android:id="@+id/cardData" style="@style/SettingsCard" android:layout_marginTop="0dp">
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/tvLastUpdated"
-                        style="@style/SettingsRowSub"
-                        android:layout_marginBottom="@dimen/space_sm"
-                        android:text="@string/checking_freshness"/>
-
-                    <TextView
-                        style="@style/SettingsRowSub"
-                        android:layout_marginBottom="@dimen/space_sm"
-                        android:text="@string/data_cache_sub"/>
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal">
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnRefreshNow"
-                            style="@style/Widget.Econ.Button.Outlined"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:layout_marginEnd="@dimen/space_sm"
-                            android:text="@string/refresh_data"
-                            android:textSize="@dimen/text_body"/>
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnClearCache"
-                            style="@style/Widget.Econ.Button.Outlined"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="@string/clear_cache"
-                            android:textSize="@dimen/text_body"/>
+                    <LinearLayout android:id="@+id/rowRefreshNow" style="@style/SettingsRow">
+                        <ImageView style="@style/SettingsRowIcon" android:src="@drawable/ic_row_refresh"/>
+                        <LinearLayout style="@style/SettingsRowText">
+                            <TextView android:id="@+id/tvRefreshTitle" style="@style/SettingsRowTitle" android:text="@string/refresh_now"/>
+                            <TextView android:id="@+id/tvLastUpdated" style="@style/SettingsRowSub" android:text="@string/checking_freshness"/>
+                        </LinearLayout>
                     </LinearLayout>
-
+                    <View android:layout_width="match_parent" android:layout_height="@dimen/divider_hairline_height"
+                        android:background="@drawable/divider_hairline_inset"/>
                     <LinearLayout style="@style/SettingsRow">
+                        <ImageView style="@style/SettingsRowIcon" android:src="@drawable/ic_settings_startup"/>
                         <LinearLayout style="@style/SettingsRowText">
                             <TextView style="@style/SettingsRowTitle" android:text="@string/refresh_on_open"/>
                             <TextView style="@style/SettingsRowSub" android:text="@string/refresh_on_open_sub"/>
                         </LinearLayout>
-                        <com.google.android.material.switchmaterial.SwitchMaterial
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
                             android:id="@+id/switchRefreshOnOpen"
-                            style="@style/SettingsSwitch"
                             android:contentDescription="@string/refresh_on_open"/>
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
+            <TextView
+                style="@style/SettingsRowSub"
+                android:layout_marginTop="@dimen/space_sm"
+                android:paddingStart="@dimen/space_sm"
+                android:paddingEnd="@dimen/space_sm"
+                android:text="@string/data_cache_sub"/>
+            <TextView
+                android:id="@+id/btnClearCache"
+                style="@style/SettingsDestructiveRow"
+                android:text="@string/clear_cache"/>
+            </LinearLayout>
 
             <!-- ~~ NEWS SOURCES ~~ -->
             <com.google.android.material.card.MaterialCardView android:id="@+id/cardNews" style="@style/SettingsCard" android:layout_marginTop="0dp">
@@ -343,13 +366,15 @@
                         android:layout_marginBottom="@dimen/space_xs"/>
 
                     <LinearLayout style="@style/SettingsRow">
+                        <ImageView style="@style/SettingsRowIcon" android:src="@drawable/ic_row_news_gov"/>
                         <LinearLayout style="@style/SettingsRowText">
                             <TextView style="@style/SettingsRowTitle" android:text="@string/news_gov"/>
                             <TextView style="@style/SettingsRowSub" android:text="@string/news_gov_sub"/>
                         </LinearLayout>
-                        <com.google.android.material.switchmaterial.SwitchMaterial
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
                             android:id="@+id/switchNewsGov"
-                            style="@style/SettingsSwitch"
                             android:contentDescription="@string/news_gov"/>
                     </LinearLayout>
 
@@ -357,13 +382,15 @@
                         android:background="@drawable/divider_hairline_inset"/>
 
                     <LinearLayout style="@style/SettingsRow">
+                        <ImageView style="@style/SettingsRowIcon" android:src="@drawable/ic_row_news_media"/>
                         <LinearLayout style="@style/SettingsRowText">
                             <TextView style="@style/SettingsRowTitle" android:text="@string/news_media"/>
                             <TextView style="@style/SettingsRowSub" android:text="@string/news_media_sub"/>
                         </LinearLayout>
-                        <com.google.android.material.switchmaterial.SwitchMaterial
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
                             android:id="@+id/switchNewsMedia"
-                            style="@style/SettingsSwitch"
                             android:contentDescription="@string/news_media"/>
                     </LinearLayout>
 
@@ -371,13 +398,15 @@
                         android:background="@drawable/divider_hairline_inset"/>
 
                     <LinearLayout style="@style/SettingsRow">
+                        <ImageView style="@style/SettingsRowIcon" android:src="@drawable/ic_row_news_intl"/>
                         <LinearLayout style="@style/SettingsRowText">
                             <TextView style="@style/SettingsRowTitle" android:text="@string/news_intl"/>
                             <TextView style="@style/SettingsRowSub" android:text="@string/news_intl_sub"/>
                         </LinearLayout>
-                        <com.google.android.material.switchmaterial.SwitchMaterial
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
                             android:id="@+id/switchNewsIntl"
-                            style="@style/SettingsSwitch"
                             android:contentDescription="@string/news_intl"/>
                     </LinearLayout>
 
@@ -385,13 +414,15 @@
                         android:background="@drawable/divider_hairline_inset"/>
 
                     <LinearLayout style="@style/SettingsRow">
+                        <ImageView style="@style/SettingsRowIcon" android:src="@drawable/ic_row_news_research"/>
                         <LinearLayout style="@style/SettingsRowText">
                             <TextView style="@style/SettingsRowTitle" android:text="@string/news_research"/>
                             <TextView style="@style/SettingsRowSub" android:text="@string/news_research_sub"/>
                         </LinearLayout>
-                        <com.google.android.material.switchmaterial.SwitchMaterial
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
                             android:id="@+id/switchNewsResearch"
-                            style="@style/SettingsSwitch"
                             android:contentDescription="@string/news_research"/>
                     </LinearLayout>
                 </LinearLayout>
@@ -405,20 +436,22 @@
                     android:orientation="vertical">
 
                     <LinearLayout style="@style/SettingsRow">
+                        <ImageView style="@style/SettingsRowIcon" android:src="@drawable/ic_row_gridlines"/>
                         <LinearLayout style="@style/SettingsRowText">
                             <TextView style="@style/SettingsRowTitle" android:text="@string/gridlines"/>
                             <TextView style="@style/SettingsRowSub" android:text="@string/gridlines_sub"/>
                         </LinearLayout>
-                        <com.google.android.material.switchmaterial.SwitchMaterial
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
                             android:id="@+id/switchGridlines"
-                            style="@style/SettingsSwitch"
                             android:contentDescription="@string/gridlines"/>
                     </LinearLayout>
 
-                    <TextView style="@style/SettingsRowTitle"
-                        android:layout_marginTop="@dimen/space_sm"
-                        android:layout_marginBottom="@dimen/space_xs"
-                        android:text="@string/axis_decimals"/>
+                    <LinearLayout style="@style/SettingsInfoRow">
+                        <ImageView style="@style/SettingsRowIcon" android:src="@drawable/ic_row_decimals"/>
+                        <TextView style="@style/SettingsRowTitle" android:text="@string/axis_decimals"/>
+                    </LinearLayout>
 
                     <!-- TICKET-55: tags are the decimal count -->
                     <com.economic.dashboard.ui.views.SegmentedView
@@ -429,10 +462,10 @@
                         app:segmentLabels="@array/decimals_segment_labels"
                         app:segmentTags="@array/decimals_segment_tags"/>
 
-                    <TextView style="@style/SettingsRowTitle"
-                        android:layout_marginTop="@dimen/space_sm"
-                        android:layout_marginBottom="@dimen/space_xs"
-                        android:text="@string/chart_timeframe"/>
+                    <LinearLayout style="@style/SettingsInfoRow">
+                        <ImageView style="@style/SettingsRowIcon" android:src="@drawable/ic_row_timeframe"/>
+                        <TextView style="@style/SettingsRowTitle" android:text="@string/chart_timeframe"/>
+                    </LinearLayout>
 
                     <!-- TICKET-55: tags are month windows (KEY_CHART_TIMEFRAME) -->
                     <com.economic.dashboard.ui.views.SegmentedView
@@ -445,7 +478,6 @@
 
                     <TextView style="@style/SettingsRowSub"
                         android:layout_marginTop="@dimen/space_sm"
-                        android:textStyle="italic"
                         android:text="@string/chart_apply_note"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -457,40 +489,41 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
 
-                    <TextView
-                        android:id="@+id/tvNotifStatus"
-                        style="@style/SettingsRowSub"
-                        android:layout_marginBottom="@dimen/space_xs"/>
-
-                    <TextView
-                        android:id="@+id/tvNotifBlocked"
-                        style="@style/SettingsRowTitle"
-                        android:textColor="@color/info_blue"
-                        android:background="?attr/selectableItemBackground"
-                        android:paddingStart="@dimen/space_sm"
-                        android:paddingEnd="@dimen/space_sm"
-                        android:paddingTop="@dimen/space_xs"
-                        android:paddingBottom="@dimen/space_xs"
-                        android:visibility="gone"
-                        android:text="@string/notif_blocked_title"/>
-
-                    <TextView
-                        android:id="@+id/tvNotifBlockedHint"
-                        style="@style/SettingsRowSub"
-                        android:paddingStart="@dimen/space_sm"
-                        android:paddingEnd="@dimen/space_sm"
-                        android:paddingBottom="@dimen/space_xs"
-                        android:visibility="gone"
-                        android:text="@string/notif_blocked_tap"/>
+                    <!-- Settings parity U5 (R9): the permission status row. -->
+                    <LinearLayout android:id="@+id/rowNotifStatus" style="@style/SettingsInfoRow">
+                        <ImageView style="@style/SettingsRowIcon" android:src="@drawable/ic_row_notify"/>
+                        <LinearLayout style="@style/SettingsRowText">
+                            <TextView android:id="@+id/tvNotifStatusTitle" style="@style/SettingsRowTitle"/>
+                            <TextView android:id="@+id/tvNotifStatus" style="@style/SettingsRowSub"/>
+                        </LinearLayout>
+                        <TextView
+                            android:id="@+id/btnNotifAllow"
+                            android:layout_width="wrap_content"
+                            android:layout_height="40dp"
+                            android:layout_marginStart="@dimen/space_sm"
+                            android:gravity="center"
+                            android:paddingStart="@dimen/space_md"
+                            android:paddingEnd="@dimen/space_md"
+                            android:background="@drawable/bg_pill_accent"
+                            android:text="@string/notif_allow"
+                            android:textStyle="bold"
+                            android:textSize="@dimen/text_body"
+                            android:textColor="?attr/econOnAccent"
+                            android:visibility="gone"/>
+                    </LinearLayout>
+                    <View android:layout_width="match_parent" android:layout_height="@dimen/divider_hairline_height"
+                        android:background="@drawable/divider_hairline_inset"/>
 
                     <LinearLayout style="@style/SettingsRow">
+                        <ImageView style="@style/SettingsRowIcon" android:src="@drawable/ic_trending_up"/>
                         <LinearLayout style="@style/SettingsRowText">
                             <TextView style="@style/SettingsRowTitle" android:text="@string/notify_moves"/>
                             <TextView style="@style/SettingsRowSub" android:text="@string/notify_moves_sub"/>
                         </LinearLayout>
-                        <com.google.android.material.switchmaterial.SwitchMaterial
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
                             android:id="@+id/switchNotifyMoves"
-                            style="@style/SettingsSwitch"
                             android:contentDescription="@string/notify_moves"/>
                     </LinearLayout>
 
@@ -498,13 +531,15 @@
                         android:background="@drawable/divider_hairline_inset"/>
 
                     <LinearLayout style="@style/SettingsRow">
+                        <ImageView style="@style/SettingsRowIcon" android:src="@drawable/ic_row_releases"/>
                         <LinearLayout style="@style/SettingsRowText">
                             <TextView style="@style/SettingsRowTitle" android:text="@string/notify_releases"/>
                             <TextView style="@style/SettingsRowSub" android:text="@string/notify_releases_sub"/>
                         </LinearLayout>
-                        <com.google.android.material.switchmaterial.SwitchMaterial
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
                             android:id="@+id/switchNotifyReleases"
-                            style="@style/SettingsSwitch"
                             android:contentDescription="@string/notify_releases"/>
                     </LinearLayout>
 
@@ -512,19 +547,28 @@
                         android:background="@drawable/divider_hairline_inset"/>
 
                     <LinearLayout style="@style/SettingsRow">
+                        <ImageView style="@style/SettingsRowIcon" android:src="@drawable/ic_row_brief"/>
                         <LinearLayout style="@style/SettingsRowText">
                             <TextView style="@style/SettingsRowTitle" android:text="@string/daily_brief"/>
                             <TextView style="@style/SettingsRowSub" android:text="@string/daily_brief_sub"/>
                         </LinearLayout>
-                        <com.google.android.material.switchmaterial.SwitchMaterial
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
                             android:id="@+id/switchDailyBrief"
-                            style="@style/SettingsSwitch"
                             android:contentDescription="@string/daily_brief"/>
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <!-- ~~ ABOUT ~~ -->
+            <!-- ~~ DATA SOURCES & AI ~~ (settings parity U3, R3) -->
+            <com.google.android.material.card.MaterialCardView android:id="@+id/cardSources" style="@style/SettingsCard" android:layout_marginTop="0dp">
+                <TextView
+                    style="@style/SettingsRowSub"
+                    android:text="@string/about_data_note"/>
+            </com.google.android.material.card.MaterialCardView>
+
             <com.google.android.material.card.MaterialCardView android:id="@+id/cardAbout" style="@style/SettingsCard" android:layout_marginTop="0dp">
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -536,19 +580,50 @@
                         style="@style/SettingsRowSub"
                         android:text="Economii"/>
 
-                    <TextView
-                        style="@style/SettingsRowSub"
-                        android:layout_marginTop="@dimen/space_xs"
-                        android:text="@string/about_data_note"/>
-
-                    <TextView
-                        style="@style/SettingsRowSub"
-                        android:layout_marginTop="@dimen/space_sm"
-                        android:text="@string/about_privacy"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
+
+    <!-- ══════════════════════ SHORTCUTS EDITOR ══════════════════════ -->
+    <!-- Settings parity U7 (R11): its own pane, not a detail card, because the
+         list scrolls under a sticky Save changes button. SettingsFragment
+         shows it for the "shortcuts" section. -->
+    <LinearLayout
+        android:id="@+id/shortcutsEditorPane"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvShortcutsEditor"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:clipToPadding="false"
+            android:paddingStart="@dimen/space_lg"
+            android:paddingEnd="@dimen/space_lg"
+            android:paddingBottom="@dimen/space_lg" />
+
+        <TextView
+            android:id="@+id/btnShortcutsSave"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/space_lg"
+            android:layout_marginEnd="@dimen/space_lg"
+            android:layout_marginTop="@dimen/space_sm"
+            android:layout_marginBottom="@dimen/space_md"
+            android:minHeight="56dp"
+            android:gravity="center"
+            android:background="@drawable/bg_pill_accent"
+            android:text="@string/shortcuts_editor_save"
+            android:textColor="?attr/econOnAccent"
+            android:textSize="@dimen/text_title"
+            android:textStyle="bold"
+            android:clickable="true"
+            android:focusable="true" />
+    </LinearLayout>
 
 </FrameLayout>

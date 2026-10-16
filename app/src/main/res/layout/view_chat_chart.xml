@@ -31,7 +31,7 @@
             android:background="@drawable/bg_icon_tile"
             android:padding="9dp"
             android:src="@drawable/ic_trending_up"
-            app:tint="@color/accent"
+            app:tint="?attr/econAccent"
             android:importantForAccessibility="no" />
 
         <TextView

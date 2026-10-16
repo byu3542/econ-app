@@ -62,7 +62,7 @@
                 android:paddingHorizontal="@dimen/space_lg"
                 android:background="@drawable/bg_pill_accent"
                 android:text="@string/watchlist_done"
-                android:textColor="@color/on_accent"
+                android:textColor="?attr/econOnAccent"
                 android:textSize="@dimen/text_body"
                 android:textStyle="bold"
                 android:clickable="true"

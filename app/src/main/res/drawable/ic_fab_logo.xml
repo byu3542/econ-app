@@ -5,8 +5,10 @@
 
     Disc and ring are vector circle paths (anti-aliased) rather than relying on
     the MaterialCardView's clipToOutline crop, which is NOT anti-aliased.
-    Ring color uses @color/fab_ring so it adapts to dark mode; a thin gold
-    hairline keeps the navy disc separated from the navy nav bar.
+    Ring color uses @color/fab_ring so it adapts to dark mode. The disc and its
+    hairline take ?attr/econAccentBright, so the FAB follows the selected
+    accent. The bars with the left dot, and the trend mark (line plus the right
+    dot), are black or white by theme: @color/fab_glyph_stem and @color/fab_glyph_mark.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
@@ -19,29 +21,29 @@
         android:fillColor="@color/fab_ring"
         android:pathData="M54,1 a53,53 0 1,1 -0.01,0 z"/>
 
-    <!-- Gold hairline -->
+    <!-- Accent hairline -->
     <path
-        android:fillColor="#E7BE55"
+        android:fillColor="?attr/econAccentBright"
         android:pathData="M54,6.2 a47.8,47.8 0 1,1 -0.01,0 z"/>
 
-    <!-- Navy disc (launcher background color) -->
+    <!-- Accent disc -->
     <path
-        android:fillColor="#1A3470"
+        android:fillColor="?attr/econAccentBright"
         android:pathData="M54,8.2 a45.8,45.8 0 1,1 -0.01,0 z"/>
 
     <!-- Twin i glyph, copied from ic_launcher_foreground and scaled to fill the disc -->
     <group android:pivotX="54" android:pivotY="54" android:scaleX="1.6" android:scaleY="1.6"
         android:translateY="0.3">
         <path android:pathData="M46,49 L62,40"
-            android:strokeColor="#E7BE55" android:strokeWidth="3.2" android:strokeLineCap="round"/>
+            android:strokeColor="@color/fab_glyph_mark" android:strokeWidth="3.2" android:strokeLineCap="round"/>
         <path android:pathData="M41.5,61.5 a4.5,4.5 0 0 1 9,0 v6 a4.5,4.5 0 0 1 -9,0 z"
-            android:fillColor="#FFFFFF"/>
+            android:fillColor="@color/fab_glyph_stem"/>
         <path android:pathData="M57.5,52.5 a4.5,4.5 0 0 1 9,0 v15 a4.5,4.5 0 0 1 -9,0 z"
-            android:fillColor="#FFFFFF"/>
+            android:fillColor="@color/fab_glyph_stem"/>
         <path android:pathData="M41.4,49 a4.6,4.6 0 1 0 9.2,0 a4.6,4.6 0 1 0 -9.2,0 z"
-            android:fillColor="#FFFFFF"/>
+            android:fillColor="@color/fab_glyph_stem"/>
         <path android:pathData="M57.4,40 a4.6,4.6 0 1 0 9.2,0 a4.6,4.6 0 1 0 -9.2,0 z"
-            android:fillColor="#E7BE55"/>
+            android:fillColor="@color/fab_glyph_mark"/>
     </group>
 
 </vector>

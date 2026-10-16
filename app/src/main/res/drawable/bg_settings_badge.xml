@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Pantrii port U11: the settings row's leading tile — a rounded square
-     on surface_2, like the header's icon buttons (bg_icon_button). -->
-<shape xmlns:android="http://schemas.android.com/apk/res/android"
-    android:shape="rectangle">
-    <solid android:color="@color/surface_2"/>
-    <corners android:radius="10dp"/>
-</shape>

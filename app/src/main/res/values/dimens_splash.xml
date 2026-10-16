@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <!-- On-screen size of the system splash icon, so the overlay's wordmark
-         lands on exactly the same pixels when it takes over. -->
-    <dimen name="splash_wordmark_size">288dp</dimen>
-</resources>

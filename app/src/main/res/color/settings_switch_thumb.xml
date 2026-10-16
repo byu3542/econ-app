@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Pantrii port U11: a white thumb in both themes, as in Pantrii. It rides
-     the accent or muted track, never the page, so it does not follow ground. -->
-<selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:color="@android:color/white"/>
-</selector>

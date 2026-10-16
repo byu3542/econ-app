@@ -52,7 +52,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:max="6"
-            android:progressTint="@color/accent"
+            android:progressTint="?attr/econAccent"
             android:progressBackgroundTint="@color/line"
             android:progress="0" />
 
@@ -142,7 +142,7 @@
             android:paddingVertical="@dimen/space_sm"
             android:background="@drawable/bg_pill_accent"
             android:text="@string/watchlist_done"
-            android:textColor="@color/on_accent"
+            android:textColor="?attr/econOnAccent"
             android:textSize="@dimen/text_body"
             android:textStyle="bold"
             android:clickable="true"

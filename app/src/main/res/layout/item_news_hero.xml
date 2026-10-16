@@ -39,14 +39,14 @@
                 android:textSize="@dimen/text_caption"
                 android:textStyle="bold"
                 android:textAllCaps="true"
-                android:textColor="@color/accent" />
+                android:textColor="?attr/econAccent" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/space_sm"
                 android:text="@string/news_top_story"
-                android:textColor="@color/accent"
+                android:textColor="?attr/econAccent"
                 android:textSize="@dimen/text_caption"
                 android:textStyle="bold" />
 
@@ -78,10 +78,10 @@
                 android:paddingHorizontal="@dimen/space_md"
                 android:background="@drawable/bg_pill_accent_soft"
                 android:drawableStart="@drawable/ic_sparkle_12"
-                android:drawableTint="@color/accent"
+                android:drawableTint="?attr/econAccent"
                 android:drawablePadding="@dimen/space_xs"
                 android:text="@string/news_analyze_chip"
-                android:textColor="@color/accent"
+                android:textColor="?attr/econAccent"
                 android:textSize="@dimen/text_caption"
                 android:textStyle="bold"
                 android:contentDescription="@string/news_more_actions"

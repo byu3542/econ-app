@@ -1,5 +1,9 @@
 package com.economic.dashboard.ui
 
+import com.economic.dashboard.news.NewsAdapter
+import com.economic.dashboard.ui.search.SearchFragment
+import com.economic.dashboard.search.SearchScope
+import com.economic.dashboard.search.SearchResult
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -8,6 +12,7 @@ import android.os.Bundle
 import com.economic.dashboard.analyst.ConversationSummary
 import com.economic.dashboard.ui.assistant.AssistantFragment
 import com.economic.dashboard.ui.assistant.ChatHistoryFragment
+import android.util.TypedValue
 import android.view.Gravity
 import android.view.Menu
 import android.view.MenuItem
@@ -19,8 +24,10 @@ import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.google.android.material.color.MaterialColors
 import androidx.core.graphics.Insets
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -44,6 +51,8 @@ import com.economic.dashboard.news.NewsRepository
 import com.economic.dashboard.ui.fragments.DashboardFragment
 import com.economic.dashboard.ui.fragments.EconomyFragment
 import com.economic.dashboard.ui.fragments.MarketsFragment
+import com.economic.dashboard.ui.shortcuts.ShortcutAction
+import com.economic.dashboard.ui.shortcuts.ShortcutsBottomSheet
 import com.economic.dashboard.ui.views.PressFeedback
 import com.economic.dashboard.utils.AppExecutors
 import com.economic.dashboard.utils.EdgeToEdgeInsets
@@ -75,13 +84,13 @@ import okhttp3.OkHttpClient
  * not apply to a Kotlin-declared `getX()` function. Same rule as
  * EconomicViewModel in 11b — the call sites decide.
  */
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), ShortcutsBottomSheet.Host, SearchFragment.Host {
 
     private lateinit var viewModel: EconomicViewModel
 
-    /** Title of the visible tab ("Overview", "Markets", ...) — read by the AI
+    /** Title of the visible tab ("Home", "Markets", ...) — read by the AI
         Analyst so the model knows what screen the user is looking at. */
-    private var currentScreenLabel = "Overview"
+    private var currentScreenLabel = "Home"
 
     fun getCurrentScreenLabel(): String = currentScreenLabel
 
@@ -90,6 +99,13 @@ class MainActivity : AppCompatActivity() {
     /** True only on a fresh launch (not on theme-change/rotation recreates) —
         gates "open to default tab" and "refresh cache on open". */
     private var freshLaunch = false
+
+    /** The Home wordmark waves once per cold start, after the splash leaves
+     *  and the first time Home is in view (Aaron, 2026-10-16). */
+    private var homeWavePending = false
+    private var splashGone = false
+    /** Settings parity U6: sub-tab a shortcut asked for, consumed by the next tab host made. */
+    private var pendingSubTab = -1
 
     // These were package-private in the Java. Nothing outside the class reads
     // them directly (the tests do not touch MainActivity), so they are private
@@ -120,36 +136,30 @@ class MainActivity : AppCompatActivity() {
     fun getViewModel(): EconomicViewModel = viewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // Must run before super.onCreate: swaps the navy Starting theme for the
-        // app theme. The animated wordmark (LaunchSplash) takes over below.
+        // Must run before super.onCreate: swaps the Starting theme for the
+        // app theme. LaunchExit plays the exit below.
         val splash = installSplashScreen()
+        // Settings parity U1 (KTD1): the chosen accent overlays the app theme
+        // before anything inflates. Changing it recreates the activity.
+        theme.applyStyle(SettingsManager.getAccent(this).overlay, true)
         super.onCreate(savedInstanceState)
         freshLaunch = (savedInstanceState == null)
+        homeWavePending = freshLaunch
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         // Fresh launches only, so a theme change or rotation doesn't replay it.
-        // The system splash animates the wordmark until the first frame is
-        // drawn (API 31+; a still first frame below that); the overlay then
-        // takes over on the same pixels and keeps it moving.
+        // The system splash builds the logo on the accent ground (API 31+; a
+        // still logo below that); LaunchExit then collapses it into the
+        // Analyst FAB. No data hold: a first launch shows the dashboard's own
+        // loading state.
         if (freshLaunch) {
             splash.setOnExitAnimationListener { provider ->
-                // remove() only once the overlay covers the system splash, so
-                // the navy ground and the motion never break.
-                val launch = LaunchSplash.show(this) { provider.remove() }
-                // Cache-first: with a snapshot on disk the cards are already
-                // painted, so the overlay only waits for its own animation.
-                // A first-ever launch waits for the network fetch to settle.
-                if (DashboardDataCache.hasAny(this)) {
-                    launch.markReady()
-                } else {
-                    var sawLoading = false
-                    viewModel.getIsLoading().observe(this) { loading ->
-                        if (loading == true) sawLoading = true
-                        else if (sawLoading) launch.markReady()
-                    }
-                }
+                LaunchExit.play(this, provider, binding.fabAiAnalyst) { splashGone = true; maybePlayHomeWave() }
             }
+        } else {
+            splashGone = true
         }
+        syncSplashTheme()
 
         // Edge-to-edge: draw behind system bars, then pad the header and
         // bottom nav so content clears them (required on Android 15+).
@@ -177,6 +187,8 @@ class MainActivity : AppCompatActivity() {
             supportFragmentManager.findFragmentByTag(AssistantFragment.TAG)?.view
                 ?.let { ViewCompat.dispatchApplyWindowInsets(it, insets) }
             supportFragmentManager.findFragmentByTag(ChatHistoryFragment.TAG)?.view
+                ?.let { ViewCompat.dispatchApplyWindowInsets(it, insets) }
+            supportFragmentManager.findFragmentByTag(SearchFragment.TAG)?.view
                 ?.let { ViewCompat.dispatchApplyWindowInsets(it, insets) }
             WindowInsetsCompat.CONSUMED
         }
@@ -259,7 +271,7 @@ class MainActivity : AppCompatActivity() {
         // back gesture on their own Window and never reach this dispatcher.
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                if (isAssistantShowing()) {
+                if (isFullScreenShowing()) {
                     supportFragmentManager.popBackStack()
                 } else if (isSettingsShowing()) {
                     handleSettingsBackOrClose()
@@ -275,13 +287,20 @@ class MainActivity : AppCompatActivity() {
         })
 
         PressFeedback.attach(binding.fabAiAnalyst) // same bouncy spring feedback as the overview KPI badges
+        // Settings parity U6 (R10, R12, KTD7): tap opens the Shortcuts sheet;
+        // long-press keeps the old one-gesture path straight into the Analyst.
+        binding.fabAiAnalyst.contentDescription = getString(R.string.shortcuts_fab_cd)
         binding.fabAiAnalyst.setOnClickListener {
-            markAnalystSeen(); clearAnalystBadge() // TICKET-26: opening Analyst clears its badge
-            if (!isAssistantShowing()) {
-                HapticUtil.confirm(binding.fabAiAnalyst) // firmer pulse — primary action, not a tab switch
-                AssistantFragment.show(supportFragmentManager, AssistantFragment())
-            }
+            HapticUtil.selection(binding.fabAiAnalyst)
+            ShortcutsBottomSheet.show(supportFragmentManager)
         }
+        binding.fabAiAnalyst.setOnLongClickListener {
+            openAnalyst()
+            true
+        }
+        ViewCompat.replaceAccessibilityAction(binding.fabAiAnalyst,
+            AccessibilityNodeInfoCompat.AccessibilityActionCompat.ACTION_LONG_CLICK,
+            getString(R.string.shortcuts_fab_long_press), null)
         // Don't clobber the back-chevron handler applySettingsChrome() just
         // bound when setupBottomNav() kept a restored Settings — rebinding to
         // openSettings() here would leave the chevron dead (openSettings
@@ -292,6 +311,8 @@ class MainActivity : AppCompatActivity() {
             (supportFragmentManager.findFragmentByTag("overview") as? DashboardFragment)
                 ?.takeIf { it.isAdded }?.openEditTargetSheet()
         }
+        // Settings parity U9 (R13): header search, on every main tab.
+        binding.btnSearch.setOnClickListener { openSearch() }
         updateEditCardsButton()
         observeViewModel()
         // Skip on a theme-toggle/rotation recreate: the ViewModel survives
@@ -327,6 +348,106 @@ class MainActivity : AppCompatActivity() {
         handleShareIntent(intent)
     }
 
+    // ── Shortcuts (settings parity U6) ───────────────────────────────────────
+
+    /** The Analyst path, shared by the FAB long-press and the sheet's button. */
+    private fun openAnalyst() {
+        markAnalystSeen(); clearAnalystBadge() // TICKET-26: opening Analyst clears its badge
+        if (!isAssistantShowing()) {
+            HapticUtil.confirm(binding.fabAiAnalyst) // firmer pulse — primary action, not a tab switch
+            AssistantFragment.show(supportFragmentManager, AssistantFragment())
+        }
+    }
+
+    override fun openAnalystFromShortcuts() = openAnalyst()
+
+    override fun openShortcutsEditor() = openSettings(SettingsFragment.SECTION_SHORTCUTS)
+
+    override fun runShortcut(action: ShortcutAction) {
+        when (action) {
+            is ShortcutAction.OpenTab -> openTab(action.tabKey, action.subTab)
+            ShortcutAction.EditCards -> {
+                openTab("overview", -1)
+                // The Overview may still be committing; open its editor once it is up.
+                binding.root.post {
+                    supportFragmentManager.executePendingTransactions()
+                    (supportFragmentManager.findFragmentByTag("overview") as? DashboardFragment)
+                        ?.takeIf { it.isAdded }?.openEditTargetSheet()
+                }
+            }
+            ShortcutAction.RefreshData -> refreshAllData()
+            ShortcutAction.ChatHistory -> {
+                openAnalyst()
+                // History hides the assistant, so it must land after the
+                // assistant's own transaction and first layout.
+                binding.root.post { ChatHistoryFragment.show(supportFragmentManager) }
+            }
+            ShortcutAction.Search -> openSearch()
+        }
+    }
+
+    // ── Global search (settings parity U9) ───────────────────────────────────
+
+    private fun isSearchShowing(): Boolean =
+        supportFragmentManager.findFragmentByTag(SearchFragment.TAG) != null
+
+    /** KTD9: search is full screen like the Analyst, so it shares its chrome. */
+    private fun isFullScreenShowing(): Boolean = isAssistantShowing() || isSearchShowing()
+
+    private fun openSearch() {
+        if (isFullScreenShowing() || isSettingsShowing()) return
+        HapticUtil.selection(binding.btnSearch)
+        SearchFragment.show(supportFragmentManager)
+    }
+
+    /** R14: each result opens its target. An article opens over search, so
+     *  back from the browser lands on the results; every other target
+     *  closes search first. */
+    override fun openSearchResult(result: SearchResult, chat: ConversationSummary?) {
+        if (result.scope == SearchScope.NEWS) {
+            NewsAdapter.openArticle(this, result.key)
+            return
+        }
+        supportFragmentManager.popBackStackImmediate(
+            SearchFragment.TAG, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE)
+        when (result.scope) {
+            SearchScope.INDICATORS -> MetricPopupController.show(this, viewModel, result.key)
+            SearchScope.SETTINGS -> openSettings(result.key)
+            // Swap the thread in before the Analyst reads it, as history does.
+            SearchScope.CHATS -> if (chat != null) reopenConversation(chat) { openAnalyst() }
+            SearchScope.NEWS -> Unit
+        }
+    }
+
+    /** A tab plus, for Markets and Economy, one sub-tab (-1 keeps its default). */
+    private fun openTab(tabKey: String, subTab: Int) {
+        pendingSubTab = subTab
+        navigateToTab(tabKey)
+        // Already on that tab, so no new fragment read pendingSubTab: switch
+        // the live one instead.
+        if (pendingSubTab >= 0) {
+            when (val f = supportFragmentManager.findFragmentById(R.id.fragmentContainer)) {
+                is MarketsFragment -> f.selectSubTab(pendingSubTab)
+                is EconomyFragment -> f.selectSubTab(pendingSubTab)
+            }
+            pendingSubTab = -1
+        }
+    }
+
+    /** Refresh live dashboard data and force-refresh the local cache, reporting
+     *  the outcome (TICKET-15). Shared by the overflow menu and the shortcut. */
+    private fun refreshAllData() {
+        Toast.makeText(this, R.string.refreshing_data, Toast.LENGTH_SHORT).show()
+        viewModel.fetchAllData()
+        CacheManager.forceRefreshAll(this) { success ->
+            runOnUiThread {
+                Toast.makeText(this,
+                    if (success) R.string.refresh_done else R.string.refresh_failed,
+                    Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
     // ── Settings (design 1b: full-screen page, opens like any other tab) ───────
 
     private fun isSettingsShowing(): Boolean =
@@ -336,9 +457,14 @@ class MainActivity : AppCompatActivity() {
      *  mechanism as switching to Markets/Economy/News. Never touches
      *  bottomNav.selectedItemId, so closeSettings() can just re-load whatever
      *  tab is still selected there to restore the screen underneath. */
-    private fun openSettings() {
-        if (isSettingsShowing()) return
-        loadFragment(SettingsFragment(), SettingsFragment.TAG)
+    private fun openSettings(section: String? = null) {
+        if (isSettingsShowing()) {
+            if (section != null)
+                (supportFragmentManager.findFragmentByTag(SettingsFragment.TAG) as? SettingsFragment)
+                    ?.openSection(section)
+            return
+        }
+        loadFragment(SettingsFragment.newInstance(section), SettingsFragment.TAG)
         applySettingsChrome()
     }
 
@@ -356,8 +482,7 @@ class MainActivity : AppCompatActivity() {
      *  openSettings(), so [setupBottomNav] re-applies the chrome alone. */
     private fun applySettingsChrome() {
         resetHeaderCompactAlwaysVisible()
-        binding.tvHeaderCompactTitle.text = getString(R.string.settings)
-        currentScreenLabel = getString(R.string.settings)
+        setSettingsTitle(getString(R.string.settings))
         binding.btnSettings.setImageResource(R.drawable.ic_chevron_left)
         binding.btnSettings.contentDescription = getString(R.string.settings_back_to_list)
         binding.btnSettings.setOnClickListener { handleSettingsBackOrClose() }
@@ -370,6 +495,68 @@ class MainActivity : AppCompatActivity() {
         binding.navScrim.visibility = View.GONE
         binding.fabAiAnalyst.visibility = View.GONE
         binding.btnEditCards.visibility = View.GONE
+        binding.btnSearch.visibility = View.GONE
+    }
+
+    /** Settings parity U3 (R1, R2, KTD3): Settings and each of its pages own
+     *  the header title, large and left-aligned beside the back button. The
+     *  fragment calls this from showList and showSection. */
+    fun setSettingsTitle(title: CharSequence) {
+        setHeaderTitleLarge(true)
+        binding.wordmarkHome.visibility = View.GONE
+        binding.tvHeaderCompactTitle.visibility = View.VISIBLE
+        binding.tvHeaderCompactTitle.text = title
+        currentScreenLabel = title.toString()
+    }
+
+    /** Every header title is large and left-aligned, as in Pantrii. Settings
+     *  ([large]) starts it past the back button; a tab starts it at the edge.
+     *  Settings parity U9, Aaron's call 2026-10-16: the centred tab title
+     *  collided with the search button once three buttons sat on the right. */
+    private fun setHeaderTitleLarge(large: Boolean) {
+        val tv = binding.tvHeaderCompactTitle
+        val lp = tv.layoutParams as FrameLayout.LayoutParams
+        lp.gravity = Gravity.START or Gravity.CENTER_VERTICAL
+        lp.marginStart = if (large) resources.getDimensionPixelSize(R.dimen.settings_header_title_inset) else 0
+        tv.layoutParams = lp
+        tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, resources.getDimension(R.dimen.text_page_title))
+    }
+
+    /** A tab's header title. Home shows the "economii" wordmark instead of
+     *  its name; [currentScreenLabel] keeps the name for the Analyst. */
+    private fun setTabTitle(title: String, navId: Int = binding.bottomNav.selectedItemId) {
+        val home = navId == R.id.nav_overview
+        binding.tvHeaderCompactTitle.text = title
+        binding.tvHeaderCompactTitle.visibility = if (home) View.GONE else View.VISIBLE
+        binding.wordmarkHome.visibility = if (home) View.VISIBLE else View.GONE
+        currentScreenLabel = title
+        maybePlayHomeWave()
+    }
+
+    /**
+     * API 33+: makes the next cold launch's system splash use the chosen
+     * accent's Starting theme (Android persists it). Called once per process
+     * and again after each accent change (which recreates the activity), not
+     * gated on a stored flag: the system's copy is the source of truth and can
+     * be reset without our prefs knowing.
+     */
+    private fun syncSplashTheme() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+        val accent = SettingsManager.getAccent(this)
+        if (splashThemeSynced == accent.id) return
+        try {
+            splashScreen.setSplashScreenTheme(accent.startingTheme)
+            splashThemeSynced = accent.id
+        } catch (e: RuntimeException) {
+            android.util.Log.w("MainActivity", "setSplashScreenTheme failed", e)
+        }
+    }
+
+    private fun maybePlayHomeWave() {
+        if (!homeWavePending || !splashGone) return
+        if (binding.wordmarkHome.visibility != View.VISIBLE || isFullScreenShowing()) return
+        homeWavePending = false
+        binding.wordmarkHome.playWave()
     }
 
     /** Restores whichever tab bottomNav still has selected and puts the gear
@@ -378,8 +565,8 @@ class MainActivity : AppCompatActivity() {
         val id = binding.bottomNav.selectedItemId
         loadFragmentForNavId(id)
         val (_, title) = fragmentIndexAndTitle(id)
-        binding.tvHeaderCompactTitle.text = title
-        currentScreenLabel = title
+        setHeaderTitleLarge(false)
+        setTabTitle(title)
         resetSettingsGearIcon()
         binding.bottomNavWrapper.visibility = View.VISIBLE
         binding.navScrim.visibility = View.VISIBLE
@@ -402,6 +589,7 @@ class MainActivity : AppCompatActivity() {
         binding.btnSettings.setImageResource(R.drawable.ic_settings)
         binding.btnSettings.contentDescription = getString(R.string.settings)
         binding.btnSettings.setOnClickListener { openSettings() }
+        binding.btnSearch.visibility = View.VISIBLE
         setSettingsButtonGravity(Gravity.END or Gravity.CENTER_VERTICAL)
     }
 
@@ -424,10 +612,19 @@ class MainActivity : AppCompatActivity() {
     /** Maps a bottom-nav item id to the fragment shown underneath the header —
      *  shared by the nav listener (on tap) and closeSettings() (on restore). */
     private fun loadFragmentForNavId(id: Int) {
-        if (id == R.id.nav_markets) loadFragment(MarketsFragment(), "markets")
-        else if (id == R.id.nav_economy) loadFragment(EconomyFragment(), "economy")
+        if (id == R.id.nav_markets) loadFragment(withSubTab(MarketsFragment(), MarketsFragment.ARG_SUB_TAB), "markets")
+        else if (id == R.id.nav_economy) loadFragment(withSubTab(EconomyFragment(), EconomyFragment.ARG_SUB_TAB), "economy")
         else if (id == R.id.navigation_news) loadFragment(NewsFragment(), "news")
         else loadFragment(DashboardFragment(), "overview")
+    }
+
+    /** Hands a pending shortcut sub-tab to a freshly made tab host, once. */
+    private fun withSubTab(f: Fragment, key: String): Fragment {
+        if (pendingSubTab >= 0) {
+            f.arguments = Bundle().apply { putInt(key, pendingSubTab) }
+            pendingSubTab = -1
+        }
+        return f
     }
 
     /** Active-indicator slot index + header title for a bottom-nav item id. */
@@ -435,7 +632,7 @@ class MainActivity : AppCompatActivity() {
         return if (id == R.id.nav_markets) 1 to "Markets"
         else if (id == R.id.nav_economy) 3 to "Economy"
         else if (id == R.id.navigation_news) 4 to "News"
-        else 0 to "Overview"
+        else 0 to "Home"
     }
 
     /** Asks for the Android 13+ notification permission if not yet granted. */
@@ -699,6 +896,9 @@ class MainActivity : AppCompatActivity() {
         if (isAssistantShowing())
             supportFragmentManager.popBackStackImmediate(
                 AssistantFragment.TAG, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE)
+        if (isSearchShowing())
+            supportFragmentManager.popBackStackImmediate(
+                SearchFragment.TAG, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE)
         val targetId =
             if ("markets" == tabKey) R.id.nav_markets
             else if ("economy" == tabKey) R.id.nav_economy
@@ -752,7 +952,7 @@ class MainActivity : AppCompatActivity() {
      *  (FAB, long-press ask, share) and out (back, close, citation tap) and an
      *  Activity recreate all land on the same chrome. */
     private fun applyAssistantChrome() {
-        if (isAssistantShowing()) {
+        if (isFullScreenShowing()) {
             binding.headerContainer.visibility = View.GONE
             binding.bottomNavWrapper.visibility = View.GONE
             binding.navScrim.visibility = View.GONE
@@ -773,7 +973,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupBottomNav() {
         supportFragmentManager.addOnBackStackChangedListener { applyAssistantChrome() }
-        if (isAssistantShowing()) binding.root.post { applyAssistantChrome() }
+        if (isFullScreenShowing()) binding.root.post { applyAssistantChrome() }
         // On an Activity recreate with Settings open, the FragmentManager has
         // already restored SettingsFragment into fragmentContainer — but the
         // "overview" tag is absent (Settings replaced it), so loadFragment's
@@ -798,7 +998,9 @@ class MainActivity : AppCompatActivity() {
             binding.bottomNav.post {
                 // U3: a restored assistant sits on the back stack over the tab;
                 // loading the tab here would replace it.
-                if (!isAssistantShowing()) loadFragmentForNavId(binding.bottomNav.selectedItemId)
+                if (!isFullScreenShowing()) loadFragmentForNavId(binding.bottomNav.selectedItemId)
+                if (!isSettingsShowing())
+                    setTabTitle(fragmentIndexAndTitle(binding.bottomNav.selectedItemId).second)
                 updateEditCardsButton()
             }
         }
@@ -827,8 +1029,8 @@ class MainActivity : AppCompatActivity() {
                 }
                 val (index, title) = fragmentIndexAndTitle(id)
                 resetHeaderCompactAlwaysVisible()
-                binding.tvHeaderCompactTitle.text = title
-                currentScreenLabel = title
+                // The nav still reports the old item inside this listener.
+                setTabTitle(title, id)
 
                 // Width is read at tap time, not captured at setup: when
                 // setupBottomNav() ran with the nav GONE (recreate straight
@@ -885,8 +1087,8 @@ class MainActivity : AppCompatActivity() {
         // Explicit setters on BadgeDrawable (Material, third-party): Drawable
         // also declares a two-arg setVisible(boolean, boolean), so property
         // syntax here would be needlessly ambiguous (migration lesson 12).
-        badge.setBackgroundColor(ContextCompat.getColor(this, R.color.accent))
-        badge.setBadgeTextColor(ContextCompat.getColor(this, R.color.on_accent))
+        badge.setBackgroundColor(MaterialColors.getColor(binding.bottomNav, R.attr.econAccent))
+        badge.setBadgeTextColor(MaterialColors.getColor(binding.bottomNav, R.attr.econOnAccent))
         badge.setMaxCharacterCount(2)                   // "9+" style past 99
         badge.setNumber(unread)
         badge.setVisible(true)
@@ -920,7 +1122,7 @@ class MainActivity : AppCompatActivity() {
         val newest = SettingsManager.getAnalystLastInsight(this)
         if (newest > lastSeen) {
             val badge = binding.bottomNav.getOrCreateBadge(R.id.nav_ai_placeholder)
-            badge.setBackgroundColor(ContextCompat.getColor(this, R.color.accent))
+            badge.setBackgroundColor(MaterialColors.getColor(binding.bottomNav, R.attr.econAccent))
             badge.setVisible(true)                  // dot — a single "new insight" nudge
         } else {
             clearAnalystBadge()
@@ -979,18 +1181,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == R.id.action_refresh) {
-            // Refresh live dashboard data AND force-refresh the local cache.
-            // TICKET-15: report the outcome, not just the start, so the user
-            // always knows whether the refresh actually landed.
-            Toast.makeText(this, R.string.refreshing_data, Toast.LENGTH_SHORT).show()
-            viewModel.fetchAllData()
-            CacheManager.forceRefreshAll(this) { success ->
-                runOnUiThread {
-                    Toast.makeText(this,
-                        if (success) R.string.refresh_done else R.string.refresh_failed,
-                        Toast.LENGTH_SHORT).show()
-                }
-            }
+            refreshAllData()
             return true
         }
         if (item.itemId == R.id.action_clear_cache) {
@@ -1015,6 +1206,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     companion object {
+        /** Accent id last passed to setSplashScreenTheme in this process. */
+        private var splashThemeSynced: String? = null
+
         const val WELCOME_TEXT =
             "Hello! I am your economii Analyst, powered by Claude. " +
                 "I can see all of the dashboard's live data — ask me anything about it. " +

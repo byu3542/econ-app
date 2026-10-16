@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Launch splash icon (variation C): the launcher's Twin i glyph, path for
+     path from ic_launcher_foreground, on the splash's navy icon disc
+     (windowSplashScreenIconBackgroundColor). The still values are the
+     finished logo, which is what core-splashscreen shows below API 31;
+     splash_logo_anim builds it from nothing on API 31+. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path android:name="line" android:pathData="M46,49 L62,40"
+        android:strokeColor="#E7BE55" android:strokeWidth="3.2" android:strokeLineCap="round"/>
+    <group android:name="bar0" android:pivotY="72">
+        <path android:pathData="M41.5,61.5 a4.5,4.5 0 0 1 9,0 v6 a4.5,4.5 0 0 1 -9,0 z"
+            android:fillColor="#FFFFFF"/>
+    </group>
+    <group android:name="bar1" android:pivotY="72">
+        <path android:pathData="M57.5,52.5 a4.5,4.5 0 0 1 9,0 v15 a4.5,4.5 0 0 1 -9,0 z"
+            android:fillColor="#FFFFFF"/>
+    </group>
+    <path android:name="dot0" android:pathData="M41.4,49 a4.6,4.6 0 1 0 9.2,0 a4.6,4.6 0 1 0 -9.2,0 z"
+        android:fillColor="#FFFFFF"/>
+    <group android:name="dot1" android:pivotX="62" android:pivotY="40">
+        <path android:pathData="M57.4,40 a4.6,4.6 0 1 0 9.2,0 a4.6,4.6 0 1 0 -9.2,0 z"
+            android:fillColor="#E7BE55"/>
+    </group>
+</vector>

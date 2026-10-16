@@ -2,7 +2,7 @@
     <string name="app_name">Economii</string>
 
     <string name="refresh">Refresh</string>
-    <string name="clear_cache">Clear Cache</string>
+    <string name="clear_cache">Clear cache</string>
     <string name="clear_cache_confirm">Delete all locally cached economic data? It will be re-downloaded on the next refresh.</string>
     <string name="cache_cleared">Cache cleared</string>
     <string name="refreshing_data">Refreshing data…</string>
@@ -12,9 +12,35 @@
 
     <!-- Settings full-screen page (design 1b) -->
     <string name="settings_search_hint">Search settings</string>
-    <string name="settings_group_frequent">Frequently changed</string>
-    <string name="settings_group_more">More settings</string>
-    <string name="settings_back_to_list">Settings</string>
+    <string name="settings_group_preferences">Preferences</string>
+    <string name="settings_group_data">Data</string>
+    <string name="settings_group_support">Support</string>
+    <string name="section_feedback">Send feedback</string>
+    <string name="section_sources">Data sources &amp; AI</string>
+    <string name="section_privacy">Privacy policy</string>
+    <string name="settings_summary_sources">FRED, BLS, BEA · Claude</string>
+    <string name="settings_coming_soon">Coming soon</string>
+    <string name="refresh_now">Refresh now</string>
+    <string name="notif_status_on">Notifications are on</string>
+    <string name="notif_allow">Allow</string>
+    <string name="startup_title">Open the app on</string>
+    <string name="startup_sub">The tab you land on at launch</string>
+    <string name="appearance_theme_header">Theme</string>
+    <string name="appearance_accent_header">Accent color</string>
+    <string name="appearance_example_header">Example</string>
+    <string name="appearance_display_header">Display</string>
+    <string name="theme_system_sub">Match your device</string>
+    <string name="theme_light_sub">Always light</string>
+    <string name="theme_dark_sub">Always dark</string>
+    <string name="accent_swatch_cd">Accent color, %1$s</string>
+    <string name="accent_example_chip_on">This week</string>
+    <string name="accent_example_chip_off">Releases</string>
+    <string name="accent_example_progress">Data refreshed</string>
+    <string name="accent_example_percent">68%</string>
+    <string name="accent_example_switch">Release alerts</string>
+    <string name="accent_example_button">Refresh now</string>
+    <string name="settings_summary_appearance_accent">%1$s · %2$s accent</string>
+    <string name="settings_back_to_list">Back</string>
     <string name="settings_summary_appearance">%1$s · Haptics %2$s</string>
     <string name="settings_summary_ai">%1$s · %2$s</string>
     <string name="settings_summary_ai_chips_on">Chips on</string>
@@ -30,8 +56,8 @@
     <string name="settings_summary_notifications">%1$d of 3 on</string>
 
     <string name="section_appearance">Appearance</string>
-    <string name="section_data">Data</string>
-    <string name="section_startup_tab">Startup and dashboard</string>
+    <string name="section_data">Data &amp; refresh</string>
+    <string name="section_startup_tab">Startup</string>
     <string name="section_news_sources">News sources</string>
     <string name="section_ai_analyst">economii Analyst</string>
     <string name="section_charts">Charts</string>
@@ -67,7 +93,7 @@
     <string name="alert_undo">Undo</string>
     <!-- TICKET-25: watchlist onboarding -->
     <string name="watchlist_title">What do you watch?</string>
-    <string name="watchlist_subtitle">Pick the metrics you care about — your Overview will show them first. Tap in your order of importance.</string>
+    <string name="watchlist_subtitle">Pick the metrics you care about — Home will show them first. Tap in your order of importance.</string>
     <string name="watchlist_progress_zero">0 of 6</string>
     <string name="watchlist_gdp">GDP growth</string>
     <string name="watchlist_spread">10Y-3M Treasury spread</string>
@@ -77,7 +103,6 @@
     <string name="watchlist_vix">VIX volatility index</string>
     <string name="watchlist_skip">Skip</string>
     <string name="watchlist_done">Done</string>
-    <string name="refresh_data">Refresh data</string>
     <string name="refresh_done">Data refreshed</string>
     <!-- Design branch 2a: customizable dashboard indicator picker -->
     <string name="indicator_picker_title">Choose an indicator</string>
@@ -136,7 +161,7 @@
     <string name="refresh_on_open_sub">Uses more data and may take longer to load</string>
     <string name="data_cache_sub">Economic history is stored on this device for faster loading.</string>
     <string name="news_sources_summary">%1$d of 4 source groups enabled</string>
-    <string name="tab_overview">Overview</string>
+    <string name="tab_overview">Home</string>
     <string name="tab_markets">Markets</string>
     <string name="tab_economy">Economy</string>
     <string name="tab_news">News</string>
@@ -148,8 +173,8 @@
     <string name="news_intl_sub">IMF, World Bank, BIS, OECD</string>
     <string name="news_research">Research &amp; think tanks</string>
     <string name="news_research_sub">Brookings, PIIE, regional Feds, and more</string>
-    <string name="smart_chips">Quick-ask suggestions</string>
-    <string name="smart_chips_sub">Show the tappable question chips in the chat</string>
+    <string name="smart_chips">Follow-up suggestions</string>
+    <string name="smart_chips_sub">Suggest follow-up questions under each answer</string>
     <string name="detailed_ai">More detailed AI answers</string>
     <string name="detailed_ai_sub">Longer, more thorough answers using more data</string>
     <string name="clear_chat_history">Clear chat history</string>
@@ -193,9 +218,8 @@
     <string name="dec_two">1.23</string>
     <string name="dec_three">1.234</string>
     <string name="notif_blocked_title">Notifications are off</string>
-    <string name="notif_blocked_tap">Tap to open system settings and allow alerts</string>
-    <string name="notifications_enabled_summary">Alerts are available on this device</string>
-    <string name="notifications_blocked_summary">Allow notifications in system settings to receive alerts</string>
+    <string name="notifications_enabled_summary">Alerts can reach this device</string>
+    <string name="notifications_blocked_summary">Allow notifications to get these alerts</string>
     <string name="news_updated">News feed updated</string>
     <string name="news_subtitle">The latest stories shaping the economy</string>
     <string name="news_meta">%1$d stories  ·  Updated %2$s</string>
@@ -215,13 +239,12 @@
     <string name="checking_freshness">Checking data freshness\u2026</string>
     <!-- Daily AI morning brief -->
     <string name="daily_brief">Daily AI morning brief</string>
-    <string name="daily_brief_sub">A 7:30 AM summary of what changed and what to watch. Skipped on mornings with no new data (at most one AI request per day)</string>
+    <string name="daily_brief_sub">A 7:30 AM summary of what changed. At most one AI request a day</string>
     <!-- TICKET-P2-8: the ✨ marker's tap target — what the analyst is and
          where its numbers come from (AnalystIdentity.showAbout). -->
     <string name="analyst_about_title">✨ economii Analyst</string>
     <string name="analyst_about_body">The economii Analyst is an AI analyst powered by Claude, built into this app.\n\nThe figures it cites come from the app\'s own data: official series fetched from the U.S. Bureau of Labor Statistics, FRED (Federal Reserve Bank of St. Louis), the U.S. Treasury, and market data feeds. The model is handed these exact numbers — it does not look them up elsewhere.\n\nIts analysis is AI-generated and can be wrong. Verify anything important before acting on it.</string>
     <string name="about_version_label">Version %1$s</string>
-    <string name="about_privacy">Data sources and AI information</string>
     <!-- 2026-10-12 analyst cards -->
     <string name="chat_card_open_chart">Open chart</string>
     <!-- Pantrii port U3: assistant header -->
@@ -268,4 +291,51 @@
     <string name="assistant_tool_chart">Drawing the chart…</string>
     <string name="assistant_tool_table">Lining up the table…</string>
     <string name="assistant_loader_cd">economii Analyst is working on your answer</string>
+
+    <!-- Settings parity U6 (R10, R12): Shortcuts sheet -->
+    <string name="shortcuts_title">Shortcuts</string>
+    <string name="shortcuts_subtitle">What would you like to do?</string>
+    <string name="shortcuts_edit_cd">Edit shortcuts</string>
+    <string name="shortcuts_analyst_button">economii Analyst</string>
+    <string name="shortcuts_fab_cd">Shortcuts. Long-press to open economii Analyst.</string>
+    <string name="shortcuts_fab_long_press">Open economii Analyst</string>
+    <string name="shortcut_search">Search</string>
+    <string name="shortcut_yield_curve">Yield curve</string>
+    <string name="shortcut_inflation">Inflation</string>
+    <string name="shortcut_jobs">Jobs report</string>
+    <string name="shortcut_news">Today\'s news</string>
+    <string name="shortcut_refresh">Refresh data</string>
+    <string name="shortcut_spreads">Spreads</string>
+    <string name="shortcut_bonds">Bonds</string>
+    <string name="shortcut_stocks">Stocks</string>
+    <string name="shortcut_gdp">GDP</string>
+    <string name="shortcut_housing">Housing</string>
+    <string name="shortcut_edit_cards">Edit cards</string>
+    <string name="shortcut_chat_history">Chat history</string>
+
+    <!-- Settings parity U7 (R11): Settings › Shortcuts editor -->
+    <string name="section_shortcuts">Shortcuts</string>
+    <string name="shortcuts_editor_yours">Your shortcuts</string>
+    <string name="shortcuts_editor_more">More shortcuts</string>
+    <string name="shortcuts_editor_count">%1$d of %2$d</string>
+    <string name="shortcuts_editor_save">Save changes</string>
+    <string name="shortcuts_editor_saved">Shortcuts saved</string>
+    <string name="shortcuts_editor_remove_cd">Remove %1$s</string>
+    <string name="shortcuts_editor_add_cd">Add %1$s</string>
+    <string name="shortcuts_editor_moved">Moved to position %1$d of %2$d</string>
+    <string name="settings_summary_shortcuts">%1$d of %2$d on the center button</string>
+
+    <!-- Settings parity U9 (R13): global search -->
+    <string name="search_everything">Search everything</string>
+    <string name="search_empty_body">Find indicators, news headlines, past chats and settings by name.</string>
+    <string name="search_no_results_title">No results for ‘%1$s’</string>
+    <string name="search_no_results_body">Try a shorter word or another scope.</string>
+    <string name="search_scope_all">All</string>
+    <string name="search_scope_indicators">Indicators</string>
+    <string name="search_scope_news">News</string>
+    <string name="search_scope_chats">Chats</string>
+    <string name="search_scope_settings">Settings</string>
+    <string name="search_group_count">%1$s · %2$d</string>
+    <string name="search_header_cd">Search</string>
+    <string name="search_subtitle_chat">Past chat</string>
 </resources>

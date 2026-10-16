@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Settings parity U7 (R11): one Shortcuts editor row, after Pantrii's. A
+     drag handle (your shortcuts only), the 40dp tinted tile, the label, and a
+     round remove or add button. Rows sit on a card drawn by
+     ShortcutsEditorAdapter.CardDecoration. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:minHeight="64dp"
+    android:focusable="true"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingStart="@dimen/space_sm"
+    android:paddingEnd="@dimen/space_sm">
+
+    <ImageView
+        android:id="@+id/ivEditHandle"
+        android:layout_width="40dp"
+        android:layout_height="48dp"
+        android:padding="8dp"
+        android:src="@drawable/ic_drag_handle"
+        android:contentDescription="@null"
+        app:tint="@color/muted" />
+
+    <ImageView
+        android:id="@+id/ivEditIcon"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="4dp"
+        android:background="@drawable/bg_settings_icon_tile"
+        android:padding="9dp"
+        android:importantForAccessibility="no"
+        tools:src="@drawable/ic_news" />
+
+    <TextView
+        android:id="@+id/tvEditLabel"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="@dimen/space_md"
+        android:maxLines="2"
+        android:ellipsize="end"
+        android:textColor="@color/ink"
+        android:textSize="@dimen/text_body"
+        android:textStyle="bold"
+        tools:text="Yield curve" />
+
+    <ImageView
+        android:id="@+id/btnEditAction"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:padding="12dp"
+        android:background="@drawable/bg_shortcut_edit_action"
+        android:clickable="true"
+        android:focusable="true"
+        app:tint="@color/ink_2"
+        tools:src="@drawable/ic_remove" />
+</LinearLayout>

@@ -58,4 +58,18 @@
     <color name="signal_alert_cb">#D55E00</color>
     <color name="signal_alert_deep_cb">#8C3D00</color>
     <color name="signal_imbalance_cb">#CC79A7</color>
+
+    <!-- Settings parity U6 (KTD7): shortcut tile tints, night. -->
+    <color name="shortcut_blue_fill">#1C2A42</color>
+    <color name="shortcut_blue_icon">#8DB4EE</color>
+    <color name="shortcut_teal_fill">#14313A</color>
+    <color name="shortcut_teal_icon">#7CCBD3</color>
+    <color name="shortcut_slate_fill">#232B3D</color>
+    <color name="shortcut_slate_icon">#B4BCD0</color>
+    <color name="shortcut_sand_fill">#2E2A22</color>
+    <color name="shortcut_sand_icon">#D6C4A0</color>
+    <!-- Analyst FAB glyph on the accent disc (ic_fab_logo): the bars with the
+         left dot, and the trend mark (line plus right dot) swap black/white with the theme. -->
+    <color name="fab_glyph_stem">#000000</color>
+    <color name="fab_glyph_mark">#FFFFFF</color>
 </resources>

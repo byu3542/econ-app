@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Settings parity U3 (R1, KTD4): one row component. A 44dp icon tile, the
+     title with its one-line subtitle beneath, and a chevron. The subtitle
+     carries what used to sit in the trailing summary column. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -10,6 +13,7 @@
         android:id="@+id/rowContent"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:minHeight="64dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:background="?attr/selectableItemBackground"
@@ -18,55 +22,74 @@
         android:paddingTop="@dimen/space_sm"
         android:paddingBottom="@dimen/space_sm">
 
-        <TextView
-            android:id="@+id/tvBadge"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
+        <ImageView
+            android:id="@+id/ivRowIcon"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
             android:layout_marginEnd="@dimen/space_md"
-            android:background="@drawable/bg_settings_badge"
-            android:gravity="center"
-            android:textSize="11sp"
-            android:textStyle="bold"
-            android:fontFamily="@font/plus_jakarta_sans_medium"
-            android:includeFontPadding="false"
-            android:textColor="@color/ink_2"
-            tools:text="Ap"/>
+            android:background="@drawable/bg_settings_icon_tile"
+            android:padding="11dp"
+            android:importantForAccessibility="no"
+            app:tint="@color/ink_2"
+            tools:src="@drawable/ic_settings_appearance"/>
 
-        <TextView
-            android:id="@+id/tvRowTitle"
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textSize="@dimen/text_body"
-            android:textColor="@color/ink"
-            tools:text="Appearance"/>
+            android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/tvRowSummary"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            <TextView
+                android:id="@+id/tvRowTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:breakStrategy="simple"
+                android:hyphenationFrequency="none"
+                android:textSize="@dimen/text_body"
+                android:textStyle="bold"
+                android:textColor="@color/ink"
+                tools:text="Appearance"/>
+
+            <TextView
+                android:id="@+id/tvRowSummary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:textSize="@dimen/text_secondary"
+                android:textColor="@color/muted"
+                tools:text="Light · Haptics on"/>
+        </LinearLayout>
+
+        <!-- U4: choice rows (Theme) show an accent check instead of the chevron. -->
+        <ImageView
+            android:id="@+id/ivRowCheck"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
             android:layout_marginStart="@dimen/space_sm"
-            android:layout_marginEnd="@dimen/space_xs"
-            android:maxWidth="150dp"
-            android:maxLines="1"
-            android:ellipsize="end"
-            android:textSize="@dimen/text_secondary"
-            android:textColor="@color/muted"
-            tools:text="Light · Haptics on"/>
+            android:src="@drawable/ic_check"
+            android:visibility="gone"
+            app:tint="?attr/econAccent"
+            android:importantForAccessibility="no"/>
 
         <ImageView
+            android:id="@+id/ivRowChevron"
             android:layout_width="16dp"
             android:layout_height="16dp"
+            android:layout_marginStart="@dimen/space_sm"
             android:src="@drawable/ic_chevron_right"
             app:tint="@color/muted"
-            android:contentDescription="@null"/>
+            android:importantForAccessibility="no"/>
     </LinearLayout>
 
     <View
         android:id="@+id/rowDivider"
         android:layout_width="match_parent"
         android:layout_height="@dimen/divider_hairline_height"
-        android:layout_marginStart="56dp"
+        android:layout_marginStart="76dp"
         android:background="@drawable/divider_hairline_inset"/>
 
 </LinearLayout>

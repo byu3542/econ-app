@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Settings parity U4 (R5): the selected swatch's ring, in ink so it reads
+     on every fill and both grounds. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval">
+    <stroke android:width="2dp" android:color="@color/ink"/>
+</shape>

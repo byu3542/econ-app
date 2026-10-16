@@ -1,12 +1,19 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. DayNight — dark palette lives in values-night/colors.xml. -->
     <style name="Theme.EconomicDashboard" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="materialSwitchStyle">@style/Widget.Econ.Switch</item>
         <!-- Primary brand color: the Pantrii accent (was the legacy navy
              #1a1a2e), so widgets that tint from colorPrimary match the port. -->
-        <item name="colorPrimary">@color/accent</item>
-        <item name="colorPrimaryDark">@color/accent</item>
-        <item name="colorOnPrimary">@color/on_accent</item>
-        <item name="colorAccent">@color/colorAccent</item>
+        <item name="colorPrimary">?attr/econAccent</item>
+        <item name="colorPrimaryDark">?attr/econAccent</item>
+        <item name="colorOnPrimary">?attr/econOnAccent</item>
+        <item name="colorAccent">?attr/econAccent</item>
+        <!-- Settings parity U1: gold defaults for the accent attributes; the
+             chosen ThemeOverlay.Economii.Accent.* overrides them. -->
+        <item name="econAccent">@color/accent</item>
+        <item name="econOnAccent">@color/on_accent</item>
+        <item name="econAccentSoft">@color/accent_soft</item>
+        <item name="econAccentBright">#E2B84B</item>
 
         <!-- Pantrii port U1: window paints the semantic ground token. Status and
              nav bars stay transparent (IOS-04 below) — the app draws edge to
@@ -131,8 +138,8 @@
     <!-- The primary button: an accent-filled pill. Unelevated, so it stays
          flat like every other surface in the port. -->
     <style name="Button.Econ.Dialog.Positive" parent="Widget.MaterialComponents.Button.UnelevatedButton">
-        <item name="backgroundTint">@color/accent</item>
-        <item name="android:textColor">@color/on_accent</item>
+        <item name="backgroundTint">?attr/econAccent</item>
+        <item name="android:textColor">?attr/econOnAccent</item>
         <item name="rippleColor">@color/hairline_on_surface</item>
         <item name="cornerRadius">@dimen/radius_pill</item>
         <item name="android:textAllCaps">false</item>
@@ -174,9 +181,9 @@
         <!-- U11: controls inside a dialog (the add-alert radios, the text
              field's focus ring and hint) take the accent. colorSecondary
              would otherwise fall back to Material's teal. -->
-        <item name="colorPrimary">@color/accent</item>
-        <item name="colorSecondary">@color/accent</item>
-        <item name="colorOnSecondary">@color/on_accent</item>
+        <item name="colorPrimary">?attr/econAccent</item>
+        <item name="colorSecondary">?attr/econAccent</item>
+        <item name="colorOnSecondary">?attr/econOnAccent</item>
     </style>
 
     <style name="AlabasterToolbar" parent="Widget.MaterialComponents.Toolbar">
@@ -327,23 +334,44 @@
     </style>
 
     <!-- Switch: accent track when on (a control, KTD10 rule 1), muted when off. -->
-    <style name="SettingsSwitch" parent="Widget.MaterialComponents.CompoundButton.Switch">
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="useMaterialThemeColors">false</item>
-        <item name="thumbTint">@color/settings_switch_thumb</item>
-        <item name="trackTint">@color/settings_switch_track</item>
+    <!-- Settings parity U2 (R8, KTD5): every switch is the Pantrii pill.
+         Set as the theme's materialSwitchStyle, so layouts need no style. -->
+    <style name="Widget.Econ.Switch" parent="Widget.Material3.CompoundButton.MaterialSwitch">
+        <item name="thumbTint">@color/switch_thumb_tint</item>
+        <item name="trackTint">@color/switch_track_tint</item>
+        <item name="trackDecorationTint">@android:color/transparent</item>
+        <item name="thumbIcon">@null</item>
     </style>
 
-    <!-- Destructive outlined button (clear chat / clear cache) -->
-    <style name="SettingsDestructiveButton" parent="Widget.MaterialComponents.Button.OutlinedButton">
+    <!-- Settings parity U5 (R4): a destructive action is a plain red text row
+         at the foot of its page, behind a confirm dialog. -->
+    <style name="SettingsDestructiveRow">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">@dimen/space_lg</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:background">?attr/selectableItemBackground</item>
         <item name="android:textSize">@dimen/text_body</item>
+        <item name="android:textStyle">bold</item>
         <item name="android:textColor">@color/error_text</item>
-        <item name="strokeColor">@color/error_bubble_stroke</item>
-        <item name="rippleColor">@color/error_bubble_bg</item>
-        <item name="cornerRadius">@dimen/radius_pill</item>
-        <item name="android:textAllCaps">false</item>
-        <item name="android:letterSpacing">0</item>
+    </style>
+
+    <!-- Settings parity U5 (R9, KTD4): the 40dp icon tile that leads every
+         control row, the smaller sibling of the list rows' 44dp tile. -->
+    <style name="SettingsRowIcon">
+        <item name="android:layout_width">40dp</item>
+        <item name="android:layout_height">40dp</item>
+        <item name="android:layout_marginEnd">@dimen/space_md</item>
+        <item name="android:padding">9dp</item>
+        <item name="android:background">@drawable/bg_settings_icon_tile</item>
+        <item name="android:importantForAccessibility">no</item>
+        <item name="tint">@color/ink_2</item>
+    </style>
+
+    <!-- A SettingsRow that is not tappable (status and label rows). -->
+    <style name="SettingsInfoRow" parent="SettingsRow">
+        <item name="android:background">@null</item>
     </style>
 
     <!-- Pantrii port U11: the secondary button. A pill with a line hairline
@@ -438,17 +466,43 @@
         <item name="android:baselineAligned">false</item>
     </style>
 
-    <!-- Cold-start theme. From the instant the icon is tapped the system
-         splash plays splash_wordmark_anim: on API 31+ the bars rise once and
-         the dots pulse until the first frame, however long that takes (the
-         system draws it, so a busy main thread can't freeze it; verified on
-         API 36). Below 31 it shows the still first frame. It then hands off to
-         the overlay MainActivity draws (LaunchSplash.kt) on the same pixels;
-         installSplashScreen() swaps to the app theme. -->
-    <style name="Theme.EconomicDashboard.Starting" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">@color/splash_navy</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_wordmark_anim</item>
-        <item name="windowSplashScreenAnimationDuration">1000</item>
+    <!-- Cold-start theme (launch variation C). The splash ground is the
+         accent's bright value and the launcher logo builds on a navy disc
+         (splash_logo_anim, 480 ms, plays once). MainActivity's exit listener
+         (LaunchExit.kt) then shrinks the accent field to a ring around the logo
+         and drops it into the Analyst FAB. This manifest theme is gold; on API
+         33+ MainActivity swaps in the chosen accent's Starting.<Accent> theme
+         with setSplashScreenTheme for the next cold launch. -->
+    <style name="Theme.EconomicDashboard.Starting" parent="Theme.SplashScreen.IconBackground">
+        <item name="windowSplashScreenBackground">#E2B84B</item>
+        <item name="windowSplashScreenIconBackgroundColor">#1A3470</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_logo_anim</item>
+        <item name="windowSplashScreenAnimationDuration">480</item>
         <item name="postSplashScreenTheme">@style/Theme.EconomicDashboard</item>
+    </style>
+
+    <!-- One per accent; only the ground differs (the AccentPalette night/bright
+         value). Android persists these by NAME via setSplashScreenTheme, so
+         never rename them. -->
+    <style name="Theme.EconomicDashboard.Starting.Gold">
+        <item name="windowSplashScreenBackground">#E2B84B</item>
+    </style>
+    <style name="Theme.EconomicDashboard.Starting.Green">
+        <item name="windowSplashScreenBackground">#4FCB86</item>
+    </style>
+    <style name="Theme.EconomicDashboard.Starting.Orange">
+        <item name="windowSplashScreenBackground">#FF8A63</item>
+    </style>
+    <style name="Theme.EconomicDashboard.Starting.Violet">
+        <item name="windowSplashScreenBackground">#9A9BFF</item>
+    </style>
+    <style name="Theme.EconomicDashboard.Starting.Blue">
+        <item name="windowSplashScreenBackground">#7FA9F5</item>
+    </style>
+    <style name="Theme.EconomicDashboard.Starting.Red">
+        <item name="windowSplashScreenBackground">#FF7A82</item>
+    </style>
+    <style name="Theme.EconomicDashboard.Starting.Teal">
+        <item name="windowSplashScreenBackground">#2ECFDF</item>
     </style>
 </resources>

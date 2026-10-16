@@ -8,6 +8,7 @@ import android.widget.TextView
 
 import androidx.annotation.ColorInt
 import androidx.core.content.ContextCompat
+import com.google.android.material.color.MaterialColors
 import androidx.core.graphics.ColorUtils
 
 import com.economic.dashboard.R
@@ -196,7 +197,8 @@ object BenchmarkStyle {
     @JvmStatic
     fun setCardActive(card: MaterialCardView, active: Boolean) {
         val res = card.resources
-        card.strokeColor = ContextCompat.getColor(card.context, if (active) R.color.accent else R.color.line)
+        card.strokeColor = if (active) MaterialColors.getColor(card, R.attr.econAccent)
+            else ContextCompat.getColor(card.context, R.color.line)
         card.strokeWidth = res.getDimensionPixelSize(if (active) R.dimen.stroke_card_active else R.dimen.stroke_card)
     }
 }

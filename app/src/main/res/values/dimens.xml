@@ -7,6 +7,7 @@
     <dimen name="text_secondary">13sp</dimen>    <!-- secondary copy, dates -->
     <dimen name="text_body">15sp</dimen>         <!-- body copy -->
     <dimen name="text_title">18sp</dimen>        <!-- card/section titles -->
+    <dimen name="text_page_title">26sp</dimen>  <!-- Settings page title in the header (U3) -->
     <dimen name="text_display">28sp</dimen>      <!-- KPI values, masthead -->
     <dimen name="text_display_lg">34sp</dimen>   <!-- large metric values -->
     <!-- R2-TICKET-06: floor for auto-sizing KPI values. Three 34sp values in one
@@ -86,4 +87,6 @@
          dialogs all four at 24dp. Both sit above the 20dp card they hold. -->
     <dimen name="radius_sheet">28dp</dimen>
     <dimen name="radius_dialog">24dp</dimen>
+    <!-- Settings parity U3: the header title clears the 48dp back button plus a gap. -->
+    <dimen name="settings_header_title_inset">60dp</dimen>
 </resources>

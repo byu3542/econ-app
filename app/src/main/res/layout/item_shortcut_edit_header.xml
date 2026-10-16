@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Settings parity U7 (R11): an editor section label, "YOUR SHORTCUTS" with
+     its accent "n OF 6" count, or "MORE SHORTCUTS". -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingTop="@dimen/space_lg"
+    android:paddingBottom="@dimen/space_sm">
+
+    <TextView
+        android:id="@+id/tvEditHeader"
+        style="@style/SettingsSectionHeader"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:accessibilityHeading="true"
+        tools:text="Your shortcuts" />
+
+    <TextView
+        android:id="@+id/tvEditCount"
+        style="@style/SettingsSectionHeader"
+        android:textColor="?attr/econAccent"
+        tools:text="6 of 6" />
+</LinearLayout>

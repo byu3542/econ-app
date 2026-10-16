@@ -14,4 +14,16 @@
         <!-- label size; defaults to @dimen/text_caption -->
         <attr name="segmentTextSize" format="dimension" />
     </declare-styleable>
+
+    <!-- Settings parity U1 (KTD1): the accent is a theme attribute, not a
+         colour resource, so a per-accent ThemeOverlay can swap it at runtime.
+         Defaults (gold) live on Theme.EconomicDashboard; overlays in
+         themes_accent.xml. Signal, delta and chart colours never read these. -->
+    <attr name="econAccent" format="color" />
+    <attr name="econOnAccent" format="color" />
+    <attr name="econAccentSoft" format="color" />
+    <!-- The accent's dark-theme (bright) value in both themes. For art that
+         sits on its own fixed ground rather than the page, e.g. the Analyst FAB
+         disc, so its colour does not shift with light/dark. -->
+    <attr name="econAccentBright" format="color" />
 </resources>

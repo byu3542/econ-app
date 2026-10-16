@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Settings parity U1 (KTD1, KTD2): one overlay per accent, light values.
+         Applied to the activity theme before inflation (MainActivity). Hex
+         values mirror ui/AccentPalette.kt, which the contrast test reads. -->
+    <style name="ThemeOverlay.Economii.Accent.Gold" parent="">
+        <item name="econAccent">#7F6222</item>
+        <item name="econAccentBright">#E2B84B</item>
+        <item name="econOnAccent">#FFFFFF</item>
+        <item name="econAccentSoft">#F5EEDC</item>
+    </style>
+    <style name="ThemeOverlay.Economii.Accent.Green" parent="">
+        <item name="econAccent">#137A45</item>
+        <item name="econAccentBright">#4FCB86</item>
+        <item name="econOnAccent">#FFFFFF</item>
+        <item name="econAccentSoft">#E3EFE9</item>
+    </style>
+    <style name="ThemeOverlay.Economii.Accent.Orange" parent="">
+        <item name="econAccent">#B4401C</item>
+        <item name="econAccentBright">#FF8A63</item>
+        <item name="econOnAccent">#FFFFFF</item>
+        <item name="econAccentSoft">#F6E8E4</item>
+    </style>
+    <style name="ThemeOverlay.Economii.Accent.Violet" parent="">
+        <item name="econAccent">#4F4FE0</item>
+        <item name="econAccentBright">#9A9BFF</item>
+        <item name="econOnAccent">#FFFFFF</item>
+        <item name="econAccentSoft">#EAEAFB</item>
+    </style>
+    <style name="ThemeOverlay.Economii.Accent.Blue" parent="">
+        <item name="econAccent">#2563C9</item>
+        <item name="econAccentBright">#7FA9F5</item>
+        <item name="econOnAccent">#FFFFFF</item>
+        <item name="econAccentSoft">#E5ECF9</item>
+    </style>
+    <style name="ThemeOverlay.Economii.Accent.Red" parent="">
+        <item name="econAccent">#B92A35</item>
+        <item name="econAccentBright">#FF7A82</item>
+        <item name="econOnAccent">#FFFFFF</item>
+        <item name="econAccentSoft">#F7E5E7</item>
+    </style>
+    <style name="ThemeOverlay.Economii.Accent.Teal" parent="">
+        <item name="econAccent">#086E7E</item>
+        <item name="econAccentBright">#2ECFDF</item>
+        <item name="econOnAccent">#FFFFFF</item>
+        <item name="econAccentSoft">#E1EEF0</item>
+    </style>
+</resources>

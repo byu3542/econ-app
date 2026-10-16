@@ -1,6 +1,8 @@
 package com.economic.dashboard.utils
 
 import android.content.Context
+import com.economic.dashboard.ui.AccentPalette
+import com.economic.dashboard.ui.shortcuts.ShortcutCatalog
 import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatDelegate
 import com.economic.dashboard.alerts.AlertRule
@@ -19,6 +21,7 @@ object SettingsManager {
 
     // Appearance
     @JvmField val KEY_NIGHT_MODE = "night_mode"
+    @JvmField val KEY_ACCENT = "accent_id" // settings parity U1: AccentPalette id, default gold
     @JvmField val KEY_COLORBLIND = "colorblind_mode" // blue/orange safe deltas
     // Data
     @JvmField val KEY_REFRESH_ON_OPEN = "refresh_on_open"
@@ -87,6 +90,10 @@ object SettingsManager {
      *  the watchlist-ranked order. */
     @JvmField val KEY_DASHBOARD_CATEGORY_ORDER = "dashboard_category_order"
 
+    /** Settings parity U6 (KTD6): ordered shortcut ids for the center-button
+     *  sheet, e.g. "yield_curve,inflation,jobs". Unset means the defaults. */
+    @JvmField val KEY_SHORTCUTS = "shortcut_ids"
+
     @JvmStatic
     fun prefs(c: Context): SharedPreferences = c.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
@@ -126,6 +133,14 @@ object SettingsManager {
     // ── Typed convenience accessors ──────────────────────────────────
     @JvmStatic
     fun getNightMode(c: Context): Int = getInt(c, KEY_NIGHT_MODE, AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+
+    @JvmStatic
+    fun getAccent(c: Context): AccentPalette = AccentPalette.fromId(prefs(c).getString(KEY_ACCENT, null))
+
+    @JvmStatic
+    fun setAccent(c: Context, accent: AccentPalette) {
+        prefs(c).edit().putString(KEY_ACCENT, accent.id).apply()
+    }
 
     @JvmStatic
     fun setNightMode(c: Context, mode: Int) {
@@ -409,5 +424,19 @@ object SettingsManager {
             return
         }
         setString(c, KEY_DASHBOARD_CATEGORY_ORDER, keys.joinToString(","))
+    }
+
+    /** Settings parity U6 (KTD6): the user's shortcuts, read through
+     *  ShortcutCatalog.sanitize, so unknown ids, duplicates and anything past
+     *  six never reach the sheet. Never set gives the defaults. */
+    @JvmStatic
+    fun getShortcuts(c: Context): List<String> {
+        val csv = getString(c, KEY_SHORTCUTS, null)
+        return ShortcutCatalog.sanitize(if (csv == null) null else parseCsvList(csv))
+    }
+
+    @JvmStatic
+    fun setShortcuts(c: Context, ids: List<String>) {
+        setString(c, KEY_SHORTCUTS, ShortcutCatalog.sanitize(ids).joinToString(","))
     }
 }
