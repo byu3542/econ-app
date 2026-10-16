@@ -132,8 +132,8 @@
     <color name="shortcut_slate_icon">#46506A</color>
     <color name="shortcut_sand_fill">#F2ECE0</color>
     <color name="shortcut_sand_icon">#6E5A3A</color>
-    <!-- Analyst FAB glyph on the accent disc (ic_fab_logo): the bar stems and
-         the trend mark (line plus both dots) swap black/white with the theme. -->
+    <!-- Analyst FAB glyph on the accent disc (ic_fab_logo): the bars with the
+         left dot, and the trend mark (line plus right dot) swap black/white with the theme. -->
     <color name="fab_glyph_stem">#FFFFFF</color>
     <color name="fab_glyph_mark">#000000</color>
 </resources>
