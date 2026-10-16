@@ -291,6 +291,12 @@ class InflationFragment : Fragment() {
         ChartHelper.setLineData(chartPceCpi, LineData(
             makeLineDataSet(pceEntries, "PCE", ChartPalette.blue(requireContext())),
             makeLineDataSet(cpiEntries, "CPI-U", ChartPalette.gold(requireContext()))))
+        // Unified charts: PCE is the first series, so it heads the chart.
+        if (pceEntries.isNotEmpty()) {
+            val pceYoy = pceEntries[pceEntries.size - 1].y.toDouble()
+            ChartHelper.showLatest(chartPceCpi, Benchmarks.pceYoY(pceYoy),
+                "PCE " + NumberFormatUtil.percent(pceYoy))
+        }
     }
 
     private fun tryBuildComparisonChart() {
@@ -344,6 +350,18 @@ class InflationFragment : Fragment() {
         if (!pceEntries.isEmpty()) sets.add(makeLineDataSet(pceEntries, "PCE", ChartPalette.blue(requireContext())))
         sets.add(makeLineDataSet(wageEntries, "Average Wages", ChartPalette.purple(requireContext())))
         ChartHelper.setLineData(chartComparison, LineData(sets))
+        // Unified charts: this chart compares wages with prices, so it heads
+        // with real wage growth — the same spread and grade as the wage card.
+        val fullCpi = cpiRowsFor(cpiData)
+        val spreadRows = if (wageRows.size >= 13 && fullCpi.size >= 13)
+            SeriesMath.realWageGrowthSpread(wageRows, fullCpi) else emptyList()
+        if (spreadRows.isNotEmpty()) {
+            val spread = spreadRows[spreadRows.size - 1].value
+            ChartHelper.showLatest(chartComparison, Benchmarks.realWageGrowth(spread),
+                "Real wages " + NumberFormatUtil.percent(spread))
+        } else {
+            ChartHelper.showLatest(chartComparison, null)
+        }
     }
 
     private fun makeLineDataSet(entries: List<Entry>, label: String, color: Int): LineDataSet {

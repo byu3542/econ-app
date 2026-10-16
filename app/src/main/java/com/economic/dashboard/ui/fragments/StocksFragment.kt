@@ -248,6 +248,15 @@ class StocksFragment : Fragment() {
         val ds = LineDataSet(entries, seriesName)
         ChartHelper.styleLineSeries(ds, lineColor) // IOS-07
         ChartHelper.setLineData(swappableChart, LineData(ds), 500)
+        val latest = rows[rows.size - 1].value
+        when (activeCard) { // unified charts: same grade as the card
+            "nasdaq" -> ChartHelper.showLatest(swappableChart,
+                Benchmarks.stockLevel(latest, 10000.0, 12000.0), NumberFormatUtil.number(latest, 0))
+            "vix" -> ChartHelper.showLatest(swappableChart,
+                Benchmarks.vix(latest), NumberFormatUtil.indexPoints(latest, 1))
+            else -> ChartHelper.showLatest(swappableChart,
+                Benchmarks.stockLevel(latest, 3500.0, 4000.0), NumberFormatUtil.number(latest, 0))
+        }
         // P6 TICKET-37: TalkBack announces the visible series, not the static XML label.
         swappableChart.contentDescription =
             seriesName + " trend, " + NumberFormatUtil.number(rows[rows.size - 1].value, 0)

@@ -149,7 +149,7 @@ object MetricPopupController {
             val windowed = if (months != null) EconomicViewModel.filterByMonths(fullHistory, m)
                 else EconomicViewModel.filterByTimeframe(ctx, fullHistory, spec.chartId)
             adapter.setData(windowed)
-            buildChart(chart, windowed, spec, if (months != null) m else null)
+            buildChart(chart, windowed, spec, gradeResult, if (months != null) m else null)
         }
     }
 
@@ -219,7 +219,8 @@ object MetricPopupController {
 
     private fun buildChart(
         chart: LineChart?, rows: List<EconomicDataPoint>,
-        spec: MetricPopupRegistry.MetricPopupSpec, windowMonths: Int? = null
+        spec: MetricPopupRegistry.MetricPopupSpec, grade: Benchmarks.Result?,
+        windowMonths: Int? = null
     ) {
         if (chart == null) return
         if (rows.isEmpty()) {
@@ -237,6 +238,9 @@ object MetricPopupController {
         val ds = LineDataSet(entries, spec.title)
         ChartHelper.styleLineSeries(ds, ChartPalette.primary(chart.context)) // U10, KTD10 rule 3: never the accent
         ChartHelper.setLineData(chart, LineData(ds))
+        // Unified charts: the analyst card's pill + latest value over the plot.
+        ChartHelper.showLatest(chart, grade,
+            String.format(Locale.US, spec.valueFmt, rows.last().value))
     }
 
     /**

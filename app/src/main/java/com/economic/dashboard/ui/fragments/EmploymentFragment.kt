@@ -208,6 +208,11 @@ class EmploymentFragment : Fragment() {
     private fun buildChart(data: List<EconomicDataPoint>, series: String, chart: LineChart, color: Int) {
         var rows = rowsFor(data, series)
         if (rows.isEmpty()) return
+        // Unified charts: grade on the full history, same as the card.
+        val latest = rows[rows.size - 1].value
+        val grade = if (series == "Unemployment Rate")
+            Benchmarks.unemployment(latest, SeriesMath.riseFromTrailingLow(rows, 12))
+            else Benchmarks.laborForce(latest)
         rows = EconomicViewModel.filterByTimeframe(requireContext(), rows, "employment")
         val entries = ArrayList<Entry>()
         val dates = ArrayList<String>()
@@ -219,6 +224,7 @@ class EmploymentFragment : Fragment() {
         val ds = LineDataSet(entries, series)
         ChartHelper.styleLineSeries(ds, color) // IOS-07
         ChartHelper.setLineData(chart, LineData(ds), 500)
+        ChartHelper.showLatest(chart, grade, NumberFormatUtil.percent(latest, 1))
         // P6 TICKET-37: TalkBack announces the visible series, not the static XML label.
         chart.contentDescription =
             series + " trend, " + NumberFormatUtil.percent(rows[rows.size - 1].value, 1)

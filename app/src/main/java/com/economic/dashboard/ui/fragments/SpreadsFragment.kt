@@ -183,6 +183,10 @@ class SpreadsFragment : Fragment() {
         val ds = LineDataSet(entries, label)
         ChartHelper.styleLineSeries(ds, lineColor) // IOS-07
         ChartHelper.setLineData(swappableChart, LineData(ds), 500)
+        val latest = data[data.size - 1].value
+        ChartHelper.showLatest(swappableChart, // unified charts: same grade as the card
+            if ("3m" == activeCard) Benchmarks.spread3m10y(latest) else Benchmarks.spread10y2y(latest),
+            NumberFormatUtil.percent(latest))
         // P6 TICKET-37: TalkBack announces the visible series, not the static XML label.
         swappableChart.contentDescription =
             label + ", " + NumberFormatUtil.percent(data[data.size - 1].value)

@@ -1,5 +1,7 @@
 package com.economic.dashboard.ui.fragments
 
+import com.economic.dashboard.ui.Benchmarks
+import com.economic.dashboard.views.ChartStatusHeader
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -151,6 +153,16 @@ class YieldsFragment : Fragment() {
         })
 
         ChartHelper.setLineData(yieldCurveChart, LineData(ds))
+
+        // Unified charts: header only — a curve has no "newest point" to
+        // crosshair (see TICKET-38 above). The pill grades the curve's shape
+        // (10Y-3M, same grader as the Spreads tab); the value is the 10Y.
+        val y10 = entries.firstOrNull { it.x == 10f }?.y?.toDouble()
+        val y3m = entries.firstOrNull { it.x == 0.25f }?.y?.toDouble()
+        val grade = if (y10 != null && y3m != null) Benchmarks.spread3m10y(y10 - y3m) else null
+        ChartStatusHeader.bind(ChartStatusHeader.attachAbove(yieldCurveChart), grade,
+            grade?.let { it.word + " · 10Y-3M" },
+            if (y10 != null) "10Y " + NumberFormatUtil.percent(y10) else "—")
     }
 
     private fun setupTreasuryRow(row: View, label: String) {

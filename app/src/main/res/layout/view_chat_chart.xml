@@ -47,46 +47,11 @@
             android:textStyle="bold"
             android:textColor="@color/ink" />
 
-        <LinearLayout
+        <include
+            layout="@layout/view_chart_header"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/space_sm"
-            android:gravity="end"
-            android:orientation="vertical">
-
-            <LinearLayout
-                android:id="@+id/llChartPill"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:visibility="gone">
-
-                <View
-                    android:id="@+id/viewChartPillDot"
-                    android:layout_width="@dimen/dot_pill"
-                    android:layout_height="@dimen/dot_pill"
-                    android:layout_marginEnd="@dimen/space_xs"
-                    android:background="@drawable/dot_neutral"
-                    android:importantForAccessibility="no" />
-
-                <TextView
-                    android:id="@+id/tvChartPill"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textAppearance="@style/TextAppearance.Econ.Label"
-                    android:letterSpacing="0.03"
-                    android:textColor="@color/muted" />
-            </LinearLayout>
-
-            <TextView
-                android:id="@+id/tvChartValue"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textAppearance="@style/TextAppearance.Econ.Number"
-                android:textSize="17sp"
-                android:textColor="@color/ink" />
-        </LinearLayout>
+            android:layout_marginStart="@dimen/space_sm" />
     </LinearLayout>
 
     <com.github.mikephil.charting.charts.LineChart

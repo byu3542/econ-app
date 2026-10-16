@@ -171,6 +171,9 @@ class GdpFragment : Fragment() {
         val ds = LineDataSet(entries, "GDP Growth (%)")
         ChartHelper.styleLineSeries(ds, ChartPalette.primary(requireContext())) // IOS-07 / TICKET-57
         ChartHelper.setLineData(gdpChart, LineData(ds))
+        // Unified charts: the plotted point is a quarter, so the quarter's grade.
+        val latest = gdpRows[gdpRows.size - 1].value
+        ChartHelper.showLatest(gdpChart, Benchmarks.gdpQuarter(latest), NumberFormatUtil.percent(latest))
     }
 
     override fun onDestroyView() {
