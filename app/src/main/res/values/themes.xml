@@ -466,17 +466,43 @@
         <item name="android:baselineAligned">false</item>
     </style>
 
-    <!-- Cold-start theme. From the instant the icon is tapped the system
-         splash plays splash_wordmark_anim: on API 31+ the bars rise once and
-         the dots pulse until the first frame, however long that takes (the
-         system draws it, so a busy main thread can't freeze it; verified on
-         API 36). Below 31 it shows the still first frame. It then hands off to
-         the overlay MainActivity draws (LaunchSplash.kt) on the same pixels;
-         installSplashScreen() swaps to the app theme. -->
-    <style name="Theme.EconomicDashboard.Starting" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">@color/splash_navy</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_wordmark_anim</item>
-        <item name="windowSplashScreenAnimationDuration">1000</item>
+    <!-- Cold-start theme (launch variation C). The splash ground is the
+         accent's bright value and the launcher logo builds on a navy disc
+         (splash_logo_anim, 480 ms, plays once). MainActivity's exit listener
+         (LaunchExit.kt) then shrinks the accent field to a ring around the logo
+         and drops it into the Analyst FAB. This manifest theme is gold; on API
+         33+ MainActivity swaps in the chosen accent's Starting.<Accent> theme
+         with setSplashScreenTheme for the next cold launch. -->
+    <style name="Theme.EconomicDashboard.Starting" parent="Theme.SplashScreen.IconBackground">
+        <item name="windowSplashScreenBackground">#E2B84B</item>
+        <item name="windowSplashScreenIconBackgroundColor">#1A3470</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_logo_anim</item>
+        <item name="windowSplashScreenAnimationDuration">480</item>
         <item name="postSplashScreenTheme">@style/Theme.EconomicDashboard</item>
+    </style>
+
+    <!-- One per accent; only the ground differs (the AccentPalette night/bright
+         value). Android persists these by NAME via setSplashScreenTheme, so
+         never rename them. -->
+    <style name="Theme.EconomicDashboard.Starting.Gold">
+        <item name="windowSplashScreenBackground">#E2B84B</item>
+    </style>
+    <style name="Theme.EconomicDashboard.Starting.Green">
+        <item name="windowSplashScreenBackground">#4FCB86</item>
+    </style>
+    <style name="Theme.EconomicDashboard.Starting.Orange">
+        <item name="windowSplashScreenBackground">#FF8A63</item>
+    </style>
+    <style name="Theme.EconomicDashboard.Starting.Violet">
+        <item name="windowSplashScreenBackground">#9A9BFF</item>
+    </style>
+    <style name="Theme.EconomicDashboard.Starting.Blue">
+        <item name="windowSplashScreenBackground">#7FA9F5</item>
+    </style>
+    <style name="Theme.EconomicDashboard.Starting.Red">
+        <item name="windowSplashScreenBackground">#FF7A82</item>
+    </style>
+    <style name="Theme.EconomicDashboard.Starting.Teal">
+        <item name="windowSplashScreenBackground">#2ECFDF</item>
     </style>
 </resources>

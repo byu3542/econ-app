@@ -136,8 +136,8 @@ class MainActivity : AppCompatActivity(), ShortcutsBottomSheet.Host, SearchFragm
     fun getViewModel(): EconomicViewModel = viewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // Must run before super.onCreate: swaps the navy Starting theme for the
-        // app theme. The animated wordmark (LaunchSplash) takes over below.
+        // Must run before super.onCreate: swaps the Starting theme for the
+        // app theme. LaunchExit plays the exit below.
         val splash = installSplashScreen()
         // Settings parity U1 (KTD1): the chosen accent overlays the app theme
         // before anything inflates. Changing it recreates the activity.
@@ -148,28 +148,18 @@ class MainActivity : AppCompatActivity(), ShortcutsBottomSheet.Host, SearchFragm
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         // Fresh launches only, so a theme change or rotation doesn't replay it.
-        // The system splash animates the wordmark until the first frame is
-        // drawn (API 31+; a still first frame below that); the overlay then
-        // takes over on the same pixels and keeps it moving.
+        // The system splash builds the logo on the accent ground (API 31+; a
+        // still logo below that); LaunchExit then collapses it into the
+        // Analyst FAB. No data hold: a first launch shows the dashboard's own
+        // loading state.
         if (freshLaunch) {
             splash.setOnExitAnimationListener { provider ->
-                // remove() only once the overlay covers the system splash, so
-                // the navy ground and the motion never break.
-                val launch = LaunchSplash.show(this, onGone = { splashGone = true; maybePlayHomeWave() }) { provider.remove() }
-                // Cache-first: with a snapshot on disk the cards are already
-                // painted, so the overlay only waits for its own animation.
-                // A first-ever launch waits for the network fetch to settle.
-                if (DashboardDataCache.hasAny(this)) {
-                    launch.markReady()
-                } else {
-                    var sawLoading = false
-                    viewModel.getIsLoading().observe(this) { loading ->
-                        if (loading == true) sawLoading = true
-                        else if (sawLoading) launch.markReady()
-                    }
-                }
+                LaunchExit.play(this, provider, binding.fabAiAnalyst) { splashGone = true; maybePlayHomeWave() }
             }
+        } else {
+            splashGone = true
         }
+        syncSplashTheme()
 
         // Edge-to-edge: draw behind system bars, then pad the header and
         // bottom nav so content clears them (required on Android 15+).
@@ -541,6 +531,19 @@ class MainActivity : AppCompatActivity(), ShortcutsBottomSheet.Host, SearchFragm
         binding.wordmarkHome.visibility = if (home) View.VISIBLE else View.GONE
         currentScreenLabel = title
         maybePlayHomeWave()
+    }
+
+    /**
+     * API 33+: makes the next cold launch's system splash use the chosen
+     * accent's Starting theme (Android persists it). Skipped when the stored
+     * choice already matches, since the call is a PackageManager IPC.
+     */
+    private fun syncSplashTheme() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+        val accent = SettingsManager.getAccent(this)
+        if (SettingsManager.getString(this, SettingsManager.KEY_SPLASH_THEME, null) == accent.id) return
+        splashScreen.setSplashScreenTheme(accent.startingTheme)
+        SettingsManager.setString(this, SettingsManager.KEY_SPLASH_THEME, accent.id)
     }
 
     private fun maybePlayHomeWave() {
