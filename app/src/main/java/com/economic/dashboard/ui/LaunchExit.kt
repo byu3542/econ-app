@@ -57,13 +57,13 @@ object LaunchExit {
     private const val RING_SCALE = 1.12f
     /** windowSplashScreenIconBackgroundColor on Theme.EconomicDashboard.Starting. */
     private const val DISC_COLOR = 0xFF1A3470.toInt()
-    /**
-     * windowSplashScreenBrandingImage as the system lays it out: 200x80dp,
-     * centred, 60dp above the bottom of the window.
-     */
+    /** splash_branding's 200x80dp box, its top this far below the spinner. */
     private const val BRAND_W_DP = 200f
     private const val BRAND_H_DP = 80f
-    private const val BRAND_BOTTOM_DP = 60f
+    private const val BRAND_GAP_DP = 4f
+    /** The wordmark fades in under the wheel and holds before the collapse. */
+    private const val BRAND_IN_MS = 160L
+    private const val BRAND_HOLD_MS = 360L
 
     fun play(activity: Activity, provider: SplashScreenViewProvider, target: View, onGone: () -> Unit) {
                 val icon = provider.iconView
@@ -91,7 +91,7 @@ object LaunchExit {
         val art = ExitDrawable(
             cx, cy, discR, icon.width, accent.bright.toInt(), fullR,
             ContextCompat.getDrawable(activity, R.drawable.splash_logo)!!,
-            branding(activity, root, accent),
+            branding(activity, cx, cy + icon.height / 2f, accent),
         )
         val view = View(activity).apply { background = art }
         root.addView(view, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
@@ -102,6 +102,7 @@ object LaunchExit {
         val start = Runnable {
             provider.remove()
             val ease = FastOutSlowInInterpolator()
+            val hold = if (art.hasBrand) BRAND_HOLD_MS else 0L
             val collapse = ValueAnimator.ofFloat(fullR, ringR).apply {
                 duration = COLLAPSE_MS
                 interpolator = ease
@@ -109,8 +110,13 @@ object LaunchExit {
                     art.fieldR = it.animatedValue as Float
                     art.brandAlpha = (1f - it.animatedFraction * 2f).coerceAtLeast(0f)
                 }
+                startDelay = hold
             }
             val scale = (target.width / 2f) / ringR
+            val brandIn = ValueAnimator.ofFloat(0f, 1f).apply {
+                duration = if (art.hasBrand) BRAND_IN_MS else 0L
+                addUpdateListener { art.brandAlpha = it.animatedValue as Float }
+            }
             val drop = AnimatorSet().apply {
                 playTogether(
                     ObjectAnimator.ofFloat(view, View.TRANSLATION_X, targetLoc[0] - rootLoc[0] + target.width / 2f - cx),
@@ -118,16 +124,16 @@ object LaunchExit {
                     ObjectAnimator.ofFloat(view, View.SCALE_X, scale),
                     ObjectAnimator.ofFloat(view, View.SCALE_Y, scale),
                 )
-                startDelay = DROP_DELAY_MS
+                startDelay = hold + DROP_DELAY_MS
                 duration = DROP_MS
                 interpolator = ease
             }
             val fade = ObjectAnimator.ofFloat(view, View.ALPHA, 0f).apply {
-                startDelay = FADE_DELAY_MS
+                startDelay = hold + FADE_DELAY_MS
                 duration = FADE_MS
             }
             running = AnimatorSet().apply {
-                playTogether(collapse, drop, fade)
+                playTogether(brandIn, collapse, drop, fade)
                 addListener(object : AnimatorListenerAdapter() {
                     override fun onAnimationEnd(animation: Animator) {
                         root.removeView(view)
@@ -162,20 +168,18 @@ object LaunchExit {
         }
 
     /**
-     * The system splash's wordmark, placed where the system drew it, so it
-     * stays while the field collapses. None below API 31, which has no
-     * branding image.
+     * The wordmark, centred under the spinner (whose outer edge is [top]).
+     * White on navy, black on the lighter accents.
      */
-    private fun branding(context: Context, root: View, accent: AccentPalette): Drawable? {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return null
+    private fun branding(context: Context, cx: Float, top: Float, accent: AccentPalette): Drawable? {
         val res = if (accent == AccentPalette.NAVY) R.drawable.splash_branding_light else R.drawable.splash_branding
         val d = ContextCompat.getDrawable(context, res) ?: return null
         val dp = context.resources.displayMetrics.density
         val w = (BRAND_W_DP * dp).toInt()
         val h = (BRAND_H_DP * dp).toInt()
-        val left = (root.width - w) / 2
-        val bottom = root.height - (BRAND_BOTTOM_DP * dp).toInt()
-        d.setBounds(left, bottom - h, left + w, bottom)
+        val left = (cx - w / 2f).toInt()
+        val t = (top + BRAND_GAP_DP * dp).toInt()
+        d.setBounds(left, t, left + w, t + h)
         return d
     }
 
@@ -199,8 +203,10 @@ object LaunchExit {
                 invalidateSelf()
             }
 
-        /** The wordmark fades out in the first half of the collapse, before the drop moves it. */
-        var brandAlpha = 1f
+        val hasBrand get() = brand != null
+
+        /** Fades in under the wheel, then out in the first half of the collapse, before the drop moves it. */
+        var brandAlpha = 0f
             set(value) {
                 field = value
                 invalidateSelf()

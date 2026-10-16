@@ -479,8 +479,6 @@
         <!-- Navy ground: the drawable draws its own smaller disc. -->
         <item name="windowSplashScreenAnimatedIcon">@drawable/splash_logo_anim</item>
         <item name="windowSplashScreenAnimationDuration">480</item>
-        <!-- White wordmark on navy; the lighter accents switch to black. -->
-        <item name="android:windowSplashScreenBrandingImage" tools:targetApi="31">@drawable/splash_branding_light</item>
         <item name="postSplashScreenTheme">@style/Theme.EconomicDashboard</item>
     </style>
 
@@ -500,31 +498,25 @@
     <style name="Theme.EconomicDashboard.Starting.Green">
         <item name="windowSplashScreenBackground">#4FCB86</item>
         <item name="windowSplashScreenIconBackgroundColor">#4FCB86</item>
-        <item name="android:windowSplashScreenBrandingImage" tools:targetApi="31">@drawable/splash_branding</item>
     </style>
     <style name="Theme.EconomicDashboard.Starting.Orange">
         <item name="windowSplashScreenBackground">#FF8A63</item>
         <item name="windowSplashScreenIconBackgroundColor">#FF8A63</item>
-        <item name="android:windowSplashScreenBrandingImage" tools:targetApi="31">@drawable/splash_branding</item>
     </style>
     <style name="Theme.EconomicDashboard.Starting.Violet">
         <item name="windowSplashScreenBackground">#9A9BFF</item>
         <item name="windowSplashScreenIconBackgroundColor">#9A9BFF</item>
-        <item name="android:windowSplashScreenBrandingImage" tools:targetApi="31">@drawable/splash_branding</item>
     </style>
     <style name="Theme.EconomicDashboard.Starting.Blue">
         <item name="windowSplashScreenBackground">#7FA9F5</item>
         <item name="windowSplashScreenIconBackgroundColor">#7FA9F5</item>
-        <item name="android:windowSplashScreenBrandingImage" tools:targetApi="31">@drawable/splash_branding</item>
     </style>
     <style name="Theme.EconomicDashboard.Starting.Red">
         <item name="windowSplashScreenBackground">#FF7A82</item>
         <item name="windowSplashScreenIconBackgroundColor">#FF7A82</item>
-        <item name="android:windowSplashScreenBrandingImage" tools:targetApi="31">@drawable/splash_branding</item>
     </style>
     <style name="Theme.EconomicDashboard.Starting.Teal">
         <item name="windowSplashScreenBackground">#2ECFDF</item>
         <item name="windowSplashScreenIconBackgroundColor">#2ECFDF</item>
-        <item name="android:windowSplashScreenBrandingImage" tools:targetApi="31">@drawable/splash_branding</item>
     </style>
 </resources>
