@@ -4,6 +4,8 @@ import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import android.content.res.ColorStateList
+import android.content.res.Configuration
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -11,10 +13,12 @@ import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.util.TypedValue
 import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.RadioButton
 import android.widget.TextView
 
 import androidx.appcompat.app.AppCompatDelegate
@@ -32,7 +36,6 @@ import com.economic.dashboard.utils.SettingsManager
 import com.economic.dashboard.utils.markDestructive
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.android.material.card.MaterialCardView
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.materialswitch.MaterialSwitch
 
@@ -80,6 +83,9 @@ class SettingsFragment : Fragment() {
     override fun onViewCreated(v: View, savedInstanceState: Bundle?) {
         super.onViewCreated(v, savedInstanceState)
         val b = binding ?: return
+        // U4: a theme or accent change recreates the Activity; land back on
+        // the page the user was on (Appearance), not the Settings root.
+        val restored = savedInstanceState?.getString(STATE_SECTION)
 
         setupTheme(v)
         setupData(v)
@@ -98,7 +104,13 @@ class SettingsFragment : Fragment() {
 
         setupFooter(b)
         buildList()
-        host().setSettingsTitle(getString(titleFor(activeSection)))
+        if (restored != null && SECTIONS.any { it.id == restored }) showSection(restored)
+        else host().setSettingsTitle(getString(R.string.settings))
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putString(STATE_SECTION, activeSection)
     }
 
     override fun onResume() {
@@ -142,8 +154,8 @@ class SettingsFragment : Fragment() {
         buildList() // values may have changed while a section was open
     }
 
-    private fun detailCards(b: FragmentSettingsBinding): Map<String, MaterialCardView> = mapOf(
-        "appearance" to b.cardAppearance,
+    private fun detailCards(b: FragmentSettingsBinding): Map<String, View> = mapOf(
+        "appearance" to b.appearancePage,
         "startup" to b.cardStartup,
         "ai" to b.cardAi,
         "data" to b.cardData,
@@ -231,8 +243,7 @@ class SettingsFragment : Fragment() {
                     AppCompatDelegate.MODE_NIGHT_YES -> getString(R.string.theme_dark)
                     else -> getString(R.string.theme_system)
                 }
-                val hapticsOn = SettingsManager.getBool(c, SettingsManager.KEY_HAPTICS, true)
-                getString(R.string.settings_summary_appearance, themeLabel, onOff(hapticsOn))
+                getString(R.string.settings_summary_appearance_accent, themeLabel, SettingsManager.getAccent(c).label)
             }
             "startup" -> {
                 val labels = intArrayOf(R.string.tab_overview, R.string.tab_markets, R.string.tab_economy, R.string.tab_news)
@@ -286,29 +297,9 @@ class SettingsFragment : Fragment() {
     // -- Appearance -----------------------------------------------------------
 
     private fun setupTheme(v: View) {
-        val seg: SegmentedView = v.findViewById(R.id.segTheme)
-        val mode = SettingsManager.getNightMode(requireContext())
-        val tag = when (mode) {
-            AppCompatDelegate.MODE_NIGHT_NO -> "light"
-            AppCompatDelegate.MODE_NIGHT_YES -> "dark"
-            else -> "system"
-        }
-        seg.select(tag, animate = false)
-
-        seg.onSelect = SegmentedView.OnSelect { picked ->
-            val newMode = when (picked) {
-                "light" -> AppCompatDelegate.MODE_NIGHT_NO
-                "dark" -> AppCompatDelegate.MODE_NIGHT_YES
-                else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
-            }
-            if (newMode != SettingsManager.getNightMode(requireContext())) {
-                SettingsManager.setNightMode(requireContext(), newMode)
-                // Recreates the activity with the new theme. MainActivity's
-                // setupBottomNav keeps the restored Settings on screen (and
-                // re-applies its chrome), so the user can keep comparing themes.
-                AppCompatDelegate.setDefaultNightMode(newMode)
-            }
-        }
+        val b = binding ?: return
+        buildThemeRows(b)
+        buildAccentSwatches(b)
 
         // Colorblind-safe delta palette. Re-fetch so every delta chip repaints
         // with the new palette immediately.
@@ -316,6 +307,126 @@ class SettingsFragment : Fragment() {
             host().getViewModel().fetchAllData()
         }
         bindSwitch(v, R.id.switchHaptics, SettingsManager.KEY_HAPTICS, true, null)
+    }
+
+    private data class ThemeChoice(val mode: Int, val titleRes: Int, val subRes: Int, val iconRes: Int)
+
+    /** U4 (R5, KTD4): System, Light and Dark as choice rows; the current one
+     *  gets an accent-soft tile and an accent check. Replaces the segmented control. */
+    private fun buildThemeRows(b: FragmentSettingsBinding) {
+        val c = requireContext()
+        val choices = listOf(
+            ThemeChoice(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM, R.string.theme_system, R.string.theme_system_sub, R.drawable.ic_settings),
+            ThemeChoice(AppCompatDelegate.MODE_NIGHT_NO, R.string.theme_light, R.string.theme_light_sub, R.drawable.ic_theme_light),
+            ThemeChoice(AppCompatDelegate.MODE_NIGHT_YES, R.string.theme_dark, R.string.theme_dark_sub, R.drawable.ic_theme_dark),
+        )
+        val current = SettingsManager.getNightMode(c)
+        val container = b.llThemeRows
+        container.removeAllViews()
+        val inflater = LayoutInflater.from(c)
+        choices.forEachIndexed { i, choice ->
+            val row = inflater.inflate(R.layout.item_settings_row, container, false)
+            val icon: ImageView = row.findViewById(R.id.ivRowIcon)
+            val content: View = row.findViewById(R.id.rowContent)
+            val selected = choice.mode == current
+            icon.setImageResource(choice.iconRes)
+            row.findViewById<TextView>(R.id.tvRowTitle).setText(choice.titleRes)
+            row.findViewById<TextView>(R.id.tvRowSummary).setText(choice.subRes)
+            row.findViewById<View>(R.id.ivRowChevron).visibility = View.GONE
+            row.findViewById<View>(R.id.ivRowCheck).visibility = if (selected) View.VISIBLE else View.GONE
+            row.findViewById<View>(R.id.rowDivider).visibility = if (i == choices.lastIndex) View.GONE else View.VISIBLE
+            if (selected) {
+                icon.backgroundTintList = ColorStateList.valueOf(themeColor(R.attr.econAccentSoft))
+                icon.imageTintList = ColorStateList.valueOf(themeColor(R.attr.econAccent))
+            }
+            content.accessibilityDelegate = object : View.AccessibilityDelegate() {
+                override fun onInitializeAccessibilityNodeInfo(host: View, info: AccessibilityNodeInfo) {
+                    super.onInitializeAccessibilityNodeInfo(host, info)
+                    info.className = RadioButton::class.java.name
+                    info.isCheckable = true
+                    info.isChecked = selected
+                }
+            }
+            content.setOnClickListener {
+                if (choice.mode != SettingsManager.getNightMode(c)) {
+                    SettingsManager.setNightMode(c, choice.mode)
+                    // Recreates the activity with the new theme; the saved
+                    // section brings the user straight back to Appearance.
+                    AppCompatDelegate.setDefaultNightMode(choice.mode)
+                }
+            }
+            PressFeedback.attach(content)
+            container.addView(row)
+        }
+    }
+
+    /** U4 (R5, R6): seven 52dp swatches, five to a row. A tap previews the
+     *  accent on the Example card, then saves it and recreates onto Appearance. */
+    private fun buildAccentSwatches(b: FragmentSettingsBinding) {
+        val c = requireContext()
+        val night = isNight()
+        val current = SettingsManager.getAccent(c)
+        val container = b.llAccentSwatches
+        container.removeAllViews()
+        val inflater = LayoutInflater.from(c)
+        val gap = resources.getDimensionPixelSize(R.dimen.space_sm)
+        var line: LinearLayout? = null
+        AccentPalette.values().forEachIndexed { i, accent ->
+            if (i % SWATCHES_PER_ROW == 0) {
+                line = LinearLayout(c).apply { orientation = LinearLayout.HORIZONTAL }
+                container.addView(line, LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+                ).apply { if (i > 0) topMargin = gap })
+            }
+            val swatch = inflater.inflate(R.layout.view_accent_swatch, line, false)
+            val fill = (if (night) accent.night else accent.light).toInt()
+            val selected = accent == current
+            swatch.findViewById<View>(R.id.swatchFill).backgroundTintList = ColorStateList.valueOf(fill)
+            swatch.findViewById<View>(R.id.swatchRing).visibility = if (selected) View.VISIBLE else View.INVISIBLE
+            swatch.findViewById<ImageView>(R.id.swatchCheck).apply {
+                visibility = if (selected) View.VISIBLE else View.GONE
+                imageTintList = ColorStateList.valueOf(onAccent(night))
+            }
+            swatch.contentDescription = getString(R.string.accent_swatch_cd, accent.label)
+            swatch.isSelected = selected
+            swatch.setOnClickListener {
+                if (accent == SettingsManager.getAccent(c)) return@setOnClickListener
+                previewExample(b, fill, onAccent(night))
+                SettingsManager.setAccent(c, accent)
+                swatch.postDelayed({ if (isAdded) requireActivity().recreate() }, ACCENT_APPLY_DELAY_MS)
+            }
+            PressFeedback.attach(swatch)
+            // Keep the layout's 52dp size; only add the gap between swatches.
+            (swatch.layoutParams as LinearLayout.LayoutParams).apply {
+                if (i % SWATCHES_PER_ROW > 0) marginStart = gap
+            }
+            line!!.addView(swatch)
+        }
+    }
+
+    /** Paints the Example card in a not-yet-applied accent (R5). */
+    private fun previewExample(b: FragmentSettingsBinding, fill: Int, on: Int) {
+        val ex = b.accentExample
+        val fillList = ColorStateList.valueOf(fill)
+        ex.exChipOn.backgroundTintList = fillList
+        ex.exChipOn.setTextColor(on)
+        ex.exButton.backgroundTintList = fillList
+        ex.exButton.setTextColor(on)
+        ex.exPercent.setTextColor(fill)
+        ex.exProgress.setIndicatorColor(fill)
+        ex.exSwitch.trackTintList = fillList
+    }
+
+    private fun isNight(): Boolean =
+        (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+
+    private fun onAccent(night: Boolean): Int =
+        (if (night) AccentPalette.ON_ACCENT_NIGHT else AccentPalette.ON_ACCENT_LIGHT).toInt()
+
+    private fun themeColor(attr: Int): Int {
+        val tv = TypedValue()
+        requireContext().theme.resolveAttribute(attr, tv, true)
+        return tv.data
     }
 
     // -- Data -----------------------------------------------------------------
@@ -606,6 +717,11 @@ class SettingsFragment : Fragment() {
             SectionMeta("privacy", R.string.section_privacy, R.drawable.ic_settings_privacy, Group.SUPPORT, placeholder = true),
             SectionMeta("about", R.string.section_about, R.drawable.ic_settings_about, Group.SUPPORT),
         )
+
+        private const val STATE_SECTION = "settings_section"
+        private const val SWATCHES_PER_ROW = 5
+        /** Long enough to see the Example preview before the recreate. */
+        private const val ACCENT_APPLY_DELAY_MS = 250L
 
         private val NEWS_KEYS = arrayOf(
             SettingsManager.KEY_NEWS_GOV, SettingsManager.KEY_NEWS_MEDIA,

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Settings parity U4 (R5): an accent swatch. White here; the picker tints
+     it with each AccentPalette fill for the current mode. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval">
+    <solid android:color="@android:color/white"/>
+</shape>

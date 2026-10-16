@@ -64,6 +64,17 @@
                 tools:text="Light · Haptics on"/>
         </LinearLayout>
 
+        <!-- U4: choice rows (Theme) show an accent check instead of the chevron. -->
+        <ImageView
+            android:id="@+id/ivRowCheck"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginStart="@dimen/space_sm"
+            android:src="@drawable/ic_check"
+            android:visibility="gone"
+            app:tint="?attr/econAccent"
+            android:importantForAccessibility="no"/>
+
         <ImageView
             android:id="@+id/ivRowChevron"
             android:layout_width="16dp"

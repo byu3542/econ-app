@@ -40,18 +40,6 @@
         <item>table</item>
     </string-array>
 
-    <!-- Settings › Appearance -->
-    <string-array name="theme_segment_labels">
-        <item>@string/theme_light</item>
-        <item>@string/theme_dark</item>
-        <item>@string/theme_system</item>
-    </string-array>
-    <string-array name="theme_segment_tags">
-        <item>light</item>
-        <item>dark</item>
-        <item>system</item>
-    </string-array>
-
     <!-- Settings › Charts: axis decimals (tag = count) -->
     <string-array name="decimals_segment_labels">
         <item>@string/dec_one</item>

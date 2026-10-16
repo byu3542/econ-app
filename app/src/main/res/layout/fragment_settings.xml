@@ -164,21 +164,42 @@
             android:paddingBottom="@dimen/space_3xl">
 
             <!-- ~~ APPEARANCE ~~ -->
-            <com.google.android.material.card.MaterialCardView android:id="@+id/cardAppearance" style="@style/SettingsCard" android:layout_marginTop="0dp">
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
+            <!-- Settings parity U4 (R5): Theme, Accent color, Example, Display. -->
+            <LinearLayout
+                android:id="@+id/appearancePage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
 
-                    <!-- TICKET-55: the app's one segmented control; tags light/dark/system -->
-                    <com.economic.dashboard.ui.views.SegmentedView
-                        android:id="@+id/segTheme"
+                <TextView style="@style/SettingsSectionHeader" android:text="@string/appearance_theme_header"/>
+                <com.google.android.material.card.MaterialCardView style="@style/SettingsCard" android:layout_marginTop="0dp">
+                    <LinearLayout
+                        android:id="@+id/llThemeRows"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="@dimen/space_sm"
-                        app:segmentTextSize="@dimen/text_secondary"
-                        app:segmentLabels="@array/theme_segment_labels"
-                        app:segmentTags="@array/theme_segment_tags"/>
+                        android:orientation="vertical"/>
+                </com.google.android.material.card.MaterialCardView>
+
+                <TextView style="@style/SettingsSectionHeader" android:layout_marginTop="@dimen/space_lg" android:text="@string/appearance_accent_header"/>
+                <com.google.android.material.card.MaterialCardView style="@style/SettingsCard" android:layout_marginTop="0dp">
+                    <LinearLayout
+                        android:id="@+id/llAccentSwatches"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"/>
+                </com.google.android.material.card.MaterialCardView>
+
+                <TextView style="@style/SettingsSectionHeader" android:layout_marginTop="@dimen/space_lg" android:text="@string/appearance_example_header"/>
+                <com.google.android.material.card.MaterialCardView style="@style/SettingsCard" android:layout_marginTop="0dp">
+                    <include android:id="@+id/accentExample" layout="@layout/view_accent_example"/>
+                </com.google.android.material.card.MaterialCardView>
+
+                <TextView style="@style/SettingsSectionHeader" android:layout_marginTop="@dimen/space_lg" android:text="@string/appearance_display_header"/>
+                <com.google.android.material.card.MaterialCardView style="@style/SettingsCard" android:layout_marginTop="0dp">
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
 
                     <LinearLayout style="@style/SettingsRow">
                         <LinearLayout style="@style/SettingsRowText">
@@ -206,8 +227,9 @@
                             android:id="@+id/switchHaptics"
                             android:contentDescription="@string/haptics_title"/>
                     </LinearLayout>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
 
             <!-- ~~ STARTUP TAB ~~ -->
             <com.google.android.material.card.MaterialCardView android:id="@+id/cardStartup" style="@style/SettingsCard" android:layout_marginTop="0dp">
