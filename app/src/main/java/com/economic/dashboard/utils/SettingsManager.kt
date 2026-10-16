@@ -21,7 +21,7 @@ object SettingsManager {
 
     // Appearance
     @JvmField val KEY_NIGHT_MODE = "night_mode"
-    @JvmField val KEY_ACCENT = "accent_id" // settings parity U1: AccentPalette id, default gold
+    @JvmField val KEY_ACCENT = "accent_id" // settings parity U1: AccentPalette id, default navy
     @JvmField val KEY_COLORBLIND = "colorblind_mode" // blue/orange safe deltas
     // Data
     @JvmField val KEY_REFRESH_ON_OPEN = "refresh_on_open"

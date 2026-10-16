@@ -9,10 +9,11 @@ import kotlin.math.pow
 class AccentPaletteTest {
 
     @Test
-    fun fromIdFallsBackToGold() {
-        assertEquals(AccentPalette.GOLD, AccentPalette.fromId(null))
-        assertEquals(AccentPalette.GOLD, AccentPalette.fromId(""))
-        assertEquals(AccentPalette.GOLD, AccentPalette.fromId("magenta"))
+    fun fromIdFallsBackToNavy() {
+        assertEquals(AccentPalette.NAVY, AccentPalette.fromId(null))
+        assertEquals(AccentPalette.NAVY, AccentPalette.fromId(""))
+        assertEquals(AccentPalette.NAVY, AccentPalette.fromId("magenta"))
+        assertEquals(AccentPalette.NAVY, AccentPalette.fromId("gold"))
         assertEquals(AccentPalette.RED, AccentPalette.fromId("red"))
     }
 

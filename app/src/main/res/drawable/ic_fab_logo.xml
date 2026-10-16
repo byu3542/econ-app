@@ -8,7 +8,8 @@
     Ring color uses @color/fab_ring so it adapts to dark mode. The disc and its
     hairline take ?attr/econAccentBright, so the FAB follows the selected
     accent. The bars with the left dot, and the trend mark (line plus the right
-    dot), are black or white by theme: @color/fab_glyph_stem and @color/fab_glyph_mark.
+    dot), use @color/fab_glyph_stem (black in light mode, white in dark) and
+    @color/fab_glyph_mark (always the logo gold).
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"

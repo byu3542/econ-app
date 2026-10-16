@@ -3,11 +3,13 @@
     <!-- Settings parity U1 (KTD1, KTD2): one overlay per accent, night values.
          Applied to the activity theme before inflation (MainActivity). Hex
          values mirror ui/AccentPalette.kt, which the contrast test reads. -->
-    <style name="ThemeOverlay.Economii.Accent.Gold" parent="">
-        <item name="econAccent">#E2B84B</item>
-        <item name="econAccentBright">#E2B84B</item>
+    <style name="ThemeOverlay.Economii.Accent.Navy" parent="">
+        <!-- Text and fills use a lifted navy to read on the dark ground; the
+             FAB disc (econAccentBright) keeps the launcher icon's navy. -->
+        <item name="econAccent">#8FA8E8</item>
+        <item name="econAccentBright">#1A3470</item>
         <item name="econOnAccent">#17130A</item>
-        <item name="econAccentSoft">#262014</item>
+        <item name="econAccentSoft">#18213A</item>
     </style>
     <style name="ThemeOverlay.Economii.Accent.Green" parent="">
         <item name="econAccent">#4FCB86</item>

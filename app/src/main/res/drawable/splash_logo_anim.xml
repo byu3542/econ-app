@@ -1,10 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Builds the launch logo once, 480 ms, no repeat: bars grow, left dot
-     appears, trend line draws, trend dot lands. Matches
+<!-- Builds the launch logo once, 480 ms: bars grow, left dot appears, trend
+     line draws, trend dot lands. A white arc spins outside the disc until the splash
+     exits (the only repeating part). Matches
      windowSplashScreenAnimationDuration on Theme.EconomicDashboard.Starting. -->
 <animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:aapt="http://schemas.android.com/aapt"
     android:drawable="@drawable/splash_logo">
+    <target android:name="spinner">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:propertyName="rotation" android:valueFrom="0" android:valueTo="360"
+                android:duration="700" android:repeatCount="infinite"
+                android:interpolator="@android:interpolator/linear"/>
+        </aapt:attr>
+    </target>
+    <target android:name="spinnerArc">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:propertyName="strokeAlpha" android:valueFrom="0" android:valueTo="1"
+                android:duration="120"/>
+        </aapt:attr>
+    </target>
     <target android:name="bar0">
         <aapt:attr name="android:animation">
             <objectAnimator android:propertyName="scaleY" android:valueFrom="0" android:valueTo="1"

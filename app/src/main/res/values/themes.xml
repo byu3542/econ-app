@@ -13,7 +13,7 @@
         <item name="econAccent">@color/accent</item>
         <item name="econOnAccent">@color/on_accent</item>
         <item name="econAccentSoft">@color/accent_soft</item>
-        <item name="econAccentBright">#E2B84B</item>
+        <item name="econAccentBright">#1A3470</item>
 
         <!-- Pantrii port U1: window paints the semantic ground token. Status and
              nav bars stay transparent (IOS-04 below) — the app draws edge to
@@ -470,39 +470,54 @@
          accent's bright value and the launcher logo builds on a navy disc
          (splash_logo_anim, 480 ms, plays once). MainActivity's exit listener
          (LaunchExit.kt) then shrinks the accent field to a ring around the logo
-         and drops it into the Analyst FAB. This manifest theme is gold; on API
+         and drops it into the Analyst FAB. This manifest theme is navy; on API
          33+ MainActivity swaps in the chosen accent's Starting.<Accent> theme
          with setSplashScreenTheme for the next cold launch. -->
     <style name="Theme.EconomicDashboard.Starting" parent="Theme.SplashScreen.IconBackground">
-        <item name="windowSplashScreenBackground">#E2B84B</item>
+        <item name="windowSplashScreenBackground">#1A3470</item>
         <item name="windowSplashScreenIconBackgroundColor">#1A3470</item>
+        <!-- Navy ground: the drawable draws its own smaller disc. -->
         <item name="windowSplashScreenAnimatedIcon">@drawable/splash_logo_anim</item>
         <item name="windowSplashScreenAnimationDuration">480</item>
+        <item name="android:windowSplashScreenBrandingImage" tools:targetApi="31">@drawable/splash_branding</item>
         <item name="postSplashScreenTheme">@style/Theme.EconomicDashboard</item>
     </style>
 
     <!-- One per accent; only the ground differs (the AccentPalette night/bright
          value). Android persists these by NAME via setSplashScreenTheme, so
          never rename them. -->
+    <style name="Theme.EconomicDashboard.Starting.Navy">
+        <item name="windowSplashScreenBackground">#1A3470</item>
+        <item name="windowSplashScreenIconBackgroundColor">#1A3470</item>
+    </style>
+    <!-- Gold was retired for Navy; Android may still hold this name from an
+         older install, so it stays and shows the navy ground. -->
     <style name="Theme.EconomicDashboard.Starting.Gold">
-        <item name="windowSplashScreenBackground">#E2B84B</item>
+        <item name="windowSplashScreenBackground">#1A3470</item>
+        <item name="windowSplashScreenIconBackgroundColor">#1A3470</item>
     </style>
     <style name="Theme.EconomicDashboard.Starting.Green">
         <item name="windowSplashScreenBackground">#4FCB86</item>
+        <item name="windowSplashScreenIconBackgroundColor">#4FCB86</item>
     </style>
     <style name="Theme.EconomicDashboard.Starting.Orange">
         <item name="windowSplashScreenBackground">#FF8A63</item>
+        <item name="windowSplashScreenIconBackgroundColor">#FF8A63</item>
     </style>
     <style name="Theme.EconomicDashboard.Starting.Violet">
         <item name="windowSplashScreenBackground">#9A9BFF</item>
+        <item name="windowSplashScreenIconBackgroundColor">#9A9BFF</item>
     </style>
     <style name="Theme.EconomicDashboard.Starting.Blue">
         <item name="windowSplashScreenBackground">#7FA9F5</item>
+        <item name="windowSplashScreenIconBackgroundColor">#7FA9F5</item>
     </style>
     <style name="Theme.EconomicDashboard.Starting.Red">
         <item name="windowSplashScreenBackground">#FF7A82</item>
+        <item name="windowSplashScreenIconBackgroundColor">#FF7A82</item>
     </style>
     <style name="Theme.EconomicDashboard.Starting.Teal">
         <item name="windowSplashScreenBackground">#2ECFDF</item>
+        <item name="windowSplashScreenIconBackgroundColor">#2ECFDF</item>
     </style>
 </resources>

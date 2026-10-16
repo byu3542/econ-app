@@ -9,6 +9,17 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+    <!-- The system icon disc is the splash ground colour, so this navy disc
+         (radius 30 of the 36 visible) leaves room for the spinner outside it. -->
+    <path android:pathData="M54,24 a30,30 0 1,1 -0.01,0 z" android:fillColor="#1A3470"/>
+    <!-- Spinner: a white arc outside the disc. Hidden in the still;
+         splash_logo_anim fades it in and spins it. -->
+    <group android:name="spinner" android:pivotX="54" android:pivotY="54">
+        <path android:name="spinnerArc" android:pathData="M54,20.5 a33.5,33.5 0 0 1 33.5,33.5"
+            android:strokeColor="#FFFFFF" android:strokeWidth="2.2" android:strokeLineCap="round"
+            android:strokeAlpha="0"/>
+    </group>
+    <group android:pivotX="54" android:pivotY="54" android:scaleX="0.8333" android:scaleY="0.8333">
     <path android:name="line" android:pathData="M46,49 L62,40"
         android:strokeColor="#E7BE55" android:strokeWidth="3.2" android:strokeLineCap="round"/>
     <group android:name="bar0" android:pivotY="72">
@@ -24,5 +35,6 @@
     <group android:name="dot1" android:pivotX="62" android:pivotY="40">
         <path android:pathData="M57.4,40 a4.6,4.6 0 1 0 9.2,0 a4.6,4.6 0 1 0 -9.2,0 z"
             android:fillColor="#E7BE55"/>
+    </group>
     </group>
 </vector>

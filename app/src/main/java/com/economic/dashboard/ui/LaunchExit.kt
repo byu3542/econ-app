@@ -51,6 +51,8 @@ object LaunchExit {
      * view.
      */
     private const val LOGO_SCALE = 240f / 160f
+    /** The navy disc inside splash_logo: radius 30 of the 36 the icon view shows. */
+    private const val DISC_FRACTION = 30f / 36f
     /** The accent ring left around the disc, like the FAB's hairline. */
     private const val RING_SCALE = 1.12f
     /** windowSplashScreenIconBackgroundColor on Theme.EconomicDashboard.Starting. */
@@ -74,7 +76,7 @@ object LaunchExit {
         val targetLoc = IntArray(2).also { target.getLocationOnScreen(it) }
         val cx = iconLoc[0] - rootLoc[0] + icon.width / 2f
         val cy = iconLoc[1] - rootLoc[1] + icon.height / 2f
-        val discR = icon.width / 2f
+        val discR = icon.width / 2f * DISC_FRACTION
         val ringR = discR * RING_SCALE
         val fullR = hypot(max(cx, root.width - cx), max(cy, root.height - cy))
 
@@ -138,7 +140,7 @@ object LaunchExit {
 
     /**
      * The ground the system splash just showed: the chosen accent on API 33+
-     * (setSplashScreenTheme), the manifest theme's gold below that.
+     * (setSplashScreenTheme), the manifest theme's navy below that.
      */
     private fun groundColor(context: Context): Int {
         val accent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -146,7 +148,7 @@ object LaunchExit {
         } else {
             AccentPalette.DEFAULT
         }
-        return accent.night.toInt()
+        return accent.bright.toInt()
     }
 
     /** The splash, redrawn: accent field, navy disc, finished logo. */
