@@ -20,6 +20,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.RadioButton
 import android.widget.TextView
+import android.widget.Toast
 
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
@@ -33,6 +34,11 @@ import com.economic.dashboard.ui.views.PressFeedback
 import com.economic.dashboard.ui.views.SegmentedView
 import com.economic.dashboard.utils.EdgeToEdgeInsets
 import com.economic.dashboard.utils.SettingsManager
+import com.economic.dashboard.ui.shortcuts.ShortcutCatalog
+import com.economic.dashboard.ui.shortcuts.ShortcutEditor
+import com.economic.dashboard.ui.shortcuts.ShortcutsEditorAdapter
+import androidx.recyclerview.widget.ItemTouchHelper
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.economic.dashboard.utils.markDestructive
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
@@ -53,6 +59,8 @@ class SettingsFragment : Fragment() {
 
     /** Section id currently shown in the detail pane, or null when the list is showing. */
     private var activeSection: String? = null
+    /** Settings parity U7: the open editor's working copy; null when closed. */
+    private var shortcutEditor: ShortcutEditor? = null
 
     private fun host(): MainActivity = requireActivity() as MainActivity
 
@@ -68,6 +76,8 @@ class SettingsFragment : Fragment() {
         EdgeToEdgeInsets.applyTopInset(b.settingsDetailScroll)
         padForSystemBottomInset(b.settingsListScroll)
         padForSystemBottomInset(b.settingsDetailScroll)
+        EdgeToEdgeInsets.applyTopInset(b.shortcutsEditorPane)
+        padForSystemBottomInset(b.shortcutsEditorPane)
         return b.root
     }
 
@@ -146,15 +156,56 @@ class SettingsFragment : Fragment() {
         host().setSettingsTitle(getString(titleFor(id)))
         for ((key, card) in detailCards(b)) card.visibility = if (key == id) View.VISIBLE else View.GONE
         b.settingsListScroll.visibility = View.GONE
+        if (id == SECTION_SHORTCUTS) {
+            b.settingsDetailScroll.visibility = View.GONE
+            openShortcutsEditor(b)
+            return
+        }
+        b.shortcutsEditorPane.visibility = View.GONE
         b.settingsDetailScroll.visibility = View.VISIBLE
         b.settingsDetailScroll.scrollTo(0, 0)
+    }
+
+    /** Settings parity U7 (R11): a fresh working copy every time the page
+     *  opens, so leaving without Save changes discards the edit. */
+    private fun openShortcutsEditor(b: FragmentSettingsBinding) {
+        val editor = ShortcutEditor(SettingsManager.getShortcuts(requireContext()))
+        shortcutEditor = editor
+        val rv = b.rvShortcutsEditor
+        val adapter = ShortcutsEditorAdapter(editor) { updateSaveButton(b) }
+        if (rv.layoutManager == null) {
+            rv.layoutManager = LinearLayoutManager(requireContext())
+            rv.addItemDecoration(ShortcutsEditorAdapter.CardDecoration(rv))
+        }
+        val touchHelper = ItemTouchHelper(ShortcutsEditorAdapter.DragCallback(adapter))
+        adapter.touchHelper = touchHelper
+        touchHelper.attachToRecyclerView(rv)
+        rv.adapter = adapter
+        b.btnShortcutsSave.setOnClickListener {
+            val e = shortcutEditor ?: return@setOnClickListener
+            if (!e.isDirty) return@setOnClickListener
+            SettingsManager.setShortcuts(requireContext(), e.ids)
+            Toast.makeText(requireContext(), R.string.shortcuts_editor_saved, Toast.LENGTH_SHORT).show()
+            showList()
+        }
+        updateSaveButton(b)
+        b.shortcutsEditorPane.visibility = View.VISIBLE
+    }
+
+    /** Save changes is live only once something changed. */
+    private fun updateSaveButton(b: FragmentSettingsBinding) {
+        val dirty = shortcutEditor?.isDirty == true
+        b.btnShortcutsSave.isEnabled = dirty
+        b.btnShortcutsSave.alpha = if (dirty) 1f else 0.45f
     }
 
     private fun showList() {
         val b = binding ?: return
         activeSection = null
+        shortcutEditor = null // unsaved edits are discarded (R11)
         host().setSettingsTitle(getString(R.string.settings))
         b.settingsDetailScroll.visibility = View.GONE
+        b.shortcutsEditorPane.visibility = View.GONE
         b.settingsListScroll.visibility = View.VISIBLE
         buildList() // values may have changed while a section was open
     }
@@ -242,6 +293,8 @@ class SettingsFragment : Fragment() {
     private fun summaryFor(id: String): String {
         val c = requireContext()
         return when (id) {
+            SECTION_SHORTCUTS -> getString(R.string.settings_summary_shortcuts,
+                SettingsManager.getShortcuts(c).size, ShortcutCatalog.MAX)
             "appearance" -> {
                 val themeLabel = when (SettingsManager.getNightMode(c)) {
                     AppCompatDelegate.MODE_NIGHT_NO -> getString(R.string.theme_light)
@@ -720,9 +773,13 @@ class SettingsFragment : Fragment() {
         /** Fragment-manager tag, shared by MainActivity's open/close/back logic. */
         const val TAG = "SettingsFragment"
 
-        // Settings parity U3 (R3). Shortcuts joins Preferences in U6.
+        /** Settings parity U7: the editor page, also opened by the sheet's gear. */
+        const val SECTION_SHORTCUTS = "shortcuts"
+
+        // Settings parity U3 (R3); Shortcuts joined Preferences in U7.
         private val SECTIONS = listOf(
             SectionMeta("appearance", R.string.section_appearance, R.drawable.ic_settings_appearance, Group.PREFERENCES),
+            SectionMeta(SECTION_SHORTCUTS, R.string.section_shortcuts, R.drawable.ic_settings_shortcuts, Group.PREFERENCES),
             SectionMeta("notifications", R.string.section_notifications, R.drawable.ic_settings_notifications, Group.PREFERENCES),
             SectionMeta("ai", R.string.section_ai_analyst, R.drawable.ic_settings_analyst, Group.PREFERENCES),
             SectionMeta("startup", R.string.section_startup_tab, R.drawable.ic_settings_startup, Group.PREFERENCES),

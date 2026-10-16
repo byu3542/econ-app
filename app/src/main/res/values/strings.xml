@@ -312,4 +312,16 @@
     <string name="shortcut_housing">Housing</string>
     <string name="shortcut_edit_cards">Edit cards</string>
     <string name="shortcut_chat_history">Chat history</string>
+
+    <!-- Settings parity U7 (R11): Settings › Shortcuts editor -->
+    <string name="section_shortcuts">Shortcuts</string>
+    <string name="shortcuts_editor_yours">Your shortcuts</string>
+    <string name="shortcuts_editor_more">More shortcuts</string>
+    <string name="shortcuts_editor_count">%1$d of %2$d</string>
+    <string name="shortcuts_editor_save">Save changes</string>
+    <string name="shortcuts_editor_saved">Shortcuts saved</string>
+    <string name="shortcuts_editor_remove_cd">Remove %1$s</string>
+    <string name="shortcuts_editor_add_cd">Add %1$s</string>
+    <string name="shortcuts_editor_moved">Moved to position %1$d of %2$d</string>
+    <string name="settings_summary_shortcuts">%1$d of %2$d on the center button</string>
 </resources>

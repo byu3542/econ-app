@@ -1,6 +1,7 @@
 package com.economic.dashboard.ui.shortcuts
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -53,5 +54,52 @@ class ShortcutCatalogTest {
                 assertTrue((s.action as ShortcutAction.OpenTab).tabKey in setOf("markets", "economy", "news"))
             }
         }
+    }
+
+    // ── Settings parity U7 (R11): the editor's working copy ──
+
+    @Test
+    fun addingASeventhIsRejected() {
+        val e = ShortcutEditor(listOf("gdp", "bonds", "stocks", "news", "housing", "spreads"))
+        assertTrue(e.isFull)
+        assertFalse(e.add("jobs"))
+        assertEquals(6, e.ids.size)
+        assertFalse(e.isDirty)
+    }
+
+    @Test
+    fun removingThenAddingAppendsAtTheEnd() {
+        val e = ShortcutEditor(listOf("gdp", "bonds", "stocks"))
+        assertTrue(e.remove("gdp"))
+        assertTrue(e.add("gdp"))
+        assertEquals(listOf("bonds", "stocks", "gdp"), e.ids)
+        assertTrue(e.isDirty)
+    }
+
+    @Test
+    fun addRejectsDuplicatesAndUnknownIds() {
+        val e = ShortcutEditor(listOf("gdp"))
+        assertFalse(e.add("gdp"))
+        assertFalse(e.add("nonsense"))
+        assertEquals(listOf("gdp"), e.ids)
+    }
+
+    @Test
+    fun moveReordersAndRejectsOutOfRange() {
+        val e = ShortcutEditor(listOf("gdp", "bonds", "stocks"))
+        assertTrue(e.move(1, 0))
+        assertEquals(listOf("bonds", "gdp", "stocks"), e.ids)
+        assertFalse(e.move(0, 3))
+        assertFalse(e.move(-1, 0))
+        assertTrue(e.move(1, 0))
+        assertFalse(e.isDirty) // back to where it opened
+    }
+
+    @Test
+    fun moreListsEveryAvailableShortcutNotInTheList() {
+        val e = ShortcutEditor(listOf("gdp"))
+        val more = e.more()
+        assertFalse("gdp" in more)
+        assertEquals(ShortcutCatalog.available().size - 1, more.size)
     }
 }

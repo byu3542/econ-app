@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Settings parity U7: the editor's round remove/add button, a 32dp
+     surface_2 circle inset in its 48dp target. -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:inset="8dp">
+    <shape android:shape="oval">
+        <solid android:color="@color/surface_2" />
+    </shape>
+</inset>

@@ -357,7 +357,7 @@ class MainActivity : AppCompatActivity(), ShortcutsBottomSheet.Host {
 
     override fun openAnalystFromShortcuts() = openAnalyst()
 
-    override fun openShortcutsEditor() = openSettings(SECTION_SHORTCUTS)
+    override fun openShortcutsEditor() = openSettings(SettingsFragment.SECTION_SHORTCUTS)
 
     override fun runShortcut(action: ShortcutAction) {
         when (action) {
@@ -1123,9 +1123,6 @@ class MainActivity : AppCompatActivity(), ShortcutsBottomSheet.Host {
     }
 
     companion object {
-        /** Settings page the Shortcuts sheet's gear opens (U7's editor). */
-        private const val SECTION_SHORTCUTS = "shortcuts"
-
         const val WELCOME_TEXT =
             "Hello! I am your Econ Analyst, powered by Claude. " +
                 "I can see all of the dashboard's live data — ask me anything about it. " +
