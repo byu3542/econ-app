@@ -291,4 +291,25 @@
     <string name="assistant_tool_chart">Drawing the chart…</string>
     <string name="assistant_tool_table">Lining up the table…</string>
     <string name="assistant_loader_cd">Econ Analyst is working on your answer</string>
+
+    <!-- Settings parity U6 (R10, R12): Shortcuts sheet -->
+    <string name="shortcuts_title">Shortcuts</string>
+    <string name="shortcuts_subtitle">What would you like to do?</string>
+    <string name="shortcuts_edit_cd">Edit shortcuts</string>
+    <string name="shortcuts_analyst_button">economii Analyst</string>
+    <string name="shortcuts_fab_cd">Shortcuts. Long-press to open Econ Analyst.</string>
+    <string name="shortcuts_fab_long_press">Open Econ Analyst</string>
+    <string name="shortcut_search">Search</string>
+    <string name="shortcut_yield_curve">Yield curve</string>
+    <string name="shortcut_inflation">Inflation</string>
+    <string name="shortcut_jobs">Jobs report</string>
+    <string name="shortcut_news">Today\'s news</string>
+    <string name="shortcut_refresh">Refresh data</string>
+    <string name="shortcut_spreads">Spreads</string>
+    <string name="shortcut_bonds">Bonds</string>
+    <string name="shortcut_stocks">Stocks</string>
+    <string name="shortcut_gdp">GDP</string>
+    <string name="shortcut_housing">Housing</string>
+    <string name="shortcut_edit_cards">Edit cards</string>
+    <string name="shortcut_chat_history">Chat history</string>
 </resources>

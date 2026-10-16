@@ -85,6 +85,7 @@ class SettingsFragment : Fragment() {
         // U4: a theme or accent change recreates the Activity; land back on
         // the page the user was on (Appearance), not the Settings root.
         val restored = savedInstanceState?.getString(STATE_SECTION)
+            ?: if (savedInstanceState == null) arguments?.getString(ARG_SECTION) else null
 
         setupTheme(v)
         setupData(v)
@@ -120,6 +121,11 @@ class SettingsFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         binding = null
+    }
+
+    /** Settings parity U6: open straight to a page when Settings is already up. */
+    fun openSection(id: String) {
+        if (SECTIONS.any { it.id == id && !it.placeholder }) showSection(id)
     }
 
     /** Consulted by MainActivity's back handler. Returns true if the press was
@@ -730,6 +736,14 @@ class SettingsFragment : Fragment() {
         )
 
         private const val STATE_SECTION = "settings_section"
+        private const val ARG_SECTION = "settings_open_section"
+
+        /** Settings parity U6: Settings opened on one page, e.g. "shortcuts"
+         *  from the Shortcuts sheet's gear. An unknown id lands on the root. */
+        @JvmStatic
+        fun newInstance(section: String?): SettingsFragment = SettingsFragment().apply {
+            if (section != null) arguments = Bundle().apply { putString(ARG_SECTION, section) }
+        }
         /** Set after the first denied prompt, to tell "never asked" from "blocked". */
         private const val KEY_NOTIF_ASKED = "notif_prompt_denied_once"
         private const val SWATCHES_PER_ROW = 5

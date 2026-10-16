@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Settings parity U6 (R10): one Shortcuts sheet tile. A 56dp rounded-square
+     icon tile in a decorative tint (ShortcutTint), the label centred beneath,
+     wrapping to two lines like Pantrii's "Add grocery item". -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:minHeight="112dp"
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+    android:paddingTop="@dimen/space_sm"
+    android:paddingBottom="@dimen/space_sm"
+    android:paddingHorizontal="4dp"
+    android:background="?attr/selectableItemBackgroundBorderless"
+    android:clickable="true"
+    android:focusable="true">
+
+    <ImageView
+        android:id="@+id/ivShortcutIcon"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:background="@drawable/bg_settings_icon_tile"
+        android:padding="15dp"
+        android:importantForAccessibility="no"
+        tools:src="@drawable/ic_news" />
+
+    <TextView
+        android:id="@+id/tvShortcutLabel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_sm"
+        android:gravity="center_horizontal"
+        android:maxLines="2"
+        android:ellipsize="end"
+        android:breakStrategy="simple"
+        android:hyphenationFrequency="none"
+        android:textColor="@color/ink"
+        android:textSize="@dimen/text_body"
+        tools:text="Yield curve" />
+</LinearLayout>

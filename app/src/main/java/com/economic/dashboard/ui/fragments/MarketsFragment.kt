@@ -56,10 +56,23 @@ class MarketsFragment : Fragment() {
                 else -> tab.text = ""
             }
         }.attach()
+        if (savedInstanceState == null) arguments?.getInt(ARG_SUB_TAB, -1)?.let { selectSubTab(it) }
+    }
+
+    /** Settings parity U6: a shortcut opens straight to one sub-tab. Read on
+     *  first creation from [ARG_SUB_TAB]; [selectSubTab] covers a host that is
+     *  already showing. */
+    fun selectSubTab(position: Int) {
+        val vp = binding?.viewPager ?: return
+        if (position in 0 until (vp.adapter?.itemCount ?: 0)) vp.setCurrentItem(position, false)
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         binding = null
+    }
+
+    companion object {
+        const val ARG_SUB_TAB = "sub_tab"
     }
 }

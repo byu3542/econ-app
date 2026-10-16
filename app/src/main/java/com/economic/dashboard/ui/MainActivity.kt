@@ -23,6 +23,7 @@ import androidx.core.content.ContextCompat
 import com.google.android.material.color.MaterialColors
 import androidx.core.graphics.Insets
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -46,6 +47,8 @@ import com.economic.dashboard.news.NewsRepository
 import com.economic.dashboard.ui.fragments.DashboardFragment
 import com.economic.dashboard.ui.fragments.EconomyFragment
 import com.economic.dashboard.ui.fragments.MarketsFragment
+import com.economic.dashboard.ui.shortcuts.ShortcutAction
+import com.economic.dashboard.ui.shortcuts.ShortcutsBottomSheet
 import com.economic.dashboard.ui.views.PressFeedback
 import com.economic.dashboard.utils.AppExecutors
 import com.economic.dashboard.utils.EdgeToEdgeInsets
@@ -77,7 +80,7 @@ import okhttp3.OkHttpClient
  * not apply to a Kotlin-declared `getX()` function. Same rule as
  * EconomicViewModel in 11b — the call sites decide.
  */
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), ShortcutsBottomSheet.Host {
 
     private lateinit var viewModel: EconomicViewModel
 
@@ -92,6 +95,8 @@ class MainActivity : AppCompatActivity() {
     /** True only on a fresh launch (not on theme-change/rotation recreates) —
         gates "open to default tab" and "refresh cache on open". */
     private var freshLaunch = false
+    /** Settings parity U6: sub-tab a shortcut asked for, consumed by the next tab host made. */
+    private var pendingSubTab = -1
 
     // These were package-private in the Java. Nothing outside the class reads
     // them directly (the tests do not touch MainActivity), so they are private
@@ -280,13 +285,20 @@ class MainActivity : AppCompatActivity() {
         })
 
         PressFeedback.attach(binding.fabAiAnalyst) // same bouncy spring feedback as the overview KPI badges
+        // Settings parity U6 (R10, R12, KTD7): tap opens the Shortcuts sheet;
+        // long-press keeps the old one-gesture path straight into the Analyst.
+        binding.fabAiAnalyst.contentDescription = getString(R.string.shortcuts_fab_cd)
         binding.fabAiAnalyst.setOnClickListener {
-            markAnalystSeen(); clearAnalystBadge() // TICKET-26: opening Analyst clears its badge
-            if (!isAssistantShowing()) {
-                HapticUtil.confirm(binding.fabAiAnalyst) // firmer pulse — primary action, not a tab switch
-                AssistantFragment.show(supportFragmentManager, AssistantFragment())
-            }
+            HapticUtil.selection(binding.fabAiAnalyst)
+            ShortcutsBottomSheet.show(supportFragmentManager)
         }
+        binding.fabAiAnalyst.setOnLongClickListener {
+            openAnalyst()
+            true
+        }
+        ViewCompat.replaceAccessibilityAction(binding.fabAiAnalyst,
+            AccessibilityNodeInfoCompat.AccessibilityActionCompat.ACTION_LONG_CLICK,
+            getString(R.string.shortcuts_fab_long_press), null)
         // Don't clobber the back-chevron handler applySettingsChrome() just
         // bound when setupBottomNav() kept a restored Settings — rebinding to
         // openSettings() here would leave the chevron dead (openSettings
@@ -332,6 +344,74 @@ class MainActivity : AppCompatActivity() {
         handleShareIntent(intent)
     }
 
+    // ── Shortcuts (settings parity U6) ───────────────────────────────────────
+
+    /** The Analyst path, shared by the FAB long-press and the sheet's button. */
+    private fun openAnalyst() {
+        markAnalystSeen(); clearAnalystBadge() // TICKET-26: opening Analyst clears its badge
+        if (!isAssistantShowing()) {
+            HapticUtil.confirm(binding.fabAiAnalyst) // firmer pulse — primary action, not a tab switch
+            AssistantFragment.show(supportFragmentManager, AssistantFragment())
+        }
+    }
+
+    override fun openAnalystFromShortcuts() = openAnalyst()
+
+    override fun openShortcutsEditor() = openSettings(SECTION_SHORTCUTS)
+
+    override fun runShortcut(action: ShortcutAction) {
+        when (action) {
+            is ShortcutAction.OpenTab -> openTab(action.tabKey, action.subTab)
+            ShortcutAction.EditCards -> {
+                openTab("overview", -1)
+                // The Overview may still be committing; open its editor once it is up.
+                binding.root.post {
+                    supportFragmentManager.executePendingTransactions()
+                    (supportFragmentManager.findFragmentByTag("overview") as? DashboardFragment)
+                        ?.takeIf { it.isAdded }?.openEditTargetSheet()
+                }
+            }
+            ShortcutAction.RefreshData -> refreshAllData()
+            ShortcutAction.ChatHistory -> {
+                openAnalyst()
+                // History hides the assistant, so it must land after the
+                // assistant's own transaction and first layout.
+                binding.root.post { ChatHistoryFragment.show(supportFragmentManager) }
+            }
+            // Search lands in U9; the catalog keeps it unavailable until then.
+            ShortcutAction.Search -> Unit
+        }
+    }
+
+    /** A tab plus, for Markets and Economy, one sub-tab (-1 keeps its default). */
+    private fun openTab(tabKey: String, subTab: Int) {
+        pendingSubTab = subTab
+        navigateToTab(tabKey)
+        // Already on that tab, so no new fragment read pendingSubTab: switch
+        // the live one instead.
+        if (pendingSubTab >= 0) {
+            when (val f = supportFragmentManager.findFragmentById(R.id.fragmentContainer)) {
+                is MarketsFragment -> f.selectSubTab(pendingSubTab)
+                is EconomyFragment -> f.selectSubTab(pendingSubTab)
+            }
+            pendingSubTab = -1
+        }
+    }
+
+    /** Refresh live dashboard data and force-refresh the local cache, reporting
+     *  the outcome (TICKET-15). Shared by the overflow menu and the shortcut. */
+    private fun refreshAllData() {
+        Toast.makeText(this, R.string.refreshing_data, Toast.LENGTH_SHORT).show()
+        viewModel.fetchAllData()
+        CacheManager.forceRefreshAll(this) { success ->
+            runOnUiThread {
+                Toast.makeText(this,
+                    if (success) R.string.refresh_done else R.string.refresh_failed,
+                    Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
     // ── Settings (design 1b: full-screen page, opens like any other tab) ───────
 
     private fun isSettingsShowing(): Boolean =
@@ -341,9 +421,14 @@ class MainActivity : AppCompatActivity() {
      *  mechanism as switching to Markets/Economy/News. Never touches
      *  bottomNav.selectedItemId, so closeSettings() can just re-load whatever
      *  tab is still selected there to restore the screen underneath. */
-    private fun openSettings() {
-        if (isSettingsShowing()) return
-        loadFragment(SettingsFragment(), SettingsFragment.TAG)
+    private fun openSettings(section: String? = null) {
+        if (isSettingsShowing()) {
+            if (section != null)
+                (supportFragmentManager.findFragmentByTag(SettingsFragment.TAG) as? SettingsFragment)
+                    ?.openSection(section)
+            return
+        }
+        loadFragment(SettingsFragment.newInstance(section), SettingsFragment.TAG)
         applySettingsChrome()
     }
 
@@ -449,10 +534,19 @@ class MainActivity : AppCompatActivity() {
     /** Maps a bottom-nav item id to the fragment shown underneath the header —
      *  shared by the nav listener (on tap) and closeSettings() (on restore). */
     private fun loadFragmentForNavId(id: Int) {
-        if (id == R.id.nav_markets) loadFragment(MarketsFragment(), "markets")
-        else if (id == R.id.nav_economy) loadFragment(EconomyFragment(), "economy")
+        if (id == R.id.nav_markets) loadFragment(withSubTab(MarketsFragment(), MarketsFragment.ARG_SUB_TAB), "markets")
+        else if (id == R.id.nav_economy) loadFragment(withSubTab(EconomyFragment(), EconomyFragment.ARG_SUB_TAB), "economy")
         else if (id == R.id.navigation_news) loadFragment(NewsFragment(), "news")
         else loadFragment(DashboardFragment(), "overview")
+    }
+
+    /** Hands a pending shortcut sub-tab to a freshly made tab host, once. */
+    private fun withSubTab(f: Fragment, key: String): Fragment {
+        if (pendingSubTab >= 0) {
+            f.arguments = Bundle().apply { putInt(key, pendingSubTab) }
+            pendingSubTab = -1
+        }
+        return f
     }
 
     /** Active-indicator slot index + header title for a bottom-nav item id. */
@@ -1004,18 +1098,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == R.id.action_refresh) {
-            // Refresh live dashboard data AND force-refresh the local cache.
-            // TICKET-15: report the outcome, not just the start, so the user
-            // always knows whether the refresh actually landed.
-            Toast.makeText(this, R.string.refreshing_data, Toast.LENGTH_SHORT).show()
-            viewModel.fetchAllData()
-            CacheManager.forceRefreshAll(this) { success ->
-                runOnUiThread {
-                    Toast.makeText(this,
-                        if (success) R.string.refresh_done else R.string.refresh_failed,
-                        Toast.LENGTH_SHORT).show()
-                }
-            }
+            refreshAllData()
             return true
         }
         if (item.itemId == R.id.action_clear_cache) {
@@ -1040,6 +1123,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     companion object {
+        /** Settings page the Shortcuts sheet's gear opens (U7's editor). */
+        private const val SECTION_SHORTCUTS = "shortcuts"
+
         const val WELCOME_TEXT =
             "Hello! I am your Econ Analyst, powered by Claude. " +
                 "I can see all of the dashboard's live data — ask me anything about it. " +

@@ -121,4 +121,15 @@
     <color name="splash_navy">#101A33</color>
     <color name="splash_gold">#D9A441</color>
     <color name="splash_ink">#F2F4FA</color>
+
+    <!-- Settings parity U6 (KTD7): decorative shortcut tile tints, kept off
+         the signal hues (green, yellow, orange, red, purple). -->
+    <color name="shortcut_blue_fill">#E3ECF8</color>
+    <color name="shortcut_blue_icon">#2F5F9E</color>
+    <color name="shortcut_teal_fill">#DFF0F1</color>
+    <color name="shortcut_teal_icon">#1F6F78</color>
+    <color name="shortcut_slate_fill">#E8EAF0</color>
+    <color name="shortcut_slate_icon">#46506A</color>
+    <color name="shortcut_sand_fill">#F2ECE0</color>
+    <color name="shortcut_sand_icon">#6E5A3A</color>
 </resources>

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Settings parity U6 (R10, KTD7): the center button's Shortcuts sheet, after
+     Pantrii's. Title and subtitle with a gear to the editor, up to six tiles
+     in a three-column grid, then the full-width accent Analyst button. On the
+     shared sheet theme (surface, 28dp, line handle). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingHorizontal="@dimen/space_lg"
+    android:paddingBottom="@dimen/space_lg">
+
+    <View
+        android:layout_width="40dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/bg_sheet_handle"
+        android:importantForAccessibility="no" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_md"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvShortcutsTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:accessibilityHeading="true"
+                android:text="@string/shortcuts_title"
+                android:textColor="@color/ink"
+                android:textSize="@dimen/text_title"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="@string/shortcuts_subtitle"
+                android:textColor="@color/muted"
+                android:textSize="@dimen/text_body" />
+        </LinearLayout>
+
+        <ImageView
+            android:id="@+id/btnShortcutsEdit"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:padding="@dimen/space_md"
+            android:src="@drawable/ic_settings"
+            android:contentDescription="@string/shortcuts_edit_cd"
+            android:background="@drawable/bg_icon_button_inset"
+            android:clickable="true"
+            android:focusable="true"
+            app:tint="@color/ink" />
+    </LinearLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvShortcuts"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_md"
+        android:nestedScrollingEnabled="false"
+        android:overScrollMode="never" />
+
+    <TextView
+        android:id="@+id/btnShortcutsAnalyst"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_md"
+        android:minHeight="56dp"
+        android:gravity="center"
+        android:background="@drawable/bg_pill_accent"
+        android:text="@string/shortcuts_analyst_button"
+        android:textColor="?attr/econOnAccent"
+        android:textSize="@dimen/text_title"
+        android:textStyle="bold"
+        android:clickable="true"
+        android:focusable="true" />
+</LinearLayout>
