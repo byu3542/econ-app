@@ -59,10 +59,9 @@ object ShortcutCatalog {
 
     @JvmField
     val ALL: List<Shortcut> = listOf(
-        // Search opens in U9; until then it is unavailable and drops out of
-        // every list, including the defaults.
+        // Live since settings parity U9; it leads the defaults again.
         Shortcut("search", R.string.shortcut_search, R.drawable.ic_search, ShortcutTint.SLATE,
-            ShortcutAction.Search, available = false),
+            ShortcutAction.Search),
         Shortcut("yield_curve", R.string.shortcut_yield_curve, R.drawable.ic_shortcut_show_chart, ShortcutTint.BLUE,
             ShortcutAction.OpenTab("markets", MARKETS_YIELDS)),
         Shortcut("inflation", R.string.shortcut_inflation, R.drawable.ic_shortcut_percent, ShortcutTint.SAND,

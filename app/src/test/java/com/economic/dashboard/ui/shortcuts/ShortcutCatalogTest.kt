@@ -44,6 +44,13 @@ class ShortcutCatalogTest {
     }
 
     @Test
+    fun searchIsLiveAndLeadsTheDefaults() {
+        // Settings parity U9: Search went live, so it is first again.
+        assertEquals("search", ShortcutCatalog.find("search")?.id)
+        assertEquals("search", ShortcutCatalog.defaults().first())
+    }
+
+    @Test
     fun everyCatalogIdIsUniqueAndHasAnAction() {
         val ids = ShortcutCatalog.ALL.map { it.id }
         assertEquals(ids.size, ids.toSet().size)

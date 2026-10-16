@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Settings parity U9 (R13, R14): one search hit. The first hit of a group
+     also shows the group's counted header ("Indicators · 2") above its card.
+     Same card as the chat-history rows (bg_prompt_card). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/tvGroupHeader"
+        style="@style/SettingsSectionHeader"
+        android:layout_marginTop="@dimen/space_lg"
+        android:layout_marginBottom="@dimen/space_xs"
+        android:accessibilityHeading="true"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:id="@+id/llResultRow"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_sm"
+        android:minHeight="56dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@drawable/bg_prompt_card"
+        android:paddingStart="@dimen/space_xl"
+        android:paddingEnd="@dimen/space_lg"
+        android:paddingVertical="@dimen/space_md"
+        android:clickable="true"
+        android:focusable="true">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvResultTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textAppearance="@style/TextAppearance.Econ.Body"
+                android:textColor="@color/ink"
+                android:maxLines="2"
+                android:ellipsize="end" />
+
+            <TextView
+                android:id="@+id/tvResultSubtitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textAppearance="@style/TextAppearance.Econ.Caption"
+                android:textColor="@color/muted"
+                android:maxLines="1"
+                android:ellipsize="end" />
+        </LinearLayout>
+
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginStart="@dimen/space_md"
+            android:src="@drawable/ic_chevron_right"
+            app:tint="@color/muted"
+            android:importantForAccessibility="no" />
+    </LinearLayout>
+
+</LinearLayout>

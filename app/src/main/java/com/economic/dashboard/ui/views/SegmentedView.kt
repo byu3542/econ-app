@@ -10,6 +10,7 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
+import androidx.core.widget.TextViewCompat
 import androidx.dynamicanimation.animation.DynamicAnimation
 import com.economic.dashboard.R
 import com.economic.dashboard.utils.HapticUtil
@@ -134,6 +135,14 @@ class SegmentedView @JvmOverloads constructor(
             seg.text = labels[i]
             seg.tag = tags[i]
             seg.setTextSize(TypedValue.COMPLEX_UNIT_PX, textSizePx)
+            // Settings parity U9: one line always. A label too long for its
+            // equal-width slot ("Indicators" among five scopes) shrinks
+            // instead of wrapping; labels that fit keep textSizePx.
+            seg.maxLines = 1
+            val minPx = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 9f,
+                resources.displayMetrics).toInt()
+            TextViewCompat.setAutoSizeTextTypeUniformWithConfiguration(seg,
+                minPx, textSizePx.toInt().coerceAtLeast(minPx + 1), 1, TypedValue.COMPLEX_UNIT_PX)
             seg.setTypeface(seg.typeface, android.graphics.Typeface.BOLD)
             seg.setTextColor(inactive)
             seg.isClickable = true

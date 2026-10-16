@@ -1,6 +1,7 @@
 package com.economic.dashboard.ui
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -30,6 +31,7 @@ import com.economic.dashboard.R
 import com.economic.dashboard.cache.CacheManager
 import com.economic.dashboard.databinding.FragmentSettingsBinding
 import com.economic.dashboard.news.NewsRepository
+import com.economic.dashboard.search.SearchDoc
 import com.economic.dashboard.ui.views.PressFeedback
 import com.economic.dashboard.ui.views.SegmentedView
 import com.economic.dashboard.utils.EdgeToEdgeInsets
@@ -800,6 +802,19 @@ class SettingsFragment : Fragment() {
         @JvmStatic
         fun newInstance(section: String?): SettingsFragment = SettingsFragment().apply {
             if (section != null) arguments = Bundle().apply { putString(ARG_SECTION, section) }
+        }
+
+        /** Settings parity U9 (R13, KTD8): the pages global search can open,
+         *  keyed by section id for [newInstance]. Placeholder rows open
+         *  nothing, so they are left out. */
+        @JvmStatic
+        fun searchDocs(ctx: Context): List<SearchDoc> = SECTIONS.filter { !it.placeholder }.map {
+            val group = ctx.getString(when (it.group) {
+                Group.PREFERENCES -> R.string.settings_group_preferences
+                Group.DATA -> R.string.settings_group_data
+                Group.SUPPORT -> R.string.settings_group_support
+            })
+            SearchDoc(it.id, ctx.getString(it.titleRes), group)
         }
         /** Set after the first denied prompt, to tell "never asked" from "blocked". */
         private const val KEY_NOTIF_ASKED = "notif_prompt_denied_once"

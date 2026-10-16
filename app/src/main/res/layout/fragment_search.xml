@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Settings parity U9 (R13, KTD9): full-screen global search, pushed over the
+  tab like the Analyst. Pantrii's layout: back button beside a "Search
+  everything" pill, a segmented row of scope chips, then counted result
+  groups. The empty state explains what is searchable. Root pads itself for
+  the system bars (SearchFragment).
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/ground"
+    android:clickable="true"
+    android:focusable="false">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="64dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="@dimen/space_lg"
+        android:paddingVertical="@dimen/space_sm">
+
+        <ImageButton
+            android:id="@+id/btnSearchBack"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/bg_icon_button_inset"
+            android:src="@drawable/ic_chevron_left"
+            android:contentDescription="@string/assistant_back"
+            app:tint="@color/ink" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginStart="@dimen/space_sm"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/bg_search_everything"
+            android:paddingHorizontal="@dimen/space_lg">
+
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_marginEnd="@dimen/space_sm"
+                android:src="@drawable/ic_search"
+                app:tint="@color/muted"
+                android:importantForAccessibility="no" />
+
+            <EditText
+                android:id="@+id/etSearch"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@null"
+                android:hint="@string/search_everything"
+                android:textColorHint="@color/muted"
+                android:textColor="@color/ink"
+                android:textSize="@dimen/text_body"
+                android:inputType="text"
+                android:imeOptions="actionSearch"
+                android:importantForAutofill="no"
+                android:maxLines="1"
+                android:singleLine="true" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- The app's one segmented control (TICKET-55); SUBTLE gives Pantrii's
+         white thumb. Tags are SearchScope names, "all" for All. -->
+    <com.economic.dashboard.ui.views.SegmentedView
+        android:id="@+id/segScope"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="@dimen/space_lg"
+        app:segmentTextSize="@dimen/text_secondary" />
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvSearch"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingHorizontal="@dimen/space_lg"
+            android:paddingBottom="@dimen/space_lg" />
+
+        <LinearLayout
+            android:id="@+id/llSearchEmpty"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_3xl"
+            android:layout_marginHorizontal="@dimen/space_xl"
+            android:orientation="vertical"
+            android:gravity="center_horizontal">
+
+            <ImageView
+                android:id="@+id/ivSearchEmpty"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:padding="20dp"
+                android:background="@drawable/bg_search_empty_icon"
+                android:src="@drawable/ic_search"
+                app:tint="@color/muted"
+                android:importantForAccessibility="no" />
+
+            <TextView
+                android:id="@+id/tvSearchEmptyTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_md"
+                android:gravity="center"
+                android:text="@string/search_everything"
+                android:fontFamily="@font/plus_jakarta_sans_extrabold"
+                android:textStyle="bold"
+                android:textColor="@color/ink"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/tvSearchEmptyBody"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_xs"
+                android:gravity="center"
+                android:text="@string/search_empty_body"
+                android:textAppearance="@style/TextAppearance.Econ.Body"
+                android:textColor="@color/muted" />
+        </LinearLayout>
+
+    </FrameLayout>
+
+</LinearLayout>

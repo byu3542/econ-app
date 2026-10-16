@@ -1,5 +1,9 @@
 package com.economic.dashboard.ui
 
+import com.economic.dashboard.news.NewsAdapter
+import com.economic.dashboard.ui.search.SearchFragment
+import com.economic.dashboard.search.SearchScope
+import com.economic.dashboard.search.SearchResult
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -80,7 +84,7 @@ import okhttp3.OkHttpClient
  * not apply to a Kotlin-declared `getX()` function. Same rule as
  * EconomicViewModel in 11b — the call sites decide.
  */
-class MainActivity : AppCompatActivity(), ShortcutsBottomSheet.Host {
+class MainActivity : AppCompatActivity(), ShortcutsBottomSheet.Host, SearchFragment.Host {
 
     private lateinit var viewModel: EconomicViewModel
 
@@ -188,6 +192,8 @@ class MainActivity : AppCompatActivity(), ShortcutsBottomSheet.Host {
                 ?.let { ViewCompat.dispatchApplyWindowInsets(it, insets) }
             supportFragmentManager.findFragmentByTag(ChatHistoryFragment.TAG)?.view
                 ?.let { ViewCompat.dispatchApplyWindowInsets(it, insets) }
+            supportFragmentManager.findFragmentByTag(SearchFragment.TAG)?.view
+                ?.let { ViewCompat.dispatchApplyWindowInsets(it, insets) }
             WindowInsetsCompat.CONSUMED
         }
 
@@ -269,7 +275,7 @@ class MainActivity : AppCompatActivity(), ShortcutsBottomSheet.Host {
         // back gesture on their own Window and never reach this dispatcher.
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                if (isAssistantShowing()) {
+                if (isFullScreenShowing()) {
                     supportFragmentManager.popBackStack()
                 } else if (isSettingsShowing()) {
                     handleSettingsBackOrClose()
@@ -309,6 +315,8 @@ class MainActivity : AppCompatActivity(), ShortcutsBottomSheet.Host {
             (supportFragmentManager.findFragmentByTag("overview") as? DashboardFragment)
                 ?.takeIf { it.isAdded }?.openEditTargetSheet()
         }
+        // Settings parity U9 (R13): header search, on every main tab.
+        binding.btnSearch.setOnClickListener { openSearch() }
         updateEditCardsButton()
         observeViewModel()
         // Skip on a theme-toggle/rotation recreate: the ViewModel survives
@@ -378,8 +386,40 @@ class MainActivity : AppCompatActivity(), ShortcutsBottomSheet.Host {
                 // assistant's own transaction and first layout.
                 binding.root.post { ChatHistoryFragment.show(supportFragmentManager) }
             }
-            // Search lands in U9; the catalog keeps it unavailable until then.
-            ShortcutAction.Search -> Unit
+            ShortcutAction.Search -> openSearch()
+        }
+    }
+
+    // ── Global search (settings parity U9) ───────────────────────────────────
+
+    private fun isSearchShowing(): Boolean =
+        supportFragmentManager.findFragmentByTag(SearchFragment.TAG) != null
+
+    /** KTD9: search is full screen like the Analyst, so it shares its chrome. */
+    private fun isFullScreenShowing(): Boolean = isAssistantShowing() || isSearchShowing()
+
+    private fun openSearch() {
+        if (isFullScreenShowing() || isSettingsShowing()) return
+        HapticUtil.selection(binding.btnSearch)
+        SearchFragment.show(supportFragmentManager)
+    }
+
+    /** R14: each result opens its target. An article opens over search, so
+     *  back from the browser lands on the results; every other target
+     *  closes search first. */
+    override fun openSearchResult(result: SearchResult, chat: ConversationSummary?) {
+        if (result.scope == SearchScope.NEWS) {
+            NewsAdapter.openArticle(this, result.key)
+            return
+        }
+        supportFragmentManager.popBackStackImmediate(
+            SearchFragment.TAG, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE)
+        when (result.scope) {
+            SearchScope.INDICATORS -> MetricPopupController.show(this, viewModel, result.key)
+            SearchScope.SETTINGS -> openSettings(result.key)
+            // Swap the thread in before the Analyst reads it, as history does.
+            SearchScope.CHATS -> if (chat != null) reopenConversation(chat) { openAnalyst() }
+            SearchScope.NEWS -> Unit
         }
     }
 
@@ -459,6 +499,7 @@ class MainActivity : AppCompatActivity(), ShortcutsBottomSheet.Host {
         binding.navScrim.visibility = View.GONE
         binding.fabAiAnalyst.visibility = View.GONE
         binding.btnEditCards.visibility = View.GONE
+        binding.btnSearch.visibility = View.GONE
     }
 
     /** Settings parity U3 (R1, R2, KTD3): Settings and each of its pages own
@@ -470,15 +511,17 @@ class MainActivity : AppCompatActivity(), ShortcutsBottomSheet.Host {
         currentScreenLabel = title.toString()
     }
 
-    /** The large left-aligned Settings title, or the centred tab title. */
+    /** Every header title is large and left-aligned, as in Pantrii. Settings
+     *  ([large]) starts it past the back button; a tab starts it at the edge.
+     *  Settings parity U9, Aaron's call 2026-10-16: the centred tab title
+     *  collided with the search button once three buttons sat on the right. */
     private fun setHeaderTitleLarge(large: Boolean) {
         val tv = binding.tvHeaderCompactTitle
         val lp = tv.layoutParams as FrameLayout.LayoutParams
-        lp.gravity = if (large) Gravity.START or Gravity.CENTER_VERTICAL else Gravity.CENTER
+        lp.gravity = Gravity.START or Gravity.CENTER_VERTICAL
         lp.marginStart = if (large) resources.getDimensionPixelSize(R.dimen.settings_header_title_inset) else 0
         tv.layoutParams = lp
-        tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, resources.getDimension(
-            if (large) R.dimen.text_page_title else R.dimen.text_title))
+        tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, resources.getDimension(R.dimen.text_page_title))
     }
 
     /** Restores whichever tab bottomNav still has selected and puts the gear
@@ -512,6 +555,7 @@ class MainActivity : AppCompatActivity(), ShortcutsBottomSheet.Host {
         binding.btnSettings.setImageResource(R.drawable.ic_settings)
         binding.btnSettings.contentDescription = getString(R.string.settings)
         binding.btnSettings.setOnClickListener { openSettings() }
+        binding.btnSearch.visibility = View.VISIBLE
         setSettingsButtonGravity(Gravity.END or Gravity.CENTER_VERTICAL)
     }
 
@@ -818,6 +862,9 @@ class MainActivity : AppCompatActivity(), ShortcutsBottomSheet.Host {
         if (isAssistantShowing())
             supportFragmentManager.popBackStackImmediate(
                 AssistantFragment.TAG, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE)
+        if (isSearchShowing())
+            supportFragmentManager.popBackStackImmediate(
+                SearchFragment.TAG, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE)
         val targetId =
             if ("markets" == tabKey) R.id.nav_markets
             else if ("economy" == tabKey) R.id.nav_economy
@@ -871,7 +918,7 @@ class MainActivity : AppCompatActivity(), ShortcutsBottomSheet.Host {
      *  (FAB, long-press ask, share) and out (back, close, citation tap) and an
      *  Activity recreate all land on the same chrome. */
     private fun applyAssistantChrome() {
-        if (isAssistantShowing()) {
+        if (isFullScreenShowing()) {
             binding.headerContainer.visibility = View.GONE
             binding.bottomNavWrapper.visibility = View.GONE
             binding.navScrim.visibility = View.GONE
@@ -892,7 +939,7 @@ class MainActivity : AppCompatActivity(), ShortcutsBottomSheet.Host {
 
     private fun setupBottomNav() {
         supportFragmentManager.addOnBackStackChangedListener { applyAssistantChrome() }
-        if (isAssistantShowing()) binding.root.post { applyAssistantChrome() }
+        if (isFullScreenShowing()) binding.root.post { applyAssistantChrome() }
         // On an Activity recreate with Settings open, the FragmentManager has
         // already restored SettingsFragment into fragmentContainer — but the
         // "overview" tag is absent (Settings replaced it), so loadFragment's
@@ -917,7 +964,7 @@ class MainActivity : AppCompatActivity(), ShortcutsBottomSheet.Host {
             binding.bottomNav.post {
                 // U3: a restored assistant sits on the back stack over the tab;
                 // loading the tab here would replace it.
-                if (!isAssistantShowing()) loadFragmentForNavId(binding.bottomNav.selectedItemId)
+                if (!isFullScreenShowing()) loadFragmentForNavId(binding.bottomNav.selectedItemId)
                 updateEditCardsButton()
             }
         }

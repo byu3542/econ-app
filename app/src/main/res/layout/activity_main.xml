@@ -76,9 +76,10 @@
                     android:id="@+id/tvHeaderCompactTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center"
+                    android:layout_gravity="start|center_vertical"
                     android:text="Overview"
                     android:textAppearance="@style/TextAppearance.Econ.Title"
+                    android:textSize="@dimen/text_page_title"
                     android:textColor="@color/ink"
                     android:fontFamily="@font/plus_jakarta_sans_bold"
                     android:singleLine="true"
@@ -101,17 +102,36 @@
                      shows it only while Overview is the visible tab. U9: the
                      48dp end margin is the gear's 48dp, butted up like the assistant
                      header: the two 4dp insets leave an 8dp visible gap, as in Pantrii. -->
-                <ImageView
-                    android:id="@+id/btnEditCards"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
+                <!-- Settings parity U9 (R13, KTD9): search sits left of Edit cards
+                     on every tab. Both live in one end-aligned row, so when the
+                     pencil is GONE off Overview, search slides up to the gear. -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:layout_marginEnd="48dp"
                     android:layout_gravity="end|center_vertical"
-                    android:padding="@dimen/space_md"
-                    android:src="@drawable/ic_edit"
-                    android:contentDescription="@string/edit_dashboard_button"
-                    android:background="@drawable/bg_icon_button_inset"
-                    app:tint="@color/ink"/>
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:id="@+id/btnSearch"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:padding="@dimen/space_md"
+                        android:src="@drawable/ic_search"
+                        android:contentDescription="@string/search_header_cd"
+                        android:background="@drawable/bg_icon_button_inset"
+                        app:tint="@color/ink"/>
+
+                    <ImageView
+                        android:id="@+id/btnEditCards"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:padding="@dimen/space_md"
+                        android:src="@drawable/ic_edit"
+                        android:contentDescription="@string/edit_dashboard_button"
+                        android:background="@drawable/bg_icon_button_inset"
+                        app:tint="@color/ink"/>
+                </LinearLayout>
 
             </FrameLayout>
 
