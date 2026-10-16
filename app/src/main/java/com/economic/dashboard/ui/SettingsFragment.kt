@@ -34,7 +34,6 @@ import com.economic.dashboard.ui.views.SegmentedView
 import com.economic.dashboard.utils.EdgeToEdgeInsets
 import com.economic.dashboard.utils.SettingsManager
 import com.economic.dashboard.utils.markDestructive
-import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.materialswitch.MaterialSwitch
@@ -157,8 +156,8 @@ class SettingsFragment : Fragment() {
     private fun detailCards(b: FragmentSettingsBinding): Map<String, View> = mapOf(
         "appearance" to b.appearancePage,
         "startup" to b.cardStartup,
-        "ai" to b.cardAi,
-        "data" to b.cardData,
+        "ai" to b.aiPage,
+        "data" to b.dataPage,
         "news" to b.cardNews,
         "charts" to b.cardCharts,
         "notifications" to b.cardNotifications,
@@ -432,22 +431,23 @@ class SettingsFragment : Fragment() {
     // -- Data -----------------------------------------------------------------
 
     private fun setupData(v: View) {
-        val btnRefresh: MaterialButton = v.findViewById(R.id.btnRefreshNow)
-        val btnClear: MaterialButton = v.findViewById(R.id.btnClearCache)
+        val btnRefresh: View = v.findViewById(R.id.rowRefreshNow)
+        val tvRefresh: TextView = v.findViewById(R.id.tvRefreshTitle)
+        val btnClear: View = v.findViewById(R.id.btnClearCache)
 
         // Refresh runs inline: Settings stays open and the button shows progress.
         btnRefresh.setOnClickListener {
             val act = host()
             btnRefresh.isEnabled = false
             btnClear.isEnabled = false
-            btnRefresh.setText(R.string.refreshing_data)
+            tvRefresh.setText(R.string.refreshing_data)
             act.getViewModel().fetchAllData()             // live data behind the visible UI
             CacheManager.forceRefreshAll(act) { success -> // cached 24-month history
                 act.runOnUiThread {
                     if (isAdded) {
                         btnRefresh.isEnabled = true
                         btnClear.isEnabled = true
-                        btnRefresh.setText(R.string.refresh_data)
+                        tvRefresh.setText(R.string.refresh_now)
                         snack(if (success) R.string.refresh_done else R.string.refresh_failed)
                         updateLastUpdated()
                     }
@@ -602,8 +602,12 @@ class SettingsFragment : Fragment() {
                 .putExtra(Settings.EXTRA_APP_PACKAGE,
                     requireContext().packageName))
         }
-        v.findViewById<View>(R.id.tvNotifBlocked).setOnClickListener(openNotificationSettings)
-        v.findViewById<View>(R.id.tvNotifBlockedHint).setOnClickListener(openNotificationSettings)
+        // Allow asks for the permission where the OS still offers the prompt;
+        // below Android 13, or once the prompt is gone, it opens system settings.
+        v.findViewById<View>(R.id.btnNotifAllow).setOnClickListener {
+            if (Build.VERSION.SDK_INT >= 33 && !promptBlocked()) host().ensureNotificationPermission()
+            else openNotificationSettings.onClick(it)
+        }
         updateNotifBlockedBanner()
     }
 
@@ -623,14 +627,20 @@ class SettingsFragment : Fragment() {
     private fun updateNotifBlockedBanner() {
         val v = view ?: return
         val allowed = notificationsAllowed()
-        v.findViewById<View>(R.id.tvNotifBlocked)
+        v.findViewById<View>(R.id.btnNotifAllow)
             .visibility = if (allowed) View.GONE else View.VISIBLE
-        v.findViewById<View>(R.id.tvNotifBlockedHint)
-            .visibility = if (allowed) View.GONE else View.VISIBLE
+        v.findViewById<TextView>(R.id.tvNotifStatusTitle).setText(
+            if (allowed) R.string.notif_status_on else R.string.notif_blocked_title)
         v.findViewById<TextView>(R.id.tvNotifStatus).text =
             getString(if (allowed) R.string.notifications_enabled_summary
             else R.string.notifications_blocked_summary)
     }
+
+    /** True once the user has denied the prompt for good: the OS no longer
+     *  shows it, so Allow must send them to system settings instead. */
+    private fun promptBlocked(): Boolean =
+        SettingsManager.getBool(requireContext(), KEY_NOTIF_ASKED, false) &&
+            !shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)
 
     private fun notificationsAllowed(): Boolean {
         return Build.VERSION.SDK_INT < 33 ||
@@ -641,6 +651,7 @@ class SettingsFragment : Fragment() {
     /** Called by MainActivity when the POST_NOTIFICATIONS request is denied. */
     fun onNotificationPermissionDenied() {
         val v = view ?: return
+        SettingsManager.setBool(requireContext(), KEY_NOTIF_ASKED, true)
         // setChecked fires the listeners, which also revert the stored prefs
         v.findViewById<MaterialSwitch>(R.id.switchNotifyMoves).isChecked = false
         v.findViewById<MaterialSwitch>(R.id.switchNotifyReleases).isChecked = false
@@ -719,6 +730,8 @@ class SettingsFragment : Fragment() {
         )
 
         private const val STATE_SECTION = "settings_section"
+        /** Set after the first denied prompt, to tell "never asked" from "blocked". */
+        private const val KEY_NOTIF_ASKED = "notif_prompt_denied_once"
         private const val SWATCHES_PER_ROW = 5
         /** Long enough to see the Example preview before the recreate. */
         private const val ACCENT_APPLY_DELAY_MS = 250L

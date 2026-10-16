@@ -202,6 +202,7 @@
                         android:orientation="vertical">
 
                     <LinearLayout style="@style/SettingsRow">
+                        <ImageView style="@style/SettingsRowIcon" android:src="@drawable/ic_row_colorblind"/>
                         <LinearLayout style="@style/SettingsRowText">
                             <TextView style="@style/SettingsRowTitle" android:text="@string/colorblind_title"/>
                             <TextView style="@style/SettingsRowSub" android:text="@string/colorblind_sub"/>
@@ -217,6 +218,7 @@
                         android:background="@drawable/divider_hairline_inset"/>
 
                     <LinearLayout style="@style/SettingsRow">
+                        <ImageView style="@style/SettingsRowIcon" android:src="@drawable/ic_row_haptics"/>
                         <LinearLayout style="@style/SettingsRowText">
                             <TextView style="@style/SettingsRowTitle" android:text="@string/haptics_title"/>
                             <TextView style="@style/SettingsRowSub" android:text="@string/haptics_sub"/>
@@ -237,7 +239,13 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
-
+                    <LinearLayout style="@style/SettingsInfoRow">
+                        <ImageView style="@style/SettingsRowIcon" android:src="@drawable/ic_row_startup"/>
+                        <LinearLayout style="@style/SettingsRowText">
+                            <TextView style="@style/SettingsRowTitle" android:text="@string/startup_title"/>
+                            <TextView style="@style/SettingsRowSub" android:text="@string/startup_sub"/>
+                        </LinearLayout>
+                    </LinearLayout>
                     <!-- TICKET-55: tags are the bottom-nav index SettingsManager stores -->
                     <com.economic.dashboard.ui.views.SegmentedView
                         android:id="@+id/segDefaultTab"
@@ -250,6 +258,11 @@
             </com.google.android.material.card.MaterialCardView>
 
             <!-- ~~ ECON ANALYST ~~ -->
+            <LinearLayout
+                android:id="@+id/aiPage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
             <com.google.android.material.card.MaterialCardView android:id="@+id/cardAi" style="@style/SettingsCard" android:layout_marginTop="0dp">
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -257,6 +270,7 @@
                     android:orientation="vertical">
 
                     <LinearLayout style="@style/SettingsRow">
+                        <ImageView style="@style/SettingsRowIcon" android:src="@drawable/ic_row_followups"/>
                         <LinearLayout style="@style/SettingsRowText">
                             <TextView style="@style/SettingsRowTitle" android:text="@string/smart_chips"/>
                             <TextView style="@style/SettingsRowSub" android:text="@string/smart_chips_sub"/>
@@ -272,6 +286,7 @@
                         android:background="@drawable/divider_hairline_inset"/>
 
                     <LinearLayout style="@style/SettingsRow">
+                        <ImageView style="@style/SettingsRowIcon" android:src="@drawable/ic_row_detailed"/>
                         <LinearLayout style="@style/SettingsRowText">
                             <TextView style="@style/SettingsRowTitle" android:text="@string/detailed_ai"/>
                             <TextView style="@style/SettingsRowSub" android:text="@string/detailed_ai_sub"/>
@@ -283,60 +298,37 @@
                             android:contentDescription="@string/detailed_ai"/>
                     </LinearLayout>
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnClearChat"
-                        style="@style/SettingsDestructiveButton"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/space_xs"
-                        android:text="@string/clear_chat_history"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
+            <!-- Settings parity U5 (R4): destructive actions are red text rows at the page foot. -->
+            <TextView
+                android:id="@+id/btnClearChat"
+                style="@style/SettingsDestructiveRow"
+                android:text="@string/clear_chat_history"/>
+            </LinearLayout>
 
             <!-- ~~ DATA & SYNC ~~ -->
+            <LinearLayout
+                android:id="@+id/dataPage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
             <com.google.android.material.card.MaterialCardView android:id="@+id/cardData" style="@style/SettingsCard" android:layout_marginTop="0dp">
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/tvLastUpdated"
-                        style="@style/SettingsRowSub"
-                        android:layout_marginBottom="@dimen/space_sm"
-                        android:text="@string/checking_freshness"/>
-
-                    <TextView
-                        style="@style/SettingsRowSub"
-                        android:layout_marginBottom="@dimen/space_sm"
-                        android:text="@string/data_cache_sub"/>
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal">
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnRefreshNow"
-                            style="@style/Widget.Econ.Button.Outlined"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:layout_marginEnd="@dimen/space_sm"
-                            android:text="@string/refresh_data"
-                            android:textSize="@dimen/text_body"/>
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnClearCache"
-                            style="@style/Widget.Econ.Button.Outlined"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="@string/clear_cache"
-                            android:textSize="@dimen/text_body"/>
+                    <LinearLayout android:id="@+id/rowRefreshNow" style="@style/SettingsRow">
+                        <ImageView style="@style/SettingsRowIcon" android:src="@drawable/ic_row_refresh"/>
+                        <LinearLayout style="@style/SettingsRowText">
+                            <TextView android:id="@+id/tvRefreshTitle" style="@style/SettingsRowTitle" android:text="@string/refresh_now"/>
+                            <TextView android:id="@+id/tvLastUpdated" style="@style/SettingsRowSub" android:text="@string/checking_freshness"/>
+                        </LinearLayout>
                     </LinearLayout>
-
+                    <View android:layout_width="match_parent" android:layout_height="@dimen/divider_hairline_height"
+                        android:background="@drawable/divider_hairline_inset"/>
                     <LinearLayout style="@style/SettingsRow">
+                        <ImageView style="@style/SettingsRowIcon" android:src="@drawable/ic_settings_startup"/>
                         <LinearLayout style="@style/SettingsRowText">
                             <TextView style="@style/SettingsRowTitle" android:text="@string/refresh_on_open"/>
                             <TextView style="@style/SettingsRowSub" android:text="@string/refresh_on_open_sub"/>
@@ -349,6 +341,17 @@
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
+            <TextView
+                style="@style/SettingsRowSub"
+                android:layout_marginTop="@dimen/space_sm"
+                android:paddingStart="@dimen/space_sm"
+                android:paddingEnd="@dimen/space_sm"
+                android:text="@string/data_cache_sub"/>
+            <TextView
+                android:id="@+id/btnClearCache"
+                style="@style/SettingsDestructiveRow"
+                android:text="@string/clear_cache"/>
+            </LinearLayout>
 
             <!-- ~~ NEWS SOURCES ~~ -->
             <com.google.android.material.card.MaterialCardView android:id="@+id/cardNews" style="@style/SettingsCard" android:layout_marginTop="0dp">
@@ -363,6 +366,7 @@
                         android:layout_marginBottom="@dimen/space_xs"/>
 
                     <LinearLayout style="@style/SettingsRow">
+                        <ImageView style="@style/SettingsRowIcon" android:src="@drawable/ic_row_news_gov"/>
                         <LinearLayout style="@style/SettingsRowText">
                             <TextView style="@style/SettingsRowTitle" android:text="@string/news_gov"/>
                             <TextView style="@style/SettingsRowSub" android:text="@string/news_gov_sub"/>
@@ -378,6 +382,7 @@
                         android:background="@drawable/divider_hairline_inset"/>
 
                     <LinearLayout style="@style/SettingsRow">
+                        <ImageView style="@style/SettingsRowIcon" android:src="@drawable/ic_row_news_media"/>
                         <LinearLayout style="@style/SettingsRowText">
                             <TextView style="@style/SettingsRowTitle" android:text="@string/news_media"/>
                             <TextView style="@style/SettingsRowSub" android:text="@string/news_media_sub"/>
@@ -393,6 +398,7 @@
                         android:background="@drawable/divider_hairline_inset"/>
 
                     <LinearLayout style="@style/SettingsRow">
+                        <ImageView style="@style/SettingsRowIcon" android:src="@drawable/ic_row_news_intl"/>
                         <LinearLayout style="@style/SettingsRowText">
                             <TextView style="@style/SettingsRowTitle" android:text="@string/news_intl"/>
                             <TextView style="@style/SettingsRowSub" android:text="@string/news_intl_sub"/>
@@ -408,6 +414,7 @@
                         android:background="@drawable/divider_hairline_inset"/>
 
                     <LinearLayout style="@style/SettingsRow">
+                        <ImageView style="@style/SettingsRowIcon" android:src="@drawable/ic_row_news_research"/>
                         <LinearLayout style="@style/SettingsRowText">
                             <TextView style="@style/SettingsRowTitle" android:text="@string/news_research"/>
                             <TextView style="@style/SettingsRowSub" android:text="@string/news_research_sub"/>
@@ -429,6 +436,7 @@
                     android:orientation="vertical">
 
                     <LinearLayout style="@style/SettingsRow">
+                        <ImageView style="@style/SettingsRowIcon" android:src="@drawable/ic_row_gridlines"/>
                         <LinearLayout style="@style/SettingsRowText">
                             <TextView style="@style/SettingsRowTitle" android:text="@string/gridlines"/>
                             <TextView style="@style/SettingsRowSub" android:text="@string/gridlines_sub"/>
@@ -440,10 +448,10 @@
                             android:contentDescription="@string/gridlines"/>
                     </LinearLayout>
 
-                    <TextView style="@style/SettingsRowTitle"
-                        android:layout_marginTop="@dimen/space_sm"
-                        android:layout_marginBottom="@dimen/space_xs"
-                        android:text="@string/axis_decimals"/>
+                    <LinearLayout style="@style/SettingsInfoRow">
+                        <ImageView style="@style/SettingsRowIcon" android:src="@drawable/ic_row_decimals"/>
+                        <TextView style="@style/SettingsRowTitle" android:text="@string/axis_decimals"/>
+                    </LinearLayout>
 
                     <!-- TICKET-55: tags are the decimal count -->
                     <com.economic.dashboard.ui.views.SegmentedView
@@ -454,10 +462,10 @@
                         app:segmentLabels="@array/decimals_segment_labels"
                         app:segmentTags="@array/decimals_segment_tags"/>
 
-                    <TextView style="@style/SettingsRowTitle"
-                        android:layout_marginTop="@dimen/space_sm"
-                        android:layout_marginBottom="@dimen/space_xs"
-                        android:text="@string/chart_timeframe"/>
+                    <LinearLayout style="@style/SettingsInfoRow">
+                        <ImageView style="@style/SettingsRowIcon" android:src="@drawable/ic_row_timeframe"/>
+                        <TextView style="@style/SettingsRowTitle" android:text="@string/chart_timeframe"/>
+                    </LinearLayout>
 
                     <!-- TICKET-55: tags are month windows (KEY_CHART_TIMEFRAME) -->
                     <com.economic.dashboard.ui.views.SegmentedView
@@ -470,7 +478,6 @@
 
                     <TextView style="@style/SettingsRowSub"
                         android:layout_marginTop="@dimen/space_sm"
-                        android:textStyle="italic"
                         android:text="@string/chart_apply_note"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -482,33 +489,33 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
 
-                    <TextView
-                        android:id="@+id/tvNotifStatus"
-                        style="@style/SettingsRowSub"
-                        android:layout_marginBottom="@dimen/space_xs"/>
-
-                    <TextView
-                        android:id="@+id/tvNotifBlocked"
-                        style="@style/SettingsRowTitle"
-                        android:textColor="@color/info_blue"
-                        android:background="?attr/selectableItemBackground"
-                        android:paddingStart="@dimen/space_sm"
-                        android:paddingEnd="@dimen/space_sm"
-                        android:paddingTop="@dimen/space_xs"
-                        android:paddingBottom="@dimen/space_xs"
-                        android:visibility="gone"
-                        android:text="@string/notif_blocked_title"/>
-
-                    <TextView
-                        android:id="@+id/tvNotifBlockedHint"
-                        style="@style/SettingsRowSub"
-                        android:paddingStart="@dimen/space_sm"
-                        android:paddingEnd="@dimen/space_sm"
-                        android:paddingBottom="@dimen/space_xs"
-                        android:visibility="gone"
-                        android:text="@string/notif_blocked_tap"/>
+                    <!-- Settings parity U5 (R9): the permission status row. -->
+                    <LinearLayout android:id="@+id/rowNotifStatus" style="@style/SettingsInfoRow">
+                        <ImageView style="@style/SettingsRowIcon" android:src="@drawable/ic_row_notify"/>
+                        <LinearLayout style="@style/SettingsRowText">
+                            <TextView android:id="@+id/tvNotifStatusTitle" style="@style/SettingsRowTitle"/>
+                            <TextView android:id="@+id/tvNotifStatus" style="@style/SettingsRowSub"/>
+                        </LinearLayout>
+                        <TextView
+                            android:id="@+id/btnNotifAllow"
+                            android:layout_width="wrap_content"
+                            android:layout_height="40dp"
+                            android:layout_marginStart="@dimen/space_sm"
+                            android:gravity="center"
+                            android:paddingStart="@dimen/space_md"
+                            android:paddingEnd="@dimen/space_md"
+                            android:background="@drawable/bg_pill_accent"
+                            android:text="@string/notif_allow"
+                            android:textStyle="bold"
+                            android:textSize="@dimen/text_body"
+                            android:textColor="?attr/econOnAccent"
+                            android:visibility="gone"/>
+                    </LinearLayout>
+                    <View android:layout_width="match_parent" android:layout_height="@dimen/divider_hairline_height"
+                        android:background="@drawable/divider_hairline_inset"/>
 
                     <LinearLayout style="@style/SettingsRow">
+                        <ImageView style="@style/SettingsRowIcon" android:src="@drawable/ic_trending_up"/>
                         <LinearLayout style="@style/SettingsRowText">
                             <TextView style="@style/SettingsRowTitle" android:text="@string/notify_moves"/>
                             <TextView style="@style/SettingsRowSub" android:text="@string/notify_moves_sub"/>
@@ -524,6 +531,7 @@
                         android:background="@drawable/divider_hairline_inset"/>
 
                     <LinearLayout style="@style/SettingsRow">
+                        <ImageView style="@style/SettingsRowIcon" android:src="@drawable/ic_row_releases"/>
                         <LinearLayout style="@style/SettingsRowText">
                             <TextView style="@style/SettingsRowTitle" android:text="@string/notify_releases"/>
                             <TextView style="@style/SettingsRowSub" android:text="@string/notify_releases_sub"/>
@@ -539,6 +547,7 @@
                         android:background="@drawable/divider_hairline_inset"/>
 
                     <LinearLayout style="@style/SettingsRow">
+                        <ImageView style="@style/SettingsRowIcon" android:src="@drawable/ic_row_brief"/>
                         <LinearLayout style="@style/SettingsRowText">
                             <TextView style="@style/SettingsRowTitle" android:text="@string/daily_brief"/>
                             <TextView style="@style/SettingsRowSub" android:text="@string/daily_brief_sub"/>

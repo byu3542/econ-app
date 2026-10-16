@@ -342,15 +342,35 @@
         <item name="thumbIcon">@null</item>
     </style>
 
-    <!-- Destructive outlined button (clear chat / clear cache) -->
-    <style name="SettingsDestructiveButton" parent="Widget.MaterialComponents.Button.OutlinedButton">
+    <!-- Settings parity U5 (R4): a destructive action is a plain red text row
+         at the foot of its page, behind a confirm dialog. -->
+    <style name="SettingsDestructiveRow">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">@dimen/space_lg</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:background">?attr/selectableItemBackground</item>
         <item name="android:textSize">@dimen/text_body</item>
+        <item name="android:textStyle">bold</item>
         <item name="android:textColor">@color/error_text</item>
-        <item name="strokeColor">@color/error_bubble_stroke</item>
-        <item name="rippleColor">@color/error_bubble_bg</item>
-        <item name="cornerRadius">@dimen/radius_pill</item>
-        <item name="android:textAllCaps">false</item>
-        <item name="android:letterSpacing">0</item>
+    </style>
+
+    <!-- Settings parity U5 (R9, KTD4): the 40dp icon tile that leads every
+         control row, the smaller sibling of the list rows' 44dp tile. -->
+    <style name="SettingsRowIcon">
+        <item name="android:layout_width">40dp</item>
+        <item name="android:layout_height">40dp</item>
+        <item name="android:layout_marginEnd">@dimen/space_md</item>
+        <item name="android:padding">9dp</item>
+        <item name="android:background">@drawable/bg_settings_icon_tile</item>
+        <item name="android:importantForAccessibility">no</item>
+        <item name="tint">@color/ink_2</item>
+    </style>
+
+    <!-- A SettingsRow that is not tappable (status and label rows). -->
+    <style name="SettingsInfoRow" parent="SettingsRow">
+        <item name="android:background">@null</item>
     </style>
 
     <!-- Pantrii port U11: the secondary button. A pill with a line hairline
