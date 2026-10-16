@@ -30,7 +30,7 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.snackbar.Snackbar
-import com.google.android.material.switchmaterial.SwitchMaterial
+import com.google.android.material.materialswitch.MaterialSwitch
 
 /**
  * Settings as a full-screen page (design 1b), opened from the gear icon in
@@ -373,7 +373,7 @@ class SettingsFragment : Fragment() {
     }
 
     private fun bindNewsSwitch(root: View, id: Int, prefKey: String) {
-        val sw: SwitchMaterial = root.findViewById(id)
+        val sw: MaterialSwitch = root.findViewById(id)
         sw.isChecked = SettingsManager.getBool(requireContext(), prefKey, true)
         makeRowTappable(sw)
         sw.setOnCheckedChangeListener { _, checked ->
@@ -394,7 +394,7 @@ class SettingsFragment : Fragment() {
         for (k in NEWS_KEYS)
             if (SettingsManager.getBool(requireContext(), k, true)) enabledCount++
         for (i in NEWS_SWITCH_IDS.indices) {
-            val sw: SwitchMaterial = v.findViewById(NEWS_SWITCH_IDS[i])
+            val sw: MaterialSwitch = v.findViewById(NEWS_SWITCH_IDS[i])
             val on = SettingsManager.getBool(requireContext(), NEWS_KEYS[i], true)
             val locked = on && enabledCount == 1
             sw.isEnabled = !locked
@@ -469,7 +469,7 @@ class SettingsFragment : Fragment() {
 
     /** Shows OFF when the OS permission is missing, regardless of the stored pref. */
     private fun bindNotifySwitch(root: View, id: Int, prefKey: String) {
-        val sw: SwitchMaterial = root.findViewById(id)
+        val sw: MaterialSwitch = root.findViewById(id)
         sw.isChecked = notificationsAllowed() &&
             SettingsManager.getBool(requireContext(), prefKey, false)
         makeRowTappable(sw)
@@ -502,9 +502,9 @@ class SettingsFragment : Fragment() {
     fun onNotificationPermissionDenied() {
         val v = view ?: return
         // setChecked fires the listeners, which also revert the stored prefs
-        v.findViewById<SwitchMaterial>(R.id.switchNotifyMoves).isChecked = false
-        v.findViewById<SwitchMaterial>(R.id.switchNotifyReleases).isChecked = false
-        v.findViewById<SwitchMaterial>(R.id.switchDailyBrief).isChecked = false
+        v.findViewById<MaterialSwitch>(R.id.switchNotifyMoves).isChecked = false
+        v.findViewById<MaterialSwitch>(R.id.switchNotifyReleases).isChecked = false
+        v.findViewById<MaterialSwitch>(R.id.switchDailyBrief).isChecked = false
         updateNotifBlockedBanner()
         snack(R.string.notifications_denied)
     }
@@ -531,7 +531,7 @@ class SettingsFragment : Fragment() {
     }
 
     /** Tapping anywhere on the row flips its switch (not just the small thumb). */
-    private fun makeRowTappable(sw: SwitchMaterial) {
+    private fun makeRowTappable(sw: MaterialSwitch) {
         val row = sw.parent as View
         row.setOnClickListener {
             if (sw.isEnabled) sw.toggle()
@@ -540,7 +540,7 @@ class SettingsFragment : Fragment() {
 
     /** Wires a switch to a boolean pref; runs onChange (if any) after every flip. */
     private fun bindSwitch(root: View, id: Int, prefKey: String, def: Boolean, onChange: (() -> Unit)?) {
-        val sw: SwitchMaterial = root.findViewById(id)
+        val sw: MaterialSwitch = root.findViewById(id)
         sw.isChecked = SettingsManager.getBool(requireContext(), prefKey, def)
         makeRowTappable(sw)
         sw.setOnCheckedChangeListener { _, checked ->

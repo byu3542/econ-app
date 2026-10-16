@@ -192,9 +192,10 @@
                             <TextView style="@style/SettingsRowTitle" android:text="@string/colorblind_title"/>
                             <TextView style="@style/SettingsRowSub" android:text="@string/colorblind_sub"/>
                         </LinearLayout>
-                        <com.google.android.material.switchmaterial.SwitchMaterial
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
                             android:id="@+id/switchColorblind"
-                            style="@style/SettingsSwitch"
                             android:contentDescription="@string/colorblind_title"/>
                     </LinearLayout>
 
@@ -206,9 +207,10 @@
                             <TextView style="@style/SettingsRowTitle" android:text="@string/haptics_title"/>
                             <TextView style="@style/SettingsRowSub" android:text="@string/haptics_sub"/>
                         </LinearLayout>
-                        <com.google.android.material.switchmaterial.SwitchMaterial
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
                             android:id="@+id/switchHaptics"
-                            style="@style/SettingsSwitch"
                             android:contentDescription="@string/haptics_title"/>
                     </LinearLayout>
                 </LinearLayout>
@@ -244,9 +246,10 @@
                             <TextView style="@style/SettingsRowTitle" android:text="@string/smart_chips"/>
                             <TextView style="@style/SettingsRowSub" android:text="@string/smart_chips_sub"/>
                         </LinearLayout>
-                        <com.google.android.material.switchmaterial.SwitchMaterial
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
                             android:id="@+id/switchSmartChips"
-                            style="@style/SettingsSwitch"
                             android:contentDescription="@string/smart_chips"/>
                     </LinearLayout>
 
@@ -258,9 +261,10 @@
                             <TextView style="@style/SettingsRowTitle" android:text="@string/detailed_ai"/>
                             <TextView style="@style/SettingsRowSub" android:text="@string/detailed_ai_sub"/>
                         </LinearLayout>
-                        <com.google.android.material.switchmaterial.SwitchMaterial
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
                             android:id="@+id/switchDetailedAi"
-                            style="@style/SettingsSwitch"
                             android:contentDescription="@string/detailed_ai"/>
                     </LinearLayout>
 
@@ -322,9 +326,10 @@
                             <TextView style="@style/SettingsRowTitle" android:text="@string/refresh_on_open"/>
                             <TextView style="@style/SettingsRowSub" android:text="@string/refresh_on_open_sub"/>
                         </LinearLayout>
-                        <com.google.android.material.switchmaterial.SwitchMaterial
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
                             android:id="@+id/switchRefreshOnOpen"
-                            style="@style/SettingsSwitch"
                             android:contentDescription="@string/refresh_on_open"/>
                     </LinearLayout>
                 </LinearLayout>
@@ -347,9 +352,10 @@
                             <TextView style="@style/SettingsRowTitle" android:text="@string/news_gov"/>
                             <TextView style="@style/SettingsRowSub" android:text="@string/news_gov_sub"/>
                         </LinearLayout>
-                        <com.google.android.material.switchmaterial.SwitchMaterial
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
                             android:id="@+id/switchNewsGov"
-                            style="@style/SettingsSwitch"
                             android:contentDescription="@string/news_gov"/>
                     </LinearLayout>
 
@@ -361,9 +367,10 @@
                             <TextView style="@style/SettingsRowTitle" android:text="@string/news_media"/>
                             <TextView style="@style/SettingsRowSub" android:text="@string/news_media_sub"/>
                         </LinearLayout>
-                        <com.google.android.material.switchmaterial.SwitchMaterial
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
                             android:id="@+id/switchNewsMedia"
-                            style="@style/SettingsSwitch"
                             android:contentDescription="@string/news_media"/>
                     </LinearLayout>
 
@@ -375,9 +382,10 @@
                             <TextView style="@style/SettingsRowTitle" android:text="@string/news_intl"/>
                             <TextView style="@style/SettingsRowSub" android:text="@string/news_intl_sub"/>
                         </LinearLayout>
-                        <com.google.android.material.switchmaterial.SwitchMaterial
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
                             android:id="@+id/switchNewsIntl"
-                            style="@style/SettingsSwitch"
                             android:contentDescription="@string/news_intl"/>
                     </LinearLayout>
 
@@ -389,9 +397,10 @@
                             <TextView style="@style/SettingsRowTitle" android:text="@string/news_research"/>
                             <TextView style="@style/SettingsRowSub" android:text="@string/news_research_sub"/>
                         </LinearLayout>
-                        <com.google.android.material.switchmaterial.SwitchMaterial
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
                             android:id="@+id/switchNewsResearch"
-                            style="@style/SettingsSwitch"
                             android:contentDescription="@string/news_research"/>
                     </LinearLayout>
                 </LinearLayout>
@@ -409,9 +418,10 @@
                             <TextView style="@style/SettingsRowTitle" android:text="@string/gridlines"/>
                             <TextView style="@style/SettingsRowSub" android:text="@string/gridlines_sub"/>
                         </LinearLayout>
-                        <com.google.android.material.switchmaterial.SwitchMaterial
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
                             android:id="@+id/switchGridlines"
-                            style="@style/SettingsSwitch"
                             android:contentDescription="@string/gridlines"/>
                     </LinearLayout>
 
@@ -488,9 +498,10 @@
                             <TextView style="@style/SettingsRowTitle" android:text="@string/notify_moves"/>
                             <TextView style="@style/SettingsRowSub" android:text="@string/notify_moves_sub"/>
                         </LinearLayout>
-                        <com.google.android.material.switchmaterial.SwitchMaterial
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
                             android:id="@+id/switchNotifyMoves"
-                            style="@style/SettingsSwitch"
                             android:contentDescription="@string/notify_moves"/>
                     </LinearLayout>
 
@@ -502,9 +513,10 @@
                             <TextView style="@style/SettingsRowTitle" android:text="@string/notify_releases"/>
                             <TextView style="@style/SettingsRowSub" android:text="@string/notify_releases_sub"/>
                         </LinearLayout>
-                        <com.google.android.material.switchmaterial.SwitchMaterial
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
                             android:id="@+id/switchNotifyReleases"
-                            style="@style/SettingsSwitch"
                             android:contentDescription="@string/notify_releases"/>
                     </LinearLayout>
 
@@ -516,9 +528,10 @@
                             <TextView style="@style/SettingsRowTitle" android:text="@string/daily_brief"/>
                             <TextView style="@style/SettingsRowSub" android:text="@string/daily_brief_sub"/>
                         </LinearLayout>
-                        <com.google.android.material.switchmaterial.SwitchMaterial
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
                             android:id="@+id/switchDailyBrief"
-                            style="@style/SettingsSwitch"
                             android:contentDescription="@string/daily_brief"/>
                     </LinearLayout>
                 </LinearLayout>
