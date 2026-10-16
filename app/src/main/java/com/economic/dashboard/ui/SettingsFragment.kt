@@ -265,6 +265,11 @@ class SettingsFragment : Fragment() {
             val content: View = row.findViewById(R.id.rowContent)
 
             icon.setImageResource(meta.iconRes)
+            if (meta.id == "ai") {
+                // The AI Analyst row matches the accent-coloured Analyst FAB.
+                icon.backgroundTintList = ColorStateList.valueOf(themeColor(R.attr.econAccentSoft))
+                icon.imageTintList = ColorStateList.valueOf(themeColor(R.attr.econAccent))
+            }
             tvTitle.text = getString(meta.titleRes)
             tvSummary.text = summaryFor(meta.id)
             divider.visibility = if (i == rows.lastIndex) View.GONE else View.VISIBLE

@@ -13,6 +13,7 @@
         <item name="econAccent">@color/accent</item>
         <item name="econOnAccent">@color/on_accent</item>
         <item name="econAccentSoft">@color/accent_soft</item>
+        <item name="econAccentBright">#E2B84B</item>
 
         <!-- Pantrii port U1: window paints the semantic ground token. Status and
              nav bars stay transparent (IOS-04 below) — the app draws edge to

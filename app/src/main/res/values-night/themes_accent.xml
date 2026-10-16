@@ -5,36 +5,43 @@
          values mirror ui/AccentPalette.kt, which the contrast test reads. -->
     <style name="ThemeOverlay.Economii.Accent.Gold" parent="">
         <item name="econAccent">#E2B84B</item>
+        <item name="econAccentBright">#E2B84B</item>
         <item name="econOnAccent">#17130A</item>
         <item name="econAccentSoft">#262014</item>
     </style>
     <style name="ThemeOverlay.Economii.Accent.Green" parent="">
         <item name="econAccent">#4FCB86</item>
+        <item name="econAccentBright">#4FCB86</item>
         <item name="econOnAccent">#17130A</item>
         <item name="econAccentSoft">#142827</item>
     </style>
     <style name="ThemeOverlay.Economii.Accent.Orange" parent="">
         <item name="econAccent">#FF8A63</item>
+        <item name="econAccentBright">#FF8A63</item>
         <item name="econOnAccent">#17130A</item>
         <item name="econAccentSoft">#2C1F22</item>
     </style>
     <style name="ThemeOverlay.Economii.Accent.Violet" parent="">
         <item name="econAccent">#9A9BFF</item>
+        <item name="econAccentBright">#9A9BFF</item>
         <item name="econOnAccent">#17130A</item>
         <item name="econAccentSoft">#1E2238</item>
     </style>
     <style name="ThemeOverlay.Economii.Accent.Blue" parent="">
         <item name="econAccent">#7FA9F5</item>
+        <item name="econAccentBright">#7FA9F5</item>
         <item name="econOnAccent">#17130A</item>
         <item name="econAccentSoft">#1A2437</item>
     </style>
     <style name="ThemeOverlay.Economii.Accent.Red" parent="">
         <item name="econAccent">#FF7A82</item>
+        <item name="econAccentBright">#FF7A82</item>
         <item name="econOnAccent">#17130A</item>
         <item name="econAccentSoft">#2C1D27</item>
     </style>
     <style name="ThemeOverlay.Economii.Accent.Teal" parent="">
         <item name="econAccent">#2ECFDF</item>
+        <item name="econAccentBright">#2ECFDF</item>
         <item name="econOnAccent">#17130A</item>
         <item name="econAccentSoft">#0F2934</item>
     </style>
