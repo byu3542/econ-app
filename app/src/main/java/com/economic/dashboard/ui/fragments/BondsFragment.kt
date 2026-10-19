@@ -183,6 +183,10 @@ class BondsFragment : Fragment() {
         val ds = LineDataSet(entries, seriesName)
         ChartHelper.styleLineSeries(ds, lineColor) // IOS-07
         ChartHelper.setLineData(swappableChart, LineData(ds), 500)
+        val latest = rows[rows.size - 1].value
+        ChartHelper.showLatest(swappableChart, // unified charts: same grade as the card
+            if ("hy" == activeCard) Benchmarks.bondSpread(latest, 5.0, 8.0) else Benchmarks.bondSpread(latest, 2.5, 3.5),
+            NumberFormatUtil.percent(latest))
         // P6 TICKET-37: TalkBack announces the visible series, not the static XML label.
         swappableChart.contentDescription =
             seriesName + " trend, " + NumberFormatUtil.percent(rows[rows.size - 1].value)

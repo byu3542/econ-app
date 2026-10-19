@@ -489,6 +489,12 @@ class HousingFragment : Fragment() {
         ds.setDrawFilled(false)
 
         ChartHelper.setLineData(chartSwappable, LineData(ds), 500)
+        val latest = rows[rows.size - 1].value
+        ChartHelper.showLatest(chartSwappable, when (activeBadge) { // unified charts: same grade as the badge
+            "tenYear" -> Benchmarks.rateBadge(latest, 3.0, 4.0, 5.0)
+            "spread" -> Benchmarks.mortgageSpread(latest)
+            else -> Benchmarks.rateBadge(latest, 4.0, 5.5, 7.0)
+        }, NumberFormatUtil.percent(latest))
         // P6 TICKET-37: TalkBack announces the visible series, not the static XML label.
         chartSwappable.contentDescription = seriesLabel + " trend, " +
             NumberFormatUtil.percent(rows[rows.size - 1].value, if (twoDecimals) 2 else 1)
@@ -565,6 +571,12 @@ class HousingFragment : Fragment() {
         mortgageSet.setDrawFilled(false)
 
         ChartHelper.setLineData(chartMbsMortgage, LineData(bankSet, fedSet, mortgageSet))
+        // Unified charts: the mortgage rate (dataset 2) is the primary series.
+        if (mortgageRows.isNotEmpty()) {
+            val rate = mortgageRows[mortgageRows.size - 1].value
+            ChartHelper.showLatest(chartMbsMortgage, Benchmarks.rateBadge(rate, 4.0, 5.5, 7.0),
+                "Mortgage " + NumberFormatUtil.percent(rate), dataSetIndex = 2)
+        }
     }
 
     /** Builds chart Entry list by mapping data points onto a shared date index. */

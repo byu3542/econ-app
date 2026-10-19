@@ -415,13 +415,38 @@ object ChartHelper {
         }
     }
 
+    /**
+     * 2026-10-16 unified charts: the one call that gives any chart the analyst
+     * card's resting state — status header (pill + latest value) above the
+     * chart and the crosshair on the newest point of the first series. Call
+     * after [setLineData]. [latest] defaults to the newest point read to 2dp.
+     */
+    @JvmStatic
+    @JvmOverloads
+    fun showLatest(
+        chart: LineChart,
+        grade: com.economic.dashboard.ui.Benchmarks.Result?,
+        latest: String? = null,
+        pillText: String? = null,
+        dataSetIndex: Int = 0
+    ) {
+        if (chart.marker == null) attachCrosshair(chart)
+        val ds = chart.data?.getDataSetByIndex(dataSetIndex)
+        val text = latest ?: if (ds == null || ds.entryCount == 0) "—"
+            else NumberFormatUtil.number(ds.getEntryForIndex(ds.entryCount - 1).y.toDouble(), 2)
+        com.economic.dashboard.views.ChartStatusHeader.bind(
+            com.economic.dashboard.views.ChartStatusHeader.attachAbove(chart), grade, pillText, text)
+        highlightLatest(chart, dataSetIndex)
+    }
+
     /** Puts the crosshair on the newest point, the card's resting state. */
     @JvmStatic
-    fun highlightLatest(chart: LineChart) {
-        val ds = chart.data?.getDataSetByIndex(0) ?: return
+    @JvmOverloads
+    fun highlightLatest(chart: LineChart, dataSetIndex: Int = 0) {
+        val ds = chart.data?.getDataSetByIndex(dataSetIndex) ?: return
         if (ds.entryCount == 0) return
         val last = ds.getEntryForIndex(ds.entryCount - 1)
-        chart.highlightValue(Highlight(last.x, last.y, 0), false)
+        chart.highlightValue(Highlight(last.x, last.y, dataSetIndex), false)
     }
 
     /**
@@ -436,7 +461,12 @@ object ChartHelper {
 
         override fun refreshContent(e: Entry?, highlight: Highlight?) {
             if (e != null) {
-                val yf: ValueFormatter? = chart?.axisLeft?.valueFormatter
+                // A right-axis series (Housing's dual-axis mortgage rate) reads
+                // through the right axis's formatter, not the left's.
+                val onRight = highlight != null && chart?.data?.getDataSetByIndex(highlight.dataSetIndex)
+                    ?.axisDependency == YAxis.AxisDependency.RIGHT
+                val yf: ValueFormatter? = if (onRight) chart?.axisRight?.valueFormatter
+                    else chart?.axisLeft?.valueFormatter
                 tvValue.text = if (yf != null) yf.getFormattedValue(e.y) else NumberFormatUtil.number(e.y.toDouble(), 2)
                 val xf: ValueFormatter? = chart?.xAxis?.valueFormatter
                 tvDate.text = if (xf != null) xf.getFormattedValue(e.x) else ""

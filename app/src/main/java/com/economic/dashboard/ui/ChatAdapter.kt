@@ -1,5 +1,6 @@
 package com.economic.dashboard.ui
 
+import com.economic.dashboard.views.ChartStatusHeader
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -532,9 +533,8 @@ class ChatAdapter(
         row.visibility = View.VISIBLE
         val ctx = row.context
         row.findViewById<TextView>(R.id.tvChartLabel).text = card.label
-        row.findViewById<TextView>(R.id.tvChartValue).text = card.latestText()
-        bindPill(row.findViewById(R.id.llChartPill), row.findViewById(R.id.viewChartPillDot),
-            row.findViewById(R.id.tvChartPill), card)
+        ChartStatusHeader.bind(row.findViewById(R.id.llChartHeaderBlock),
+            card.grade, card.pillText(), card.latestText())
         row.findViewById<TextView>(R.id.tvChartCaption).text = card.windowText()
 
         val lineChart: LineChart = row.findViewById(R.id.chatLineChart)
@@ -558,8 +558,8 @@ class ChatAdapter(
         }
     }
 
-    /** Status pill: tier dot + word, graded series only. Tier color on the dot,
-     *  never the text — same rule as the sheet's subtitle and bands. */
+    /** Status pill for the table card: tier dot + word, graded series only.
+     *  Tier color on the dot, never the text. */
     private fun bindPill(pill: View, dot: View, word: TextView, card: ChatSeriesData.Card) {
         val g = card.grade
         if (g == null) { pill.visibility = View.GONE; return }
